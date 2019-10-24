@@ -1,5 +1,12 @@
-# Created by https://www.gitignore.io/api/linux,godot,macos,windows,notepadpp,visualstudiocode
-# Edit at https://www.gitignore.io/?templates=linux,godot,macos,windows,notepadpp,visualstudiocode
+# Created by https://www.gitignore.io/api/linux,godot,macos,backup,windows,visualstudiocode
+# Edit at https://www.gitignore.io/?templates=linux,godot,macos,backup,windows,visualstudiocode
+
+### Backup ###
+*.bak
+*.gho
+*.ori
+*.orig
+*.tmp
 
 ### Godot ###
 
@@ -54,10 +61,6 @@ Network Trash Folder
 Temporary Items
 .apdisk
 
-### NotepadPP ###
-# Notepad++ backups #
-*.bak
-
 ### VisualStudioCode ###
 .vscode/*
 !.vscode/settings.json
@@ -95,4 +98,4 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
-# End of https://www.gitignore.io/api/linux,godot,macos,windows,notepadpp,visualstudiocode
+# End of https://www.gitignore.io/api/linux,godot,macos,backup,windows,visualstudiocode
