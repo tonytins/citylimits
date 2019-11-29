@@ -15,7 +15,8 @@ _global_script_class_icons={
 
 [application]
 
-config/name="CityLimits"
+config/name="City Limits"
+run/main_scene="res://world.tscn"
 config/icon="res://icon.png"
 
 [rendering]
