@@ -1,0 +1,37 @@
+[gd_scene format=2]
+
+[node name="GUI" type="Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="GPanel" type="Panel" parent="."]
+anchor_right = 1.0
+margin_bottom = 23.0
+
+[node name="HBox" type="HBoxContainer" parent="GPanel"]
+anchor_right = 1.0
+margin_top = 2.0
+margin_bottom = 22.0
+alignment = 2
+
+[node name="CurrencyLbl" type="Label" parent="GPanel/HBox"]
+margin_left = 1003.0
+margin_top = 3.0
+margin_right = 1011.0
+margin_bottom = 17.0
+text = "$"
+
+[node name="MoneyLbl" type="Label" parent="GPanel/HBox"]
+margin_left = 1015.0
+margin_top = 3.0
+margin_right = 1024.0
+margin_bottom = 17.0
+text = "#"
+
+[node name="DebugBtn" type="Button" parent="GPanel"]
+visible = false
+margin_left = 932.754
+margin_top = 563.202
+margin_right = 985.754
+margin_bottom = 583.202
+text = "Debug"
