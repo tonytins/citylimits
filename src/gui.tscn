@@ -3,28 +3,66 @@
 [node name="GUI" type="Control"]
 anchor_right = 1.0
 anchor_bottom = 1.0
+__meta__ = {
+"_edit_use_anchors_": false
+}
 
 [node name="GPanel" type="Panel" parent="."]
 anchor_right = 1.0
 margin_bottom = 23.0
+__meta__ = {
+"_edit_use_anchors_": false
+}
 
-[node name="HBox" type="HBoxContainer" parent="GPanel"]
-anchor_right = 1.0
-margin_top = 2.0
-margin_bottom = 22.0
-alignment = 2
+[node name="CityMenus" type="HBoxContainer" parent="GPanel"]
+anchor_top = 0.5
+anchor_bottom = 0.5
+margin_left = 3.0
+margin_top = -10.0
+margin_right = 166.0
+margin_bottom = 10.0
+__meta__ = {
+"_edit_use_anchors_": false
+}
 
-[node name="CurrencyLbl" type="Label" parent="GPanel/HBox"]
-margin_left = 1003.0
+[node name="CityNameLbl" type="Label" parent="GPanel/CityMenus"]
 margin_top = 3.0
-margin_right = 1011.0
+margin_right = 66.0
+margin_bottom = 17.0
+text = "City Name"
+
+[node name="GameSpeed" type="MenuButton" parent="GPanel/CityMenus"]
+margin_left = 70.0
+margin_right = 163.0
+margin_bottom = 20.0
+text = "Game Speed"
+items = [ "Slow", null, 0, false, false, 0, 0, null, "", false, "Medium", null, 0, false, false, 1, 0, null, "", false, "Fast", null, 0, false, false, 2, 0, null, "", false ]
+
+[node name="CityStatus" type="HBoxContainer" parent="GPanel"]
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+margin_left = -276.0
+margin_top = -9.5
+margin_right = -4.0
+margin_bottom = 10.5
+alignment = 2
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="CurrencyLbl" type="Label" parent="GPanel/CityStatus"]
+margin_left = 251.0
+margin_top = 3.0
+margin_right = 259.0
 margin_bottom = 17.0
 text = "$"
 
-[node name="MoneyLbl" type="Label" parent="GPanel/HBox"]
-margin_left = 1015.0
+[node name="MoneyLbl" type="Label" parent="GPanel/CityStatus"]
+margin_left = 263.0
 margin_top = 3.0
-margin_right = 1024.0
+margin_right = 272.0
 margin_bottom = 17.0
 text = "#"
 

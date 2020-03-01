@@ -6,7 +6,7 @@ var terrian_cap = 0.3
 
 func _process(delta):
 	
-	$GUI/GPanel/HBox/MoneyLbl.text = str(bank.budget)
+	$GUI/GPanel/CityStatus/MoneyLbl.text = str(bank.budget)
 	
 func _input(event):
 	pass
