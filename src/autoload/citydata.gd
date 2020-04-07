@@ -1,5 +1,7 @@
 extends Node
 
+var city_name: String
+
 var budget: int
 var prev_budget: int
 
@@ -13,7 +15,7 @@ var power_tax: int
 
 func starting_budget(lev: int):
 	
-	if lev == 1:
+	if lev == 1 or lev == 0:
 		budget = 20000
 	elif lev == 2:
 		budget = 10000

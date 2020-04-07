@@ -4,16 +4,7 @@ var noise: OpenSimplexNoise
 var map_size = Vector2(80, 60)
 var terrian_cap = 0.3
 
-func _process(delta):
-	
-	$GUI/GPanel/CityStatus/MoneyLbl.text = str(bank.budget)
-	
-func _input(event):
-	pass
-	
 func _ready():
-	
-	bank.starting_budget(1)
 	
 	randomize()
 	noise = OpenSimplexNoise.new()
