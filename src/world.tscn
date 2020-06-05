@@ -1,11 +1,10 @@
-[gd_scene load_steps=5 format=2]
+[gd_scene load_steps=4 format=2]
 
 [ext_resource path="res://assets/terrian.tres" type="TileSet" id=1]
-[ext_resource path="res://src/gui.tscn" type="PackedScene" id=2]
 [ext_resource path="res://src/world.gd" type="Script" id=3]
 [ext_resource path="res://assets/water.tres" type="TileSet" id=4]
 
-[node name="Node2D" type="Node"]
+[node name="World" type="Node"]
 script = ExtResource( 3 )
 
 [node name="Water" type="TileMap" parent="."]
@@ -17,5 +16,3 @@ format = 1
 tile_set = ExtResource( 1 )
 cell_size = Vector2( 16, 16 )
 format = 1
-
-[node name="GUI" parent="." instance=ExtResource( 2 )]
