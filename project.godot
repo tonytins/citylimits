@@ -18,6 +18,7 @@ _global_script_class_icons={
 config/name="City Limits"
 run/main_scene="res://scenes/titlescreen.tscn"
 config/icon="res://icon.png"
+config/windows_native_icon="res://icon.ico"
 
 [autoload]
 
