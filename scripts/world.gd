@@ -1,4 +1,4 @@
-extends Node
+extends Node2D
 
 var noise: OpenSimplexNoise
 var map_size = Vector2(80, 60)
@@ -20,14 +20,14 @@ func make_terrian_map():
 		for y in map_size.y:
 			var a = noise.get_noise_2d(x, y)
 			if a < terrian_cap:
-				$Terrian.set_cell(x, y, 0)
+				$terrian.set_cell(x, y, 0)
 
-	$Terrian.update_bitmask_region(Vector2(0.0, 0.0), Vector2(map_size.x, map_size.y))
+	$terrian.update_bitmask_region(Vector2(0.0, 0.0), Vector2(map_size.x, map_size.y))
 	
 func make_water():
 	for x in map_size.x:
 		for y in map_size.y:
-			if $Terrian.get_cell(x, y):
-				$Water.set_cell(x, y, 0)
+			if $terrian.get_cell(x, y):
+				$water.set_cell(x, y, 0)
 				
-	$Water.update_bitmask_region(Vector2(0.0, 0.0), Vector2(map_size.x, map_size.y))
+	$water.update_bitmask_region(Vector2(0.0, 0.0), Vector2(map_size.x, map_size.y))
