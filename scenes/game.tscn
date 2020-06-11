@@ -10,6 +10,9 @@
 
 [node name="world" type="Node2D" parent="."]
 script = ExtResource( 4 )
+__meta__ = {
+"_edit_lock_": true
+}
 
 [node name="water" type="TileMap" parent="world"]
 tile_set = ExtResource( 1 )
@@ -22,7 +25,7 @@ cell_size = Vector2( 16, 16 )
 format = 1
 
 [node name="Camera2D" type="Camera2D" parent="world"]
-position = Vector2( 503.506, 302.104 )
+position = Vector2( 512, 304 )
 current = true
 script = ExtResource( 5 )
 
@@ -32,6 +35,7 @@ script = ExtResource( 5 )
 anchor_right = 1.0
 anchor_bottom = 1.0
 __meta__ = {
+"_edit_lock_": true,
 "_edit_use_anchors_": false
 }
 
