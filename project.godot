@@ -16,12 +16,12 @@ _global_script_class_icons={
 [application]
 
 config/name="City Limits"
-run/main_scene="res://src/titlescreen.tscn"
+run/main_scene="res://scenes/titlescreen.tscn"
 config/icon="res://icon.png"
 
 [autoload]
 
-CityData="*res://src/autoload/citydata.gd"
+CityData="*res://scripts/autoload/citydata.gd"
 
 [display]
 

@@ -1,0 +1,20 @@
+[gd_scene load_steps=4 format=2]
+
+[ext_resource path="res://sprites/terrian.tres" type="TileSet" id=1]
+[ext_resource path="res://scripts/world.gd" type="Script" id=3]
+[ext_resource path="res://sprites/water.tres" type="TileSet" id=4]
+
+
+
+[node name="World" type="Node"]
+script = ExtResource( 3 )
+
+[node name="Water" type="TileMap" parent="."]
+tile_set = ExtResource( 4 )
+cell_size = Vector2( 16, 16 )
+format = 1
+
+[node name="Terrian" type="TileMap" parent="."]
+tile_set = ExtResource( 1 )
+cell_size = Vector2( 16, 16 )
+format = 1
