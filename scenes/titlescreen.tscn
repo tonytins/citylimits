@@ -46,4 +46,5 @@ margin_top = 319.0
 margin_right = 601.0
 margin_bottom = 339.0
 text = "Create"
+
 [connection signal="pressed" from="CreateBtn" to="." method="_on_CreateBtn_pressed"]

@@ -1,6 +1,11 @@
 extends Node
 
-var city_name: String
+var city_name: String = "Furtropolis"
+var year: int = 1
+var prev_quarter: int
+var quarter: int = 1
+var population: int = 0
+var news_ticker: String
 
 var budget: int
 var prev_budget: int

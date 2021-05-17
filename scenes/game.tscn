@@ -1,10 +1,11 @@
-[gd_scene load_steps=6 format=2]
+[gd_scene load_steps=7 format=2]
 
 [ext_resource path="res://sprites/water.tres" type="TileSet" id=1]
 [ext_resource path="res://scripts/gpanel.gd" type="Script" id=2]
 [ext_resource path="res://sprites/terrian.tres" type="TileSet" id=3]
 [ext_resource path="res://scripts/world.gd" type="Script" id=4]
 [ext_resource path="res://scripts/cameramovement.gd" type="Script" id=5]
+[ext_resource path="res://scenes/Zone.tscn" type="PackedScene" id=6]
 
 [node name="game" type="Node"]
 
@@ -28,6 +29,9 @@ format = 1
 position = Vector2( 512, 304 )
 current = true
 script = ExtResource( 5 )
+
+[node name="Resdenital" parent="world" instance=ExtResource( 6 )]
+position = Vector2( 152.043, 336.414 )
 
 [node name="ui" type="CanvasLayer" parent="."]
 
@@ -86,11 +90,11 @@ __meta__ = {
 }
 
 [node name="currencylbl" type="Label" parent="ui/base/gpanel/citystatus"]
-margin_left = 251.0
+margin_left = 252.0
 margin_top = 3.0
 margin_right = 259.0
 margin_bottom = 17.0
-text = "$"
+text = "§"
 
 [node name="moneylbl" type="Label" parent="ui/base/gpanel/citystatus"]
 margin_left = 263.0
