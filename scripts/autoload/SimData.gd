@@ -1,6 +1,6 @@
 extends Node
 
-var city_name: String = "Furtropolis"
+var city_name: String
 var year: int = 1
 var prev_quarter: int
 var quarter: int = 1
@@ -17,6 +17,8 @@ var indust_tax: int
 var fire_tax: int
 var police_tax: int
 var power_tax: int
+
+enum GameSpeed {SLOW, MEDIUM, FAST}
 
 func starting_budget(lev: int):
 	
