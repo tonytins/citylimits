@@ -2,8 +2,8 @@
 
 [ext_resource path="res://scenes/Map.tscn" type="PackedScene" id=1]
 [ext_resource path="res://scenes/Advise.tscn" type="PackedScene" id=2]
-[ext_resource path="res://scripts/Status.gd" type="Script" id=3]
-[ext_resource path="res://scripts/Game.gd" type="Script" id=4]
+[ext_resource path="res://scripts/city_status.gd" type="Script" id=3]
+[ext_resource path="res://scripts/gameplay.gd" type="Script" id=4]
 [ext_resource path="res://sprites/police.png" type="Texture" id=5]
 [ext_resource path="res://sprites/firestation.png" type="Texture" id=6]
 
@@ -42,7 +42,7 @@ __meta__ = {
 
 [node name="Status" type="VBoxContainer" parent="Controls/GUI/Status/Toolbar"]
 margin_right = 93.0
-margin_bottom = 66.0
+margin_bottom = 65.0
 script = ExtResource( 3 )
 __meta__ = {
 "_edit_use_anchors_": true
@@ -86,11 +86,13 @@ text = "#"
 [node name="PoliceBtn" type="TextureButton" parent="Controls/GUI/Status/Toolbar"]
 margin_left = 97.0
 margin_right = 145.0
-margin_bottom = 66.0
+margin_bottom = 65.0
 texture_normal = ExtResource( 5 )
 
 [node name="FireBtn" type="TextureButton" parent="Controls/GUI/Status/Toolbar"]
 margin_left = 149.0
 margin_right = 197.0
-margin_bottom = 66.0
+margin_bottom = 65.0
 texture_normal = ExtResource( 6 )
+
+[connection signal="pressed" from="Controls/GUI/Status/Toolbar/PoliceBtn" to="Map" method="_on_PoliceBtn_pressed"]

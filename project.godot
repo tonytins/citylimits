@@ -15,15 +15,15 @@ _global_script_class_icons={
 [application]
 
 config/name="City Limits"
-run/main_scene="res://scenes/Start.tscn"
+run/main_scene="res://scenes/Game.tscn"
 config/icon="res://icon.png"
 config/windows_native_icon="res://icon.ico"
 
 [autoload]
 
-CityData="*res://scripts/autoload/SimData.gd"
-SimData="*res://scripts/autoload/SimData.gd"
-SimEvents="*res://scripts/autoload/SimEvents.gd"
+CityData="*res://scripts/autoload/sim_data.gd"
+SimData="*res://scripts/autoload/sim_data.gd"
+SimEvents="*res://scripts/autoload/sim_events.gd"
 
 [display]
 

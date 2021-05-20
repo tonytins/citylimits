@@ -28,4 +28,4 @@ Note: this is subject to change in the future.
 
 ## License
 
-This project is licensed under the MPL 2.0 License - see the [LICENSE](LICENSE) file for details
+This project is licensed under the Artistic-2.0 License - see the [LICENSE](LICENSE) file for details
