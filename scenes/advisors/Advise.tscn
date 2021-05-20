@@ -12,10 +12,9 @@ script = ExtResource( 2 )
 __meta__ = {
 "_edit_use_anchors_": true
 }
+dialogue_file = "res://dialog/cityplanner.json"
 advisor_name = "Zack Casey"
 rank = "City Planner"
-title = "Welcome!"
-description = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus quis facilisis purus. Donec hendrerit lectus ex, eget feugiat felis egestas a. Proin ut ornare libero. Mauris non maximus sapien. Ut gravida, metus quis finibus suscipit, lacus ante lobortis libero, sed faucibus lacus nulla hendrerit magna. Nunc tempus purus vel lectus sollicitudin faucibus ut non magna. Pellentesque id varius eros, nec dapibus tellus. Sed vitae lacus dignissim, malesuada est eget, rhoncus velit."
 avatar = ExtResource( 1 )
 
 [node name="Container" type="HSplitContainer" parent="."]

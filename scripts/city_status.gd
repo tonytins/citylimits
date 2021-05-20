@@ -9,4 +9,4 @@ func _ready():
 	
 func _process(delta):
 	money.text = str(SimData.budget)
-	year.text = str(SimData.year)
+	year.text = "Y" + str(SimData.year)

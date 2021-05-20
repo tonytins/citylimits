@@ -4,7 +4,7 @@
 [ext_resource path="res://sprites/coal.png" type="Texture" id=2]
 
 [sub_resource type="RectangleShape2D" id=1]
-extents = Vector2( 24.1295, 23.9406 )
+extents = Vector2( 32.2297, 31.8602 )
 
 [sub_resource type="Animation" id=2]
 resource_name = "Animante"
