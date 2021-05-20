@@ -1,5 +1,5 @@
 extends Node
 
-signal one_time_income
-signal pay_expense
+signal has_power
+signal budget
 signal game_speed

@@ -27,7 +27,7 @@ SimEvents="*res://scripts/autoload/sim_events.gd"
 
 [display]
 
-window/size/resizable=false
+window/energy_saving/keep_screen_on=false
 window/stretch/mode="2d"
 window/stretch/aspect="keep"
 

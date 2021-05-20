@@ -1,14 +1,32 @@
-[gd_scene load_steps=7 format=2]
+[gd_scene load_steps=21 format=2]
 
 [ext_resource path="res://scenes/Map.tscn" type="PackedScene" id=1]
 [ext_resource path="res://scenes/Advise.tscn" type="PackedScene" id=2]
 [ext_resource path="res://scripts/city_status.gd" type="Script" id=3]
-[ext_resource path="res://scripts/gameplay.gd" type="Script" id=4]
-[ext_resource path="res://sprites/police.png" type="Texture" id=5]
-[ext_resource path="res://sprites/firestation.png" type="Texture" id=6]
+[ext_resource path="res://sprites/ui/icpolhi.png" type="Texture" id=4]
+[ext_resource path="res://sprites/ui/iccom.png" type="Texture" id=5]
+[ext_resource path="res://sprites/ui/icfirehi.png" type="Texture" id=6]
+[ext_resource path="res://sprites/ui/icdozrhi.png" type="Texture" id=7]
+[ext_resource path="res://sprites/ui/iccomhi.png" type="Texture" id=8]
+[ext_resource path="res://sprites/ui/icres.png" type="Texture" id=9]
+[ext_resource path="res://sprites/ui/icreshi.png" type="Texture" id=10]
+[ext_resource path="res://sprites/ui/icfire.png" type="Texture" id=11]
+[ext_resource path="res://sprites/ui/icindhi.png" type="Texture" id=12]
+[ext_resource path="res://sprites/ui/icind.png" type="Texture" id=13]
+[ext_resource path="res://sprites/ui/icqryhi.png" type="Texture" id=14]
+[ext_resource path="res://sprites/ui/icqry.png" type="Texture" id=15]
+[ext_resource path="res://sprites/ui/icpol.png" type="Texture" id=16]
+[ext_resource path="res://sprites/ui/icdozr.png" type="Texture" id=17]
+[ext_resource path="res://sprites/ui/iccoalhi.png" type="Texture" id=18]
+[ext_resource path="res://sprites/ui/iccoal.png" type="Texture" id=19]
+[ext_resource path="res://scripts/game.gd" type="Script" id=20]
 
-[node name="Game" type="Node"]
-script = ExtResource( 4 )
+[node name="Game" type="Node2D"]
+script = ExtResource( 20 )
+
+[node name="Quarters" type="Timer" parent="."]
+wait_time = 15.0
+autostart = true
 
 [node name="Map" parent="." instance=ExtResource( 1 )]
 
@@ -17,6 +35,10 @@ script = ExtResource( 4 )
 [node name="GUI" type="Control" parent="Controls"]
 anchor_right = 1.0
 anchor_bottom = 1.0
+margin_left = 0.518677
+margin_top = 2.77234
+margin_right = 0.518677
+margin_bottom = 2.77234
 __meta__ = {
 "_edit_use_anchors_": false
 }
@@ -24,75 +46,203 @@ __meta__ = {
 [node name="AdvsiorNotice" parent="Controls/GUI" instance=ExtResource( 2 )]
 
 [node name="Status" type="Panel" parent="Controls/GUI"]
-anchor_top = 0.883459
-anchor_right = 0.592773
-anchor_bottom = 1.00179
+anchor_left = 0.540039
+anchor_top = 0.825
+anchor_right = 1.00781
+anchor_bottom = 1.01167
 __meta__ = {
 "_edit_use_anchors_": true
 }
 
-[node name="Toolbar" type="HBoxContainer" parent="Controls/GUI/Status"]
-anchor_left = 0.00823723
-anchor_top = 0.0704225
-anchor_right = 0.98682
+[node name="Cotnainer" type="HSplitContainer" parent="Controls/GUI/Status"]
+anchor_right = 1.0
 anchor_bottom = 1.0
+margin_left = 8.0
+margin_top = 4.0
+dragger_visibility = 1
 __meta__ = {
-"_edit_use_anchors_": true
+"_edit_use_anchors_": false
 }
 
-[node name="Status" type="VBoxContainer" parent="Controls/GUI/Status/Toolbar"]
-margin_right = 93.0
-margin_bottom = 65.0
+[node name="Status" type="VBoxContainer" parent="Controls/GUI/Status/Cotnainer"]
+margin_right = 66.0
+margin_bottom = 108.0
+alignment = 1
 script = ExtResource( 3 )
 __meta__ = {
-"_edit_use_anchors_": true
+"_edit_use_anchors_": false
 }
 
-[node name="CityNameLbl" type="Label" parent="Controls/GUI/Status/Toolbar/Status"]
-margin_right = 93.0
-margin_bottom = 14.0
+[node name="CityNameLbl" type="Label" parent="Controls/GUI/Status/Cotnainer/Status"]
+margin_top = 29.0
+margin_right = 66.0
+margin_bottom = 43.0
 text = "City Name"
 align = 1
 
-[node name="GameSpeed" type="MenuButton" parent="Controls/GUI/Status/Toolbar/Status"]
-margin_top = 18.0
-margin_right = 93.0
-margin_bottom = 38.0
-focus_mode = 2
-text = "Game Speed"
-items = [ "Slow", null, 0, false, false, 0, 0, null, "", false, "Medium", null, 0, false, false, 1, 0, null, "", false, "Fast", null, 0, false, false, 2, 0, null, "", false ]
+[node name="YearLbl" type="Label" parent="Controls/GUI/Status/Cotnainer/Status"]
+margin_top = 47.0
+margin_right = 66.0
+margin_bottom = 61.0
+text = "2000"
+align = 1
 
-[node name="Money" type="HBoxContainer" parent="Controls/GUI/Status/Toolbar/Status"]
-margin_top = 42.0
-margin_right = 93.0
-margin_bottom = 56.0
+[node name="Money" type="HBoxContainer" parent="Controls/GUI/Status/Cotnainer/Status"]
+margin_top = 65.0
+margin_right = 66.0
+margin_bottom = 79.0
 alignment = 1
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="CurrencyLbl" type="Label" parent="Controls/GUI/Status/Toolbar/Status/Money"]
-margin_left = 36.0
-margin_right = 43.0
+[node name="CurrencyLbl" type="Label" parent="Controls/GUI/Status/Cotnainer/Status/Money"]
+margin_left = 23.0
+margin_right = 30.0
 margin_bottom = 14.0
 text = "§"
 
-[node name="MoneyLbl" type="Label" parent="Controls/GUI/Status/Toolbar/Status/Money"]
-margin_left = 47.0
-margin_right = 56.0
+[node name="MoneyLbl" type="Label" parent="Controls/GUI/Status/Cotnainer/Status/Money"]
+margin_left = 34.0
+margin_right = 42.0
 margin_bottom = 14.0
-text = "#"
+text = "0"
 
-[node name="PoliceBtn" type="TextureButton" parent="Controls/GUI/Status/Toolbar"]
-margin_left = 97.0
-margin_right = 145.0
-margin_bottom = 65.0
+[node name="Toolbar" type="Panel" parent="Controls/GUI/Status/Cotnainer"]
+margin_left = 78.0
+margin_right = 471.0
+margin_bottom = 108.0
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Tabs" type="TabContainer" parent="Controls/GUI/Status/Cotnainer/Toolbar"]
+anchor_left = 0.00118311
+anchor_top = 0.0191102
+anchor_right = 1.00118
+anchor_bottom = 1.01911
+margin_top = -4.76837e-07
+__meta__ = {
+"_edit_use_anchors_": true
+}
+
+[node name="Zones" type="Tabs" parent="Controls/GUI/Status/Cotnainer/Toolbar/Tabs"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_left = 4.0
+margin_top = 32.0
+margin_right = -4.0
+margin_bottom = -4.0
+
+[node name="ZoneCtr" type="HBoxContainer" parent="Controls/GUI/Status/Cotnainer/Toolbar/Tabs/Zones"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="ResBtn" type="TextureButton" parent="Controls/GUI/Status/Cotnainer/Toolbar/Tabs/Zones/ZoneCtr"]
+margin_right = 34.0
+margin_bottom = 71.0
+texture_normal = ExtResource( 9 )
+texture_pressed = ExtResource( 10 )
+
+[node name="ComBtn" type="TextureButton" parent="Controls/GUI/Status/Cotnainer/Toolbar/Tabs/Zones/ZoneCtr"]
+margin_left = 38.0
+margin_right = 72.0
+margin_bottom = 71.0
 texture_normal = ExtResource( 5 )
+texture_pressed = ExtResource( 8 )
 
-[node name="FireBtn" type="TextureButton" parent="Controls/GUI/Status/Toolbar"]
-margin_left = 149.0
-margin_right = 197.0
-margin_bottom = 65.0
+[node name="IndBtn" type="TextureButton" parent="Controls/GUI/Status/Cotnainer/Toolbar/Tabs/Zones/ZoneCtr"]
+margin_left = 76.0
+margin_right = 110.0
+margin_bottom = 71.0
+texture_normal = ExtResource( 13 )
+texture_pressed = ExtResource( 12 )
+
+[node name="Depts" type="Tabs" parent="Controls/GUI/Status/Cotnainer/Toolbar/Tabs"]
+visible = false
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_left = 4.0
+margin_top = 32.0
+margin_right = -4.0
+margin_bottom = -4.0
+
+[node name="DepCtr" type="HBoxContainer" parent="Controls/GUI/Status/Cotnainer/Toolbar/Tabs/Depts"]
+anchor_left = -0.00119347
+anchor_right = 0.998807
+anchor_bottom = 1.0
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="PoliceBtn" type="TextureButton" parent="Controls/GUI/Status/Cotnainer/Toolbar/Tabs/Depts/DepCtr"]
+margin_right = 34.0
+margin_bottom = 75.0
+texture_normal = ExtResource( 4 )
+texture_pressed = ExtResource( 16 )
+
+[node name="FireBtn" type="TextureButton" parent="Controls/GUI/Status/Cotnainer/Toolbar/Tabs/Depts/DepCtr"]
+margin_left = 38.0
+margin_right = 72.0
+margin_bottom = 75.0
 texture_normal = ExtResource( 6 )
+texture_pressed = ExtResource( 11 )
 
-[connection signal="pressed" from="Controls/GUI/Status/Toolbar/PoliceBtn" to="Map" method="_on_PoliceBtn_pressed"]
+[node name="Power" type="Tabs" parent="Controls/GUI/Status/Cotnainer/Toolbar/Tabs"]
+visible = false
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_left = 4.0
+margin_top = 32.0
+margin_right = -4.0
+margin_bottom = -4.0
+
+[node name="PowerCtr" type="HBoxContainer" parent="Controls/GUI/Status/Cotnainer/Toolbar/Tabs/Power"]
+margin_right = 40.0
+margin_bottom = 40.0
+
+[node name="CoalBtn" type="TextureButton" parent="Controls/GUI/Status/Cotnainer/Toolbar/Tabs/Power/PowerCtr"]
+margin_left = 75.7088
+margin_right = 117.709
+margin_bottom = 75.0
+texture_normal = ExtResource( 19 )
+texture_pressed = ExtResource( 18 )
+
+[node name="Tools" type="Tabs" parent="Controls/GUI/Status/Cotnainer/Toolbar/Tabs"]
+visible = false
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_left = 4.0
+margin_top = 32.0
+margin_right = -4.0
+margin_bottom = -4.0
+
+[node name="ToolsCtr" type="HBoxContainer" parent="Controls/GUI/Status/Cotnainer/Toolbar/Tabs/Tools"]
+anchor_right = 5.875
+anchor_bottom = 2.45833
+__meta__ = {
+"_edit_use_anchors_": true
+}
+
+[node name="InfoBtn" type="TextureButton" parent="Controls/GUI/Status/Cotnainer/Toolbar/Tabs/Tools/ToolsCtr"]
+margin_right = 34.0
+margin_bottom = 59.0
+texture_normal = ExtResource( 15 )
+texture_pressed = ExtResource( 14 )
+
+[node name="BulldozeBtn" type="TextureButton" parent="Controls/GUI/Status/Cotnainer/Toolbar/Tabs/Tools/ToolsCtr"]
+margin_left = 38.0
+margin_right = 72.0
+margin_bottom = 59.0
+texture_normal = ExtResource( 17 )
+texture_pressed = ExtResource( 7 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[connection signal="timeout" from="Quarters" to="." method="_on_Quarters_timeout"]
+[connection signal="pressed" from="Controls/GUI/Status/Cotnainer/Toolbar/Tabs/Zones/ZoneCtr/ResBtn" to="Map" method="_on_ResBtn_pressed"]
+[connection signal="pressed" from="Controls/GUI/Status/Cotnainer/Toolbar/Tabs/Power/PowerCtr/CoalBtn" to="Map" method="_on_CoalBtn_pressed"]

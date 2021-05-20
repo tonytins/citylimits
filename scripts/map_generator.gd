@@ -17,7 +17,7 @@ func _ready():
 	
 	make_terrian_map()
 	make_water()
-
+	
 func make_terrian_map():
 	for x in map_size.x:
 		for y in map_size.y:
@@ -35,17 +35,15 @@ func make_water():
 				
 	water.update_bitmask_region(Vector2(0.0, 0.0), Vector2(map_size.x, map_size.y))
 
-func fake_click(flags=0):
-	var ev = InputEvent
-	ev.type = InputEvent.MOUSE_BUTTON
-	ev.button_index=BUTTON_LEFT
-	ev.pressed = true
-	ev.global_pos = get_global_mouse_position()
-	ev.meta = flags
-	get_tree().input_event(ev)
 
-func _on_PoliceBtn_pressed():
-	var police = preload("res://scenes/Zone.tscn")
-	var instance = police.instance()
+func _on_ResBtn_pressed():
+	var new_zone = preload("res://scenes/zones/Zone.tscn")
+	var instance = new_zone.instance()
+	add_child(instance)
+	instance.emit_signal("grabbed")
+	
+func _on_CoalBtn_pressed():
+	var new_zone = preload("res://scenes/zones/Coal.tscn")
+	var instance = new_zone.instance()
 	add_child(instance)
 	instance.emit_signal("grabbed")
