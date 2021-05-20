@@ -1,4 +1,4 @@
-[gd_scene load_steps=29 format=2]
+[gd_scene load_steps=31 format=2]
 
 [ext_resource path="res://scenes/Map.tscn" type="PackedScene" id=1]
 [ext_resource path="res://scenes/advisors/Advise.tscn" type="PackedScene" id=2]
@@ -20,7 +20,7 @@
 [ext_resource path="res://sprites/ui/iccoalhi.png" type="Texture" id=18]
 [ext_resource path="res://sprites/ui/iccoal.png" type="Texture" id=19]
 [ext_resource path="res://scripts/game.gd" type="Script" id=20]
-[ext_resource path="res://sprites/ui/demandg.png" type="Texture" id=21]
+[ext_resource path="res://scenes/DebugConsole.tscn" type="PackedScene" id=21]
 [ext_resource path="res://sprites/ui/icparkhi.png" type="Texture" id=22]
 [ext_resource path="res://sprites/ui/icnuc.png" type="Texture" id=23]
 [ext_resource path="res://sprites/ui/icpark.png" type="Texture" id=24]
@@ -28,6 +28,8 @@
 [ext_resource path="res://sprites/ui/icseap.png" type="Texture" id=26]
 [ext_resource path="res://sprites/ui/icseaphi.png" type="Texture" id=27]
 [ext_resource path="res://sprites/ui/icstad.png" type="Texture" id=28]
+[ext_resource path="res://scripts/core_gui.gd" type="Script" id=29]
+[ext_resource path="res://sprites/avatars/zc.png" type="Texture" id=30]
 
 [node name="Game" type="Node2D"]
 script = ExtResource( 20 )
@@ -40,7 +42,7 @@ autostart = true
 
 [node name="Controls" type="CanvasLayer" parent="."]
 
-[node name="GUI" type="Control" parent="Controls"]
+[node name="Core" type="Control" parent="Controls"]
 anchor_left = -0.000731155
 anchor_top = -0.000954026
 anchor_right = 0.999269
@@ -49,14 +51,23 @@ margin_left = -0.172424
 margin_top = 2.77234
 margin_right = -0.172424
 margin_bottom = 2.77234
+script = ExtResource( 29 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="AdvsiorNotice" parent="Controls/GUI" instance=ExtResource( 2 )]
+[node name="Console" parent="Controls/Core" instance=ExtResource( 21 )]
+visible = false
+anchor_left = 0.00585937
+anchor_right = 0.994141
+anchor_bottom = 0.185
+margin_bottom = 0.0
 
-[node name="StatusPanel" type="Panel" parent="Controls/GUI"]
-anchor_left = 0.517578
+[node name="AdvsiorNotice" parent="Controls/Core" instance=ExtResource( 2 )]
+avatar = ExtResource( 30 )
+
+[node name="StatusPanel" type="Panel" parent="Controls/Core"]
+anchor_left = 0.52832
 anchor_top = 0.830002
 anchor_right = 0.640625
 anchor_bottom = 1.0
@@ -64,45 +75,38 @@ __meta__ = {
 "_edit_use_anchors_": true
 }
 
-[node name="StatusCtr" type="CenterContainer" parent="Controls/GUI/StatusPanel"]
+[node name="StatusCtr" type="CenterContainer" parent="Controls/Core/StatusPanel"]
 anchor_right = 1.0
 anchor_bottom = 1.0
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="StatBox" type="HBoxContainer" parent="Controls/GUI/StatusPanel/StatusCtr"]
-margin_left = 8.0
-margin_top = 25.0
-margin_right = 117.0
-margin_bottom = 75.0
-__meta__ = {
-"_edit_use_anchors_": false
-}
-
-[node name="InfoBox" type="VBoxContainer" parent="Controls/GUI/StatusPanel/StatusCtr/StatBox"]
-margin_right = 66.0
-margin_bottom = 50.0
+[node name="InfoBox" type="VBoxContainer" parent="Controls/Core/StatusPanel/StatusCtr"]
+margin_left = 24.0
+margin_top = 26.0
+margin_right = 90.0
+margin_bottom = 76.0
 alignment = 1
 script = ExtResource( 3 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="CityNameLbl" type="Label" parent="Controls/GUI/StatusPanel/StatusCtr/StatBox/InfoBox"]
+[node name="CityNameLbl" type="Label" parent="Controls/Core/StatusPanel/StatusCtr/InfoBox"]
 margin_right = 66.0
 margin_bottom = 14.0
 text = "City Name"
 align = 1
 
-[node name="YearLbl" type="Label" parent="Controls/GUI/StatusPanel/StatusCtr/StatBox/InfoBox"]
+[node name="YearLbl" type="Label" parent="Controls/Core/StatusPanel/StatusCtr/InfoBox"]
 margin_top = 18.0
 margin_right = 66.0
 margin_bottom = 32.0
 text = "Y1980"
 align = 1
 
-[node name="Money" type="HBoxContainer" parent="Controls/GUI/StatusPanel/StatusCtr/StatBox/InfoBox"]
+[node name="Money" type="HBoxContainer" parent="Controls/Core/StatusPanel/StatusCtr/InfoBox"]
 margin_top = 36.0
 margin_right = 66.0
 margin_bottom = 50.0
@@ -111,36 +115,19 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="CurrencyLbl" type="Label" parent="Controls/GUI/StatusPanel/StatusCtr/StatBox/InfoBox/Money"]
+[node name="CurrencyLbl" type="Label" parent="Controls/Core/StatusPanel/StatusCtr/InfoBox/Money"]
 margin_left = 23.0
 margin_right = 30.0
 margin_bottom = 14.0
 text = "§"
 
-[node name="MoneyLbl" type="Label" parent="Controls/GUI/StatusPanel/StatusCtr/StatBox/InfoBox/Money"]
+[node name="MoneyLbl" type="Label" parent="Controls/Core/StatusPanel/StatusCtr/InfoBox/Money"]
 margin_left = 34.0
 margin_right = 42.0
 margin_bottom = 14.0
 text = "0"
 
-[node name="RciBox" type="CenterContainer" parent="Controls/GUI/StatusPanel/StatusCtr/StatBox"]
-margin_left = 70.0
-margin_right = 109.0
-margin_bottom = 50.0
-__meta__ = {
-"_edit_use_anchors_": false
-}
-
-[node name="RciBtn" type="TextureButton" parent="Controls/GUI/StatusPanel/StatusCtr/StatBox/RciBox"]
-margin_top = 1.0
-margin_right = 39.0
-margin_bottom = 48.0
-texture_normal = ExtResource( 21 )
-__meta__ = {
-"_edit_use_anchors_": false
-}
-
-[node name="BuyPanel" type="Panel" parent="Controls/GUI"]
+[node name="BuyPanel" type="Panel" parent="Controls/Core"]
 anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
@@ -153,7 +140,7 @@ __meta__ = {
 "_edit_use_anchors_": true
 }
 
-[node name="Tabs" type="TabContainer" parent="Controls/GUI/BuyPanel"]
+[node name="Tabs" type="TabContainer" parent="Controls/Core/BuyPanel"]
 anchor_left = 0.00144509
 anchor_top = -0.0294118
 anchor_right = 1.0
@@ -162,7 +149,7 @@ __meta__ = {
 "_edit_use_anchors_": true
 }
 
-[node name="Zones" type="Tabs" parent="Controls/GUI/BuyPanel/Tabs"]
+[node name="Zones" type="Tabs" parent="Controls/Core/BuyPanel/Tabs"]
 anchor_right = 1.0
 anchor_bottom = 1.0
 margin_left = 4.0
@@ -170,34 +157,34 @@ margin_top = 32.0
 margin_right = -4.0
 margin_bottom = -4.0
 
-[node name="ZonesCtr" type="HBoxContainer" parent="Controls/GUI/BuyPanel/Tabs/Zones"]
+[node name="ZonesCtr" type="HBoxContainer" parent="Controls/Core/BuyPanel/Tabs/Zones"]
 anchor_right = 1.0
 anchor_bottom = 1.0
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="ResBtn" type="TextureButton" parent="Controls/GUI/BuyPanel/Tabs/Zones/ZonesCtr"]
+[node name="ResBtn" type="TextureButton" parent="Controls/Core/BuyPanel/Tabs/Zones/ZonesCtr"]
 margin_right = 34.0
 margin_bottom = 69.0
 texture_normal = ExtResource( 9 )
 texture_pressed = ExtResource( 10 )
 
-[node name="ComBtn" type="TextureButton" parent="Controls/GUI/BuyPanel/Tabs/Zones/ZonesCtr"]
+[node name="ComBtn" type="TextureButton" parent="Controls/Core/BuyPanel/Tabs/Zones/ZonesCtr"]
 margin_left = 38.0
 margin_right = 72.0
 margin_bottom = 69.0
 texture_normal = ExtResource( 5 )
 texture_pressed = ExtResource( 8 )
 
-[node name="IndBtn" type="TextureButton" parent="Controls/GUI/BuyPanel/Tabs/Zones/ZonesCtr"]
+[node name="IndBtn" type="TextureButton" parent="Controls/Core/BuyPanel/Tabs/Zones/ZonesCtr"]
 margin_left = 76.0
 margin_right = 110.0
 margin_bottom = 69.0
 texture_normal = ExtResource( 13 )
 texture_pressed = ExtResource( 12 )
 
-[node name="Small" type="Tabs" parent="Controls/GUI/BuyPanel/Tabs"]
+[node name="Small" type="Tabs" parent="Controls/Core/BuyPanel/Tabs"]
 visible = false
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -206,7 +193,7 @@ margin_top = 32.0
 margin_right = -4.0
 margin_bottom = -4.0
 
-[node name="SmallCtr" type="HBoxContainer" parent="Controls/GUI/BuyPanel/Tabs/Small"]
+[node name="SmallCtr" type="HBoxContainer" parent="Controls/Core/BuyPanel/Tabs/Small"]
 anchor_right = 1.0
 anchor_bottom = 1.41667
 margin_bottom = -10.0
@@ -214,27 +201,27 @@ __meta__ = {
 "_edit_use_anchors_": true
 }
 
-[node name="PoliceBtn" type="TextureButton" parent="Controls/GUI/BuyPanel/Tabs/Small/SmallCtr"]
+[node name="PoliceBtn" type="TextureButton" parent="Controls/Core/BuyPanel/Tabs/Small/SmallCtr"]
 margin_right = 34.0
 margin_bottom = 34.0
 texture_normal = ExtResource( 4 )
 texture_pressed = ExtResource( 16 )
 
-[node name="FireBtn" type="TextureButton" parent="Controls/GUI/BuyPanel/Tabs/Small/SmallCtr"]
+[node name="FireBtn" type="TextureButton" parent="Controls/Core/BuyPanel/Tabs/Small/SmallCtr"]
 margin_left = 38.0
 margin_right = 72.0
 margin_bottom = 34.0
 texture_normal = ExtResource( 6 )
 texture_pressed = ExtResource( 11 )
 
-[node name="ParkBtn" type="TextureButton" parent="Controls/GUI/BuyPanel/Tabs/Small/SmallCtr"]
+[node name="ParkBtn" type="TextureButton" parent="Controls/Core/BuyPanel/Tabs/Small/SmallCtr"]
 margin_left = 76.0
 margin_right = 110.0
 margin_bottom = 34.0
 texture_normal = ExtResource( 24 )
 texture_pressed = ExtResource( 22 )
 
-[node name="Large" type="Tabs" parent="Controls/GUI/BuyPanel/Tabs"]
+[node name="Large" type="Tabs" parent="Controls/Core/BuyPanel/Tabs"]
 visible = false
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -243,40 +230,40 @@ margin_top = 32.0
 margin_right = -4.0
 margin_bottom = -4.0
 
-[node name="LargeCtr" type="HBoxContainer" parent="Controls/GUI/BuyPanel/Tabs/Large"]
+[node name="LargeCtr" type="HBoxContainer" parent="Controls/Core/BuyPanel/Tabs/Large"]
 anchor_right = 1.0
 anchor_bottom = 1.0
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="TextureButton" type="TextureButton" parent="Controls/GUI/BuyPanel/Tabs/Large/LargeCtr"]
+[node name="TextureButton" type="TextureButton" parent="Controls/Core/BuyPanel/Tabs/Large/LargeCtr"]
 margin_right = 42.0
 margin_bottom = 69.0
 texture_normal = ExtResource( 28 )
 
-[node name="TextureButton2" type="TextureButton" parent="Controls/GUI/BuyPanel/Tabs/Large/LargeCtr"]
+[node name="TextureButton2" type="TextureButton" parent="Controls/Core/BuyPanel/Tabs/Large/LargeCtr"]
 margin_left = 46.0
 margin_right = 88.0
 margin_bottom = 69.0
 texture_normal = ExtResource( 26 )
 texture_pressed = ExtResource( 27 )
 
-[node name="NuclearBtn" type="TextureButton" parent="Controls/GUI/BuyPanel/Tabs/Large/LargeCtr"]
+[node name="NuclearBtn" type="TextureButton" parent="Controls/Core/BuyPanel/Tabs/Large/LargeCtr"]
 margin_left = 92.0
 margin_right = 134.0
 margin_bottom = 69.0
 texture_normal = ExtResource( 23 )
 texture_pressed = ExtResource( 25 )
 
-[node name="CoalBtn" type="TextureButton" parent="Controls/GUI/BuyPanel/Tabs/Large/LargeCtr"]
+[node name="CoalBtn" type="TextureButton" parent="Controls/Core/BuyPanel/Tabs/Large/LargeCtr"]
 margin_left = 138.0
 margin_right = 180.0
 margin_bottom = 69.0
 texture_normal = ExtResource( 19 )
 texture_pressed = ExtResource( 18 )
 
-[node name="Tools" type="Tabs" parent="Controls/GUI/BuyPanel/Tabs"]
+[node name="Tools" type="Tabs" parent="Controls/Core/BuyPanel/Tabs"]
 visible = false
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -285,20 +272,20 @@ margin_top = 32.0
 margin_right = -4.0
 margin_bottom = -4.0
 
-[node name="ToolsCtr" type="HBoxContainer" parent="Controls/GUI/BuyPanel/Tabs/Tools"]
+[node name="ToolsCtr" type="HBoxContainer" parent="Controls/Core/BuyPanel/Tabs/Tools"]
 anchor_right = 1.33228
 anchor_bottom = 2.83333
 __meta__ = {
 "_edit_use_anchors_": true
 }
 
-[node name="InfoBtn" type="TextureButton" parent="Controls/GUI/BuyPanel/Tabs/Tools/ToolsCtr"]
+[node name="InfoBtn" type="TextureButton" parent="Controls/Core/BuyPanel/Tabs/Tools/ToolsCtr"]
 margin_right = 34.0
 margin_bottom = 68.0
 texture_normal = ExtResource( 15 )
 texture_pressed = ExtResource( 14 )
 
-[node name="BulldozeBtn" type="TextureButton" parent="Controls/GUI/BuyPanel/Tabs/Tools/ToolsCtr"]
+[node name="BulldozeBtn" type="TextureButton" parent="Controls/Core/BuyPanel/Tabs/Tools/ToolsCtr"]
 margin_left = 38.0
 margin_right = 72.0
 margin_bottom = 68.0
@@ -309,5 +296,5 @@ __meta__ = {
 }
 
 [connection signal="timeout" from="Quarters" to="." method="_on_Quarters_timeout"]
-[connection signal="pressed" from="Controls/GUI/BuyPanel/Tabs/Zones/ZonesCtr/ResBtn" to="Map" method="_on_ResBtn_pressed"]
-[connection signal="pressed" from="Controls/GUI/BuyPanel/Tabs/Large/LargeCtr/CoalBtn" to="Map" method="_on_CoalBtn_pressed"]
+[connection signal="pressed" from="Controls/Core/BuyPanel/Tabs/Zones/ZonesCtr/ResBtn" to="Map" method="_on_ResBtn_pressed"]
+[connection signal="pressed" from="Controls/Core/BuyPanel/Tabs/Large/LargeCtr/CoalBtn" to="Map" method="_on_CoalBtn_pressed"]

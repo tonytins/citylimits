@@ -1,0 +1,30 @@
+[gd_scene load_steps=2 format=2]
+
+[ext_resource path="res://scripts/debug_console.gd" type="Script" id=1]
+
+[node name="DebugConsole" type="Control"]
+anchor_right = 1.0
+margin_bottom = 113.0
+script = ExtResource( 1 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Output" type="TextEdit" parent="."]
+anchor_right = 1.0
+anchor_bottom = 0.752212
+readonly = true
+wrap_enabled = true
+__meta__ = {
+"_edit_use_anchors_": true
+}
+
+[node name="Input" type="LineEdit" parent="."]
+anchor_top = 0.787611
+anchor_right = 1.0
+anchor_bottom = 1.0
+caret_blink = true
+caret_blink_speed = 0.5
+__meta__ = {
+"_edit_use_anchors_": true
+}

@@ -1,0 +1,46 @@
+[gd_scene format=2]
+
+[node name="Credits" type="WindowDialog"]
+visible = true
+anchor_left = 0.394043
+anchor_top = 0.293333
+anchor_right = 0.605957
+anchor_bottom = 0.706667
+window_title = "Credits"
+__meta__ = {
+"_edit_use_anchors_": true
+}
+
+[node name="RichText" type="RichTextLabel" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+bbcode_enabled = true
+bbcode_text = "[center]
+Developed by
+Tony Bark
+
+Assets by
+Maxis
+
+Powered by
+Godot Engine
+
+Inspired by
+SimCity
+[/center]"
+text = "
+Developed by
+Tony Bark
+
+Assets by
+Maxis
+
+Powered by
+Godot Engine
+
+Inspired by
+SimCity
+"
+__meta__ = {
+"_edit_use_anchors_": false
+}

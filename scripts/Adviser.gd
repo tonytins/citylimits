@@ -1,7 +1,8 @@
 extends AcceptDialog
 
 export(String, FILE, "*.json") var dialogue_file
-export var advisor_name: String
+# "character" would be "name" but it's already used by the base class
+export var character: String
 export var rank: String
 export(Texture) var avatar
 export var dialog = 0
@@ -18,7 +19,7 @@ onready var description_label = $Container/DescriptionLbl
 func start_dialogue():
 	index_dialogue()
 	description_label.text = dialogue_keys[dialog].text
-	self.window_title = dialogue_keys[dialog].name
+	window_title = dialogue_keys[dialog].name
 	
 
 func index_dialogue():
@@ -36,8 +37,7 @@ func load_dialogue(file_path):
 
 func _ready():
 	load_dialogue(dialogue_file)
-	self.show()
 	start_dialogue()
 	avatar_texture.texture = avatar
-	name_label.text = advisor_name
+	name_label.text = character
 	rank_label.text = rank

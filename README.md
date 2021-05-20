@@ -2,7 +2,7 @@
 
 ![Screenshot](screenshot.png)
 
-A city building game based on Godot using the Micropolis assets (initially).
+City Limits is a reimagining of SimCity Classic that contains features and concepts from later iterations. Such as advisors, free zones, news tickers, neighboring cities, and so on.
 
 ## Getting Started
 
@@ -16,17 +16,6 @@ A city building game based on Godot using the Micropolis assets (initially).
 - **Maxis** - _Assets_ - [SimHacker](https://github.com/SimHacker/)
 
 See also the list of [contributors](https://github.com/tonytins/citylimits/contributors) who participated in this project.
-
-## To-do
-
-With the exception of the world generator, this isn't any real order.
-
-- [x] Map generator
-- [x] Currency
-- [x] Mayor mode
-- [ ] Save & load maps
-
-Note: this is subject to change in the future.
 
 ## License
 
