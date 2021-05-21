@@ -8,14 +8,31 @@ enum {
 }
 
 const valid_commands = [
-	["money", [ARG_INT] ],
-	["whereyoufrom", [ARG_STRING] ]
+	["money", [ARG_STRING] ],
+	["whereyoufrom", [ARG_STRING] ],
+	["whatyearisit", [ARG_STRING] ]
 ]
 
+func _budget_print(value: int):
+	return "Budget increased to " + str(value)
+
 func money(value):
-	SimData.budget += int(value)
-	return "Budget changed to " + str(value)
+	var motherlode = 50000
+	var rosebud = 1000
+	if value == "motherlode":
+		SimData.budget += motherlode
+		return _budget_print(motherlode)
+	
+	if value == "rosebud":
+		SimData.budget += rosebud
+		return _budget_print(rosebud)
+		
+	return ""
 	
 func whereyoufrom(value):
 	SimData.city_name = str(value)
 	return "Changed city name to: " + str(value)
+
+func whatyearisit(value):
+	SimData.year = int(value)
+	return "Change year to: " + str(value)

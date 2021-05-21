@@ -7,7 +7,7 @@ var prev_quarter: int
 var quarter: int = 1
 var population: int = 0
 var news_ticker: String
-var budget: int = 10000000
+var budget: int = 20000
 var prev_budget: int
 
 var power_grid: int

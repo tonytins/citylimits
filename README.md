@@ -2,13 +2,13 @@
 
 ![Screenshot](screenshot.png)
 
-City Limits is a reimagining of SimCity Classic that contains features and concepts from later iterations. Such as advisors, free zones, news tickers, neighboring cities, and so on.
+City Limits is a re-imagining of SimCity Classic that contains features and concepts from later games. Such as advisors, free zones, news tickers, neighboring cities, and so on. Though it shares a lot of core gameplay and style, it's not compatible with Micropolis.
 
 ## Getting Started
 
 ### Prerequisites
 
-- Godot Engine 3.1
+- Godot Engine 3.x
 
 ## Authors
 
