@@ -1,7 +1,6 @@
 [gd_scene format=2]
 
 [node name="Credits" type="WindowDialog"]
-visible = true
 anchor_left = 0.394043
 anchor_top = 0.293333
 anchor_right = 0.605957

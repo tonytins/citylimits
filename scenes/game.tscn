@@ -43,9 +43,9 @@ autostart = true
 [node name="Controls" type="CanvasLayer" parent="."]
 
 [node name="Core" type="Control" parent="Controls"]
-anchor_left = -0.000731155
+anchor_left = -0.00137095
 anchor_top = -0.000954026
-anchor_right = 0.999269
+anchor_right = 0.998629
 anchor_bottom = 0.999044
 margin_left = -0.172424
 margin_top = 2.77234
@@ -68,9 +68,10 @@ avatar = ExtResource( 30 )
 
 [node name="StatusPanel" type="Panel" parent="Controls/Core"]
 anchor_left = 0.52832
-anchor_top = 0.830002
+anchor_top = 0.836668
 anchor_right = 0.640625
-anchor_bottom = 1.0
+anchor_bottom = 1.01
+margin_bottom = -2.0
 __meta__ = {
 "_edit_use_anchors_": true
 }
@@ -78,15 +79,17 @@ __meta__ = {
 [node name="StatusCtr" type="CenterContainer" parent="Controls/Core/StatusPanel"]
 anchor_right = 1.0
 anchor_bottom = 1.0
+margin_top = 1.65512
+margin_bottom = 1.65512
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
 [node name="InfoBox" type="VBoxContainer" parent="Controls/Core/StatusPanel/StatusCtr"]
 margin_left = 24.0
-margin_top = 26.0
+margin_top = 25.0
 margin_right = 90.0
-margin_bottom = 76.0
+margin_bottom = 75.0
 alignment = 1
 script = ExtResource( 3 )
 __meta__ = {
@@ -129,9 +132,9 @@ text = "0"
 
 [node name="BuyPanel" type="Panel" parent="Controls/Core"]
 anchor_left = 1.0
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
+anchor_top = 1.00667
+anchor_right = 1.00488
+anchor_bottom = 1.00667
 margin_left = -370.0
 margin_top = -101.999
 margin_right = -0.000244141
@@ -145,6 +148,7 @@ anchor_left = 0.00144509
 anchor_top = -0.0294118
 anchor_right = 1.0
 anchor_bottom = 1.0
+margin_top = -2.38419e-07
 __meta__ = {
 "_edit_use_anchors_": true
 }
