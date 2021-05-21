@@ -8,13 +8,14 @@ enum {
 }
 
 const valid_commands = [
-	["motherlode", [null],
-	["whereyoufrom", [ARG_STRING]]
-	]
+	["money", [ARG_INT] ],
+	["whereyoufrom", [ARG_STRING] ]
 ]
 
-func motherlode():
-	SimData.budget += 50000
+func money(value):
+	SimData.budget += int(value)
+	return "Budget changed to " + str(value)
 	
-func whereyoufrom(city_name):
-	SimData.city_name = city_name
+func whereyoufrom(value):
+	SimData.city_name = str(value)
+	return "Changed city name to: " + str(value)

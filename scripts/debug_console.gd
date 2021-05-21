@@ -1,4 +1,4 @@
-extends Control
+extends WindowDialog
 
 onready var input_box = $Input
 onready var output_box = $Output
@@ -28,8 +28,8 @@ func process_command(text: String):
 				
 			for i in range(words.size()):
 				if not check_type(words[i], cmd[1][i]):
-					output_text(str('Failure executing command "', cmd_word, '", parameter ', (i + 1),
-								' ("', words[i], '") is of the wrong type'))
+					output_text(str('Failure executing command "', cmd_word,
+					 '", parameter ', (i + 1), ' ("', words[i], '") is of the wrong type'))
 					return
 			
 				output_text(command_handler.callv(cmd_word, words))
@@ -52,12 +52,13 @@ func check_type(string: String, type):
 	
 	return false
 	
-	
-	
-
 func output_text(text):
 	output_box.text = str(output_box.text + "\n", text)
 
 func _on_Input_text_entered(new_text):
 	input_box.clear()
 	process_command(new_text)
+	
+func _on_SubmitBtn_pressed():
+	input_box.clear()
+	process_command(input_box.text)

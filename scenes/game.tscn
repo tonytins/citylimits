@@ -43,9 +43,9 @@ autostart = true
 [node name="Controls" type="CanvasLayer" parent="."]
 
 [node name="Core" type="Control" parent="Controls"]
-anchor_left = -0.00137095
+anchor_left = -0.00268195
 anchor_top = -0.000954026
-anchor_right = 0.998629
+anchor_right = 0.997318
 anchor_bottom = 0.999044
 margin_left = -0.172424
 margin_top = 2.77234
@@ -57,11 +57,14 @@ __meta__ = {
 }
 
 [node name="Console" parent="Controls/Core" instance=ExtResource( 21 )]
-visible = false
-anchor_left = 0.00585937
-anchor_right = 0.994141
-anchor_bottom = 0.185
+anchor_left = 0.597656
+anchor_top = 0.0500001
+anchor_right = 0.988281
+anchor_bottom = 0.300001
+margin_right = 0.0
 margin_bottom = 0.0
+rect_min_size = Vector2( 400, 150 )
+resizable = true
 
 [node name="AdvsiorNotice" parent="Controls/Core" instance=ExtResource( 2 )]
 avatar = ExtResource( 30 )
