@@ -1,0 +1,49 @@
+[gd_scene load_steps=7 format=2]
+
+[ext_resource path="res://scenes/advisors/CityPlanner.tscn" type="PackedScene" id=5]
+[ext_resource path="res://scenes/DebugConsole.tscn" type="PackedScene" id=7]
+[ext_resource path="res://scenes/AdvisorMeet.tscn" type="PackedScene" id=8]
+[ext_resource path="res://scenes/advisors/FinanceAdvisor.tscn" type="PackedScene" id=9]
+[ext_resource path="res://scripts/windows.gd" type="Script" id=10]
+[ext_resource path="res://scenes/TaxWindow.tscn" type="PackedScene" id=11]
+
+[node name="Windows" type="Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource( 10 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Console" parent="." instance=ExtResource( 7 )]
+anchor_left = 0.594727
+anchor_top = 0.05
+anchor_right = 0.985352
+anchor_bottom = 0.3
+margin_right = 0.0
+margin_bottom = 0.0
+rect_min_size = Vector2( 400, 150 )
+resizable = true
+
+[node name="TaxWindow" parent="." instance=ExtResource( 11 )]
+anchor_left = 0.297863
+anchor_top = 0.409167
+anchor_right = 0.702137
+anchor_bottom = 0.590833
+margin_left = 0.0
+margin_right = 0.0
+margin_bottom = 3.05176e-05
+
+[node name="AdvisorMeet" parent="." instance=ExtResource( 8 )]
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+margin_left = -234.609
+margin_top = -138.5
+margin_right = 234.609
+margin_bottom = 138.5
+
+[node name="CityPlanner" parent="." instance=ExtResource( 5 )]
+
+[node name="FinancialAdvisor" parent="." instance=ExtResource( 9 )]

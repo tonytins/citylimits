@@ -1,21 +1,29 @@
 extends Node
 
-# Hard-coded for now
-var city_name: String = "Furtropolis"
+var city_name: String = "Furtropolis" # Hard-coded, for now
 var year: int = 1980
 var prev_quarter: int
 var quarter: int = 1
 var population: int = 0
 var news_ticker: String
 var budget: int = 20000
-var prev_budget: int
+var expenses: int
 
-var power_grid: int
+const currency: String = "§"
+
+var power_grid: int # Number of power stations in the area. Helps provide redundancies.
+var power_capacity: int
+var current_power_cap: int
+var prev_power_cap: int
 var has_power: bool
 
-var res_tax: int
-var comm_tax: int
-var indust_tax: int
+var res_tax: int = 1
+var comm_tax: int = 1
+var indust_tax: int = 1
+
+var res_income: int
+var comm_income: int
+var ind_income: int
 
 var fire_tax: int
 var police_tax: int

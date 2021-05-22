@@ -1,7 +1,7 @@
-[gd_scene load_steps=31 format=2]
+[gd_scene load_steps=28 format=2]
 
 [ext_resource path="res://scenes/Map.tscn" type="PackedScene" id=1]
-[ext_resource path="res://scenes/advisors/Advise.tscn" type="PackedScene" id=2]
+[ext_resource path="res://scenes/Windows.tscn" type="PackedScene" id=2]
 [ext_resource path="res://scripts/city_status.gd" type="Script" id=3]
 [ext_resource path="res://sprites/ui/icpolhi.png" type="Texture" id=4]
 [ext_resource path="res://sprites/ui/iccom.png" type="Texture" id=5]
@@ -20,7 +20,6 @@
 [ext_resource path="res://sprites/ui/iccoalhi.png" type="Texture" id=18]
 [ext_resource path="res://sprites/ui/iccoal.png" type="Texture" id=19]
 [ext_resource path="res://scripts/game.gd" type="Script" id=20]
-[ext_resource path="res://scenes/DebugConsole.tscn" type="PackedScene" id=21]
 [ext_resource path="res://sprites/ui/icparkhi.png" type="Texture" id=22]
 [ext_resource path="res://sprites/ui/icnuc.png" type="Texture" id=23]
 [ext_resource path="res://sprites/ui/icpark.png" type="Texture" id=24]
@@ -28,8 +27,6 @@
 [ext_resource path="res://sprites/ui/icseap.png" type="Texture" id=26]
 [ext_resource path="res://sprites/ui/icseaphi.png" type="Texture" id=27]
 [ext_resource path="res://sprites/ui/icstad.png" type="Texture" id=28]
-[ext_resource path="res://scripts/core_gui.gd" type="Script" id=29]
-[ext_resource path="res://sprites/avatars/zc.png" type="Texture" id=30]
 
 [node name="Game" type="Node2D"]
 script = ExtResource( 20 )
@@ -51,147 +48,34 @@ margin_left = -0.172424
 margin_top = 2.77234
 margin_right = -0.172424
 margin_bottom = 2.77234
-script = ExtResource( 29 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="Console" parent="Controls/Core" instance=ExtResource( 21 )]
-anchor_left = 0.597656
-anchor_top = 0.0500001
-anchor_right = 0.988281
-anchor_bottom = 0.300001
-margin_right = 0.0
-margin_bottom = 0.0
-rect_min_size = Vector2( 400, 150 )
-resizable = true
+[node name="Windows" parent="Controls/Core" instance=ExtResource( 2 )]
+anchor_bottom = 0.835002
+margin_bottom = -3.05176e-05
 
-[node name="AdvsiorNotice" parent="Controls/Core" instance=ExtResource( 2 )]
-avatar = ExtResource( 30 )
-
-[node name="StatusPanel" type="Panel" parent="Controls/Core"]
-anchor_left = 0.52832
-anchor_top = 0.836668
-anchor_right = 0.640625
-anchor_bottom = 1.01
+[node name="ControlPanel" type="Panel" parent="Controls/Core"]
+anchor_left = 0.00195312
+anchor_top = 0.828335
+anchor_right = 1.00684
+anchor_bottom = 1.00834
 margin_bottom = -2.0
 __meta__ = {
 "_edit_use_anchors_": true
 }
 
-[node name="StatusCtr" type="CenterContainer" parent="Controls/Core/StatusPanel"]
-anchor_right = 1.0
-anchor_bottom = 1.0
-margin_top = 1.65512
-margin_bottom = 1.65512
-__meta__ = {
-"_edit_use_anchors_": false
-}
-
-[node name="InfoBox" type="VBoxContainer" parent="Controls/Core/StatusPanel/StatusCtr"]
-margin_left = 24.0
-margin_top = 25.0
-margin_right = 90.0
-margin_bottom = 75.0
-alignment = 1
-script = ExtResource( 3 )
-__meta__ = {
-"_edit_use_anchors_": false
-}
-
-[node name="CityNameLbl" type="Label" parent="Controls/Core/StatusPanel/StatusCtr/InfoBox"]
-margin_right = 66.0
-margin_bottom = 14.0
-text = "City Name"
-align = 1
-
-[node name="YearLbl" type="Label" parent="Controls/Core/StatusPanel/StatusCtr/InfoBox"]
-margin_top = 18.0
-margin_right = 66.0
-margin_bottom = 32.0
-text = "Y1980"
-align = 1
-
-[node name="Money" type="HBoxContainer" parent="Controls/Core/StatusPanel/StatusCtr/InfoBox"]
-margin_top = 36.0
-margin_right = 66.0
-margin_bottom = 50.0
-alignment = 1
-__meta__ = {
-"_edit_use_anchors_": false
-}
-
-[node name="CurrencyLbl" type="Label" parent="Controls/Core/StatusPanel/StatusCtr/InfoBox/Money"]
-margin_left = 23.0
-margin_right = 30.0
-margin_bottom = 14.0
-text = "§"
-
-[node name="MoneyLbl" type="Label" parent="Controls/Core/StatusPanel/StatusCtr/InfoBox/Money"]
-margin_left = 34.0
-margin_right = 42.0
-margin_bottom = 14.0
-text = "0"
-
-[node name="BuyPanel" type="Panel" parent="Controls/Core"]
-anchor_left = 1.0
-anchor_top = 1.00667
-anchor_right = 1.00488
-anchor_bottom = 1.00667
-margin_left = -370.0
-margin_top = -101.999
-margin_right = -0.000244141
-margin_bottom = 0.00109863
+[node name="Tabs" type="TabContainer" parent="Controls/Core/ControlPanel"]
+anchor_left = 0.00485909
+anchor_top = 0.0471698
+anchor_right = 0.995141
+anchor_bottom = 0.971698
 __meta__ = {
 "_edit_use_anchors_": true
 }
 
-[node name="Tabs" type="TabContainer" parent="Controls/Core/BuyPanel"]
-anchor_left = 0.00144509
-anchor_top = -0.0294118
-anchor_right = 1.0
-anchor_bottom = 1.0
-margin_top = -2.38419e-07
-__meta__ = {
-"_edit_use_anchors_": true
-}
-
-[node name="Zones" type="Tabs" parent="Controls/Core/BuyPanel/Tabs"]
-anchor_right = 1.0
-anchor_bottom = 1.0
-margin_left = 4.0
-margin_top = 32.0
-margin_right = -4.0
-margin_bottom = -4.0
-
-[node name="ZonesCtr" type="HBoxContainer" parent="Controls/Core/BuyPanel/Tabs/Zones"]
-anchor_right = 1.0
-anchor_bottom = 1.0
-__meta__ = {
-"_edit_use_anchors_": false
-}
-
-[node name="ResBtn" type="TextureButton" parent="Controls/Core/BuyPanel/Tabs/Zones/ZonesCtr"]
-margin_right = 34.0
-margin_bottom = 69.0
-texture_normal = ExtResource( 9 )
-texture_pressed = ExtResource( 10 )
-
-[node name="ComBtn" type="TextureButton" parent="Controls/Core/BuyPanel/Tabs/Zones/ZonesCtr"]
-margin_left = 38.0
-margin_right = 72.0
-margin_bottom = 69.0
-texture_normal = ExtResource( 5 )
-texture_pressed = ExtResource( 8 )
-
-[node name="IndBtn" type="TextureButton" parent="Controls/Core/BuyPanel/Tabs/Zones/ZonesCtr"]
-margin_left = 76.0
-margin_right = 110.0
-margin_bottom = 69.0
-texture_normal = ExtResource( 13 )
-texture_pressed = ExtResource( 12 )
-
-[node name="Small" type="Tabs" parent="Controls/Core/BuyPanel/Tabs"]
+[node name="Zones" type="Tabs" parent="Controls/Core/ControlPanel/Tabs"]
 visible = false
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -200,35 +84,85 @@ margin_top = 32.0
 margin_right = -4.0
 margin_bottom = -4.0
 
-[node name="SmallCtr" type="HBoxContainer" parent="Controls/Core/BuyPanel/Tabs/Small"]
+[node name="CenterZones" type="CenterContainer" parent="Controls/Core/ControlPanel/Tabs/Zones"]
 anchor_right = 1.0
-anchor_bottom = 1.41667
-margin_bottom = -10.0
+anchor_bottom = 1.0
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="ZonesCtr" type="HBoxContainer" parent="Controls/Core/ControlPanel/Tabs/Zones/CenterZones"]
+margin_left = 450.0
+margin_top = 5.0
+margin_right = 560.0
+margin_bottom = 55.0
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="ResBtn" type="TextureButton" parent="Controls/Core/ControlPanel/Tabs/Zones/CenterZones/ZonesCtr"]
+margin_right = 34.0
+margin_bottom = 50.0
+texture_normal = ExtResource( 9 )
+texture_pressed = ExtResource( 10 )
+
+[node name="ComBtn" type="TextureButton" parent="Controls/Core/ControlPanel/Tabs/Zones/CenterZones/ZonesCtr"]
+margin_left = 38.0
+margin_right = 72.0
+margin_bottom = 50.0
+texture_normal = ExtResource( 5 )
+texture_pressed = ExtResource( 8 )
+
+[node name="IndBtn" type="TextureButton" parent="Controls/Core/ControlPanel/Tabs/Zones/CenterZones/ZonesCtr"]
+margin_left = 76.0
+margin_right = 110.0
+margin_bottom = 50.0
+texture_normal = ExtResource( 13 )
+texture_pressed = ExtResource( 12 )
+
+[node name="Small" type="Tabs" parent="Controls/Core/ControlPanel/Tabs"]
+visible = false
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_left = 4.0
+margin_top = 32.0
+margin_right = -4.0
+margin_bottom = -4.0
+
+[node name="CenterSmall" type="CenterContainer" parent="Controls/Core/ControlPanel/Tabs/Small"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="SmallCtr" type="HBoxContainer" parent="Controls/Core/ControlPanel/Tabs/Small/CenterSmall"]
+margin_left = 450.0
+margin_top = 13.0
+margin_right = 560.0
+margin_bottom = 47.0
 __meta__ = {
 "_edit_use_anchors_": true
 }
 
-[node name="PoliceBtn" type="TextureButton" parent="Controls/Core/BuyPanel/Tabs/Small/SmallCtr"]
+[node name="PoliceBtn" type="TextureButton" parent="Controls/Core/ControlPanel/Tabs/Small/CenterSmall/SmallCtr"]
 margin_right = 34.0
 margin_bottom = 34.0
 texture_normal = ExtResource( 4 )
 texture_pressed = ExtResource( 16 )
 
-[node name="FireBtn" type="TextureButton" parent="Controls/Core/BuyPanel/Tabs/Small/SmallCtr"]
+[node name="FireBtn" type="TextureButton" parent="Controls/Core/ControlPanel/Tabs/Small/CenterSmall/SmallCtr"]
 margin_left = 38.0
 margin_right = 72.0
 margin_bottom = 34.0
 texture_normal = ExtResource( 6 )
 texture_pressed = ExtResource( 11 )
 
-[node name="ParkBtn" type="TextureButton" parent="Controls/Core/BuyPanel/Tabs/Small/SmallCtr"]
+[node name="ParkBtn" type="TextureButton" parent="Controls/Core/ControlPanel/Tabs/Small/CenterSmall/SmallCtr"]
 margin_left = 76.0
 margin_right = 110.0
 margin_bottom = 34.0
 texture_normal = ExtResource( 24 )
 texture_pressed = ExtResource( 22 )
 
-[node name="Large" type="Tabs" parent="Controls/Core/BuyPanel/Tabs"]
+[node name="Large" type="Tabs" parent="Controls/Core/ControlPanel/Tabs"]
 visible = false
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -237,41 +171,49 @@ margin_top = 32.0
 margin_right = -4.0
 margin_bottom = -4.0
 
-[node name="LargeCtr" type="HBoxContainer" parent="Controls/Core/BuyPanel/Tabs/Large"]
+[node name="CenterLarge" type="CenterContainer" parent="Controls/Core/ControlPanel/Tabs/Large"]
 anchor_right = 1.0
 anchor_bottom = 1.0
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="TextureButton" type="TextureButton" parent="Controls/Core/BuyPanel/Tabs/Large/LargeCtr"]
+[node name="LargeCtr" type="HBoxContainer" parent="Controls/Core/ControlPanel/Tabs/Large/CenterLarge"]
+margin_left = 415.0
+margin_top = 9.0
+margin_right = 595.0
+margin_bottom = 51.0
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="TextureButton" type="TextureButton" parent="Controls/Core/ControlPanel/Tabs/Large/CenterLarge/LargeCtr"]
 margin_right = 42.0
-margin_bottom = 69.0
+margin_bottom = 42.0
 texture_normal = ExtResource( 28 )
 
-[node name="TextureButton2" type="TextureButton" parent="Controls/Core/BuyPanel/Tabs/Large/LargeCtr"]
+[node name="TextureButton2" type="TextureButton" parent="Controls/Core/ControlPanel/Tabs/Large/CenterLarge/LargeCtr"]
 margin_left = 46.0
 margin_right = 88.0
-margin_bottom = 69.0
+margin_bottom = 42.0
 texture_normal = ExtResource( 26 )
 texture_pressed = ExtResource( 27 )
 
-[node name="NuclearBtn" type="TextureButton" parent="Controls/Core/BuyPanel/Tabs/Large/LargeCtr"]
+[node name="NuclearBtn" type="TextureButton" parent="Controls/Core/ControlPanel/Tabs/Large/CenterLarge/LargeCtr"]
 margin_left = 92.0
 margin_right = 134.0
-margin_bottom = 69.0
+margin_bottom = 42.0
 texture_normal = ExtResource( 23 )
 texture_pressed = ExtResource( 25 )
 
-[node name="CoalBtn" type="TextureButton" parent="Controls/Core/BuyPanel/Tabs/Large/LargeCtr"]
+[node name="CoalBtn" type="TextureButton" parent="Controls/Core/ControlPanel/Tabs/Large/CenterLarge/LargeCtr"]
 margin_left = 138.0
 margin_right = 180.0
-margin_bottom = 69.0
+margin_bottom = 42.0
 texture_normal = ExtResource( 19 )
 texture_pressed = ExtResource( 18 )
 
-[node name="Tools" type="Tabs" parent="Controls/Core/BuyPanel/Tabs"]
-visible = false
+[node name="Tools" type="Tabs" parent="Controls/Core/ControlPanel/Tabs"]
 anchor_right = 1.0
 anchor_bottom = 1.0
 margin_left = 4.0
@@ -279,29 +221,97 @@ margin_top = 32.0
 margin_right = -4.0
 margin_bottom = -4.0
 
-[node name="ToolsCtr" type="HBoxContainer" parent="Controls/Core/BuyPanel/Tabs/Tools"]
-anchor_right = 1.33228
-anchor_bottom = 2.83333
+[node name="CenterTools" type="CenterContainer" parent="Controls/Core/ControlPanel/Tabs/Tools"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="ToolsCtr" type="HBoxContainer" parent="Controls/Core/ControlPanel/Tabs/Tools/CenterTools"]
+margin_left = 469.0
+margin_top = 13.0
+margin_right = 541.0
+margin_bottom = 47.0
 __meta__ = {
 "_edit_use_anchors_": true
 }
 
-[node name="InfoBtn" type="TextureButton" parent="Controls/Core/BuyPanel/Tabs/Tools/ToolsCtr"]
+[node name="InfoBtn" type="TextureButton" parent="Controls/Core/ControlPanel/Tabs/Tools/CenterTools/ToolsCtr"]
 margin_right = 34.0
-margin_bottom = 68.0
+margin_bottom = 34.0
 texture_normal = ExtResource( 15 )
 texture_pressed = ExtResource( 14 )
 
-[node name="BulldozeBtn" type="TextureButton" parent="Controls/Core/BuyPanel/Tabs/Tools/ToolsCtr"]
+[node name="BulldozeBtn" type="TextureButton" parent="Controls/Core/ControlPanel/Tabs/Tools/CenterTools/ToolsCtr"]
 margin_left = 38.0
 margin_right = 72.0
-margin_bottom = 68.0
+margin_bottom = 34.0
 texture_normal = ExtResource( 17 )
 texture_pressed = ExtResource( 7 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
+[node name="StatCtr" type="HBoxContainer" parent="Controls/Core/ControlPanel"]
+anchor_left = 0.0136054
+anchor_top = 0.0571429
+anchor_right = 0.312925
+anchor_bottom = 0.214286
+script = ExtResource( 3 )
+__meta__ = {
+"_edit_use_anchors_": true
+}
+
+[node name="CityNameLbl" type="Label" parent="Controls/Core/ControlPanel/StatCtr"]
+margin_top = 1.0
+margin_right = 66.0
+margin_bottom = 15.0
+text = "City Name"
+align = 1
+
+[node name="YearLbl" type="Label" parent="Controls/Core/ControlPanel/StatCtr"]
+margin_left = 70.0
+margin_top = 1.0
+margin_right = 109.0
+margin_bottom = 15.0
+text = "Y1980"
+align = 1
+
+[node name="BudgetLbl" type="Label" parent="Controls/Core/ControlPanel/StatCtr"]
+margin_left = 113.0
+margin_top = 1.0
+margin_right = 128.0
+margin_bottom = 15.0
+text = "§0"
+align = 1
+
+[node name="ButtonCtr" type="HBoxContainer" parent="Controls/Core/ControlPanel"]
+anchor_left = 0.733722
+anchor_top = 0.0522911
+anchor_right = 0.987366
+anchor_bottom = 0.195148
+margin_top = -0.906677
+margin_bottom = 3.95047
+alignment = 2
+__meta__ = {
+"_edit_use_anchors_": true
+}
+
+[node name="TaxBtn" type="Button" parent="Controls/Core/ControlPanel/ButtonCtr"]
+margin_left = 157.0
+margin_right = 190.0
+margin_bottom = 20.0
+text = "RCI"
+
+[node name="AdvsiorBtn" type="Button" parent="Controls/Core/ControlPanel/ButtonCtr"]
+margin_left = 194.0
+margin_right = 261.0
+margin_bottom = 20.0
+text = "Advisors"
+
 [connection signal="timeout" from="Quarters" to="." method="_on_Quarters_timeout"]
-[connection signal="pressed" from="Controls/Core/BuyPanel/Tabs/Zones/ZonesCtr/ResBtn" to="Map" method="_on_ResBtn_pressed"]
-[connection signal="pressed" from="Controls/Core/BuyPanel/Tabs/Large/LargeCtr/CoalBtn" to="Map" method="_on_CoalBtn_pressed"]
+[connection signal="pressed" from="Controls/Core/ControlPanel/Tabs/Zones/CenterZones/ZonesCtr/ResBtn" to="Map" method="_on_ResBtn_pressed"]
+[connection signal="pressed" from="Controls/Core/ControlPanel/Tabs/Large/CenterLarge/LargeCtr/CoalBtn" to="Map" method="_on_CoalBtn_pressed"]
+[connection signal="pressed" from="Controls/Core/ControlPanel/ButtonCtr/TaxBtn" to="Controls/Core/Windows" method="_on_TaxBtn_pressed"]
+[connection signal="pressed" from="Controls/Core/ControlPanel/ButtonCtr/AdvsiorBtn" to="Controls/Core/Windows" method="_on_AdvsiorBtn_pressed"]

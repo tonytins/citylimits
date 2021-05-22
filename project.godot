@@ -21,7 +21,6 @@ config/windows_native_icon="res://icon.ico"
 
 [autoload]
 
-CityData="*res://scripts/autoload/sim_data.gd"
 SimData="*res://scripts/autoload/sim_data.gd"
 SimEvents="*res://scripts/autoload/sim_events.gd"
 

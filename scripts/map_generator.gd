@@ -37,13 +37,13 @@ func make_water():
 
 
 func _on_ResBtn_pressed():
-	var new_zone = preload("res://scenes/zones/Zone.tscn")
+	var new_zone = preload("res://scenes/deparments/Zone.tscn")
 	var instance = new_zone.instance()
 	add_child(instance)
 	instance.emit_signal("grabbed")
 	
 func _on_CoalBtn_pressed():
-	var new_zone = preload("res://scenes/zones/Coal.tscn")
+	var new_zone = preload("res://scenes/deparments/CoalPlant.tscn")
 	var instance = new_zone.instance()
 	add_child(instance)
 	instance.emit_signal("grabbed")

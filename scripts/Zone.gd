@@ -3,10 +3,8 @@ extends KinematicBody2D
 signal grabbed
 
 export var cost: int = 10000
-export var income: int
-export var expense: int
-enum IsPowerStation {TRUE, FALSE}
-export(IsPowerStation) var power_station = IsPowerStation.FALSE
+export var income: int = 100
+export var expense: int = 0
 
 onready var zone = $Sprite
 onready var quarters = $Quarters
@@ -17,21 +15,18 @@ var grabbed_offset = Vector2()
 
 func _ready():
 	SimEvents.connect("budget", self, "_get_budget")
-	SimEvents.connect("has_power", self, "_power_zone")
 	connect("grabbed", self, "_grab_zone")
 
-func _input(event):
+func _drag_drop(event):
 	if event is InputEventMouseButton and can_grab:
-		# Disable grabbing
-		can_grab = false
-		grabbed_offset = position - get_global_mouse_position()
-		
-		# Substract from the player's budget
+		# Substract from the player's budget and disable grabbing
 		if SimData.budget >= cost:
 			SimData.budget -= cost
-			
-		if power_station == IsPowerStation.TRUE:
-			SimEvents.emit_signal("has_power")
+			can_grab = false
+			grabbed_offset = position - get_global_mouse_position()
+
+func _input(event):
+	_drag_drop(event)
 
 func _process(delta):	
 	if can_grab:
@@ -52,13 +47,13 @@ func _animante_sprite(animante: bool = true):
 				
 func _grab_zone():
 	can_grab = true
-	
-func _power_zone():
-	SimData.has_power = true
 
 func _get_budget():
-	if SimData.budget >= expense:
+	if SimData.budget >= expense and SimData.has_power:
 		SimData.budget -= expense
+		SimData.expenses = expense
 		
-	if SimData.budget >= income:
-		SimData.budget += income
+	if SimData.has_power:
+		var total_income = SimData.res_tax * income
+		SimData.budget += total_income
+		SimData.res_income = total_income
