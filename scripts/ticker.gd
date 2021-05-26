@@ -42,6 +42,12 @@ func _random_news(file):
 	var ticker_range = rng.randi_range(0, max_mange)
 	var news = news_keys[ticker_range].text
 	
+	if SimData.city_name == "Furtropolis" and "[outlet]" in news:
+		# FNN = Furtropolis News Network
+		news = news.replace("[outlet]", "FNN")
+	elif "[outlet]" in news:
+		news = news.replace("[outlet]", "Pawprint Press")
+	
 	if "[city]" in news:
 		news = news.replace("[city]", SimData.city_name)
 	
