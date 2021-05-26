@@ -11,6 +11,8 @@ func _index_news():
 	news_keys.clear()
 	for key in news:
 		news_keys.append(news[key])
+		
+	news_keys[rng.randi()%news_keys.size()] # Sbuffle Keys
 
 func _load_news():
 	var file = File.new()
@@ -42,9 +44,9 @@ func _random_news(file):
 	rng.randomize()
 	var max_mange = news_keys.size() - 1
 	var ticker_range = rng.randi_range(0, max_mange)
-	var news = news_keys[ticker_range].text
+	var news = news_keys[ticker_range].text # Shuffle News
 	
-	if SimData.has_ctower and "[outlet]" in news:
+	if SimData.has_ctower or SimData.city_name == "Furtrpolis" and "[outlet]" in news:
 		# FNN = Furtropolis/Furry News Network
 		news = news.replace("[outlet]", "FNN")
 	elif "[outlet]" in news:

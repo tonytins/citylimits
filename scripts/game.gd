@@ -6,7 +6,7 @@ onready var quarters = $Quarters
 func _ready():
 	SimEvents.connect("resume_news", self, "_resume_rotation")
 	SimEvents.connect("send_alert", self, "_stop_news")
-
+	
 func _on_Quarters_timeout():
 	SimData.year += 1
 	SimData.prev_quarter = SimData.quarter
