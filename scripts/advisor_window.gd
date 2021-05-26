@@ -17,17 +17,23 @@ onready var description_label = $Container/DescriptionLbl
 
 func _start_dialogue(advisor, message):
 	if advisor == SimData.Advisors.CITY_PLANNER:
-		dialogue_file = "res://dialog/cityplanner.json"
+		dialogue_file = "res://dialog/advisors/cityplanner.json"
 		_load_dialogue()
-		avatar_texture.texture = preload("res://sprites/avatars/zc.png")
-		name_label.text = "Zack Casey"
+		avatar_texture.texture = preload("res://sprites/avatars/cindy.png")
+		name_label.text = "Cindy Diamond"
 		rank_label.text = "City Planner"
 	elif advisor == SimData.Advisors.FINANCIAL:
-		dialogue_file = "res://dialog/finacial.json"
+		dialogue_file = "res://dialog/advisors/finacial.json"
 		_load_dialogue()
 		avatar_texture.texture = preload("res://sprites/avatars/kit.png")
 		name_label.text = "Kit Welsh"
 		rank_label.text = "Financial Advisor"
+	elif advisor == SimData.Advisors.FINANCIAL:
+		dialogue_file = "res://dialog/advisors/transport.json"
+		_load_dialogue()
+		avatar_texture.texture = preload("res://sprites/avatars/zc.png")
+		name_label.text = "Zack Casey"
+		rank_label.text = "Transportation Advisor"
 		
 	_index_dialogue()
 	description_label.text = dialogue_keys[message].text

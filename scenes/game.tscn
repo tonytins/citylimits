@@ -1,4 +1,4 @@
-[gd_scene load_steps=38 format=2]
+[gd_scene load_steps=40 format=2]
 
 [ext_resource path="res://scenes/Map.tscn" type="PackedScene" id=1]
 [ext_resource path="res://sprites/symbols/population.svg" type="Texture" id=2]
@@ -37,6 +37,8 @@
 [ext_resource path="res://scripts/ticker.gd" type="Script" id=35]
 [ext_resource path="res://sprites/symbols/building.svg" type="Texture" id=36]
 [ext_resource path="res://scripts/windows.gd" type="Script" id=37]
+[ext_resource path="res://sprites/symbols/meet.svg" type="Texture" id=38]
+[ext_resource path="res://sprites/ui/pause.svg" type="Texture" id=39]
 
 [node name="Game" type="Node2D"]
 script = ExtResource( 20 )
@@ -54,12 +56,13 @@ autostart = true
 [node name="Controls" type="CanvasLayer" parent="."]
 
 [node name="Windows" type="Control" parent="Controls"]
-anchor_right = 0.938477
-anchor_bottom = 0.935
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_right = -81.0
+margin_bottom = -54.0
 script = ExtResource( 37 )
 __meta__ = {
-"_edit_lock_": true,
-"_edit_use_anchors_": true
+"_edit_use_anchors_": false
 }
 
 [node name="Console" parent="Controls/Windows" instance=ExtResource( 6 )]
@@ -107,10 +110,10 @@ __meta__ = {
 }
 
 [node name="VertCtr" type="VBoxContainer" parent="Controls/Windows/ToolsWindow/CenterCtr"]
-margin_left = 6.0
-margin_top = 17.0
-margin_right = 186.0
-margin_bottom = 189.0
+margin_left = 4.0
+margin_top = 14.0
+margin_right = 184.0
+margin_bottom = 186.0
 
 [node name="LargeCtr" type="HBoxContainer" parent="Controls/Windows/ToolsWindow/CenterCtr/VertCtr"]
 margin_right = 180.0
@@ -228,6 +231,17 @@ texture_pressed = ExtResource( 12 )
 [node name="Credits" parent="Controls/Windows" instance=ExtResource( 34 )]
 visible = false
 
+[node name="PauseIndicator" type="TextureRect" parent="Controls/Windows"]
+visible = false
+anchor_right = 1.0
+anchor_bottom = 1.0
+texture = ExtResource( 39 )
+stretch_mode = 1
+__meta__ = {
+"_edit_lock_": true,
+"_edit_use_anchors_": false
+}
+
 [node name="Menu" type="Panel" parent="Controls"]
 anchor_left = 0.919922
 anchor_top = -0.02
@@ -239,7 +253,7 @@ __meta__ = {
 }
 
 [node name="ButtonCtr" type="VBoxContainer" parent="Controls/Menu"]
-anchor_top = 0.0305085
+anchor_top = 0.0491526
 anchor_right = 1.0
 anchor_bottom = 1.0
 margin_right = 7.62939e-06
@@ -263,12 +277,12 @@ size_flags_horizontal = 4
 icon = ExtResource( 36 )
 
 [node name="AdvsiorBtn" type="Button" parent="Controls/Menu/ButtonCtr"]
-margin_left = 7.0
+margin_left = 10.0
 margin_top = 125.0
-margin_right = 74.0
-margin_bottom = 145.0
+margin_right = 71.0
+margin_bottom = 171.0
 size_flags_horizontal = 4
-text = "Advisors"
+icon = ExtResource( 38 )
 
 [node name="Status" type="Panel" parent="Controls"]
 anchor_top = 1.0

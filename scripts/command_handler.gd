@@ -17,17 +17,7 @@ func _budget_print(value: int):
 	return "Budget increased to " + str(value)
 
 func money(value):
-	var motherlode = 50000
-	var rosebud = 1000
-	if value == "motherlode":
-		SimData.budget += motherlode
-		return _budget_print(motherlode)
-	
-	if value == "rosebud":
-		SimData.budget += rosebud
-		return _budget_print(rosebud)
-		
-	return ""
+	SimData.budget += int(value)
 	
 func whereyoufrom(value):
 	SimData.city_name = str(value)

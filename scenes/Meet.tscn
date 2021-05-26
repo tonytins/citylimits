@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=2]
+[gd_scene load_steps=4 format=2]
 
-[ext_resource path="res://sprites/avatars/zc.png" type="Texture" id=1]
+[ext_resource path="res://sprites/avatars/cindy.png" type="Texture" id=1]
 [ext_resource path="res://sprites/avatars/kit.png" type="Texture" id=2]
+[ext_resource path="res://sprites/avatars/zc.png" type="Texture" id=3]
 
 [node name="AdvisorMeet" type="WindowDialog"]
 anchor_left = 0.328125
@@ -36,6 +37,12 @@ margin_left = 204.0
 margin_right = 304.0
 margin_bottom = 100.0
 texture_normal = ExtResource( 2 )
+
+[node name="TransportBtn" type="TextureButton" parent="Advsiors"]
+margin_left = 204.0
+margin_right = 304.0
+margin_bottom = 100.0
+texture_normal = ExtResource( 3 )
 
 [node name="Tree" type="Tree" parent="."]
 anchor_left = 0.0148515

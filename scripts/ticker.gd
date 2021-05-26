@@ -9,10 +9,12 @@ var news_keys = []
 func _index_news():
 	var news = _load_news()
 	news_keys.clear()
+	
 	for key in news:
 		news_keys.append(news[key])
 		
-	news_keys[rng.randi()%news_keys.size()] # Sbuffle Keys
+	randomize()
+	news_keys.shuffle()
 
 func _load_news():
 	var file = File.new()
@@ -26,7 +28,7 @@ func _ready():
 	SimData.mayor_name = SimData.mayor_name.capitalize()
 	SimEvents.connect("send_alert", self, "_start_alert")
 	SimEvents.connect("resume_news", self, "_resume_ticker")
-	_random_news("res://dialog/ticker.json")
+	_random_news("res://dialog/ticker/ticker.json")
 
 func _process(delta):
 	if get_tree().paused:
@@ -34,19 +36,21 @@ func _process(delta):
 
 func _start_alert(message):
 	SimData.is_alert = true
-	news_file = "res://dialog/ticker_alerts.json"
+	news_file = "res://dialog/ticker/ticker_alerts.json"
 	ticker_text.text = news_keys[message].text
 
 func _random_news(file):
 	news_file = file
+	
+	rng.randomize()
 	_load_news()
 	_index_news()
-	rng.randomize()
+	
 	var max_mange = news_keys.size() - 1
 	var ticker_range = rng.randi_range(0, max_mange)
-	var news = news_keys[ticker_range].text # Shuffle News
+	var news = news_keys[ticker_range].text
 	
-	if SimData.has_ctower or SimData.city_name == "Furtropolis" and "[outlet]" in news:
+	if SimData.has_ctower or SimData.city_name == "Furtropolis" or "Furville" and "[outlet]" in news:
 		# FNN = Furtropolis/Furry News Network
 		news = news.replace("[outlet]", "FNN")
 	elif "[outlet]" in news:
@@ -61,7 +65,7 @@ func _random_news(file):
 	ticker_text.text = news
 	
 func _resume_ticker():
-	_random_news("res://dialog/ticker.json")
+	_random_news("res://dialog/ticker/ticker.json")
 	
 func _on_RotateNews_timeout():
-	_random_news("res://dialog/ticker.json")
+	_random_news("res://dialog/ticker/ticker.json")

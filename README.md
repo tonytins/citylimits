@@ -14,6 +14,7 @@ City Limits is a re-imagining of SimCity Classic that contains features and conc
 
 - **Tony Bark** - _Initial work_ - [tonytins](https://github.com/tonytins)
 - **Maxis** - _Assets_ - [SimHacker](https://github.com/SimHacker/)
+- **Font Awesome** - *Icons* - [FontAwesome.com](https://fontawesome.com/)
 
 See also the list of [contributors](https://github.com/tonytins/citylimits/contributors) who participated in this project.
 
