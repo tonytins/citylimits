@@ -3,5 +3,8 @@ extends Node
 signal has_power
 signal budget
 signal game_speed
-signal city_planner(message)
-signal financial_advisor(message)
+signal advisor_message(advisor, message)
+
+# News
+signal send_alert(message)
+signal resume_news

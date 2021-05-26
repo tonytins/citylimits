@@ -10,17 +10,13 @@
 [node name="Controls" type="CanvasLayer" parent="."]
 
 [node name="Start" type="Panel" parent="Controls"]
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-margin_left = -142.0
-margin_top = -76.0
-margin_right = 130.0
-margin_bottom = 70.0
+anchor_left = 0.367188
+anchor_top = 0.378333
+anchor_right = 0.632812
+anchor_bottom = 0.646667
 script = ExtResource( 1 )
 __meta__ = {
-"_edit_use_anchors_": false
+"_edit_use_anchors_": true
 }
 
 [node name="Container" type="VBoxContainer" parent="Controls/Start"]
@@ -44,7 +40,17 @@ align = 1
 margin_top = 18.0
 margin_right = 219.0
 margin_bottom = 42.0
-text = "Furtropolis"
+align = 1
+caret_blink = true
+caret_blink_speed = 0.5
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="MayorNameEdit" type="LineEdit" parent="Controls/Start/Container"]
+margin_top = 46.0
+margin_right = 219.0
+margin_bottom = 70.0
 align = 1
 caret_blink = true
 caret_blink_speed = 0.5
@@ -53,9 +59,9 @@ __meta__ = {
 }
 
 [node name="BudgetMenu" type="MenuButton" parent="Controls/Start/Container"]
-margin_top = 46.0
+margin_top = 74.0
 margin_right = 219.0
-margin_bottom = 66.0
+margin_bottom = 94.0
 text = "Starting Budget"
 items = [ "20000", null, 0, false, false, 0, 0, null, "", false, "10000", null, 0, false, false, 1, 0, null, "", false, "500", null, 0, false, false, 2, 0, null, "", false ]
 __meta__ = {
@@ -63,9 +69,9 @@ __meta__ = {
 }
 
 [node name="CreateBtn" type="Button" parent="Controls/Start/Container"]
-margin_top = 70.0
+margin_top = 98.0
 margin_right = 219.0
-margin_bottom = 90.0
+margin_bottom = 118.0
 text = "Create"
 
 [connection signal="pressed" from="Controls/Start/Container/CreateBtn" to="Controls/Start" method="_on_CreateBtn_pressed"]
