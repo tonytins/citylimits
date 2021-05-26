@@ -255,15 +255,15 @@ __meta__ = {
 [node name="ButtonCtr" type="VBoxContainer" parent="Controls/Menu"]
 anchor_top = 0.0491526
 anchor_right = 1.0
-anchor_bottom = 1.0
+anchor_bottom = 0.772882
 margin_right = 7.62939e-06
 __meta__ = {
 "_edit_use_anchors_": true
 }
 
 [node name="TaxBtn" type="Button" parent="Controls/Menu/ButtonCtr"]
-margin_left = 10.0
-margin_right = 72.0
+margin_left = 9.0
+margin_right = 71.0
 margin_bottom = 56.0
 size_flags_horizontal = 4
 icon = ExtResource( 7 )
@@ -295,93 +295,95 @@ __meta__ = {
 }
 
 [node name="StatCtr" type="HBoxContainer" parent="Controls/Status"]
-anchor_left = 0.00878906
-anchor_top = 0.527273
-anchor_right = 1.0
-anchor_bottom = 0.963636
-custom_constants/separation = 100
+anchor_left = 0.00585938
+anchor_top = 0.545455
+anchor_right = 0.853516
+anchor_bottom = 1.0
+margin_bottom = -3.8147e-06
+custom_constants/separation = 65
 alignment = 1
 script = ExtResource( 3 )
 __meta__ = {
+"_edit_lock_": true,
 "_edit_use_anchors_": true
 }
 
 [node name="CityNameLbl" type="Label" parent="Controls/Status/StatCtr"]
-margin_left = 123.0
-margin_top = 4.0
-margin_right = 189.0
-margin_bottom = 18.0
+margin_left = 154.0
+margin_top = 5.0
+margin_right = 220.0
+margin_bottom = 19.0
 text = "City Name"
 
 [node name="CityYearSep" type="VSeparator" parent="Controls/Status/StatCtr"]
-margin_left = 289.0
-margin_right = 293.0
-margin_bottom = 23.0
+margin_left = 285.0
+margin_right = 289.0
+margin_bottom = 24.0
 
 [node name="YearCtr" type="HBoxContainer" parent="Controls/Status/StatCtr"]
-margin_left = 393.0
-margin_right = 443.0
-margin_bottom = 23.0
+margin_left = 354.0
+margin_right = 404.0
+margin_bottom = 24.0
 
 [node name="CalIcon" type="TextureRect" parent="Controls/Status/StatCtr/YearCtr"]
 margin_right = 14.0
-margin_bottom = 23.0
+margin_bottom = 24.0
 texture = ExtResource( 8 )
 stretch_mode = 4
 
 [node name="YearLbl" type="Label" parent="Controls/Status/StatCtr/YearCtr"]
 margin_left = 18.0
-margin_top = 4.0
+margin_top = 5.0
 margin_right = 50.0
-margin_bottom = 18.0
+margin_bottom = 19.0
 text = "1980"
 
 [node name="YearBudgetSep" type="VSeparator" parent="Controls/Status/StatCtr"]
-margin_left = 543.0
-margin_right = 547.0
-margin_bottom = 23.0
+margin_left = 469.0
+margin_right = 473.0
+margin_bottom = 24.0
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
 [node name="BudgetLbl" type="Label" parent="Controls/Status/StatCtr"]
-margin_left = 647.0
-margin_top = 4.0
-margin_right = 662.0
-margin_bottom = 18.0
+margin_left = 538.0
+margin_top = 5.0
+margin_right = 553.0
+margin_bottom = 19.0
 text = "§0"
 
 [node name="BudgetPopSep" type="VSeparator" parent="Controls/Status/StatCtr"]
-margin_left = 762.0
-margin_right = 766.0
-margin_bottom = 23.0
+margin_left = 618.0
+margin_right = 622.0
+margin_bottom = 24.0
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
 [node name="PopCtr" type="HBoxContainer" parent="Controls/Status/StatCtr"]
-margin_left = 866.0
-margin_right = 892.0
-margin_bottom = 23.0
+margin_left = 687.0
+margin_right = 713.0
+margin_bottom = 24.0
 
 [node name="PopIcon" type="TextureRect" parent="Controls/Status/StatCtr/PopCtr"]
 margin_right = 14.0
-margin_bottom = 23.0
+margin_bottom = 24.0
 texture = ExtResource( 2 )
 stretch_mode = 4
 
 [node name="PopLbl" type="Label" parent="Controls/Status/StatCtr/PopCtr"]
 margin_left = 18.0
-margin_top = 4.0
+margin_top = 5.0
 margin_right = 26.0
-margin_bottom = 18.0
+margin_bottom = 19.0
 text = "0"
 
 [node name="TickerBg" type="ColorRect" parent="Controls/Status"]
 anchor_left = 0.00976562
-anchor_top = 0.0909091
-anchor_right = 0.987305
-anchor_bottom = 0.490909
+anchor_top = 0.0727273
+anchor_right = 0.854492
+anchor_bottom = 0.472727
 color = Color( 0, 0, 0, 1 )
 script = ExtResource( 35 )
 __meta__ = {
@@ -393,7 +395,20 @@ anchor_left = 0.00601721
 anchor_top = 0.181818
 anchor_right = 0.994298
 anchor_bottom = 0.954545
+margin_top = 0.687989
+margin_bottom = 0.687988
 __meta__ = {
+"_edit_lock_": true,
+"_edit_use_anchors_": true
+}
+
+[node name="MiniMap" type="Panel" parent="Controls"]
+anchor_left = 0.853516
+anchor_top = 0.75
+anchor_right = 1.0
+anchor_bottom = 1.0
+__meta__ = {
+"_edit_lock_": true,
 "_edit_use_anchors_": true
 }
 
