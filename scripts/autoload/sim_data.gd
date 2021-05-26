@@ -9,6 +9,7 @@ var population: int = 0
 var budget: int = 20000
 var expenses: int
 var is_alert: bool = false
+var has_ctower: bool = false # Central Tower
 
 const currency: String = "§"
 

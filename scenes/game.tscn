@@ -46,7 +46,7 @@ wait_time = 150.0
 autostart = true
 
 [node name="RotateNews" type="Timer" parent="."]
-wait_time = 5.0
+wait_time = 10.0
 autostart = true
 
 [node name="Map" parent="." instance=ExtResource( 1 )]
