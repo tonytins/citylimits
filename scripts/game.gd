@@ -18,12 +18,14 @@ func _resume_rotation():
 func _on_DayCycle_timeout():
 	
 	if SimData.prev_day < 30:
+		SimData.prev_day = SimData.day
 		SimData.day += 1
 	
 	if SimData.prev_day == 30:
-		SimData.month =+ 1
-		SimData.prev_month = SimData.month
+		SimData.prev_day = SimData.day
 		SimData.day = 1
+		SimData.prev_month = SimData.month
+		SimData.month += 1
 		SimEvents.emit_signal("budget")
 		
 	if SimData.prev_month == 12:
