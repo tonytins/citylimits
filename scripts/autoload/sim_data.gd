@@ -1,7 +1,5 @@
 extends Node
 
-const CURRENCY: String = "§"
-
 var city_name: String = "Furtropolis" # Hard-coded, for now
 var mayor_name: String = "Defecto"
 var population: int = 0
@@ -81,11 +79,14 @@ enum Ordinances {
 	TIRE_RECYCLE
 }
 
-func starting_budget(lev = Level.EASY):
-	match lev:
-		Level.EASY:
-			budget = 20000
-		Level.MEDIUM:
-			budget = 10000
-		Level.HARD:
-			budget = 5000
+func get_week():
+	return (10 + total_days - day) / 7
+
+#func starting_budget(lev = Level.EASY):
+#	match lev:
+#		Level.EASY:
+#			budget = 20000
+#		Level.MEDIUM:
+#			budget = 10000
+#		Level.HARD:
+#			budget = 5000

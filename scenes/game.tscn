@@ -260,26 +260,35 @@ __meta__ = {
 "_edit_use_anchors_": true
 }
 
+[node name="SettingsBtn" type="Button" parent="Controls/Status"]
+anchor_left = 0.0115391
+anchor_top = 0.155151
+anchor_right = 0.0525548
+anchor_bottom = 0.57868
+margin_top = -9.53674e-07
+hint_tooltip = "Meet"
+size_flags_horizontal = 4
+icon = ExtResource( 43 )
+__meta__ = {
+"_edit_use_anchors_": true
+}
+
 [node name="StatCtr" type="HBoxContainer" parent="Controls/Status"]
-anchor_left = 0.00119134
-anchor_top = 0.489112
-anchor_right = 1.00119
-anchor_bottom = 0.489112
-margin_left = 0.940155
-margin_top = -30.0
-margin_right = 0.940063
-margin_bottom = 6.0
+anchor_left = 0.0556641
+anchor_top = 0.141176
+anchor_right = 1.0
+anchor_bottom = 0.564706
+margin_top = 9.53674e-07
 custom_constants/separation = 50
 alignment = 1
 script = ExtResource( 3 )
 __meta__ = {
-"_edit_lock_": true,
-"_edit_use_anchors_": false
+"_edit_use_anchors_": true
 }
 
 [node name="ButtonCtr" type="HBoxContainer" parent="Controls/Status/StatCtr"]
-margin_left = 241.0
-margin_right = 575.0
+margin_left = 235.0
+margin_right = 517.0
 margin_bottom = 36.0
 custom_constants/separation = 10
 alignment = 1
@@ -310,56 +319,48 @@ hint_tooltip = "Meet"
 size_flags_horizontal = 4
 icon = ExtResource( 38 )
 
-[node name="SettingsBtn" type="Button" parent="Controls/Status/StatCtr/ButtonCtr"]
-margin_left = 156.0
-margin_right = 198.0
-margin_bottom = 36.0
-hint_tooltip = "Meet"
-size_flags_horizontal = 4
-icon = ExtResource( 43 )
-
 [node name="VSeparator" type="VSeparator" parent="Controls/Status/StatCtr/ButtonCtr"]
-margin_left = 208.0
-margin_right = 212.0
+margin_left = 156.0
+margin_right = 160.0
 margin_bottom = 36.0
 
 [node name="TurtleBtn" type="Button" parent="Controls/Status/StatCtr/ButtonCtr"]
-margin_left = 222.0
-margin_right = 263.0
+margin_left = 170.0
+margin_right = 211.0
 margin_bottom = 36.0
 hint_tooltip = "Slow"
 toggle_mode = true
 icon = ExtResource( 40 )
 
 [node name="CheetaBtn" type="Button" parent="Controls/Status/StatCtr/ButtonCtr"]
-margin_left = 273.0
-margin_right = 320.0
+margin_left = 221.0
+margin_right = 268.0
 margin_bottom = 36.0
 hint_tooltip = "Fast"
 toggle_mode = true
 icon = ExtResource( 41 )
 
 [node name="VSeparator2" type="VSeparator" parent="Controls/Status/StatCtr/ButtonCtr"]
-margin_left = 330.0
-margin_right = 334.0
+margin_left = 278.0
+margin_right = 282.0
 margin_bottom = 36.0
 
 [node name="NameDate" type="VBoxContainer" parent="Controls/Status/StatCtr"]
-margin_left = 625.0
-margin_right = 705.0
+margin_left = 567.0
+margin_right = 655.0
 margin_bottom = 36.0
 alignment = 1
 
 [node name="CityNameLbl" type="Label" parent="Controls/Status/StatCtr/NameDate"]
 margin_top = 2.0
-margin_right = 80.0
+margin_right = 88.0
 margin_bottom = 16.0
 text = "City Name"
 align = 1
 
 [node name="YearCtr" type="HBoxContainer" parent="Controls/Status/StatCtr/NameDate"]
 margin_top = 20.0
-margin_right = 80.0
+margin_right = 88.0
 margin_bottom = 34.0
 
 [node name="CalIcon" type="TextureRect" parent="Controls/Status/StatCtr/NameDate/YearCtr"]
@@ -370,16 +371,16 @@ stretch_mode = 4
 
 [node name="CalendarLbl" type="Label" parent="Controls/Status/StatCtr/NameDate/YearCtr"]
 margin_left = 14.0
-margin_right = 80.0
+margin_right = 88.0
 margin_bottom = 14.0
-text = "1/1/12000"
+text = "01/01/2000"
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
 [node name="PopBudget" type="VBoxContainer" parent="Controls/Status/StatCtr"]
-margin_left = 755.0
-margin_right = 781.0
+margin_left = 705.0
+margin_right = 731.0
 margin_bottom = 36.0
 alignment = 1
 
