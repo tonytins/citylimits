@@ -5,6 +5,11 @@ onready var ticker_text = $TickerTxt
 var news_file = ""
 var rng = RandomNumberGenerator.new()
 var news_keys = []
+var speices = [
+	"Cat",
+	"Fennec",
+	"Fox"
+]
 
 func _index_news():
 	var news = _load_news()
@@ -30,12 +35,8 @@ func _ready():
 	SimEvents.connect("resume_news", self, "_resume_ticker")
 	_random_news("res://dialog/ticker/ticker.json")
 
-func _process(delta):
-	if get_tree().paused:
-		ticker_text.text = "Simulation Paused"
-
 func _start_alert(message):
-	SimData.is_alert = true
+	SimData.on_alert = true
 	news_file = "res://dialog/ticker/ticker_alerts.json"
 	ticker_text.text = news_keys[message].text
 
@@ -55,6 +56,11 @@ func _random_news(file):
 		news = news.replace("[outlet]", "FNN")
 	elif "[outlet]" in news:
 		news = news.replace("[outlet]", "Pawprint Press")
+	
+	if "[species]" in news:
+		randomize()
+		speices.shuffle()
+		news = news.replace("[species]", speices[rng.randi()%speices.size()])
 	
 	if "[city]" in news:
 		news = news.replace("[city]", SimData.city_name)

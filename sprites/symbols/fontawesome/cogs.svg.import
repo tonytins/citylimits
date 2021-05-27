@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/building.svg-565a4a6da30528637c52860f03f9ac31.stex"
+path="res://.import/cogs.svg-4981dda10bbfacabb8e193d2031d89fd.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://sprites/symbols/building.svg"
-dest_files=[ "res://.import/building.svg-565a4a6da30528637c52860f03f9ac31.stex" ]
+source_file="res://sprites/symbols/fontawesome/cogs.svg"
+dest_files=[ "res://.import/cogs.svg-4981dda10bbfacabb8e193d2031d89fd.stex" ]
 
 [params]
 

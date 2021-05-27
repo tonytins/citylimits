@@ -2,7 +2,7 @@
 
 ![Screenshot](screenshot.png)
 
-City Limits is a re-imagining of SimCity Classic that contains features and concepts from later games. Such as advisors, free zones, news tickers, neighboring cities, and so on. Though it shares a lot of core gameplay and style, it's not compatible with Micropolis.
+City Limits is a re-imagining of SimCity Classic using 
 
 ## Getting Started
 
@@ -14,7 +14,7 @@ City Limits is a re-imagining of SimCity Classic that contains features and conc
 
 - **Tony Bark** - _Initial work_ - [tonytins](https://github.com/tonytins)
 - **Maxis** - _Assets_ - [SimHacker](https://github.com/SimHacker/)
-- **Font Awesome** - *Icons* - [FontAwesome.com](https://fontawesome.com/)
+- **Font Awesome** - *Icons* - [FortAwesome](https://github.com/FortAwesome)
 
 See also the list of [contributors](https://github.com/tonytins/citylimits/contributors) who participated in this project.
 

@@ -28,6 +28,7 @@ anchor_bottom = 0.751553
 readonly = true
 wrap_enabled = true
 __meta__ = {
+"_edit_lock_": true,
 "_edit_use_anchors_": true
 }
 
@@ -39,6 +40,7 @@ anchor_bottom = 0.950311
 caret_blink = true
 caret_blink_speed = 0.5
 __meta__ = {
+"_edit_lock_": true,
 "_edit_use_anchors_": true
 }
 
@@ -50,6 +52,7 @@ anchor_bottom = 0.951903
 margin_top = 7.62939e-06
 text = "Submit"
 __meta__ = {
+"_edit_lock_": true,
 "_edit_use_anchors_": true
 }
 

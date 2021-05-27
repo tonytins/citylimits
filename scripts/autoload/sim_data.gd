@@ -1,17 +1,22 @@
 extends Node
 
+const CURRENCY: String = "§"
+
 var city_name: String = "Furtropolis" # Hard-coded, for now
 var mayor_name: String = "Defecto"
-var year: int = 1980
-var prev_quarter: int
-var quarter: int = 1
 var population: int = 0
 var budget: int = 20000
 var expenses: int
-var is_alert: bool = false
+var on_alert: bool = false
 var has_ctower: bool = false # Central Tower
 
-const currency: String = "§"
+var year: int = 2000
+var prev_year: int
+var month: int = 1
+var prev_month: int
+var day: int = 1
+var prev_day: int
+var total_days: int = 1
 
 var power_grid: int # Number of power stations in the area. Helps provide redundancies.
 var power_capacity: int
@@ -37,18 +42,50 @@ enum GameSpeed {
 	FAST
 }
 
-enum Advisors { 
-	CITY_PLANNER,
-	FINANCIAL
+enum Level {
+	EASY,
+	MEDIUM,
+	HARD
 }
 
-func starting_budget(lev: int):
-	
-	if lev == 1 or lev == 0:
-		budget = 20000
-	elif lev == 2:
-		budget = 10000
-	elif lev == 3:
-		budget = 5000
-	else:
-		budget = NAN
+enum Advisors { 
+	CITY_PLANNER,
+	FINANCIAL,
+	TRANSPORT
+}
+
+enum Ordinances {
+	# Education
+	CPR_TRAINING,
+	PRO_READING,
+	NHOOD_WATCH,
+	# Financial
+	PARKING_FINES,
+	GAMBLING,
+	SALES_TAX,
+	# Promo
+	ANNUAL_CARNIVAL,
+	BUSINESS_ADS,
+	CITY_BEAUTY,
+	TOURIST_ADS
+	# Health & Safety
+	FREE_CLINICS,
+	JUNIOR_SPORTS,
+	SMOKING_BAN,
+	VOLUNTEER_FIRE,
+	SMOKE_DETECTOR,
+	# Environment
+	ENERGY_CONSERVATION,
+	HOMELESS_SHELTERS,
+	CLEAN_AIR_ACT,
+	TIRE_RECYCLE
+}
+
+func starting_budget(lev = Level.EASY):
+	match lev:
+		Level.EASY:
+			budget = 20000
+		Level.MEDIUM:
+			budget = 10000
+		Level.HARD:
+			budget = 5000

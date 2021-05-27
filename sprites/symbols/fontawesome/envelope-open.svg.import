@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/population.svg-3d56f4f7e17f6028aa5b7980dc8fdf72.stex"
+path="res://.import/envelope-open.svg-eddd32f621a1eac220839f0f75d96fd0.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://sprites/symbols/population.svg"
-dest_files=[ "res://.import/population.svg-3d56f4f7e17f6028aa5b7980dc8fdf72.stex" ]
+source_file="res://sprites/symbols/fontawesome/envelope-open.svg"
+dest_files=[ "res://.import/envelope-open.svg-eddd32f621a1eac220839f0f75d96fd0.stex" ]
 
 [params]
 

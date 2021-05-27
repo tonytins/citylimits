@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/fast.svg-ed2ede9e5f07eaa54eda00268034b8f2.stex"
+path="res://.import/folder-open.svg-8470fba77683e1b2241aa1ad8cf986be.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://sprites/symbols/fast.svg"
-dest_files=[ "res://.import/fast.svg-ed2ede9e5f07eaa54eda00268034b8f2.stex" ]
+source_file="res://sprites/symbols/fontawesome/folder-open.svg"
+dest_files=[ "res://.import/folder-open.svg-8470fba77683e1b2241aa1ad8cf986be.stex" ]
 
 [params]
 

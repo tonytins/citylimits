@@ -10,8 +10,12 @@ enum {
 const valid_commands = [
 	["money", [ARG_STRING] ],
 	["whereyoufrom", [ARG_STRING] ],
-	["whatyearisit", [ARG_STRING] ]
+	["whatyearisit", [ARG_STRING] ],
+	["show_policy", [ARG_INT]]
 ]
+
+func show_policy(policy):
+	SimEvents.emit_signal("policy_message", policy)
 
 func _budget_print(value: int):
 	return "Budget increased to " + str(value)

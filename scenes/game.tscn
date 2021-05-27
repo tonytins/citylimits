@@ -1,13 +1,13 @@
-[gd_scene load_steps=40 format=2]
+[gd_scene load_steps=45 format=2]
 
 [ext_resource path="res://scenes/Map.tscn" type="PackedScene" id=1]
-[ext_resource path="res://sprites/symbols/population.svg" type="Texture" id=2]
+[ext_resource path="res://sprites/symbols/fontawesome/population.svg" type="Texture" id=2]
 [ext_resource path="res://scripts/city_status.gd" type="Script" id=3]
-[ext_resource path="res://scenes/Advisor.tscn" type="PackedScene" id=4]
+[ext_resource path="res://scenes/windows/Advisor.tscn" type="PackedScene" id=4]
 [ext_resource path="res://sprites/ui/iccom.png" type="Texture" id=5]
-[ext_resource path="res://scenes/DebugConsole.tscn" type="PackedScene" id=6]
-[ext_resource path="res://sprites/symbols/graph.svg" type="Texture" id=7]
-[ext_resource path="res://sprites/symbols/calendar.svg" type="Texture" id=8]
+[ext_resource path="res://scenes/windows/DebugConsole.tscn" type="PackedScene" id=6]
+[ext_resource path="res://sprites/symbols/fontawesome/pie-chart.svg" type="Texture" id=7]
+[ext_resource path="res://sprites/symbols/fontawesome/calendar.svg" type="Texture" id=8]
 [ext_resource path="res://sprites/ui/icres.png" type="Texture" id=9]
 [ext_resource path="res://sprites/ui/icreshi.png" type="Texture" id=10]
 [ext_resource path="res://sprites/ui/icfire.png" type="Texture" id=11]
@@ -20,7 +20,7 @@
 [ext_resource path="res://sprites/ui/iccoalhi.png" type="Texture" id=18]
 [ext_resource path="res://sprites/ui/iccoal.png" type="Texture" id=19]
 [ext_resource path="res://scripts/game.gd" type="Script" id=20]
-[ext_resource path="res://scenes/Meet.tscn" type="PackedScene" id=21]
+[ext_resource path="res://scenes/windows/Meet.tscn" type="PackedScene" id=21]
 [ext_resource path="res://sprites/ui/icparkhi.png" type="Texture" id=22]
 [ext_resource path="res://sprites/ui/icnuc.png" type="Texture" id=23]
 [ext_resource path="res://sprites/ui/icpark.png" type="Texture" id=24]
@@ -31,21 +31,29 @@
 [ext_resource path="res://sprites/ui/icpolhi.png" type="Texture" id=29]
 [ext_resource path="res://sprites/ui/iccomhi.png" type="Texture" id=30]
 [ext_resource path="res://sprites/ui/icdozrhi.png" type="Texture" id=31]
-[ext_resource path="res://scenes/TaxWindow.tscn" type="PackedScene" id=32]
+[ext_resource path="res://scenes/windows/TaxWindow.tscn" type="PackedScene" id=32]
 [ext_resource path="res://sprites/ui/icfirehi.png" type="Texture" id=33]
-[ext_resource path="res://scenes/Credits.tscn" type="PackedScene" id=34]
+[ext_resource path="res://scenes/windows/Credits.tscn" type="PackedScene" id=34]
 [ext_resource path="res://scripts/ticker.gd" type="Script" id=35]
-[ext_resource path="res://sprites/symbols/building.svg" type="Texture" id=36]
+[ext_resource path="res://sprites/symbols/fontawesome/city.svg" type="Texture" id=36]
 [ext_resource path="res://scripts/windows.gd" type="Script" id=37]
-[ext_resource path="res://sprites/symbols/meet.svg" type="Texture" id=38]
+[ext_resource path="res://sprites/symbols/fontawesome/envelope.svg" type="Texture" id=38]
 [ext_resource path="res://sprites/ui/pause.svg" type="Texture" id=39]
+[ext_resource path="res://sprites/symbols/fontawesome/slow.svg" type="Texture" id=40]
+[ext_resource path="res://sprites/symbols/fontawesome/fast.svg" type="Texture" id=41]
+[ext_resource path="res://sprites/symbols/fontawesome/coins.svg" type="Texture" id=42]
+[ext_resource path="res://sprites/symbols/fontawesome/cogs.svg" type="Texture" id=43]
+[ext_resource path="res://scenes/windows/Ordinance.tscn" type="PackedScene" id=44]
 
 [node name="Game" type="Node2D"]
 script = ExtResource( 20 )
 
-[node name="Quarters" type="Timer" parent="."]
-wait_time = 150.0
+[node name="DayCycle" type="Timer" parent="."]
+wait_time = 12.0
 autostart = true
+__meta__ = {
+"_editor_description_": "Calculation based on: https://gaming.stackexchange.com/questions/110529/real-world-time-in-a-simcity-day-on-various-speeds"
+}
 
 [node name="RotateNews" type="Timer" parent="."]
 wait_time = 6.0
@@ -58,18 +66,17 @@ autostart = true
 [node name="Windows" type="Control" parent="Controls"]
 anchor_right = 1.0
 anchor_bottom = 1.0
-margin_right = -81.0
-margin_bottom = -54.0
 script = ExtResource( 37 )
 __meta__ = {
+"_edit_lock_": true,
 "_edit_use_anchors_": false
 }
 
 [node name="Console" parent="Controls/Windows" instance=ExtResource( 6 )]
-anchor_left = 0.594727
-anchor_top = 0.05
-anchor_right = 0.985352
-anchor_bottom = 0.3
+anchor_left = 0.52391
+anchor_top = 0.0691609
+anchor_right = 0.918441
+anchor_bottom = 0.320828
 rect_min_size = Vector2( 400, 150 )
 resizable = true
 
@@ -110,10 +117,10 @@ __meta__ = {
 }
 
 [node name="VertCtr" type="VBoxContainer" parent="Controls/Windows/ToolsWindow/CenterCtr"]
-margin_left = 4.0
-margin_top = 14.0
-margin_right = 184.0
-margin_bottom = 186.0
+margin_left = 12.0
+margin_top = 24.0
+margin_right = 192.0
+margin_bottom = 196.0
 
 [node name="LargeCtr" type="HBoxContainer" parent="Controls/Windows/ToolsWindow/CenterCtr/VertCtr"]
 margin_right = 180.0
@@ -229,7 +236,6 @@ texture_normal = ExtResource( 13 )
 texture_pressed = ExtResource( 12 )
 
 [node name="Credits" parent="Controls/Windows" instance=ExtResource( 34 )]
-visible = false
 
 [node name="PauseIndicator" type="TextureRect" parent="Controls/Windows"]
 visible = false
@@ -242,133 +248,138 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
+[node name="Ordinance" parent="Controls/Windows" instance=ExtResource( 44 )]
+
 [node name="Menu" type="Panel" parent="Controls"]
-anchor_left = 0.919922
-anchor_top = -0.02
+anchor_left = 1.0
 anchor_right = 1.0
-anchor_bottom = 0.963333
+anchor_bottom = 1.0
+margin_left = -57.0
+margin_top = -18.0
 __meta__ = {
-"_edit_lock_": true,
-"_edit_use_anchors_": true
+"_edit_use_anchors_": false
 }
 
 [node name="ButtonCtr" type="VBoxContainer" parent="Controls/Menu"]
-anchor_top = 0.0491526
+anchor_top = 0.0420712
 anchor_right = 1.0
-anchor_bottom = 0.772882
-margin_right = 7.62939e-06
+anchor_bottom = 1.0
+custom_constants/separation = 5
 __meta__ = {
 "_edit_use_anchors_": true
 }
 
 [node name="TaxBtn" type="Button" parent="Controls/Menu/ButtonCtr"]
-margin_left = 9.0
-margin_right = 71.0
-margin_bottom = 56.0
+margin_left = 7.0
+margin_right = 49.0
+margin_bottom = 36.0
+hint_tooltip = "RCI"
 size_flags_horizontal = 4
 icon = ExtResource( 7 )
 
 [node name="ToolsBtn" type="Button" parent="Controls/Menu/ButtonCtr"]
-margin_left = 13.0
-margin_top = 60.0
-margin_right = 68.0
-margin_bottom = 121.0
+margin_left = 7.0
+margin_top = 41.0
+margin_right = 49.0
+margin_bottom = 72.0
+hint_tooltip = "Tools"
 size_flags_horizontal = 4
 icon = ExtResource( 36 )
 
 [node name="AdvsiorBtn" type="Button" parent="Controls/Menu/ButtonCtr"]
-margin_left = 10.0
-margin_top = 125.0
-margin_right = 71.0
-margin_bottom = 171.0
+margin_left = 7.0
+margin_top = 77.0
+margin_right = 49.0
+margin_bottom = 103.0
+hint_tooltip = "Meet"
 size_flags_horizontal = 4
 icon = ExtResource( 38 )
 
+[node name="SettingsBtn" type="Button" parent="Controls/Menu/ButtonCtr"]
+margin_left = 7.0
+margin_top = 108.0
+margin_right = 49.0
+margin_bottom = 140.0
+hint_tooltip = "Meet"
+size_flags_horizontal = 4
+icon = ExtResource( 43 )
+
 [node name="Status" type="Panel" parent="Controls"]
-anchor_top = 1.0
-anchor_right = 1.0
+anchor_left = -0.0126953
+anchor_top = 0.908333
+anchor_right = 1.01953
 anchor_bottom = 1.0
-margin_top = -55.0
 __meta__ = {
-"_edit_lock_": true,
-"_edit_use_anchors_": false
+"_edit_use_anchors_": true
 }
 
 [node name="StatCtr" type="HBoxContainer" parent="Controls/Status"]
-anchor_left = 0.00585938
-anchor_top = 0.545455
-anchor_right = 0.853516
-anchor_bottom = 1.0
+anchor_left = 0.0302744
+anchor_top = 0.527271
+anchor_right = 0.808894
+anchor_bottom = 0.981815
 margin_bottom = -3.8147e-06
-custom_constants/separation = 65
+custom_constants/separation = 50
 alignment = 1
 script = ExtResource( 3 )
 __meta__ = {
-"_edit_lock_": true,
 "_edit_use_anchors_": true
 }
 
 [node name="CityNameLbl" type="Label" parent="Controls/Status/StatCtr"]
-margin_left = 154.0
+margin_left = 237.0
 margin_top = 5.0
-margin_right = 220.0
+margin_right = 303.0
 margin_bottom = 19.0
 text = "City Name"
 
-[node name="CityYearSep" type="VSeparator" parent="Controls/Status/StatCtr"]
-margin_left = 285.0
-margin_right = 289.0
-margin_bottom = 24.0
-
 [node name="YearCtr" type="HBoxContainer" parent="Controls/Status/StatCtr"]
-margin_left = 354.0
-margin_right = 404.0
-margin_bottom = 24.0
+margin_left = 353.0
+margin_right = 433.0
+margin_bottom = 25.0
 
 [node name="CalIcon" type="TextureRect" parent="Controls/Status/StatCtr/YearCtr"]
-margin_right = 14.0
-margin_bottom = 24.0
+margin_right = 10.0
+margin_bottom = 25.0
 texture = ExtResource( 8 )
 stretch_mode = 4
 
-[node name="YearLbl" type="Label" parent="Controls/Status/StatCtr/YearCtr"]
+[node name="CalendarLbl" type="Label" parent="Controls/Status/StatCtr/YearCtr"]
+margin_left = 14.0
+margin_top = 5.0
+margin_right = 80.0
+margin_bottom = 19.0
+text = "1/1/12000"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="BudgetCtr" type="HBoxContainer" parent="Controls/Status/StatCtr"]
+margin_left = 483.0
+margin_right = 509.0
+margin_bottom = 25.0
+
+[node name="CoinsIcon" type="TextureRect" parent="Controls/Status/StatCtr/BudgetCtr"]
+margin_right = 14.0
+margin_bottom = 25.0
+texture = ExtResource( 42 )
+stretch_mode = 4
+
+[node name="BudgetLbl" type="Label" parent="Controls/Status/StatCtr/BudgetCtr"]
 margin_left = 18.0
 margin_top = 5.0
-margin_right = 50.0
+margin_right = 26.0
 margin_bottom = 19.0
-text = "1980"
-
-[node name="YearBudgetSep" type="VSeparator" parent="Controls/Status/StatCtr"]
-margin_left = 469.0
-margin_right = 473.0
-margin_bottom = 24.0
-__meta__ = {
-"_edit_use_anchors_": false
-}
-
-[node name="BudgetLbl" type="Label" parent="Controls/Status/StatCtr"]
-margin_left = 538.0
-margin_top = 5.0
-margin_right = 553.0
-margin_bottom = 19.0
-text = "§0"
-
-[node name="BudgetPopSep" type="VSeparator" parent="Controls/Status/StatCtr"]
-margin_left = 618.0
-margin_right = 622.0
-margin_bottom = 24.0
-__meta__ = {
-"_edit_use_anchors_": false
-}
+text = "0"
 
 [node name="PopCtr" type="HBoxContainer" parent="Controls/Status/StatCtr"]
-margin_left = 687.0
-margin_right = 713.0
-margin_bottom = 24.0
+margin_left = 559.0
+margin_right = 585.0
+margin_bottom = 25.0
 
 [node name="PopIcon" type="TextureRect" parent="Controls/Status/StatCtr/PopCtr"]
 margin_right = 14.0
-margin_bottom = 24.0
+margin_bottom = 25.0
 texture = ExtResource( 2 )
 stretch_mode = 4
 
@@ -380,10 +391,10 @@ margin_bottom = 19.0
 text = "0"
 
 [node name="TickerBg" type="ColorRect" parent="Controls/Status"]
-anchor_left = 0.00976562
-anchor_top = 0.0727273
-anchor_right = 0.854492
-anchor_bottom = 0.472727
+anchor_left = 0.0331126
+anchor_top = 0.0363635
+anchor_right = 0.808894
+anchor_bottom = 0.436362
 color = Color( 0, 0, 0, 1 )
 script = ExtResource( 35 )
 __meta__ = {
@@ -402,20 +413,38 @@ __meta__ = {
 "_edit_use_anchors_": true
 }
 
-[node name="MiniMap" type="Panel" parent="Controls"]
-anchor_left = 0.853516
-anchor_top = 0.75
-anchor_right = 1.0
-anchor_bottom = 1.0
+[node name="SpeedCtr" type="HBoxContainer" parent="Controls/Status"]
+anchor_left = 0.816463
+anchor_top = 0.181818
+anchor_right = 0.918639
+anchor_bottom = 0.818179
+alignment = 1
 __meta__ = {
-"_edit_lock_": true,
 "_edit_use_anchors_": true
 }
 
-[connection signal="timeout" from="Quarters" to="." method="_on_Quarters_timeout"]
+[node name="TurtleBtn" type="Button" parent="Controls/Status/SpeedCtr"]
+margin_left = 7.0
+margin_right = 48.0
+margin_bottom = 35.0
+hint_tooltip = "Slow"
+toggle_mode = true
+icon = ExtResource( 40 )
+
+[node name="CheetaBtn" type="Button" parent="Controls/Status/SpeedCtr"]
+margin_left = 52.0
+margin_right = 99.0
+margin_bottom = 35.0
+hint_tooltip = "Fast"
+toggle_mode = true
+icon = ExtResource( 41 )
+
+[connection signal="timeout" from="DayCycle" to="." method="_on_DayCycle_timeout"]
 [connection signal="timeout" from="RotateNews" to="Controls/Status/TickerBg" method="_on_RotateNews_timeout"]
 [connection signal="pressed" from="Controls/Windows/ToolsWindow/CenterCtr/VertCtr/LargeCtr/CoalBtn" to="Map" method="_on_CoalBtn_pressed"]
 [connection signal="pressed" from="Controls/Windows/ToolsWindow/CenterCtr/VertCtr/ZonesCtr/ResBtn" to="Map" method="_on_ResBtn_pressed"]
 [connection signal="pressed" from="Controls/Menu/ButtonCtr/TaxBtn" to="Controls/Windows" method="_on_TaxBtn_pressed"]
 [connection signal="pressed" from="Controls/Menu/ButtonCtr/ToolsBtn" to="Controls/Windows" method="_on_ToolsBtn_pressed"]
 [connection signal="pressed" from="Controls/Menu/ButtonCtr/AdvsiorBtn" to="Controls/Windows" method="_on_AdvsiorBtn_pressed"]
+[connection signal="toggled" from="Controls/Status/SpeedCtr/TurtleBtn" to="." method="_on_TurtleBtn_toggled"]
+[connection signal="toggled" from="Controls/Status/SpeedCtr/CheetaBtn" to="." method="_on_CheetaBtn_toggled"]

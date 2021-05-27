@@ -1,5 +1,5 @@
 50 Car Pile-Up Results In New City Sculpture
-9 Out Of 10 Sims Prefer Cranberry Jelly Over Preserves
+9 Out Of 10 Animals Prefer Cranberry Jelly Over Preserves
 After 36 Years Of Marriage, Man Discovers Wife Is Actually A Rare Yucca Plant
 All Raccoons Cheat At Poker, Animal Researchers Say
 Ancient Meteorite Revealed To Be Burnt Burger
@@ -19,7 +19,7 @@ Broccoli Pops Cereal Not As Popular As Presumed
 Broccoli Tops For Moms, Last For Kids; Dads Indifferent
 Building Turned Into Aviary After Birds Stick To New Paint
 Bus Misses Turn, Dozens Late For Work
-Cab Fares In ''city name'' To Increase; Sims Brace For Worst
+Cab Fares In [city] To Increase; Animals Brace For Worst
 Cable Disruption Blamed For Rising Birthrates
 Cat Burglar Spotted, Mistaken For Dalmatian
 Cat Hijacks Municipal Bus; Riders Applaud Good Timing At Stops And Courteous Meows
@@ -89,7 +89,7 @@ Here Comes The Sun
 House Made Entirely Of Broccoli Built In [city] [mayor]; Furniture Made Of Wheat Germ
 Humming Show Tunes Sure Sign Of Poor Motor Skills, Researchers Declare
 I Was Framed, Jokes Local Artist
-\"I'm Just A Sim, Sim, Simple Guy\" Rises To Top Of Charts
+\"I'm Just A [species], [species], Simple Guy\" Rises To Top Of Charts
 If Tin Whistles Are Made Of Tin, What Do They Make Foghorns Out Of?
 Information Shown Here Frequently Absurd, Poll Indicates
 Lady's Knitting Circle Raises Cash For Homeless
@@ -99,21 +99,21 @@ Local Kindergartners Prefer Oi Brand Paste; Claim It Just Tastes Better
 Local Mustard Magnate Marries Daughter Of Dill Pickle Mogul
 Local Politicians Take Both Sides Of Issues, Little Accomplished
 Local Scientists Conclude: Kitties Like Fish, Dogs Less Picky
-Local Sim Bill Flopsby Heads County Commission On Snuggles And Hugs
-Local Sim Discovers Just Who Wrote Book Of Love
-Local Sim Mentioned In Out Of Town Newspaper; Starts Scrapbook
+Local [species] Bill Flopsby Heads County Commission On Snuggles And Hugs
+Local [species] Discovers Just Who Wrote Book Of Love
+Local [species] Mentioned In Out Of Town Newspaper; Starts Scrapbook
 Lou Turns Away Every Person Who Skips To Her; \"They Have No Rhythm,\" She Says
 Lunar Eclipse Obscured By Clouds
 Lying Found To Be Effective Calorie Reducer
 Man Caught Shoplifting Spatulas; Thousands Of Flippers Found In Bedroom
 Man Discovers Neighbor Completely Enclosed In Mailbox; Returns Him For Postage
 Man Survives Wintry Night Adhered To Bus Bench By Chewing Gum
-Marathon! Sims Hit The Ground Running
+Marathon! Animals Hit The Ground Running
 Mediums Agree Blue-Striped Socks No More Lucky Than Clovers Or Pennies
 Middle Age A Hoax, Declares Study; Turns Out To Be Bad Posture After All
 Miracle Lint Remover Based On Broccoli Juice Sweeps Market
 Molasses Truck Springs Leak; Sweetest Accident In Long Time
-Most Sims Ignore Tickers, Study Reveals
+Most Animals Ignore Tickers, Study Reveals
 Mrs. SimLeary Gets Prize Cow
 Mysterious Loud Rumbling Noises In [city] name Found To Be Mysterious Loud Rumblings
 Never Feed Broccoli To Your Dog, No Matter How Much He Begs
@@ -136,39 +136,39 @@ School Field Trip To Museum Sparks Interest In Local History
 Scientists Assert That Swearing Is Source Of Bad Breath
 Semicolon Declared Sexier Than Comma At Grammarian's Fete
 Shopping After Hours Source Of Purchase Embarrassment Says Survey
-Sim Offers To Let City Bus Run Him Over For Lifetime Salad Bar Privileges
-Sim Scientist Discovers Gravity While Falling Down Stairs
+[species] Offers To Let City Bus Run Him Over For Lifetime Salad Bar Privileges
+[species] Scientist Discovers Gravity While Falling Down Stairs
 SimFirefighters Wanted: Apply At Your Local Fire Station
-SimNation Report: Criminals Demand Cell Phones
-SimNation To Host Energy Symposium
-SimPolice Officers Wanted: Apply At Your Local Police Precinct
-SimScientist Discovers Abacus Can Be Used To Dry Towels
-SimScientist Discovers New Dry Cleaning Method Using Sparklers
-SimSurvey Reports Rise in Vegetarian Sims
-SimSurvey: \"Cheese Louise\" Voted Best Pizza Restaurant In [city] [mayor]
-SimSurvey: 3 Out Of 5 Sims Loathe Modern Art
-SimSurvey: 4 Out Of 5 Sims Prefer Hard Cheese To Brie
-SimSurvey: 4 Out Of 5 Sims Surveyed Find Surveys Satisfactory
-SimSurvey: 50% Of Sims Say YES
-SimSurvey: 80% Of Sims Hang Up On Telephone Solicitors
-SimSurvey: 80% Of Sims Love Clog-Dancing
-SimSurvey: Sims Sleep Seven Hours
-Sims Everywhere Agree: A Sound Financial Future Begins With Inheriting Lots Of Money
-Sims Everywhere Agree: All Sales Are Final
-Sims Everywhere Agree: Brush Before, After, And Between Meals
-Sims Everywhere Agree: For The Best In News Ticker Entertainment, The Picayune Can't Be Beat
-Sims Everywhere Agree: Frequent Saving Prevents File Loss
-Sims Everywhere Agree: Good Grooming Is Essential To Success
-Sims Everywhere Agree: History Laughs At Many People Who Deserved To Be Laughed At
-Sims Everywhere Agree: If You Throw A Stone, It Will Hit Something
-Sims Everywhere Agree: It's Not What You Make, It's What You Keep
-Sims Everywhere Agree: Past Performance Does Not Guarantee Future Returns
-Sims Everywhere Agree: Purring Kitties Are Happy Kitties
-Sims Everywhere Agree: The Egg Came First, But Only After The Chicken
-Sims Everywhere Agree: Vote Early, Vote Often
-Sims Everywhere Agree: Your Actual Costs May Vary
-Sims Flock To Grand Opening Of Betty's Bird Boutique
-Sims Report Widespread SimAnt Problem
+Nethington Report: Criminals Demand Cell Phones
+Nethington To Host Energy Symposium
+Police Officers Wanted: Apply At Your Local Police Precinct
+Scientist Discovers Abacus Can Be Used To Dry Towels
+Scientist Discovers New Dry Cleaning Method Using Sparklers
+Survey Reports Rise in Vegetarian Animals
+Survey: \"Cheese Louise\" Voted Best Pizza Restaurant In [city] [mayor]
+Survey: 3 Out Of 5 Animals Loathe Modern Art
+Survey: 4 Out Of 5 Animals Prefer Hard Cheese To Brie
+Survey: 4 Out Of 5 Animals Surveyed Find Surveys Satisfactory
+Survey: 50% Of Animals Say YES
+Survey: 80% Of Animals Hang Up On Telephone Solicitors
+Survey: 80% Of Animals Love Clog-Dancing
+Survey: Animals Sleep Seven Hours
+Animals Everywhere Agree: A Sound Financial Future Begins With Inheriting Lots Of Money
+Animals Everywhere Agree: All Sales Are Final
+Animals Everywhere Agree: Brush Before, After, And Between Meals
+Animals Everywhere Agree: For The Best In News Ticker Entertainment, The Picayune Can't Be Beat
+Animals Everywhere Agree: Frequent Saving Prevents File Loss
+Animals Everywhere Agree: Good Grooming Is Essential To Success
+Animals Everywhere Agree: History Laughs At Many People Who Deserved To Be Laughed At
+Animals Everywhere Agree: If You Throw A Stone, It Will Hit Something
+Animals Everywhere Agree: It's Not What You Make, It's What You Keep
+Animals Everywhere Agree: Past Performance Does Not Guarantee Future Returns
+Animals Everywhere Agree: Purring Kitties Are Happy Kitties
+Animals Everywhere Agree: The Egg Came First, But Only After The Chicken
+Animals Everywhere Agree: Vote Early, Vote Often
+Animals Everywhere Agree: Your Actual Costs May Vary
+Animals Flock To Grand Opening Of Betty's Bird Boutique
+Animals Report Widespread SimAnt Problem
 Skirmish At Writer's Workshop, Speaker Used Fighting Words
 Some Destruction, But Not Too Much, In Practical Joke Derby
 Spotted Owl Spotted
@@ -176,7 +176,7 @@ Stand Up And Cheer If You Like SimCity
 Staring At Football-Shaped Bladders Good For Concentration, Researchers Proclaim
 Staring At Lapping Ocean Waves Makes You More Assertive During Lunch
 State Governor Found To Be Mule; \"His Clothes Always Fit Funny,\" Says Aide
-Studies Show Most Sims Mispronounce \"Zsdersw\"
+Studies Show Most Animals Mispronounce \"Zsdersw\"
 Study Demonstrates That Singing In The Shower Makes Teeth Crooked
 Survey Shows Less Is More, More Or Less
 Swamp Gas Verified To Be Exhalations Of Stars--Movie Stars--Long Passed
@@ -229,7 +229,7 @@ Is Kitty Kibble Shortage Real? Authorities Say Rumors Unfounded
 Unlicensed Kitty Kibble Factory Fuels Rumors Of Shortage
 Enough Kitty Kibble For Twenty Years, Experts Agree
 Kitty Kibble Association Flooded With Letters: Where Is Kitty Kibble?
-Is Kitty Kibble Shortage A Hoax? Sims Search For Truth
+Is Kitty Kibble Shortage A Hoax? Animals Search For Truth
 Rumors Persist In Kitty Kibble Shortage; Unfounded Say Many
 Kitties Want Answers In Possible Kitty Kibble Shortage
 Kitties Say Not Enough Being Done In Kitty Kibble Shortage

@@ -15,30 +15,63 @@ onready var rank_label = $Container/Advisor/RankLbl
 onready var name_label = $Container/Advisor/NameLbl
 onready var description_label = $Container/DescriptionLbl
 
-func _start_dialogue(advisor, message):
-	if advisor == SimData.Advisors.CITY_PLANNER:
-		dialogue_file = "res://dialog/advisors/cityplanner.json"
-		_load_dialogue()
-		avatar_texture.texture = preload("res://sprites/avatars/cindy.png")
-		name_label.text = "Cindy Diamond"
-		rank_label.text = "City Planner"
-	elif advisor == SimData.Advisors.FINANCIAL:
-		dialogue_file = "res://dialog/advisors/finacial.json"
-		_load_dialogue()
-		avatar_texture.texture = preload("res://sprites/avatars/kit.png")
-		name_label.text = "Kit Welsh"
-		rank_label.text = "Financial Advisor"
-	elif advisor == SimData.Advisors.FINANCIAL:
-		dialogue_file = "res://dialog/advisors/transport.json"
-		_load_dialogue()
-		avatar_texture.texture = preload("res://sprites/avatars/zc.png")
-		name_label.text = "Zack Casey"
-		rank_label.text = "Transportation Advisor"
+enum JsonFile {
+	ANNOUNCEMENTS,
+	ANALYSIS
+}
+
+func _ready():
+	SimEvents.connect("advisor_message", self, "_advisor_dialogue")
+	SimEvents.connect("policy_analysis", self, "_analysis_dialouge")
+	
+func _init_advisor(file, advisor):
+	match advisor:
+		SimData.Advisors.CITY_PLANNER:
+			match file:
+				JsonFile.ANNOUNCEMENTS:
+					dialogue_file = "res://dialog/advisors/cityplanner.json"
+				JsonFile.ANALYSIS:
+					dialogue_file = "res://dialog/policies/cityplanner_analysis.json"
+					
+			avatar_texture.texture = preload("res://sprites/avatars/cindy.png")
+			name_label.text = "Cindy Diamond"
+			rank_label.text = "City Planner"
 		
+		SimData.Advisors.FINANCIAL:
+			match file:
+				JsonFile.ANNOUNCEMENTS:
+					dialogue_file = "res://dialog/advisors/finacial.json"
+				JsonFile.ANALYSIS:
+					dialogue_file = "res://dialog/policies/finacial_analysis.json"
+					
+			avatar_texture.texture = preload("res://sprites/avatars/kit.png")
+			name_label.text = "Kit Welsh"
+			rank_label.text = "Financial Advisor"
+			
+		SimData.Advisors.TRANSPORT:
+			match file:
+				JsonFile.ANNOUNCEMENTS:
+					dialogue_file = "res://dialog/advisors/transport.json"
+				JsonFile.ANALYSIS:
+					dialogue_file = "res://dialog/policies/transport_analysis.json"
+					
+			avatar_texture.texture = preload("res://sprites/avatars/zc.png")
+			name_label.text = "Zack Casey"
+			rank_label.text = "Transportation Advisor"
+	
+func _launch_advisor_window(key):
 	_index_dialogue()
-	description_label.text = dialogue_keys[message].text
-	window_title = dialogue_keys[message].name
+	description_label.text = dialogue_keys[key].text
+	window_title = dialogue_keys[key].name
 	show()
+
+func _advisor_dialogue(advisor, message):
+	_init_advisor(JsonFile.ANNOUNCEMENTS, advisor)
+	_launch_advisor_window(message)
+	
+func _analysis_dialouge(advisor, policy):
+	_init_advisor(JsonFile.ANALYSIS, advisor)
+	_launch_advisor_window(policy)
 
 func _index_dialogue():
 	var dialogue = _load_dialogue()
@@ -52,6 +85,3 @@ func _load_dialogue():
 		file.open(dialogue_file, file.READ)
 		var dialogue = parse_json(file.get_as_text())
 		return dialogue
-
-func _ready():
-	SimEvents.connect("advisor_message", self, "_start_dialogue")

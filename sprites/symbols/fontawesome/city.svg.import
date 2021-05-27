@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/calendar.svg-4fbe4e8ff7750f8c6b821d1ab5f5b51e.stex"
+path="res://.import/city.svg-8d4c29ab828a6ad06f0000da24d8fdf6.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://sprites/symbols/calendar.svg"
-dest_files=[ "res://.import/calendar.svg-4fbe4e8ff7750f8c6b821d1ab5f5b51e.stex" ]
+source_file="res://sprites/symbols/fontawesome/city.svg"
+dest_files=[ "res://.import/city.svg-8d4c29ab828a6ad06f0000da24d8fdf6.stex" ]
 
 [params]
 

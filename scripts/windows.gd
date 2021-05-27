@@ -4,7 +4,6 @@ onready var debug_console = $Console
 onready var tax_window = $TaxWindow
 onready var advsior_meet_window = $AdvisorMeet
 onready var tools_window = $ToolsWindow
-# onready var news_ticker = $
 
 func _ready():
 	SimEvents.emit_signal("advisor_message", SimData.Advisors.CITY_PLANNER, 0)

@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/github-sign.svg-206b3863570889f5db50a3777e9d6707.stex"
+path="res://.import/adorable-z.png-5fdc63fd95e4c69749d0532f2ec2287e.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://sprites/symbols/github-sign.svg"
-dest_files=[ "res://.import/github-sign.svg-206b3863570889f5db50a3777e9d6707.stex" ]
+source_file="res://sprites/adorable-z.png"
+dest_files=[ "res://.import/adorable-z.png-5fdc63fd95e4c69749d0532f2ec2287e.stex" ]
 
 [params]
 

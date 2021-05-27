@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/graph.svg-a3897e2373c1268fce188530eba003b4.stex"
+path="res://.import/coins.svg-70f9299636a88850d5eb95148ff6bdbb.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://sprites/symbols/graph.svg"
-dest_files=[ "res://.import/graph.svg-a3897e2373c1268fce188530eba003b4.stex" ]
+source_file="res://sprites/symbols/fontawesome/coins.svg"
+dest_files=[ "res://.import/coins.svg-70f9299636a88850d5eb95148ff6bdbb.stex" ]
 
 [params]
 
