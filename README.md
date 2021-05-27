@@ -2,7 +2,7 @@
 
 ![Screenshot](screenshot.png)
 
-City Limits is a re-imagining of SimCity Classic using 
+City Limits is a re-imagining of SimCity Classic that brings modern city building concepts to the classic game.
 
 ## Getting Started
 

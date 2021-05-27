@@ -2,8 +2,8 @@ extends Node2D
 
 onready var rotate_news = $RotateNews
 onready var day_cycle = $DayCycle
-onready var turtle_btn = $Controls/Status/SpeedCtr/TurtleBtn
-onready var cheeta_btn = $Controls/Status/SpeedCtr/CheetaBtn
+onready var turtle_btn = $Controls/Status/StatCtr/ButtonCtr/TurtleBtn
+onready var cheeta_btn = $Controls/Status/StatCtr/ButtonCtr/CheetaBtn
 
 func _ready():
 	SimEvents.connect("resume_news", self, "_resume_rotation")
@@ -45,3 +45,4 @@ func _on_CheetaBtn_toggled(button_pressed):
 	if button_pressed:
 		day_cycle.wait_time = 2
 		turtle_btn.pressed = false
+		

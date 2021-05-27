@@ -26,9 +26,8 @@ func _ready():
 func _process(delta):
 	var total_income = int(SimData.res_income + SimData.comm_income + SimData.ind_income)
 	
-	
-	if total_income >= 1:
-		annual_income.text = "Income: " + SimData.currency + str(total_income) + "/yr"
+	if SimData.prev_month < SimData.month and total_income > 1:
+		annual_income.text = str(total_income) + "/mo"
 
 func _on_ResSlider_value_changed(value):
 	SimData.res_tax = int(value)

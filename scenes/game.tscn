@@ -69,20 +69,21 @@ anchor_bottom = 1.0
 script = ExtResource( 37 )
 __meta__ = {
 "_edit_lock_": true,
-"_edit_use_anchors_": false
+"_edit_use_anchors_": true
 }
 
 [node name="Console" parent="Controls/Windows" instance=ExtResource( 6 )]
-anchor_left = 0.52391
-anchor_top = 0.0691609
-anchor_right = 0.918441
-anchor_bottom = 0.320828
+anchor_left = 0.590492
+anchor_top = 0.0604199
+anchor_right = 0.985023
+anchor_bottom = 0.312087
 rect_min_size = Vector2( 400, 150 )
 resizable = true
 
 [node name="CityPlanner" parent="Controls/Windows" instance=ExtResource( 4 )]
 
 [node name="TaxWindow" parent="Controls/Windows" instance=ExtResource( 32 )]
+visible = false
 anchor_left = 0.297863
 anchor_top = 0.409167
 anchor_right = 0.702137
@@ -250,162 +251,189 @@ __meta__ = {
 
 [node name="Ordinance" parent="Controls/Windows" instance=ExtResource( 44 )]
 
-[node name="Menu" type="Panel" parent="Controls"]
-anchor_left = 1.0
+[node name="Status" type="Panel" parent="Controls"]
+anchor_top = 0.860396
 anchor_right = 1.0
-anchor_bottom = 1.0
-margin_left = -57.0
-margin_top = -18.0
+anchor_bottom = 1.00206
+__meta__ = {
+"_edit_lock_": true,
+"_edit_use_anchors_": true
+}
+
+[node name="StatCtr" type="HBoxContainer" parent="Controls/Status"]
+anchor_left = 0.00119134
+anchor_top = 0.489112
+anchor_right = 1.00119
+anchor_bottom = 0.489112
+margin_left = 0.940155
+margin_top = -30.0
+margin_right = 0.940063
+margin_bottom = 6.0
+custom_constants/separation = 50
+alignment = 1
+script = ExtResource( 3 )
+__meta__ = {
+"_edit_lock_": true,
+"_edit_use_anchors_": false
+}
+
+[node name="ButtonCtr" type="HBoxContainer" parent="Controls/Status/StatCtr"]
+margin_left = 241.0
+margin_right = 575.0
+margin_bottom = 36.0
+custom_constants/separation = 10
+alignment = 1
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="ButtonCtr" type="VBoxContainer" parent="Controls/Menu"]
-anchor_top = 0.0420712
-anchor_right = 1.0
-anchor_bottom = 1.0
-custom_constants/separation = 5
-__meta__ = {
-"_edit_use_anchors_": true
-}
-
-[node name="TaxBtn" type="Button" parent="Controls/Menu/ButtonCtr"]
-margin_left = 7.0
-margin_right = 49.0
+[node name="TaxBtn" type="Button" parent="Controls/Status/StatCtr/ButtonCtr"]
+margin_right = 42.0
 margin_bottom = 36.0
 hint_tooltip = "RCI"
 size_flags_horizontal = 4
 icon = ExtResource( 7 )
 
-[node name="ToolsBtn" type="Button" parent="Controls/Menu/ButtonCtr"]
-margin_left = 7.0
-margin_top = 41.0
-margin_right = 49.0
-margin_bottom = 72.0
+[node name="ToolsBtn" type="Button" parent="Controls/Status/StatCtr/ButtonCtr"]
+margin_left = 52.0
+margin_right = 94.0
+margin_bottom = 36.0
 hint_tooltip = "Tools"
 size_flags_horizontal = 4
 icon = ExtResource( 36 )
 
-[node name="AdvsiorBtn" type="Button" parent="Controls/Menu/ButtonCtr"]
-margin_left = 7.0
-margin_top = 77.0
-margin_right = 49.0
-margin_bottom = 103.0
+[node name="AdvsiorBtn" type="Button" parent="Controls/Status/StatCtr/ButtonCtr"]
+margin_left = 104.0
+margin_right = 146.0
+margin_bottom = 36.0
 hint_tooltip = "Meet"
 size_flags_horizontal = 4
 icon = ExtResource( 38 )
 
-[node name="SettingsBtn" type="Button" parent="Controls/Menu/ButtonCtr"]
-margin_left = 7.0
-margin_top = 108.0
-margin_right = 49.0
-margin_bottom = 140.0
+[node name="SettingsBtn" type="Button" parent="Controls/Status/StatCtr/ButtonCtr"]
+margin_left = 156.0
+margin_right = 198.0
+margin_bottom = 36.0
 hint_tooltip = "Meet"
 size_flags_horizontal = 4
 icon = ExtResource( 43 )
 
-[node name="Status" type="Panel" parent="Controls"]
-anchor_left = -0.0126953
-anchor_top = 0.908333
-anchor_right = 1.01953
-anchor_bottom = 1.0
-__meta__ = {
-"_edit_use_anchors_": true
-}
+[node name="VSeparator" type="VSeparator" parent="Controls/Status/StatCtr/ButtonCtr"]
+margin_left = 208.0
+margin_right = 212.0
+margin_bottom = 36.0
 
-[node name="StatCtr" type="HBoxContainer" parent="Controls/Status"]
-anchor_left = 0.0302744
-anchor_top = 0.527271
-anchor_right = 0.808894
-anchor_bottom = 0.981815
-margin_bottom = -3.8147e-06
-custom_constants/separation = 50
+[node name="TurtleBtn" type="Button" parent="Controls/Status/StatCtr/ButtonCtr"]
+margin_left = 222.0
+margin_right = 263.0
+margin_bottom = 36.0
+hint_tooltip = "Slow"
+toggle_mode = true
+icon = ExtResource( 40 )
+
+[node name="CheetaBtn" type="Button" parent="Controls/Status/StatCtr/ButtonCtr"]
+margin_left = 273.0
+margin_right = 320.0
+margin_bottom = 36.0
+hint_tooltip = "Fast"
+toggle_mode = true
+icon = ExtResource( 41 )
+
+[node name="VSeparator2" type="VSeparator" parent="Controls/Status/StatCtr/ButtonCtr"]
+margin_left = 330.0
+margin_right = 334.0
+margin_bottom = 36.0
+
+[node name="NameDate" type="VBoxContainer" parent="Controls/Status/StatCtr"]
+margin_left = 625.0
+margin_right = 705.0
+margin_bottom = 36.0
 alignment = 1
-script = ExtResource( 3 )
-__meta__ = {
-"_edit_use_anchors_": true
-}
 
-[node name="CityNameLbl" type="Label" parent="Controls/Status/StatCtr"]
-margin_left = 237.0
-margin_top = 5.0
-margin_right = 303.0
-margin_bottom = 19.0
+[node name="CityNameLbl" type="Label" parent="Controls/Status/StatCtr/NameDate"]
+margin_top = 2.0
+margin_right = 80.0
+margin_bottom = 16.0
 text = "City Name"
+align = 1
 
-[node name="YearCtr" type="HBoxContainer" parent="Controls/Status/StatCtr"]
-margin_left = 353.0
-margin_right = 433.0
-margin_bottom = 25.0
+[node name="YearCtr" type="HBoxContainer" parent="Controls/Status/StatCtr/NameDate"]
+margin_top = 20.0
+margin_right = 80.0
+margin_bottom = 34.0
 
-[node name="CalIcon" type="TextureRect" parent="Controls/Status/StatCtr/YearCtr"]
+[node name="CalIcon" type="TextureRect" parent="Controls/Status/StatCtr/NameDate/YearCtr"]
 margin_right = 10.0
-margin_bottom = 25.0
+margin_bottom = 14.0
 texture = ExtResource( 8 )
 stretch_mode = 4
 
-[node name="CalendarLbl" type="Label" parent="Controls/Status/StatCtr/YearCtr"]
+[node name="CalendarLbl" type="Label" parent="Controls/Status/StatCtr/NameDate/YearCtr"]
 margin_left = 14.0
-margin_top = 5.0
 margin_right = 80.0
-margin_bottom = 19.0
+margin_bottom = 14.0
 text = "1/1/12000"
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="BudgetCtr" type="HBoxContainer" parent="Controls/Status/StatCtr"]
-margin_left = 483.0
-margin_right = 509.0
-margin_bottom = 25.0
+[node name="PopBudget" type="VBoxContainer" parent="Controls/Status/StatCtr"]
+margin_left = 755.0
+margin_right = 781.0
+margin_bottom = 36.0
+alignment = 1
 
-[node name="CoinsIcon" type="TextureRect" parent="Controls/Status/StatCtr/BudgetCtr"]
+[node name="BudgetCtr" type="HBoxContainer" parent="Controls/Status/StatCtr/PopBudget"]
+margin_top = 2.0
+margin_right = 26.0
+margin_bottom = 16.0
+
+[node name="CoinsIcon" type="TextureRect" parent="Controls/Status/StatCtr/PopBudget/BudgetCtr"]
 margin_right = 14.0
-margin_bottom = 25.0
+margin_bottom = 14.0
 texture = ExtResource( 42 )
 stretch_mode = 4
 
-[node name="BudgetLbl" type="Label" parent="Controls/Status/StatCtr/BudgetCtr"]
+[node name="BudgetLbl" type="Label" parent="Controls/Status/StatCtr/PopBudget/BudgetCtr"]
 margin_left = 18.0
-margin_top = 5.0
 margin_right = 26.0
-margin_bottom = 19.0
+margin_bottom = 14.0
 text = "0"
 
-[node name="PopCtr" type="HBoxContainer" parent="Controls/Status/StatCtr"]
-margin_left = 559.0
-margin_right = 585.0
-margin_bottom = 25.0
+[node name="PopCtr" type="HBoxContainer" parent="Controls/Status/StatCtr/PopBudget"]
+margin_top = 20.0
+margin_right = 26.0
+margin_bottom = 34.0
 
-[node name="PopIcon" type="TextureRect" parent="Controls/Status/StatCtr/PopCtr"]
+[node name="PopIcon" type="TextureRect" parent="Controls/Status/StatCtr/PopBudget/PopCtr"]
 margin_right = 14.0
-margin_bottom = 25.0
+margin_bottom = 14.0
 texture = ExtResource( 2 )
 stretch_mode = 4
 
-[node name="PopLbl" type="Label" parent="Controls/Status/StatCtr/PopCtr"]
+[node name="PopLbl" type="Label" parent="Controls/Status/StatCtr/PopBudget/PopCtr"]
 margin_left = 18.0
-margin_top = 5.0
 margin_right = 26.0
-margin_bottom = 19.0
+margin_bottom = 14.0
 text = "0"
 
 [node name="TickerBg" type="ColorRect" parent="Controls/Status"]
-anchor_left = 0.0331126
-anchor_top = 0.0363635
-anchor_right = 0.808894
-anchor_bottom = 0.436362
+anchor_left = 0.00073738
+anchor_top = 1.0
+anchor_right = 1.00074
+anchor_bottom = 1.0
+margin_top = -28.0
 color = Color( 0, 0, 0, 1 )
 script = ExtResource( 35 )
 __meta__ = {
-"_edit_use_anchors_": true
+"_edit_use_anchors_": false
 }
 
 [node name="TickerTxt" type="RichTextLabel" parent="Controls/Status/TickerBg"]
-anchor_left = 0.00601721
-anchor_top = 0.181818
-anchor_right = 0.994298
-anchor_bottom = 0.954545
+anchor_left = 0.0145068
+anchor_top = 0.17248
+anchor_right = 0.987427
+anchor_bottom = 0.93248
 margin_top = 0.687989
 margin_bottom = 0.687988
 __meta__ = {
@@ -413,38 +441,12 @@ __meta__ = {
 "_edit_use_anchors_": true
 }
 
-[node name="SpeedCtr" type="HBoxContainer" parent="Controls/Status"]
-anchor_left = 0.816463
-anchor_top = 0.181818
-anchor_right = 0.918639
-anchor_bottom = 0.818179
-alignment = 1
-__meta__ = {
-"_edit_use_anchors_": true
-}
-
-[node name="TurtleBtn" type="Button" parent="Controls/Status/SpeedCtr"]
-margin_left = 7.0
-margin_right = 48.0
-margin_bottom = 35.0
-hint_tooltip = "Slow"
-toggle_mode = true
-icon = ExtResource( 40 )
-
-[node name="CheetaBtn" type="Button" parent="Controls/Status/SpeedCtr"]
-margin_left = 52.0
-margin_right = 99.0
-margin_bottom = 35.0
-hint_tooltip = "Fast"
-toggle_mode = true
-icon = ExtResource( 41 )
-
 [connection signal="timeout" from="DayCycle" to="." method="_on_DayCycle_timeout"]
 [connection signal="timeout" from="RotateNews" to="Controls/Status/TickerBg" method="_on_RotateNews_timeout"]
 [connection signal="pressed" from="Controls/Windows/ToolsWindow/CenterCtr/VertCtr/LargeCtr/CoalBtn" to="Map" method="_on_CoalBtn_pressed"]
 [connection signal="pressed" from="Controls/Windows/ToolsWindow/CenterCtr/VertCtr/ZonesCtr/ResBtn" to="Map" method="_on_ResBtn_pressed"]
-[connection signal="pressed" from="Controls/Menu/ButtonCtr/TaxBtn" to="Controls/Windows" method="_on_TaxBtn_pressed"]
-[connection signal="pressed" from="Controls/Menu/ButtonCtr/ToolsBtn" to="Controls/Windows" method="_on_ToolsBtn_pressed"]
-[connection signal="pressed" from="Controls/Menu/ButtonCtr/AdvsiorBtn" to="Controls/Windows" method="_on_AdvsiorBtn_pressed"]
-[connection signal="toggled" from="Controls/Status/SpeedCtr/TurtleBtn" to="." method="_on_TurtleBtn_toggled"]
-[connection signal="toggled" from="Controls/Status/SpeedCtr/CheetaBtn" to="." method="_on_CheetaBtn_toggled"]
+[connection signal="pressed" from="Controls/Status/StatCtr/ButtonCtr/TaxBtn" to="Controls/Windows" method="_on_TaxBtn_pressed"]
+[connection signal="pressed" from="Controls/Status/StatCtr/ButtonCtr/ToolsBtn" to="Controls/Windows" method="_on_ToolsBtn_pressed"]
+[connection signal="pressed" from="Controls/Status/StatCtr/ButtonCtr/AdvsiorBtn" to="Controls/Windows" method="_on_AdvsiorBtn_pressed"]
+[connection signal="toggled" from="Controls/Status/StatCtr/ButtonCtr/TurtleBtn" to="." method="_on_TurtleBtn_toggled"]
+[connection signal="toggled" from="Controls/Status/StatCtr/ButtonCtr/CheetaBtn" to="." method="_on_CheetaBtn_toggled"]

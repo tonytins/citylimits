@@ -1,38 +1,39 @@
 extends WindowDialog
 
-var dialogue_file = "res://dialog/policies/policies.json"
+var dialogue_file = "res://dialog/policies/proposels.json"
 
 var dialogue_keys = []
 var dialogue_name = ""
 var dialogue_text = ""
-var policy: int
+var policy_id
 
 onready var ordinance_label = $OrdinanceLbl
 onready var description_label = $DescPanel/DescriptionLbl
 
-func _start_dialogue(ordinance):
-	
+func _start_dialogue(policy):
+	match policy:
+		[SimData.Ordinances.ENERGY_CONSERVATION, 1]:
+			policy_id = 1
+			_launch_policy_window(1)
+		[SimData.Ordinances.CLEAN_AIR_ACT, 3]:
+			policy_id = 2
+			_launch_policy_window(2)
+		[SimData.Ordinances.TIRE_RECYCLE, 3]:
+			policy_id = 3
+			_launch_policy_window(3)
+
+func _launch_policy_window(key):
 	_index_dialogue()
+	var message: String = dialogue_keys[key].text
 	
-	match ordinance:
-		1:
-			policy = 1
-		2:
-			policy = 2
-		3:
-			policy = 3
+	if "[name]" in message:
+		message = message.replace("[name]", SimData.mayor_name)
 	
-	var proposel: String = dialogue_keys[policy].text
+	if "[city]" in message:
+		message = message.replace("[city]", SimData.city_name)
 	
-	if "[name]" in proposel:
-		proposel = proposel.replace("[name]", SimData.mayor_name)
-	
-	if "[city]" in proposel:
-		proposel = proposel.replace("[city]", SimData.city_name)
-			
-	description_label.text = proposel
-	ordinance_label.text = dialogue_keys[policy].name
-	
+	description_label.text = message
+	window_title = dialogue_keys[key].name
 	show()
 
 func _index_dialogue():
@@ -52,18 +53,18 @@ func _ready():
 	SimEvents.connect("policy_message", self, "_start_dialogue")
 
 func _on_IgnoreBtn_pressed():
-	policy = 0
+	policy_id = 0
 	description_label.text = ""
 	ordinance_label.text = ""
 	hide()
 
 func _on_EnectBtn_pressed():
-	match policy:
+	match policy_id:
 		1: SimEvents.emit_signal("energy_saving")
 		2: SimEvents.emit_signal("clean_air_act")
 
 func _on_AnalysisBtn_pressed():
-	match policy:
-		1: SimEvents.emit_signal("policy_analysis", SimData.Advisors.CITY_PLANNER, policy)
-		2: SimEvents.emit_signal("policy_analysis", SimData.Advisors.CITY_PLANNER, policy)
-		3: SimEvents.emit_signal("policy_analysis", SimData.Advisors.CITY_PLANNER, policy)
+	match policy_id:
+		1: SimEvents.emit_signal("policy_analysis", SimData.Advisors.CITY_PLANNER, policy_id)
+		2: SimEvents.emit_signal("policy_analysis", SimData.Advisors.CITY_PLANNER, policy_id)
+		3: SimEvents.emit_signal("policy_analysis", SimData.Advisors.CITY_PLANNER, policy_id)

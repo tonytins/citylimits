@@ -1,8 +1,8 @@
 extends HBoxContainer
 
-onready var city_name = $CityNameLbl
-onready var budget = $BudgetCtr/BudgetLbl
-onready var calendar = $YearCtr/CalendarLbl
+onready var city_name = $NameDate/CityNameLbl
+onready var budget = $PopBudget/BudgetCtr/BudgetLbl
+onready var calendar = $NameDate/YearCtr/CalendarLbl
 
 func _process(delta):
 	city_name.text = SimData.city_name
