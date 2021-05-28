@@ -11,8 +11,16 @@ const valid_commands = [
 	["money", [ARG_STRING] ],
 	["whereyoufrom", [ARG_STRING] ],
 	["whatyearisit", [ARG_STRING] ],
-	["show_policy", [ARG_INT]]
+	["show_policy", [ARG_INT]],
+	["set_month", [ARG_INT]],
+	["set_year", [ARG_INT]]
 ]
+
+func set_month(month):
+	SimData.month = month
+
+func set_year(year):
+	SimData.year = year
 
 func show_policy(policy):
 	SimEvents.emit_signal("policy_message", policy)

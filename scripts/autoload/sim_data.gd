@@ -14,6 +14,7 @@ var month: int = 1
 var prev_month: int
 var day: int = 1
 var prev_day: int
+var last_total_days: int
 var total_days: int = 1
 
 var power_grid: int # Number of power stations in the area. Helps provide redundancies.
@@ -78,9 +79,6 @@ enum Ordinances {
 	CLEAN_AIR_ACT,
 	TIRE_RECYCLE
 }
-
-func get_week():
-	return (10 + total_days - day) / 7
 
 #func starting_budget(lev = Level.EASY):
 #	match lev:
