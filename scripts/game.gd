@@ -17,31 +17,24 @@ func _resume_rotation():
 
 func _on_DayCycle_timeout():
 	
-	if SimData.prev_month < 12:
-		SimData.last_total_days = SimData.total_days
-		SimData.total_days += 1
-	
 	# Increment the number days until it reaches 30
-	if SimData.prev_day < 30:
-		SimData.day += 1
+	if SimTime.prev_day < 30:
+		SimTime.increment_day(1)
 	
 	# Reset the number of days to 1 on day 30 and increment the month
-	if SimData.prev_day == 30:
-		SimData.day = 1
-		SimData.prev_month = SimData.month
-		SimData.month += 1
+	if SimTime.prev_day == 30:
+		SimTime.reset_day()
+		
+		# Increment month up until the 12th
+		if SimTime.prev_month != 12:
+			SimTime.increment_month(1)
+			
 		SimEvents.emit_signal("budget")
 	
 	# Increment the year on the 12th month 
-	if SimData.prev_month == 12:
-		SimData.prev_year = SimData.year
-		SimData.total_days = 1
-		SimData.month = 1
-		SimData.year += 1
-	
-	SimData.last_total_days = SimData.total_days
-	SimData.prev_day = SimData.day
-
+	if SimTime.prev_month == 12:
+		SimTime.new_year()
+		
 func _on_TurtleBtn_toggled(button_pressed):
 	if button_pressed:
 		day_cycle.wait_time = 12

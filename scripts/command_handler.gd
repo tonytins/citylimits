@@ -17,10 +17,10 @@ const valid_commands = [
 ]
 
 func set_month(month):
-	SimData.month = month
+	SimTime.month = month
 
 func set_year(year):
-	SimData.year = year
+	SimTime.year = year
 
 func show_policy(policy):
 	SimEvents.emit_signal("policy_message", policy)

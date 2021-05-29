@@ -8,15 +8,6 @@ var expenses: int
 var on_alert: bool = false
 var has_ctower: bool = false # Central Tower
 
-var year: int = 2000
-var prev_year: int
-var month: int = 1
-var prev_month: int
-var day: int = 1
-var prev_day: int
-var last_total_days: int
-var total_days: int = 1
-
 var power_grid: int # Number of power stations in the area. Helps provide redundancies.
 var power_capacity: int
 var current_power_cap: int
@@ -34,6 +25,12 @@ var ind_income: int
 var fire_tax: int
 var police_tax: int
 var power_tax: int
+
+var ticker_files: Array = [
+	"adverts.json",
+	"sammy.json"
+]
+var prev_ticker_files: Array = []
 
 enum GameSpeed {
 	SLOW, 
