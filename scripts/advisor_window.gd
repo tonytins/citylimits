@@ -29,9 +29,9 @@ func _init_advisor(file, advisor):
 		SimData.Advisors.CITY_PLANNER:
 			match file:
 				JsonFile.ANNOUNCEMENTS:
-					dialogue_file = "res://dialog/advisors/cityplanner.json"
+					dialogue_file = "res://json/advisors/cityplanner.json"
 				JsonFile.ANALYSIS:
-					dialogue_file = "res://dialog/policies/cityplanner_analysis.json"
+					dialogue_file = "res://json/policies/cityplanner_analysis.json"
 					
 			avatar_texture.texture = preload("res://sprites/avatars/cindy.png")
 			name_label.text = "Cindy Diamond"
@@ -40,9 +40,9 @@ func _init_advisor(file, advisor):
 		SimData.Advisors.FINANCIAL:
 			match file:
 				JsonFile.ANNOUNCEMENTS:
-					dialogue_file = "res://dialog/advisors/finacial.json"
+					dialogue_file = "res://json/advisors/finacial.json"
 				JsonFile.ANALYSIS:
-					dialogue_file = "res://dialog/policies/finacial_analysis.json"
+					dialogue_file = "res://json/policies/finacial_analysis.json"
 					
 			avatar_texture.texture = preload("res://sprites/avatars/kit.png")
 			name_label.text = "Kit Welsh"
@@ -51,9 +51,9 @@ func _init_advisor(file, advisor):
 		SimData.Advisors.TRANSPORT:
 			match file:
 				JsonFile.ANNOUNCEMENTS:
-					dialogue_file = "res://dialog/advisors/transport.json"
+					dialogue_file = "res://json/advisors/transport.json"
 				JsonFile.ANALYSIS:
-					dialogue_file = "res://dialog/policies/transport_analysis.json"
+					dialogue_file = "res://json/policies/transport_analysis.json"
 					
 			avatar_texture.texture = preload("res://sprites/avatars/zc.png")
 			name_label.text = "Zack Casey"
