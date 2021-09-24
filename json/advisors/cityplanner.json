@@ -1,6 +1,6 @@
 {
-    "1": {
-        "name": "Roll up your sleeves, Mayor!",
-        "text": "Nice to meet you, Mayor [name]. I'm Cindy, your city planner. I'll be helping you with zoning, land values, and handling connections to and from the city."
+    "name": "Cindy Diamond",
+    "messages": {
+        "welcome": "Nice to meet you, Mayor [name]. I'm Cindy, your city planner. I'll be helping you with zoning, land values, and handling connections to and from the city."
     }
 }

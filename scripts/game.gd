@@ -45,3 +45,5 @@ func _on_CheetaBtn_toggled(button_pressed):
 		day_cycle.wait_time = 2
 		turtle_btn.pressed = false
 		
+func _on_VRMode_pressed():
+	get_tree().change_scene("res://scenes/VR Game.tscn")

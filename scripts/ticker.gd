@@ -1,8 +1,8 @@
-extends ColorRect
-
-onready var ticker_text = $TickerTxt
+extends Panel
 
 const ticker_path = "res://json/ticker/"
+
+onready var ticker_text = $Ticker
 
 var news_file: String = ""
 var rng = RandomNumberGenerator.new()
@@ -67,9 +67,12 @@ func _ready():
 	_random_news(json_files)
 
 func _start_alert(message):
+	if ticker_text.items.size() > 3:
+		ticker_text.clear()
+		
 	SimData.on_alert = true
 	news_file = str(ticker_path + "ticker_alerts.json")
-	ticker_text = all_news
+	ticker_text.add_item(all_news)
 
 func _random_news(files: Array):
 	for file in files:
@@ -84,14 +87,13 @@ func _random_news(files: Array):
 	var news_range = rng.randi_range(0, all_news.size() - 1)
 	var news_text: String = all_news[news_range]
 	
-	if SimData.has_ctower or SimData.city_name == "Furtropolis" or "Furville" and "[outlet]" in news_text:
+	if SimData.city_name == "Furtropolis" or "Furville" and "[outlet]" in news_text:
 		# FNN = Furtropolis/Furry News Network
 		news_text.replace("[outlet]", "FNN")
-	else:
+	elif "[outlet]" in news_text:
 		news_text.replace("[outlet]", "Pawprint Press")
 
 	if "[species]" in news_text:
-		randomize()
 		speices.shuffle()
 		var speices_range = rng.randi_range(speices.size() - 1)
 		news_text.replace("[species]", speices[speices_range])
@@ -102,7 +104,10 @@ func _random_news(files: Array):
 	if "[mayor]" in news_text:
 		news_text.replace("[mayor]", SimData.mayor_name)
 	
-	ticker_text.text = news_text
+	if ticker_text.items.size() > 3:
+		ticker_text.clear()
+		
+	ticker_text.add_item(news_text)
 	
 func _resume_ticker():
 	_random_news(json_files)

@@ -60,18 +60,19 @@ func _init_advisor(file, advisor):
 			rank_label.text = "Transportation Advisor"
 	
 func _launch_advisor_window(key):
-	_index_dialogue()
-	var message: String = dialogue_keys[key].text
-	
-	if "[name]" in message:
-		message = message.replace("[name]", SimData.mayor_name)
-	
-	if "[city]" in message:
-		message = message.replace("[city]", SimData.city_name)
-	
-	description_label.text = message
-	window_title = dialogue_keys[key].name
-	show()
+#	_index_dialogue()
+#	var message: String = dialogue_keys[key].text
+#
+#	if "[name]" in message:
+#		message = message.replace("[name]", SimData.mayor_name)
+#
+#	if "[city]" in message:
+#		message = message.replace("[city]", SimData.city_name)
+#
+#	description_label.text = message
+#	window_title = dialogue_keys[key].name
+#	show()
+	pass
 
 func _advisor_dialogue(advisor, message):
 	_init_advisor(JsonFile.ANNOUNCEMENTS, advisor)
