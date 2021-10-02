@@ -46,4 +46,5 @@ func _on_CheetaBtn_toggled(button_pressed):
 		turtle_btn.pressed = false
 
 func _on_VRMode_pressed():
-	get_tree().change_scene("res://scenes/VR Game.tscn")
+	# get_tree().change_scene("res://scenes/VR Game.tscn")
+	pass

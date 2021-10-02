@@ -52,11 +52,11 @@ func _get_budget():
 		SimData.budget += total_income
 		SimData.res_income = total_income
 
-func _on_Zone_body_entered(body):
+func _on_Zone_body_entered(body: Node):
 	if SimData.has_power and can_grab == false:
 		quarters.start()
 		_animante_sprite()
 		
-func _on_Zone_body_exited(body):
+func _on_Zone_body_exited(body: Node):
 	quarters.stop()
 	_animante_sprite(false)
