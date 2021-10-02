@@ -1,17 +1,14 @@
 [gd_scene load_steps=5 format=2]
 
 [ext_resource path="res://scripts/zone.gd" type="Script" id=1]
-[ext_resource path="res://sprites/res_zones.png" type="Texture" id=2]
-
-[sub_resource type="RectangleShape2D" id=1]
-extents = Vector2( 24.1295, 23.9406 )
+[ext_resource path="res://assets/res_zones.png" type="Texture" id=2]
 
 [sub_resource type="Animation" id=2]
 resource_name = "Animante"
 length = 5.0
 step = 1.0
 tracks/0/type = "value"
-tracks/0/path = NodePath("Sprite:frame")
+tracks/0/path = NodePath("../Sprite:frame")
 tracks/0/interp = 1
 tracks/0/loop_wrap = true
 tracks/0/imported = false
@@ -23,11 +20,11 @@ tracks/0/keys = {
 "values": [ 1, 2, 3, 4, 6 ]
 }
 
-[node name="Zone" type="KinematicBody2D"]
-input_pickable = true
+[sub_resource type="CircleShape2D" id=3]
+radius = 34.955
+
+[node name="Zone" type="Area2D"]
 script = ExtResource( 1 )
-cost = 0
-income = 500
 
 [node name="Quarters" type="Timer" parent="."]
 wait_time = 10.0
@@ -36,10 +33,11 @@ wait_time = 10.0
 texture = ExtResource( 2 )
 vframes = 19
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-shape = SubResource( 1 )
-
 [node name="AnimationPlayer" type="AnimationPlayer" parent="."]
 anims/Animante = SubResource( 2 )
 
-[connection signal="timeout" from="Quarters" to="." method="_on_Quarters_timeout"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource( 3 )
+
+[connection signal="body_entered" from="." to="." method="_on_Zone_body_entered"]
+[connection signal="body_exited" from="." to="." method="_on_Zone_body_exited"]

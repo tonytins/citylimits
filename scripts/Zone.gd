@@ -1,6 +1,7 @@
-extends KinematicBody2D
+extends Area2D
 
 signal grabbed
+signal has_power
 
 export var cost: int = 10000
 export var income: int = 100
@@ -31,13 +32,6 @@ func _input(event):
 func _process(delta):	
 	if can_grab:
 		position = get_global_mouse_position() + grabbed_offset
-	
-	if SimData.has_power and can_grab == false:
-		quarters.start()
-		_animante_sprite()
-	else:
-		quarters.stop()
-		_animante_sprite(false)
 		
 func _animante_sprite(animante: bool = true):
 	if zone.hframes > 1 or zone.vframes > 1 and animante:
@@ -57,3 +51,12 @@ func _get_budget():
 		var total_income = SimData.res_tax * income
 		SimData.budget += total_income
 		SimData.res_income = total_income
+
+func _on_Zone_body_entered(body):
+	if SimData.has_power and can_grab == false:
+		quarters.start()
+		_animante_sprite()
+		
+func _on_Zone_body_exited(body):
+	quarters.stop()
+	_animante_sprite(false)

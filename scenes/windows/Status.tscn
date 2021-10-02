@@ -1,24 +1,23 @@
 [gd_scene load_steps=12 format=2]
 
 [ext_resource path="res://scripts/ticker.gd" type="Script" id=1]
-[ext_resource path="res://sprites/symbols/fontawesome/fast.svg" type="Texture" id=2]
-[ext_resource path="res://sprites/symbols/fontawesome/cogs.svg" type="Texture" id=3]
+[ext_resource path="res://assets/symbols/fontawesome/fast.svg" type="Texture" id=2]
+[ext_resource path="res://assets/symbols/fontawesome/cogs.svg" type="Texture" id=3]
 [ext_resource path="res://scripts/city_status.gd" type="Script" id=4]
-[ext_resource path="res://sprites/symbols/fontawesome/coins.svg" type="Texture" id=5]
-[ext_resource path="res://sprites/symbols/fontawesome/city.svg" type="Texture" id=6]
-[ext_resource path="res://sprites/symbols/fontawesome/envelope.svg" type="Texture" id=7]
-[ext_resource path="res://sprites/symbols/fontawesome/slow.svg" type="Texture" id=8]
-[ext_resource path="res://sprites/symbols/fontawesome/population.svg" type="Texture" id=9]
-[ext_resource path="res://sprites/symbols/fontawesome/pie-chart.svg" type="Texture" id=10]
-[ext_resource path="res://sprites/symbols/fontawesome/calendar.svg" type="Texture" id=11]
+[ext_resource path="res://assets/symbols/fontawesome/coins.svg" type="Texture" id=5]
+[ext_resource path="res://assets/symbols/fontawesome/city.svg" type="Texture" id=6]
+[ext_resource path="res://assets/symbols/fontawesome/envelope.svg" type="Texture" id=7]
+[ext_resource path="res://assets/symbols/fontawesome/slow.svg" type="Texture" id=8]
+[ext_resource path="res://assets/symbols/fontawesome/population.svg" type="Texture" id=9]
+[ext_resource path="res://assets/symbols/fontawesome/pie-chart.svg" type="Texture" id=10]
+[ext_resource path="res://assets/symbols/fontawesome/calendar.svg" type="Texture" id=11]
 
 [node name="Status" type="Panel"]
-anchor_top = 0.891667
 anchor_right = 1.0
-anchor_bottom = 1.00333
+margin_bottom = 64.0
 script = ExtResource( 1 )
 __meta__ = {
-"_edit_use_anchors_": true
+"_edit_use_anchors_": false
 }
 
 [node name="SettingsBtn" type="Button" parent="."]

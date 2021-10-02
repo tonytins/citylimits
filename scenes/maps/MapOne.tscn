@@ -1,8 +1,8 @@
 [gd_scene load_steps=4 format=2]
 
-[ext_resource path="res://sprites/water.tres" type="TileSet" id=1]
+[ext_resource path="res://assets/water.tres" type="TileSet" id=1]
 [ext_resource path="res://scripts/camera_move.gd" type="Script" id=2]
-[ext_resource path="res://sprites/terrian.tres" type="TileSet" id=3]
+[ext_resource path="res://assets/terrian.tres" type="TileSet" id=3]
 
 [node name="MapOne" type="Node2D"]
 __meta__ = {

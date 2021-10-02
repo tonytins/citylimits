@@ -8,10 +8,6 @@
 
 config_version=4
 
-_global_script_classes=[  ]
-_global_script_class_icons={
-}
-
 [application]
 
 config/name="City Limits"
@@ -26,6 +22,7 @@ SimData="*res://scripts/autoload/sim_data.gd"
 SimEvents="*res://scripts/autoload/sim_events.gd"
 SimTime="*res://scripts/autoload/sim_time.gd"
 ZoneData="*res://scripts/autoload/zone_data.gd"
+VRBridge="*res://scripts/autoload/vr_bridge.gd"
 
 [display]
 
@@ -36,6 +33,10 @@ window/stretch/aspect="keep"
 [editor_plugins]
 
 enabled=PoolStringArray(  )
+
+[gdnative]
+
+singletons=[  ]
 
 [input]
 
@@ -69,6 +70,10 @@ ui_cheats={
 , Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":true,"command":true,"pressed":false,"scancode":88,"unicode":0,"echo":false,"script":null)
  ]
 }
+
+[layer_names]
+
+2d_physics/layer_1="zones"
 
 [rendering]
 

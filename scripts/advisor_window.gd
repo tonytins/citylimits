@@ -33,7 +33,7 @@ func _init_advisor(file, advisor):
 				JsonFile.ANALYSIS:
 					dialogue_file = "res://json/policies/cityplanner_analysis.json"
 					
-			avatar_texture.texture = preload("res://sprites/avatars/cindy.png")
+			avatar_texture.texture = preload("res://assets/avatars/cindy.png")
 			name_label.text = "Cindy Diamond"
 			rank_label.text = "City Planner"
 		
@@ -44,7 +44,7 @@ func _init_advisor(file, advisor):
 				JsonFile.ANALYSIS:
 					dialogue_file = "res://json/policies/finacial_analysis.json"
 					
-			avatar_texture.texture = preload("res://sprites/avatars/kit.png")
+			avatar_texture.texture = preload("res://assets/avatars/kit.png")
 			name_label.text = "Kit Welsh"
 			rank_label.text = "Financial Advisor"
 			
@@ -55,7 +55,7 @@ func _init_advisor(file, advisor):
 				JsonFile.ANALYSIS:
 					dialogue_file = "res://json/policies/transport_analysis.json"
 					
-			avatar_texture.texture = preload("res://sprites/avatars/zc.png")
+			avatar_texture.texture = preload("res://assets/avatars/zc.png")
 			name_label.text = "Zack Casey"
 			rank_label.text = "Transportation Advisor"
 	

@@ -3,36 +3,36 @@
 [ext_resource path="res://scenes/maps/MapOne.tscn" type="PackedScene" id=1]
 [ext_resource path="res://scenes/windows/Status.tscn" type="PackedScene" id=2]
 [ext_resource path="res://scenes/windows/Advisor.tscn" type="PackedScene" id=4]
-[ext_resource path="res://sprites/ui/iccom.png" type="Texture" id=5]
+[ext_resource path="res://assets/ui/iccom.png" type="Texture" id=5]
 [ext_resource path="res://scenes/windows/DebugConsole.tscn" type="PackedScene" id=6]
-[ext_resource path="res://sprites/ui/icres.png" type="Texture" id=9]
-[ext_resource path="res://sprites/ui/icreshi.png" type="Texture" id=10]
-[ext_resource path="res://sprites/ui/icfire.png" type="Texture" id=11]
-[ext_resource path="res://sprites/ui/icindhi.png" type="Texture" id=12]
-[ext_resource path="res://sprites/ui/icind.png" type="Texture" id=13]
-[ext_resource path="res://sprites/ui/icqryhi.png" type="Texture" id=14]
-[ext_resource path="res://sprites/ui/icqry.png" type="Texture" id=15]
-[ext_resource path="res://sprites/ui/icpol.png" type="Texture" id=16]
-[ext_resource path="res://sprites/ui/icdozr.png" type="Texture" id=17]
-[ext_resource path="res://sprites/ui/iccoalhi.png" type="Texture" id=18]
-[ext_resource path="res://sprites/ui/iccoal.png" type="Texture" id=19]
+[ext_resource path="res://assets/ui/icres.png" type="Texture" id=9]
+[ext_resource path="res://assets/ui/icreshi.png" type="Texture" id=10]
+[ext_resource path="res://assets/ui/icfire.png" type="Texture" id=11]
+[ext_resource path="res://assets/ui/icindhi.png" type="Texture" id=12]
+[ext_resource path="res://assets/ui/icind.png" type="Texture" id=13]
+[ext_resource path="res://assets/ui/icqryhi.png" type="Texture" id=14]
+[ext_resource path="res://assets/ui/icqry.png" type="Texture" id=15]
+[ext_resource path="res://assets/ui/icpol.png" type="Texture" id=16]
+[ext_resource path="res://assets/ui/icdozr.png" type="Texture" id=17]
+[ext_resource path="res://assets/ui/iccoalhi.png" type="Texture" id=18]
+[ext_resource path="res://assets/ui/iccoal.png" type="Texture" id=19]
 [ext_resource path="res://scripts/game.gd" type="Script" id=20]
 [ext_resource path="res://scenes/windows/Meet.tscn" type="PackedScene" id=21]
-[ext_resource path="res://sprites/ui/icparkhi.png" type="Texture" id=22]
-[ext_resource path="res://sprites/ui/icnuc.png" type="Texture" id=23]
-[ext_resource path="res://sprites/ui/icpark.png" type="Texture" id=24]
-[ext_resource path="res://sprites/ui/icnuchi.png" type="Texture" id=25]
-[ext_resource path="res://sprites/ui/icseap.png" type="Texture" id=26]
-[ext_resource path="res://sprites/ui/icseaphi.png" type="Texture" id=27]
-[ext_resource path="res://sprites/ui/icstad.png" type="Texture" id=28]
-[ext_resource path="res://sprites/ui/icpolhi.png" type="Texture" id=29]
-[ext_resource path="res://sprites/ui/iccomhi.png" type="Texture" id=30]
-[ext_resource path="res://sprites/ui/icdozrhi.png" type="Texture" id=31]
+[ext_resource path="res://assets/ui/icparkhi.png" type="Texture" id=22]
+[ext_resource path="res://assets/ui/icnuc.png" type="Texture" id=23]
+[ext_resource path="res://assets/ui/icpark.png" type="Texture" id=24]
+[ext_resource path="res://assets/ui/icnuchi.png" type="Texture" id=25]
+[ext_resource path="res://assets/ui/icseap.png" type="Texture" id=26]
+[ext_resource path="res://assets/ui/icseaphi.png" type="Texture" id=27]
+[ext_resource path="res://assets/ui/icstad.png" type="Texture" id=28]
+[ext_resource path="res://assets/ui/icpolhi.png" type="Texture" id=29]
+[ext_resource path="res://assets/ui/iccomhi.png" type="Texture" id=30]
+[ext_resource path="res://assets/ui/icdozrhi.png" type="Texture" id=31]
 [ext_resource path="res://scenes/windows/TaxWindow.tscn" type="PackedScene" id=32]
-[ext_resource path="res://sprites/ui/icfirehi.png" type="Texture" id=33]
+[ext_resource path="res://assets/ui/icfirehi.png" type="Texture" id=33]
 [ext_resource path="res://scenes/windows/Credits.tscn" type="PackedScene" id=34]
 [ext_resource path="res://scripts/windows.gd" type="Script" id=37]
-[ext_resource path="res://sprites/ui/pause.svg" type="Texture" id=39]
+[ext_resource path="res://assets/ui/pause.svg" type="Texture" id=39]
 [ext_resource path="res://scenes/windows/Ordinance.tscn" type="PackedScene" id=44]
 
 [node name="Game" type="Node2D"]
@@ -242,16 +242,25 @@ __meta__ = {
 [node name="Ordinance" parent="Controls/Windows" instance=ExtResource( 44 )]
 
 [node name="VRMode" type="Button" parent="Controls/Windows"]
+visible = false
 anchor_left = 0.919922
-anchor_top = 0.0216667
+anchor_top = 0.0197812
 anchor_right = 0.989258
-anchor_bottom = 0.0683333
+anchor_bottom = 0.0664478
 text = "VR Mode"
 __meta__ = {
 "_edit_use_anchors_": true
 }
 
 [node name="Status" parent="Controls" instance=ExtResource( 2 )]
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+margin_left = -512.0
+margin_top = -64.0
+margin_right = 512.0
+margin_bottom = 0.0
 
 [connection signal="timeout" from="DayCycle" to="." method="_on_DayCycle_timeout"]
 [connection signal="pressed" from="Controls/Windows/VRMode" to="." method="_on_VRMode_pressed"]
