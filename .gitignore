@@ -1,7 +1,6 @@
 # File created using '.gitignore Generator' for Visual Studio Code: https://bit.ly/vscode-gig
-
-# Created by https://www.toptal.com/developers/gitignore/api/windows,visualstudiocode,monodevelop,macos,linux,godot,executable,dotnetcore,backup,archives
-# Edit at https://www.toptal.com/developers/gitignore?templates=windows,visualstudiocode,monodevelop,macos,linux,godot,executable,dotnetcore,backup,archives
+# Created by https://www.toptal.com/developers/gitignore/api/windows,visualstudiocode,macos,linux,godot,executable,backup,archives
+# Edit at https://www.toptal.com/developers/gitignore?templates=windows,visualstudiocode,macos,linux,godot,executable,backup,archives
 
 ### Archives ###
 # It's better to unpack these files and commit the raw source because
@@ -44,15 +43,6 @@
 *.orig
 *.tmp
 
-### DotnetCore ###
-# .NET Core build folders
-bin/
-obj/
-
-# Common node modules locations
-/node_modules
-/wwwroot/node_modules
-
 ### Executable ###
 *.app
 *.bat
@@ -65,7 +55,6 @@ obj/
 *.wsf
 
 ### Godot ###
-
 # Godot-specific ignores
 .import/
 export.cfg
@@ -100,8 +89,7 @@ data_*/
 .LSOverride
 
 # Icon must end with two \r
-Icon
-
+Icon
 
 # Thumbnails
 ._*
@@ -122,15 +110,9 @@ Network Trash Folder
 Temporary Items
 .apdisk
 
-### MonoDevelop ###
-#User Specific
-*.userprefs
-*.usertasks
-
-#Mono Project Files
-*.pidb
-*.resources
-test-results/
+### macOS Patch ###
+# iCloud generated files
+*.icloud
 
 ### VisualStudioCode ###
 .vscode/*
@@ -138,12 +120,24 @@ test-results/
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
-*.code-workspace
+!.vscode/*.code-snippets
+
+# Local History for Visual Studio Code
+.history/
+
+# Built Visual Studio Code Extensions
+*.vsix
 
 ### VisualStudioCode Patch ###
 # Ignore all local history of files
 .history
 .ionide
+
+# Support for Project snippet scope
+.vscode/*.code-snippets
+
+# Ignore code-workspaces
+*.code-workspace
 
 ### Windows ###
 # Windows thumbnail cache files
@@ -167,7 +161,7 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
-# End of https://www.toptal.com/developers/gitignore/api/windows,visualstudiocode,monodevelop,macos,linux,godot,executable,dotnetcore,backup,archives
+# End of https://www.toptal.com/developers/gitignore/api/windows,visualstudiocode,macos,linux,godot,executable,backup,archives
 
 # Custom rules (everything added below won't be overriden by 'Generate .gitignore File' if you use 'Update' option)
 
