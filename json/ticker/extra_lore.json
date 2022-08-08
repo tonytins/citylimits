@@ -1,11 +1,12 @@
 {
-    "competing_outlet": "Citizen Telegram",
     "ticker": [
-        "Some cats look to [other_outlet] for answers behind Kitty Kibble shortage.",
+        "Some cats look to [competing_outlet] for answers behind Kitty Kibble shortage.",
         "Kit Welsh awarded for his medical breakthroughs in [city].",
         "Ishard has frozen another one of Big Boston's numbers racket.",
         "Can Ishard solve the Kitty Kibble shortage?",
         "Who is Ishard? And where did he come from?",
-        "Big Boston gets frozen in his tracks again thanks to Ishard."
+        "Big Boston gets frozen in his tracks again thanks to Ishard.",
+        "[competing_outlet] suggests that Ishard is a fraud.",
+        "[competing_outlet] supports Kitty Kibble hoax theory, despite lack of evidence."
     ]
 }

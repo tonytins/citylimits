@@ -1,7 +1,10 @@
 extends Node
 
-var city_name: String = "Furtropolis" # Hard-coded, for now
-var mayor_name: String = "Defecto"
+const DEFAULT_CITY = "defualt.json"
+const SAVE_PATH = "res://json/saves/"
+
+var city_name: String = ""
+var mayor_name: String = ""
 var population: int = 0
 var budget: int = 20000
 var expenses: int
@@ -64,6 +67,13 @@ enum Ordinances {
 	CLEAN_AIR_ACT,
 	TIRE_RECYCLE
 }
+
+func _ready():
+	if city_name == "":
+		city_name = JsonHelper.key_value(SAVE_PATH, DEFAULT_CITY, "city")
+	
+	if mayor_name == "":
+		mayor_name = JsonHelper.key_value(SAVE_PATH, DEFAULT_CITY, "mayor")
 
 #func starting_budget(lev = Level.EASY):
 #	match lev:

@@ -1,0 +1,11 @@
+{
+    "primary_outlet": "Pawprint Press",
+    "secondary_outlet": "FNN",
+    "competing_outlet": "Citizen Telegram",
+    "ticker_files": [
+        "adverts.json",
+        "sammy.json",
+        "kittykibble.json",
+        "citylife.json"
+    ]
+}
