@@ -101,7 +101,6 @@ margin_right = 234.609
 margin_bottom = 138.5
 
 [node name="ToolsWindow" type="WindowDialog" parent="Controls/Windows"]
-visible = true
 anchor_left = 0.402435
 anchor_top = 0.315697
 anchor_right = 0.60263
@@ -277,7 +276,6 @@ anchor_left = 0.0115391
 anchor_top = 0.193259
 anchor_right = 0.0525548
 anchor_bottom = 0.670871
-margin_top = -9.53674e-07
 hint_tooltip = "Meet"
 size_flags_horizontal = 4
 icon = ExtResource( 35 )
@@ -290,7 +288,6 @@ anchor_left = 0.0566406
 anchor_top = 0.208955
 anchor_right = 0.601562
 anchor_bottom = 0.746269
-margin_top = 9.53674e-07
 custom_constants/separation = 50
 alignment = 1
 script = ExtResource( 38 )

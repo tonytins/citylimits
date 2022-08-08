@@ -89,20 +89,20 @@ func _random_news(files: Array):
 	
 	if SimData.city_name == "Furtropolis" or "Furville" and "[outlet]" in news_text:
 		# FNN = Furtropolis/Furry News Network
-		news_text.replace("[outlet]", "FNN")
-	elif "[outlet]" in news_text:
-		news_text.replace("[outlet]", "Pawprint Press")
+		news_text = news_text.replace("[outlet]", "FNN")
+	else:
+		news_text = news_text.replace("[outlet]", "Pawprint Press")
 
 	if "[species]" in news_text:
 		speices.shuffle()
 		var speices_range = rng.randi_range(speices.size() - 1)
-		news_text.replace("[species]", speices[speices_range])
+		news_text = news_text.replace("[species]", speices[speices_range])
 
 	if "[city]" in news_text:
-		news_text.replace("[city]", SimData.city_name)
+		news_text = news_text.replace("[city]", SimData.city_name)
 
 	if "[mayor]" in news_text:
-		news_text.replace("[mayor]", SimData.mayor_name)
+		news_text = news_text.replace("[mayor]", SimData.mayor_name)
 	
 	if ticker_text.items.size() > 3:
 		ticker_text.clear()
