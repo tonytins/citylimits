@@ -1,7 +1,6 @@
-[gd_scene load_steps=46 format=2]
+[gd_scene load_steps=45 format=2]
 
 [ext_resource path="res://scenes/maps/MapOne.tscn" type="PackedScene" id=1]
-[ext_resource path="res://assets/ticker/pawprint-logo.svg" type="Texture" id=2]
 [ext_resource path="res://assets/symbols/fontawesome/population.svg" type="Texture" id=3]
 [ext_resource path="res://scenes/windows/Advisor.tscn" type="PackedScene" id=4]
 [ext_resource path="res://assets/ui/iccom.png" type="Texture" id=5]
@@ -269,41 +268,23 @@ __meta__ = {
 }
 
 [node name="NewsWindow" type="WindowDialog" parent="Controls/Control Panel/Windows"]
-visible = true
 anchor_left = 0.0877193
 anchor_top = 0.234496
 anchor_right = 0.69883
-anchor_bottom = 0.656977
+anchor_bottom = 0.591085
+window_title = "News"
 __meta__ = {
 "_edit_use_anchors_": true
 }
 
 [node name="News" type="ItemList" parent="Controls/Control Panel/Windows/NewsWindow"]
-anchor_right = 1.0
-anchor_bottom = 1.0
-margin_top = 53.0
-
-[node name="Brand" type="HSplitContainer" parent="Controls/Control Panel/Windows/NewsWindow"]
-anchor_left = 0.0175719
-anchor_top = 0.0242718
-anchor_right = 0.982428
-anchor_bottom = 0.23301
+anchor_left = 0.00797449
+anchor_top = 0.0412844
+anchor_right = 0.992026
+anchor_bottom = 0.967889
 __meta__ = {
 "_edit_use_anchors_": true
 }
-
-[node name="NewsBrand" type="TextureRect" parent="Controls/Control Panel/Windows/NewsWindow/Brand"]
-margin_right = 288.0
-margin_bottom = 45.505
-texture = ExtResource( 2 )
-
-[node name="NewsMotto" type="Label" parent="Controls/Control Panel/Windows/NewsWindow/Brand"]
-margin_left = 300.0
-margin_top = 15.0
-margin_right = 604.964
-margin_bottom = 29.0
-align = 2
-valign = 1
 
 [node name="Status" type="Panel" parent="Controls/Control Panel"]
 anchor_top = 12.95

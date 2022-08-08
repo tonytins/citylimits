@@ -2,13 +2,11 @@ extends Control
 
 const TICKER_PATH = "res://json/ticker/"
 const FNN_LOGO = "res://assets/ticker/fnn.png"
-const META_FILE = "meta.json"
+const CONFIG_FILE = "config.json"
 
 onready var ticker_text = $Status/NewsBtn
 onready var ticker_box = $Windows/NewsWindow/News
 onready var ticker_window = $Windows/NewsWindow
-onready var news_brand = $Windows/NewsWindow/Brand/NewsBrand
-onready var news_motto = $Windows/NewsWindow/Brand/NewsMotto
 
 var news_file: String = ""
 var rng = RandomNumberGenerator.new()
@@ -35,15 +33,8 @@ func _index_news():
 	randomize()
 	all_news.shuffle()
 
-func _init():
-	json_files = JsonHelper.key_value(TICKER_PATH, META_FILE, "ticker_files")
-
-func _ready():	
-	if SimData.city_name == "Furtropolis" or "Furville":
-		news_brand.texture = load(FNN_LOGO)
-	
-	if Caseyverse.is_caseyverse():
-		json_files.append("extra_lore.json")
+func _ready():
+	ticker_window.window_title = JsonHelper.key_value(TICKER_PATH, CONFIG_FILE, "outlet")
 	
 	_randomize_news(json_files)
 
@@ -87,6 +78,9 @@ func _start_alert(message):
 	pass
 
 func _randomize_news(files: Array):	
+	if all_news == null:
+		json_files = JsonHelper.key_value(TICKER_PATH, CONFIG_FILE, "ticker_files")
+		
 	for file in files:
 		news_file = str(TICKER_PATH + file)
 		_load_json()
@@ -99,15 +93,11 @@ func _randomize_news(files: Array):
 	var news_range = rng.randi_range(0, all_news.size() - 1)
 	var news_text: String = all_news[news_range]
 	
-	if Caseyverse.is_caseyverse():
-		news_text = news_text.replace("[competing_outlet]", JsonHelper.key_value(TICKER_PATH, META_FILE, "competing_outlet"))
+	if "[competing_outlet]" in news_text:
+		news_text = news_text.replace("[competing_outlet]", JsonHelper.key_value(TICKER_PATH, CONFIG_FILE, "competing_outlet"))
 	
-	# If city name Furtropolis or Furville use Pawprint Press
-	if SimData.city_name != "Furtropolis" or "Furville":
-		news_text = news_text.replace("[outlet]", JsonHelper.key_value(TICKER_PATH, META_FILE, "secondary_outlet"))
-	else:
-		# FNN = Furtropolis/Furry News Network
-		news_text = news_text.replace("[outlet]", JsonHelper.key_value(TICKER_PATH, META_FILE, "primary_outlet"))
+	if "[outlet]" in news_text:	
+		news_text = news_text.replace("[outlet]", JsonHelper.key_value(TICKER_PATH, CONFIG_FILE, "outlet"))
 
 	if "[species]" in news_text:
 		speices.shuffle()
@@ -120,16 +110,12 @@ func _randomize_news(files: Array):
 	if "[mayor]" in news_text:
 		news_text = news_text.replace("[mayor]", SimData.mayor_name)
 	
-	if ticker_box.items.size() > 15:
+	# Prevent stack overflaw
+	if ticker_box.items.size() > 10:
 		ticker_box.clear()
 	
-	# Prevent duplicates
-	var prev_news_text = ticker_text.text
-	if news_text == prev_news_text:
-		_randomize_news(json_files)
-	else:
-		json_files.shuffle()
-		_add_news(news_text)
+	_randomize_news(json_files)
+	_add_news(news_text)
 
 func _add_news(news_item):
 	ticker_text.text = news_item

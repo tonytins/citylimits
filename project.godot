@@ -22,7 +22,6 @@ SimData="*res://scripts/autoload/sim_data.gd"
 SimEvents="*res://scripts/autoload/sim_events.gd"
 SimTime="*res://scripts/autoload/sim_time.gd"
 ZoneData="*res://scripts/autoload/zone_data.gd"
-Caseyverse="*res://scripts/autoload/caseyverse.gd"
 JsonHelper="*res://scripts/autoload/jsonhelper.gd"
 
 [display]
