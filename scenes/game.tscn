@@ -1,7 +1,7 @@
 [gd_scene load_steps=45 format=2]
 
 [ext_resource path="res://scenes/maps/MapOne.tscn" type="PackedScene" id=1]
-[ext_resource path="res://scripts/ticker.gd" type="Script" id=2]
+[ext_resource path="res://assets/ticker/pawprint-logo.svg" type="Texture" id=2]
 [ext_resource path="res://assets/symbols/fontawesome/population.svg" type="Texture" id=3]
 [ext_resource path="res://scenes/windows/Advisor.tscn" type="PackedScene" id=4]
 [ext_resource path="res://assets/ui/iccom.png" type="Texture" id=5]
@@ -56,7 +56,7 @@ __meta__ = {
 }
 
 [node name="RotateNews" type="Timer" parent="."]
-wait_time = 6.0
+wait_time = 5.0
 autostart = true
 
 [node name="MapOne" parent="." instance=ExtResource( 1 )]
@@ -263,19 +263,18 @@ __meta__ = {
 }
 
 [node name="Status" type="Panel" parent="Controls/Windows"]
-anchor_top = 0.908333
+anchor_top = 0.863333
 anchor_right = 1.0
-anchor_bottom = 1.0
-script = ExtResource( 2 )
+anchor_bottom = 1.00833
 __meta__ = {
 "_edit_use_anchors_": true
 }
 
 [node name="SettingsBtn" type="Button" parent="Controls/Windows/Status"]
 anchor_left = 0.0115391
-anchor_top = 0.193259
+anchor_top = 0.0555202
 anchor_right = 0.0525548
-anchor_bottom = 0.670871
+anchor_bottom = 0.533132
 hint_tooltip = "Meet"
 size_flags_horizontal = 4
 icon = ExtResource( 35 )
@@ -285,9 +284,9 @@ __meta__ = {
 
 [node name="StatCtr" type="HBoxContainer" parent="Controls/Windows/Status"]
 anchor_left = 0.0566406
-anchor_top = 0.208955
-anchor_right = 0.601562
-anchor_bottom = 0.746269
+anchor_top = 0.0750188
+anchor_right = 0.996094
+anchor_bottom = 0.516879
 custom_constants/separation = 50
 alignment = 1
 script = ExtResource( 38 )
@@ -296,9 +295,9 @@ __meta__ = {
 }
 
 [node name="ButtonCtr" type="HBoxContainer" parent="Controls/Windows/Status/StatCtr"]
-margin_left = 30.0
-margin_right = 312.0
-margin_bottom = 36.0
+margin_left = 233.0
+margin_right = 515.0
+margin_bottom = 38.0
 custom_constants/separation = 10
 alignment = 1
 __meta__ = {
@@ -307,7 +306,7 @@ __meta__ = {
 
 [node name="TaxBtn" type="Button" parent="Controls/Windows/Status/StatCtr/ButtonCtr"]
 margin_right = 42.0
-margin_bottom = 36.0
+margin_bottom = 38.0
 hint_tooltip = "RCI"
 size_flags_horizontal = 4
 icon = ExtResource( 40 )
@@ -315,7 +314,7 @@ icon = ExtResource( 40 )
 [node name="ToolsBtn" type="Button" parent="Controls/Windows/Status/StatCtr/ButtonCtr"]
 margin_left = 52.0
 margin_right = 94.0
-margin_bottom = 36.0
+margin_bottom = 38.0
 hint_tooltip = "Tools"
 size_flags_horizontal = 4
 icon = ExtResource( 42 )
@@ -323,7 +322,7 @@ icon = ExtResource( 42 )
 [node name="AdvsiorBtn" type="Button" parent="Controls/Windows/Status/StatCtr/ButtonCtr"]
 margin_left = 104.0
 margin_right = 146.0
-margin_bottom = 36.0
+margin_bottom = 38.0
 hint_tooltip = "Meet"
 size_flags_horizontal = 4
 icon = ExtResource( 43 )
@@ -331,12 +330,12 @@ icon = ExtResource( 43 )
 [node name="VSeparator" type="VSeparator" parent="Controls/Windows/Status/StatCtr/ButtonCtr"]
 margin_left = 156.0
 margin_right = 160.0
-margin_bottom = 36.0
+margin_bottom = 38.0
 
 [node name="TurtleBtn" type="Button" parent="Controls/Windows/Status/StatCtr/ButtonCtr"]
 margin_left = 170.0
 margin_right = 211.0
-margin_bottom = 36.0
+margin_bottom = 38.0
 hint_tooltip = "Slow"
 toggle_mode = true
 icon = ExtResource( 8 )
@@ -344,7 +343,7 @@ icon = ExtResource( 8 )
 [node name="CheetaBtn" type="Button" parent="Controls/Windows/Status/StatCtr/ButtonCtr"]
 margin_left = 221.0
 margin_right = 268.0
-margin_bottom = 36.0
+margin_bottom = 38.0
 hint_tooltip = "Fast"
 toggle_mode = true
 icon = ExtResource( 7 )
@@ -352,25 +351,25 @@ icon = ExtResource( 7 )
 [node name="VSeparator2" type="VSeparator" parent="Controls/Windows/Status/StatCtr/ButtonCtr"]
 margin_left = 278.0
 margin_right = 282.0
-margin_bottom = 36.0
+margin_bottom = 38.0
 
 [node name="NameDate" type="VBoxContainer" parent="Controls/Windows/Status/StatCtr"]
-margin_left = 362.0
-margin_right = 450.0
-margin_bottom = 36.0
+margin_left = 565.0
+margin_right = 653.0
+margin_bottom = 38.0
 alignment = 1
 
 [node name="CityNameLbl" type="Label" parent="Controls/Windows/Status/StatCtr/NameDate"]
-margin_top = 2.0
+margin_top = 3.0
 margin_right = 88.0
-margin_bottom = 16.0
+margin_bottom = 17.0
 text = "City Name"
 align = 1
 
 [node name="YearCtr" type="HBoxContainer" parent="Controls/Windows/Status/StatCtr/NameDate"]
-margin_top = 20.0
+margin_top = 21.0
 margin_right = 88.0
-margin_bottom = 34.0
+margin_bottom = 35.0
 
 [node name="CalIcon" type="TextureRect" parent="Controls/Windows/Status/StatCtr/NameDate/YearCtr"]
 margin_right = 10.0
@@ -388,15 +387,15 @@ __meta__ = {
 }
 
 [node name="PopBudget" type="VBoxContainer" parent="Controls/Windows/Status/StatCtr"]
-margin_left = 500.0
-margin_right = 526.0
-margin_bottom = 36.0
+margin_left = 703.0
+margin_right = 729.0
+margin_bottom = 38.0
 alignment = 1
 
 [node name="BudgetCtr" type="HBoxContainer" parent="Controls/Windows/Status/StatCtr/PopBudget"]
-margin_top = 2.0
+margin_top = 3.0
 margin_right = 26.0
-margin_bottom = 16.0
+margin_bottom = 17.0
 
 [node name="CoinsIcon" type="TextureRect" parent="Controls/Windows/Status/StatCtr/PopBudget/BudgetCtr"]
 margin_right = 14.0
@@ -411,9 +410,9 @@ margin_bottom = 14.0
 text = "0"
 
 [node name="PopCtr" type="HBoxContainer" parent="Controls/Windows/Status/StatCtr/PopBudget"]
-margin_top = 20.0
+margin_top = 21.0
 margin_right = 26.0
-margin_bottom = 34.0
+margin_bottom = 35.0
 
 [node name="PopIcon" type="TextureRect" parent="Controls/Windows/Status/StatCtr/PopBudget/PopCtr"]
 margin_right = 14.0
@@ -427,18 +426,63 @@ margin_right = 26.0
 margin_bottom = 14.0
 text = "0"
 
-[node name="Ticker" type="ItemList" parent="Controls/Windows/Status"]
-anchor_right = 1.0
-anchor_bottom = 1.0
-margin_left = 622.0
+[node name="NewsBtn" type="Button" parent="Controls/Windows/Status"]
+anchor_left = 0.0078125
+anchor_top = 0.633158
+anchor_right = 0.989258
+anchor_bottom = 0.888972
+text = "News"
+flat = true
 __meta__ = {
-"_edit_use_anchors_": false
+"_edit_use_anchors_": true
 }
 
+[node name="NewsWindow" type="WindowDialog" parent="Controls/Windows"]
+anchor_left = 0.0878906
+anchor_top = 0.235
+anchor_right = 0.699219
+anchor_bottom = 0.578333
+__meta__ = {
+"_edit_use_anchors_": true
+}
+
+[node name="News" type="ItemList" parent="Controls/Windows/NewsWindow"]
+anchor_left = 0.0111821
+anchor_top = 0.23301
+anchor_right = 0.988818
+anchor_bottom = 0.961165
+__meta__ = {
+"_edit_use_anchors_": true
+}
+
+[node name="Brand" type="HSplitContainer" parent="Controls/Windows/NewsWindow"]
+anchor_left = 0.0175719
+anchor_top = 0.0242718
+anchor_right = 0.982428
+anchor_bottom = 0.23301
+__meta__ = {
+"_edit_use_anchors_": true
+}
+
+[node name="NewsBrand" type="TextureRect" parent="Controls/Windows/NewsWindow/Brand"]
+margin_right = 288.0
+margin_bottom = 43.0
+texture = ExtResource( 2 )
+
+[node name="NewsMotto" type="Label" parent="Controls/Windows/NewsWindow/Brand"]
+margin_left = 300.0
+margin_top = 14.0
+margin_right = 604.0
+margin_bottom = 28.0
+align = 2
+valign = 1
+
 [connection signal="timeout" from="DayCycle" to="." method="_on_DayCycle_timeout"]
+[connection signal="timeout" from="RotateNews" to="Controls/Windows" method="_on_RotateNews_timeout"]
 [connection signal="pressed" from="Controls/Windows/VRMode" to="." method="_on_VRMode_pressed"]
 [connection signal="pressed" from="Controls/Windows/Status/StatCtr/ButtonCtr/TaxBtn" to="Controls/Windows" method="_on_TaxBtn_pressed"]
 [connection signal="pressed" from="Controls/Windows/Status/StatCtr/ButtonCtr/ToolsBtn" to="Controls/Windows" method="_on_ToolsBtn_pressed"]
 [connection signal="pressed" from="Controls/Windows/Status/StatCtr/ButtonCtr/AdvsiorBtn" to="Controls/Windows" method="_on_AdvsiorBtn_pressed"]
 [connection signal="toggled" from="Controls/Windows/Status/StatCtr/ButtonCtr/TurtleBtn" to="." method="_on_TurtleBtn_toggled"]
 [connection signal="toggled" from="Controls/Windows/Status/StatCtr/ButtonCtr/CheetaBtn" to="." method="_on_CheetaBtn_toggled"]
+[connection signal="pressed" from="Controls/Windows/Status/NewsBtn" to="Controls/Windows" method="_on_NewsBtn_pressed"]

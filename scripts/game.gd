@@ -6,7 +6,7 @@ onready var turtle_btn = $Controls/Status/StatCtr/ButtonCtr/TurtleBtn
 onready var cheeta_btn = $Controls/Status/StatCtr/ButtonCtr/CheetaBtn
 
 func _ready():
-	SimEvents.connect("resume_news", self, "_resume_rotation")
+	SimEvents.connect("rotate_news", self, "_rotate_news")
 	SimEvents.connect("send_alert", self, "_stop_news")
 	
 func _stop_news():

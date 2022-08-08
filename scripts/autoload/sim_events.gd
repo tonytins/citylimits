@@ -11,7 +11,7 @@ signal advisor_message(advisor, message)
 
 # News
 signal send_alert(message)
-signal resume_news
+signal rotate_news
 
 # Policies
 signal clean_air_act
