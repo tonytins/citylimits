@@ -20,4 +20,4 @@ See also the list of [contributors](https://github.com/tonytins/citylimits/contr
 
 ## License
 
-This project is licensed under the Artistic-2.0 License - see the [LICENSE](LICENSE) file for details
+This project is dual-licensed under the [Apache-2.0](LICENSE) or the [UNLICENSE](UNLICENSE).
