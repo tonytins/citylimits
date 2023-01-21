@@ -8,6 +8,106 @@
 
 config_version=4
 
+_global_script_classes=[ {
+"base": "Leaf",
+"class": "ActionLeaf",
+"language": "GDScript",
+"path": "res://addons/beehave/nodes/leaves/action.gd"
+}, {
+"base": "Decorator",
+"class": "AlwaysFailDecorator",
+"language": "GDScript",
+"path": "res://addons/beehave/nodes/decorators/failer.gd"
+}, {
+"base": "Decorator",
+"class": "AlwaysSucceedDecorator",
+"language": "GDScript",
+"path": "res://addons/beehave/nodes/decorators/succeeder.gd"
+}, {
+"base": "BeehaveTree",
+"class": "BeehaveNode",
+"language": "GDScript",
+"path": "res://addons/beehave/nodes/beehave_node.gd"
+}, {
+"base": "BeehaveTree",
+"class": "BeehaveRoot",
+"language": "GDScript",
+"path": "res://addons/beehave/nodes/beehave_root.gd"
+}, {
+"base": "Node",
+"class": "BeehaveTree",
+"language": "GDScript",
+"path": "res://addons/beehave/nodes/beehave_tree.gd"
+}, {
+"base": "BeehaveNode",
+"class": "Composite",
+"language": "GDScript",
+"path": "res://addons/beehave/nodes/composites/composite.gd"
+}, {
+"base": "Leaf",
+"class": "ConditionLeaf",
+"language": "GDScript",
+"path": "res://addons/beehave/nodes/leaves/condition.gd"
+}, {
+"base": "BeehaveNode",
+"class": "Decorator",
+"language": "GDScript",
+"path": "res://addons/beehave/nodes/decorators/decorator.gd"
+}, {
+"base": "Decorator",
+"class": "InverterDecorator",
+"language": "GDScript",
+"path": "res://addons/beehave/nodes/decorators/inverter.gd"
+}, {
+"base": "BeehaveNode",
+"class": "Leaf",
+"language": "GDScript",
+"path": "res://addons/beehave/nodes/leaves/leaf.gd"
+}, {
+"base": "Decorator",
+"class": "LimiterDecorator",
+"language": "GDScript",
+"path": "res://addons/beehave/nodes/decorators/limiter.gd"
+}, {
+"base": "Composite",
+"class": "SelectorComposite",
+"language": "GDScript",
+"path": "res://addons/beehave/nodes/composites/selector.gd"
+}, {
+"base": "Composite",
+"class": "SelectorStarComposite",
+"language": "GDScript",
+"path": "res://addons/beehave/nodes/composites/selector_star.gd"
+}, {
+"base": "Composite",
+"class": "SequenceComposite",
+"language": "GDScript",
+"path": "res://addons/beehave/nodes/composites/sequence.gd"
+}, {
+"base": "Composite",
+"class": "SequenceStarComposite",
+"language": "GDScript",
+"path": "res://addons/beehave/nodes/composites/sequence_star.gd"
+} ]
+_global_script_class_icons={
+"ActionLeaf": "res://addons/beehave/icons/action.svg",
+"AlwaysFailDecorator": "res://addons/beehave/icons/fail.svg",
+"AlwaysSucceedDecorator": "res://addons/beehave/icons/succeed.svg",
+"BeehaveNode": "res://addons/beehave/icons/action.svg",
+"BeehaveRoot": "res://addons/beehave/icons/tree.svg",
+"BeehaveTree": "",
+"Composite": "res://addons/beehave/icons/category_composite.svg",
+"ConditionLeaf": "res://addons/beehave/icons/condition.svg",
+"Decorator": "res://addons/beehave/icons/category_decorator.svg",
+"InverterDecorator": "res://addons/beehave/icons/inverter.svg",
+"Leaf": "res://addons/beehave/icons/action.svg",
+"LimiterDecorator": "res://addons/beehave/icons/limiter.svg",
+"SelectorComposite": "res://addons/beehave/icons/selector.svg",
+"SelectorStarComposite": "res://addons/beehave/icons/selector_star.svg",
+"SequenceComposite": "res://addons/beehave/icons/sequencer.svg",
+"SequenceStarComposite": "res://addons/beehave/icons/sequencer_star.svg"
+}
+
 [application]
 
 config/name="City Limits"
@@ -32,7 +132,7 @@ window/stretch/aspect="keep"
 
 [editor_plugins]
 
-enabled=PoolStringArray(  )
+enabled=PoolStringArray( "res://addons/beehave/plugin.cfg" )
 
 [gdnative]
 
@@ -66,8 +166,8 @@ ui_down={
 }
 ui_cheats={
 "deadzone": 0.5,
-"events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":true,"control":false,"meta":true,"command":true,"pressed":false,"scancode":67,"physical_scancode":0,"unicode":0,"echo":false,"script":null)
-, Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":true,"command":true,"pressed":false,"scancode":88,"physical_scancode":0,"unicode":0,"echo":false,"script":null)
+"events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":true,"control":true,"meta":true,"command":true,"pressed":false,"scancode":67,"physical_scancode":0,"unicode":0,"echo":false,"script":null)
+, Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":true,"meta":true,"command":true,"pressed":false,"scancode":88,"physical_scancode":0,"unicode":0,"echo":false,"script":null)
  ]
 }
 
