@@ -1,6 +1,11 @@
 # City Limits
 
-![Screenshot](screenshot.png)
+<p align="center">
+<img src="./icon.png">
+<br>
+<img alt="GitHub Workflow Status" src="https://img.shields.io/github/actions/workflow/status/tonytins/citylimits/godot.yml"> <img alt="GitHub" src="https://img.shields.io/github/license/tonytins/citylimits"> <img alt="GitHub commit activity" src="https://img.shields.io/github/commit-activity/w/tonytins/citylimits">
+<hr>
+</p>
 
 City Limits is a re-imagining of SimCity Classic that brings modern city building concepts to the classic game.
 
@@ -20,4 +25,4 @@ See also the list of [contributors](https://github.com/tonytins/citylimits/contr
 
 ## License
 
-This project is dual-licensed under the [Apache-2.0](LICENSE) or the [UNLICENSE](UNLICENSE).
+In jurisdictions that recognize copyright waivers, I've [waived all copyright](UNLICENSE) and related or neighboring rights for to this project. In areas where these waivers are not recognized, [Apache-2.0](LICENSE) is enforced.
