@@ -1,6 +1,7 @@
-[gd_scene load_steps=45 format=2]
+[gd_scene load_steps=50 format=2]
 
 [ext_resource path="res://scenes/maps/MapOne.tscn" type="PackedScene" id=1]
+[ext_resource path="res://addons/beehave/nodes/composites/selector.gd" type="Script" id=2]
 [ext_resource path="res://assets/symbols/fontawesome/population.svg" type="Texture" id=3]
 [ext_resource path="res://scenes/windows/Advisor.tscn" type="PackedScene" id=4]
 [ext_resource path="res://assets/ui/iccom.png" type="Texture" id=5]
@@ -44,16 +45,22 @@
 [ext_resource path="res://assets/symbols/fontawesome/envelope.svg" type="Texture" id=43]
 [ext_resource path="res://scenes/windows/Ordinance.tscn" type="PackedScene" id=44]
 [ext_resource path="res://scripts/ticker.gd" type="Script" id=45]
+[ext_resource path="res://addons/beehave/nodes/beehave_root.gd" type="Script" id=46]
+[ext_resource path="res://scenes/deparments/CoalPlant.tscn" type="PackedScene" id=47]
+[ext_resource path="res://addons/beehave/nodes/beehave_node.gd" type="Script" id=48]
+[ext_resource path="res://scenes/deparments/Zone.tscn" type="PackedScene" id=49]
 
 [node name="Game" type="Node2D"]
 script = ExtResource( 20 )
 
-[node name="DayCycle" type="Timer" parent="."]
-wait_time = 12.0
-autostart = true
-__meta__ = {
-"_editor_description_": "Calculation based on: https://gaming.stackexchange.com/questions/110529/real-world-time-in-a-simcity-day-on-various-speeds"
-}
+[node name="BeehaveRoot" type="Node" parent="."]
+script = ExtResource( 46 )
+
+[node name="DayCycle" type="Node" parent="BeehaveRoot"]
+script = ExtResource( 2 )
+
+[node name="BeehaveNode" type="Node" parent="BeehaveRoot/DayCycle"]
+script = ExtResource( 48 )
 
 [node name="MapOne" parent="." instance=ExtResource( 1 )]
 
@@ -294,10 +301,6 @@ __meta__ = {
 "_edit_use_anchors_": true
 }
 
-[node name="RotateNews" type="Timer" parent="Controls/Control Panel/Status"]
-wait_time = 5.0
-autostart = true
-
 [node name="SettingsBtn" type="Button" parent="Controls/Control Panel/Status"]
 anchor_left = 0.0115391
 anchor_top = 0.0555202
@@ -466,6 +469,8 @@ __meta__ = {
 "_edit_use_anchors_": true
 }
 
-[connection signal="timeout" from="DayCycle" to="." method="_on_DayCycle_timeout"]
-[connection signal="timeout" from="Controls/Control Panel/Status/RotateNews" to="Controls/Control Panel" method="_on_RotateNews_timeout"]
-[connection signal="pressed" from="Controls/Control Panel/Status/NewsBtn" to="Controls/Control Panel" method="_on_NewsBtn_pressed"]
+[node name="Zone" parent="." instance=ExtResource( 49 )]
+position = Vector2( 650, 351 )
+
+[node name="PowerStation" parent="." instance=ExtResource( 47 )]
+position = Vector2( 758, 277 )

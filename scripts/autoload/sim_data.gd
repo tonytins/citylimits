@@ -17,6 +17,9 @@ var current_power_cap: int
 var prev_power_cap: int
 var has_power: bool
 
+var res_tax: int = 5
+var res_income: int
+
 var ticker_files: Array = [
 	"adverts.json",
 	"sammy.json"
