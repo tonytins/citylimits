@@ -5,7 +5,16 @@ onready var tax_window = $TaxWindow
 onready var advsior_meet_window = $AdvisorMeet
 onready var tools_window = $ToolsWindow
 
+onready var verLabel = $VersionLbl
+
 func _ready():
+	# To get version string
+	var version = ProjectSettings.get_setting("application/config/version")
+	# To get build number
+	var build = ProjectSettings.get_setting("application/config/build")
+	
+	verLabel.text = version + " (Build " + str(build) + ")"
+	
 	SimData.city_name = SimData.city_name.capitalize()
 	SimData.mayor_name = SimData.mayor_name.capitalize()
 	

@@ -293,6 +293,16 @@ __meta__ = {
 "_edit_use_anchors_": true
 }
 
+[node name="VersionLbl" type="Label" parent="Controls/Control Panel/Windows"]
+anchor_left = 0.0146199
+anchor_top = 0.0271318
+anchor_right = 0.182261
+anchor_bottom = 0.0542636
+text = "Version"
+__meta__ = {
+"_edit_use_anchors_": true
+}
+
 [node name="Status" type="Panel" parent="Controls/Control Panel"]
 anchor_top = 12.95
 anchor_right = 25.65

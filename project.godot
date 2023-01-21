@@ -115,6 +115,8 @@ run/main_scene="res://scenes/Game.tscn"
 config/icon="res://icon.png"
 config/macos_native_icon="res://icon.icns"
 config/windows_native_icon="res://icon.ico"
+config/version="0.0.1"
+config/build=1000
 
 [autoload]
 
@@ -132,7 +134,7 @@ window/stretch/aspect="keep"
 
 [editor_plugins]
 
-enabled=PoolStringArray( "res://addons/beehave/plugin.cfg" )
+enabled=PoolStringArray( "res://addons/beehave/plugin.cfg", "res://addons/godot-version-management/plugin.cfg" )
 
 [gdnative]
 
