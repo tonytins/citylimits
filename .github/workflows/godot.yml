@@ -1,32 +1,27 @@
-name: Build Godot Project
+# name: Build Godot Project
 
-on:
-  push:
-    branches: [main, develop, "releases/**"]
-  pull_request:
-    branches: [main, develop, "releases/**"]
+# on:
+#   push:
+#     branches: [main, develop, "releases/**"]
+#   pull_request:
+#     branches: [main, develop, "releases/**"]
 
-jobs:
-  Godot:
-    timeout-minutes: 15
-    continue-on-error: true
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        platform: [linux, windows]
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          lfs: true
-      - name: Build
-        id: build
-        uses: manleydev/build-godot-action@v1.4.1
-        with:
-          name: My Simulation
-          preset: ${{ matrix.platform }}
-          debugMode: "true"
-      # - name: Upload Artifact
-      #   uses: actions/upload-artifact@v2
-      #   with:
-      #     name: Client - ${{ matrix.platform }}
-      #     path: ${{ github.workspace }}/${{ steps.build.outputs.build }}
+# jobs:
+#   Godot:
+#     timeout-minutes: 15
+#     continue-on-error: true
+#     runs-on: ubuntu-latest
+#     strategy:
+#       matrix:
+#         platform: [linux, windows]
+#     steps:
+#       - uses: actions/checkout@v2
+#         with:
+#           lfs: true
+#       - name: Build
+#         id: build
+#         uses: manleydev/build-godot-action@v1.4.1
+#         with:
+#           name: My Simulation
+#           preset: ${{ matrix.platform }}
+#           debugMode: "true"

@@ -1,11 +1,11 @@
 {
-    "outlet": "Pawprint Press",
-    "competing_outlet": "Citizen Telegram",
-    "ticker_files": [
-        "adverts.json",
-        "sammy.json",
-        "kittykibble.json",
-        "citylife.json",
-        "extra_lore.json"
-    ]
+	"outlet": "Pawprint Press",
+	"competing_outlet": "Citizen Telegram",
+	"ticker_files": [
+		"adverts.json",
+		"sammy.json",
+		"kittykibble.json",
+		"citylife.json",
+		"extra_lore.json"
+	]
 }

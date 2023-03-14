@@ -1,0 +1,12 @@
+Icon Sources
+-----------
+[0] Board Game Icons: https://kenney.nl/assets/board-game-icons
+- state.png
+- random_state.png
+- sequence_state.png
+
+[1] Game Icons: https://kenney.nl/assets/game-icons
+- animation_state.png
+
+[2] Pictogrammers: <https://pictogrammers.com/library/mdi/>
+- state_machine_debugger.png (tinted)

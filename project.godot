@@ -6,180 +6,26 @@
 ;   [section] ; section goes between []
 ;   param=value ; assign values to parameters
 
-config_version=4
-
-_global_script_classes=[ {
-"base": "Leaf",
-"class": "ActionLeaf",
-"language": "GDScript",
-"path": "res://addons/beehave/nodes/leaves/action.gd"
-}, {
-"base": "Decorator",
-"class": "AlwaysFailDecorator",
-"language": "GDScript",
-"path": "res://addons/beehave/nodes/decorators/failer.gd"
-}, {
-"base": "Decorator",
-"class": "AlwaysSucceedDecorator",
-"language": "GDScript",
-"path": "res://addons/beehave/nodes/decorators/succeeder.gd"
-}, {
-"base": "BeehaveTree",
-"class": "BeehaveNode",
-"language": "GDScript",
-"path": "res://addons/beehave/nodes/beehave_node.gd"
-}, {
-"base": "BeehaveTree",
-"class": "BeehaveRoot",
-"language": "GDScript",
-"path": "res://addons/beehave/nodes/beehave_root.gd"
-}, {
-"base": "Node",
-"class": "BeehaveTree",
-"language": "GDScript",
-"path": "res://addons/beehave/nodes/beehave_tree.gd"
-}, {
-"base": "BeehaveNode",
-"class": "Composite",
-"language": "GDScript",
-"path": "res://addons/beehave/nodes/composites/composite.gd"
-}, {
-"base": "Leaf",
-"class": "ConditionLeaf",
-"language": "GDScript",
-"path": "res://addons/beehave/nodes/leaves/condition.gd"
-}, {
-"base": "BeehaveNode",
-"class": "Decorator",
-"language": "GDScript",
-"path": "res://addons/beehave/nodes/decorators/decorator.gd"
-}, {
-"base": "Decorator",
-"class": "InverterDecorator",
-"language": "GDScript",
-"path": "res://addons/beehave/nodes/decorators/inverter.gd"
-}, {
-"base": "BeehaveNode",
-"class": "Leaf",
-"language": "GDScript",
-"path": "res://addons/beehave/nodes/leaves/leaf.gd"
-}, {
-"base": "Decorator",
-"class": "LimiterDecorator",
-"language": "GDScript",
-"path": "res://addons/beehave/nodes/decorators/limiter.gd"
-}, {
-"base": "Composite",
-"class": "SelectorComposite",
-"language": "GDScript",
-"path": "res://addons/beehave/nodes/composites/selector.gd"
-}, {
-"base": "Composite",
-"class": "SelectorStarComposite",
-"language": "GDScript",
-"path": "res://addons/beehave/nodes/composites/selector_star.gd"
-}, {
-"base": "Composite",
-"class": "SequenceComposite",
-"language": "GDScript",
-"path": "res://addons/beehave/nodes/composites/sequence.gd"
-}, {
-"base": "Composite",
-"class": "SequenceStarComposite",
-"language": "GDScript",
-"path": "res://addons/beehave/nodes/composites/sequence_star.gd"
-} ]
-_global_script_class_icons={
-"ActionLeaf": "res://addons/beehave/icons/action.svg",
-"AlwaysFailDecorator": "res://addons/beehave/icons/fail.svg",
-"AlwaysSucceedDecorator": "res://addons/beehave/icons/succeed.svg",
-"BeehaveNode": "res://addons/beehave/icons/action.svg",
-"BeehaveRoot": "res://addons/beehave/icons/tree.svg",
-"BeehaveTree": "",
-"Composite": "res://addons/beehave/icons/category_composite.svg",
-"ConditionLeaf": "res://addons/beehave/icons/condition.svg",
-"Decorator": "res://addons/beehave/icons/category_decorator.svg",
-"InverterDecorator": "res://addons/beehave/icons/inverter.svg",
-"Leaf": "res://addons/beehave/icons/action.svg",
-"LimiterDecorator": "res://addons/beehave/icons/limiter.svg",
-"SelectorComposite": "res://addons/beehave/icons/selector.svg",
-"SelectorStarComposite": "res://addons/beehave/icons/selector_star.svg",
-"SequenceComposite": "res://addons/beehave/icons/sequencer.svg",
-"SequenceStarComposite": "res://addons/beehave/icons/sequencer_star.svg"
-}
+config_version=5
 
 [application]
 
 config/name="City Limits"
-run/main_scene="res://scenes/Game.tscn"
+config/description="Based on the original sprites, CityLimits is an open source reimagining of SimCity Classic based on Godot."
+run/main_scene="res://scenes/game.tscn"
+config/features=PackedStringArray("4.0", "Forward Plus")
 config/icon="res://icon.png"
 config/macos_native_icon="res://icon.icns"
 config/windows_native_icon="res://icon.ico"
-config/version="0.0.1"
-config/build=1000
-
-[autoload]
-
-SimData="*res://scripts/autoload/sim_data.gd"
-SimEvents="*res://scripts/autoload/sim_events.gd"
-SimTime="*res://scripts/autoload/sim_time.gd"
-ZoneData="*res://scripts/autoload/zone_data.gd"
-JsonHelper="*res://scripts/autoload/jsonhelper.gd"
-
-[display]
-
-window/energy_saving/keep_screen_on=false
-window/stretch/mode="2d"
-window/stretch/aspect="keep"
 
 [editor_plugins]
 
-enabled=PoolStringArray( "res://addons/beehave/plugin.cfg", "res://addons/godot-version-management/plugin.cfg" )
-
-[gdnative]
-
-singletons=[  ]
+enabled=PackedStringArray("res://addons/simple-state/plugin.cfg", "res://addons/simplelicense/plugin.cfg")
 
 [input]
 
-ui_left={
+mb_left={
 "deadzone": 0.5,
-"events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"pressed":false,"scancode":16777231,"physical_scancode":0,"unicode":0,"echo":false,"script":null)
-, Object(InputEventJoypadButton,"resource_local_to_scene":false,"resource_name":"","device":0,"button_index":14,"pressure":0.0,"pressed":false,"script":null)
- ]
+"events": [Object(InputEventMouseButton,"resource_local_to_scene":false,"resource_name":"","device":0,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"button_mask":0,"position":Vector2(0, 0),"global_position":Vector2(0, 0),"factor":1.0,"button_index":1,"pressed":false,"double_click":false,"script":null)
+]
 }
-ui_right={
-"deadzone": 0.5,
-"events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"pressed":false,"scancode":16777233,"physical_scancode":0,"unicode":0,"echo":false,"script":null)
-, Object(InputEventJoypadButton,"resource_local_to_scene":false,"resource_name":"","device":0,"button_index":15,"pressure":0.0,"pressed":false,"script":null)
- ]
-}
-ui_up={
-"deadzone": 0.5,
-"events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"pressed":false,"scancode":16777232,"physical_scancode":0,"unicode":0,"echo":false,"script":null)
-, Object(InputEventJoypadButton,"resource_local_to_scene":false,"resource_name":"","device":0,"button_index":12,"pressure":0.0,"pressed":false,"script":null)
- ]
-}
-ui_down={
-"deadzone": 0.5,
-"events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"pressed":false,"scancode":16777234,"physical_scancode":0,"unicode":0,"echo":false,"script":null)
-, Object(InputEventJoypadButton,"resource_local_to_scene":false,"resource_name":"","device":0,"button_index":13,"pressure":0.0,"pressed":false,"script":null)
- ]
-}
-ui_cheats={
-"deadzone": 0.5,
-"events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":true,"control":true,"meta":true,"command":true,"pressed":false,"scancode":67,"physical_scancode":0,"unicode":0,"echo":false,"script":null)
-, Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":true,"meta":true,"command":true,"pressed":false,"scancode":88,"physical_scancode":0,"unicode":0,"echo":false,"script":null)
- ]
-}
-
-[layer_names]
-
-2d_physics/layer_1="zones"
-
-[rendering]
-
-quality/driver/driver_name="GLES2"
-2d/snapping/use_gpu_pixel_snap=true
-environment/default_environment="res://default_env.tres"
-quality/2d/use_pixel_snap=true
