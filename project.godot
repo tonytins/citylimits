@@ -20,7 +20,7 @@ config/windows_native_icon="res://icon.ico"
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/simple-state/plugin.cfg", "res://addons/simplelicense/plugin.cfg")
+enabled=PackedStringArray("res://addons/simplelicense/plugin.cfg", "res://addons/fontawesome/plugin.cfg", "res://addons/SpritesheetGenerator/plugin.cfg", "res://addons/yet_another_behavior_tree/plugin.cfg")
 
 [input]
 
