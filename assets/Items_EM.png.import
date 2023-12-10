@@ -3,16 +3,16 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dope3srd2yn16"
-path.etc2="res://.godot/imported/Items_EM.png-d56acc99adf5d5835b381b256fd4a6e3.etc2.ctex"
+path.s3tc="res://.godot/imported/Items_EM.png-d56acc99adf5d5835b381b256fd4a6e3.s3tc.ctex"
 metadata={
-"imported_formats": ["etc2_astc"],
+"imported_formats": ["s3tc_bptc"],
 "vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/Items_EM.png"
-dest_files=["res://.godot/imported/Items_EM.png-d56acc99adf5d5835b381b256fd4a6e3.etc2.ctex"]
+dest_files=["res://.godot/imported/Items_EM.png-d56acc99adf5d5835b381b256fd4a6e3.s3tc.ctex"]
 
 [params]
 
