@@ -40,6 +40,9 @@ CityLimits.CommandLine/       engine-free library: the command line, no Raylib
   *.cs                          namespace CityLimits.CommandLine: the parser, the dispatcher, the option reader, the exit codes
 CityLimits.Tests/              xUnit 2 tests for CityLimits.Core and CityLimits.CommandLine
   CityLimits.Tests.csproj       references the two libraries, never the game project
+.agents/skills/                skills for agents and contributors
+  dotnet-guidelines/            C# and .NET conventions
+  raylib-cs/                    how CityLimits uses Raylib-cs 8.1.0, and how to check a visual change
 docs/
   ROADMAP.md                    milestones, current focus, estimates, revision history
   scorecard.md                  verified status per area, with evidence
@@ -221,6 +224,11 @@ A city builder lives or dies on its simulation, not its art. The rules:
 
 ### Raylib rules
 
+- **Use the `raylib-cs` skill** in `.agents/skills/raylib-cs/` for any
+  work that calls Raylib: it covers the lifecycle, the frame, the tile
+  sheet, render textures, input, the examples to read, and how to check a
+  visual change on a private display. These rules win where the two
+  disagree.
 - The pinned version is `Raylib-cs` `8.1.0`, which wraps raylib `6.0`. Check
   the API of that version before using it; the Raylib-cs API changes between
   releases, and the upstream docs track the latest.
