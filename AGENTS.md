@@ -113,11 +113,12 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   icons. The project file copies them to the output folder, and the game
   loads them once, after the window is open.
 - **Version.** `VersionInfo` reports the version from GitInfo: `GitInfo.txt`
-  holds the base `major.minor.patch`, and the patch number goes up by one
-  per commit. `BuildNumber` is derived from the commit hash. The changelog
-  only records versions with user-facing and developer changes, so its latest
-  entry is expected to lag behind the version the game reports. "Developer"
-  changes include developer APIs, tools, debugging, and modding support.
+  holds the `major.minor.patch` the game reports, and it is bumped by hand
+  when a change is worth a version, with a changelog entry to match.
+  `BuildNumber` is derived from the commit hash. The changelog only records
+  versions with user-facing and developer changes, so its latest entry is
+  expected to lag behind the version the game reports. "Developer" changes
+  include developer APIs, tools, debugging, and modding support.
 
 Everything else in this file describes the rules the code must follow as it
 grows. Do not describe planned behavior as if it exists.
