@@ -9,16 +9,17 @@ public sealed class CitySimulation
     /// <summary>The chance a served zone develops each time the scan reaches it, until demand decides it.</summary>
     private const float DevelopmentChance = 0.2f;
 
-    /// <summary>Creates a simulation over the given map.</summary>
+    /// <summary>Creates a simulation over the given map, with the money the city starts with.</summary>
     /// <exception cref="ArgumentNullException">The map is null.</exception>
-    public CitySimulation(TileMap map, int seed)
+    /// <exception cref="ArgumentOutOfRangeException">The starting money is negative.</exception>
+    public CitySimulation(TileMap map, int seed, int funds = Treasury.StartingFunds)
     {
         ArgumentNullException.ThrowIfNull(map);
 
         Map = map;
         Seed = seed;
         Random = new DeterministicRandom(seed);
-        Treasury = new Treasury();
+        Treasury = new Treasury(funds);
         Roads = new RoadNetwork();
         Builder = new CityBuilder(map, Treasury, Roads);
     }
