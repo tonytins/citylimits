@@ -63,6 +63,17 @@ public sealed class TileMap
         return _tiles[(y * Width) + x];
     }
 
+    /// <summary>
+    /// Raised with a tile's coordinates after its state changes, so a view of the map can redraw
+    /// only what changed. It is not raised when a tile is set to the state it already had.
+    /// </summary>
+    /// <remarks>
+    /// The arguments are plain coordinates rather than an <see cref="EventArgs"/>, because the
+    /// simulation can change hundreds of tiles in one tick and must not allocate for each.
+    /// A handler runs inside the simulation's work, so it must be quick and must not throw.
+    /// </remarks>
+    public event Action<int, int>? TileChanged;
+
     /// <summary>Replaces the whole state of the tile at the given coordinates.</summary>
     /// <exception cref="ArgumentOutOfRangeException">The coordinates are outside the map.</exception>
     public void SetState(int x, int y, TileState state)
@@ -72,7 +83,14 @@ public sealed class TileMap
             throw new ArgumentOutOfRangeException(nameof(x), $"({x}, {y}) is outside a {Width} by {Height} map.");
         }
 
-        _tiles[(y * Width) + x] = state;
+        var index = (y * Width) + x;
+        if (_tiles[index] == state)
+        {
+            return;
+        }
+
+        _tiles[index] = state;
+        TileChanged?.Invoke(x, y);
     }
 
     /// <summary>Tells whether the given coordinates are on the map.</summary>

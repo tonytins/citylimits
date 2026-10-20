@@ -90,4 +90,61 @@ public class TileMapTests
         Assert.Throws<ArgumentOutOfRangeException>(() => map.SetState(2, 0, new TileState(TileKind.Grass)));
         Assert.Equal(TileUse.Road, map.StateAtOrDefault(9, 9, new TileState(TileKind.Grass, TileUse.Road)).Use);
     }
+
+    [Fact]
+    public void ChangingATileSaysWhichTileChanged()
+    {
+        var map = TileMap.FromTerrain(3, 3, new TileKind[9]);
+        var changes = new List<(int X, int Y)>();
+        map.TileChanged += (x, y) => changes.Add((x, y));
+
+        map.SetState(2, 1, new TileState(TileKind.Grass, TileUse.Road));
+
+        Assert.Equal([(2, 1)], changes);
+    }
+
+    [Fact]
+    public void SettingTheSameStateChangesNothing()
+    {
+        var map = TileMap.FromTerrain(3, 3, new TileKind[9]);
+        map.SetState(2, 1, new TileState(TileKind.Grass, TileUse.Road));
+        var changes = 0;
+        map.TileChanged += (_, _) => changes++;
+
+        map.SetState(2, 1, new TileState(TileKind.Grass, TileUse.Road));
+
+        Assert.Equal(0, changes);
+    }
+
+    [Fact]
+    public void ARefusedChangeOffTheMapRaisesNothing()
+    {
+        var map = TileMap.FromTerrain(3, 3, new TileKind[9]);
+        var changes = 0;
+        map.TileChanged += (_, _) => changes++;
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => map.SetState(3, 0, new TileState(TileKind.Grass, TileUse.Road)));
+
+        Assert.Equal(0, changes);
+    }
+
+    [Fact]
+    public void GrowthReportsTheTilesItDevelops()
+    {
+        var map = TileMap.FromTerrain(6, 6, new TileKind[36]);
+        var simulation = new CityLimits.Core.Simulation.CitySimulation(map, 2000);
+        simulation.Builder.Apply(BuildAction.Road, 2, 2);
+        simulation.Builder.Apply(BuildAction.ZoneResidential, 2, 1);
+        var changes = new List<(int X, int Y)>();
+        map.TileChanged += (x, y) => changes.Add((x, y));
+
+        for (var i = 0; i < 40; i++)
+        {
+            simulation.Tick();
+        }
+
+        Assert.Equal(TileState.MaxDevelopment, map.StateAt(2, 1).Development);
+        Assert.Equal(TileState.MaxDevelopment, changes.Count);
+        Assert.All(changes, change => Assert.Equal((2, 1), change));
+    }
 }

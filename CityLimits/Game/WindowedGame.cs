@@ -36,7 +36,7 @@ public static class WindowedGame
 
         try
         {
-            var game = new GameLoop(settings, settingsPath, assets, seed);
+            using var game = new GameLoop(settings, settingsPath, assets, seed);
 
             while (!Raylib.WindowShouldClose() && !game.ShouldClose)
             {

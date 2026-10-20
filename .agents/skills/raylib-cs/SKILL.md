@@ -135,9 +135,10 @@ not with shapes.
 
 ### Render textures (the chunk cache)
 
-To draw the map once and reuse it, render tiles into a `RenderTexture2D`
-and draw that texture each frame. `Core/RenderTexture.cs` and
-`Core/SmoothPixelperfect.cs` are the references.
+The map is drawn once into `RenderTexture2D` chunks of 32 by 32 tiles
+and reused each frame, in `Rendering/MapChunkCache.cs`.
+`Core/RenderTexture.cs` and `Core/SmoothPixelperfect.cs` are the
+references. What it does, and what anything like it must do:
 
 - `LoadRenderTexture(w, h)` after `InitWindow`; check
   `IsRenderTextureValid`; `UnloadRenderTexture` before `CloseWindow`.
@@ -150,7 +151,17 @@ and draw that texture each frame. `Core/RenderTexture.cs` and
 - Set `TextureFilter.Point` on `target.Texture` as well, or the cached map
   blurs when the camera zooms.
 - Redraw a chunk only when one of its tiles changes, and in step with the
-  map: a chunk that is redrawn late shows the old city.
+  map: a chunk that is redrawn late shows the old city. The cache listens
+  to `TileMap.TileChanged`, and `GameLoop.Draw` calls
+  `MapRenderer.Refresh()` before `BeginDrawing`.
+- If a tile's drawing depends on its neighbours, as a road's does, a
+  change must stale the neighbours' chunks too.
+- Keep a fallback. If `IsRenderTextureValid` fails, log it and draw tile
+  by tile through the same `MapRenderer.DrawTile`.
+- Prove a change to the cache by comparing it with the fallback: take the
+  same screenshot both ways (force `TryCreate` to return null for the
+  baseline, then restore it) and diff the map area. Identical pixels is
+  the bar.
 
 ## 6. The camera
 

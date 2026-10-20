@@ -1,7 +1,7 @@
 namespace CityLimits.Game;
 
 /// <summary>The game: it owns the clock, the camera, the tools, and the city being simulated.</summary>
-public sealed class GameLoop
+public sealed class GameLoop : IDisposable
 {
     /// <summary>The seed the starting city is built from.</summary>
     public const int DefaultSeed = 2000;
@@ -37,7 +37,8 @@ public sealed class GameLoop
         var map = TileMapGenerator.Generate(seed, MapSize.DefaultWidth, MapSize.DefaultHeight);
         _simulation = new CitySimulation(map, seed);
 
-        _mapRenderer = new MapRenderer(assets);
+        _mapRenderer = new MapRenderer(map, assets);
+        Logger.Info(_mapRenderer.IsCached ? "The map is drawn from cached chunks" : "The map is drawn tile by tile");
         _toolPaletteView = new ToolPaletteView(assets);
 
         _camera.SetScreenSize(settings.WindowWidth, settings.WindowHeight);
@@ -77,14 +78,17 @@ public sealed class GameLoop
     /// <summary>Draws the game.</summary>
     public void Draw()
     {
+        // Chunks are redrawn into their own textures, which can't happen inside the frame's camera.
+        _mapRenderer.Refresh();
+
         Raylib.BeginDrawing();
         Raylib.ClearBackground(new Color { R = 12, G = 14, B = 18, A = 255 });
 
         var mouse = Raylib.GetMousePosition();
 
         Raylib.BeginMode2D(_camera.ToRaylib());
-        _mapRenderer.Draw(_simulation.Map, _camera);
-        _mapRenderer.DrawHover(_simulation.Map, _camera, mouse);
+        _mapRenderer.Draw(_camera);
+        _mapRenderer.DrawHover(_camera, mouse);
         Raylib.EndMode2D();
 
         _toolPaletteView.Draw(_tools);
@@ -107,6 +111,9 @@ public sealed class GameLoop
 
         Raylib.EndDrawing();
     }
+
+    /// <summary>Releases what the game holds on the graphics card. Call it before the window closes.</summary>
+    public void Dispose() => _mapRenderer.Dispose();
 
     /// <summary>Records a failure so the player can see it, and keeps the game running.</summary>
     public void ReportError(Exception exception)

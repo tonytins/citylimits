@@ -23,7 +23,7 @@ CityLimits/                  the game project (Raylib-cs, NLog, net10.0)
   GlobalUsings.cs               global usings shared by the project
   Game/                         namespace CityLimits.Game: the game command, the window, the loop, the tools, the state, the headless run, the log
     Commands/                   namespace CityLimits.Game.Commands: the subcommands, one class each
-  Rendering/                    namespace CityLimits.Rendering: the camera, the tile drawing, the tile sheet, the theme
+  Rendering/                    namespace CityLimits.Rendering: the camera, the tile drawing, the chunk cache, the tile sheet, the theme
   UI/                           namespace CityLimits.UI: the HUD, the tool palette
   Assets/                       images, fonts, and sounds, copied to the output folder
 CityLimits.Core/              engine-free library: the world and the simulation, no Raylib
@@ -90,6 +90,13 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   `RoadNetwork.ConnectionsAt` reads from the map. Zones are still drawn as
   coloured shapes until they become 3 by 3 and take their buildings from
   the sheet.
+- **The chunk cache.** The map is drawn ahead of time into render
+  textures of 32 by 32 tiles (`Rendering/MapChunkCache.cs`), and a frame
+  draws only the chunks the camera can see. `TileMap.TileChanged` reports
+  each tile whose state changes, and the cache redraws that tile's chunk,
+  and its neighbours' when a road's drawing depends on them, before the
+  next frame begins. If the textures can't be made, the log says so and
+  the map is drawn tile by tile, which gives the same picture.
 - **The camera.** The WASD keys and the arrow keys pan, the mouse wheel
   zooms toward the pointer, and the view is clamped to the map.
 - **The clock.** A tick is a quarter of a second of real time, and it
@@ -142,7 +149,7 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   and no project. It holds the parser, the dispatcher, the default
   command, the strict option reader, and the exit codes.
 - **The tests.** `CityLimits.Tests` uses xUnit 2 with the VSTest runner
-  and coverlet, and holds 148 tests over the generator, the map, the
+  and coverlet, and holds 152 tests over the generator, the map, the
   calendar, the clock, the simulation, the settings, the tile rules, the
   build actions, the road network, the treasury, the option reader, and
   the dispatcher.
@@ -258,9 +265,13 @@ A city builder lives or dies on its simulation, not its art. The rules:
   `AppContext.BaseDirectory`. A missing asset is reported, and the game
   carries on: the map falls back to flat colours, and the tool keeps its
   label.
-- **Batch what you can.** One draw call per tile is fine at first, but the
-  map will grow; keep the tile drawing in one place, in
-  `Rendering/`, so it can be batched later without touching the game rules.
+- **Draw the map from the chunk cache.** A frame draws a few cached
+  textures, not every tile. Anything that is part of the map (terrain,
+  roads, zones, and later buildings) is drawn by `MapRenderer.DrawTile`,
+  which both the cache and the tile-by-tile fallback use, and it must
+  change only through `TileMap.SetState`, so the cache hears about it.
+  Things that move or follow the mouse every frame (the hover outline, a
+  tool preview, sprites) are drawn over the cached map, not into it.
 - **Colors and layouts live in one place.** Tile colors, the UI palette, and
   the sprite sizes belong in a theme file, not scattered through the draw
   code.

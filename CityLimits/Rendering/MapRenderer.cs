@@ -1,15 +1,24 @@
 namespace CityLimits.Rendering;
 
-/// <summary>Draws the map.</summary>
-public sealed class MapRenderer
+/// <summary>Draws the map: from the chunk cache when it could be made, and tile by tile when it couldn't.</summary>
+public sealed class MapRenderer : IDisposable
 {
     /// <summary>The size of a tile in world units.</summary>
     public const int TileSize = 16;
 
-    private readonly GameAssets? _assets;
+    private readonly TileMap _map;
+    private readonly Texture2D? _sheet;
+    private readonly MapChunkCache? _chunks;
 
-    /// <summary>Creates a renderer that draws the map with the given assets.</summary>
-    public MapRenderer(GameAssets? assets) => _assets = assets;
+    /// <summary>Creates a renderer for a map, with the given assets. Call it after the window is open.</summary>
+    public MapRenderer(TileMap map, GameAssets? assets)
+    {
+        ArgumentNullException.ThrowIfNull(map);
+
+        _map = map;
+        _sheet = assets?.TileSheet;
+        _chunks = MapChunkCache.TryCreate(map, _sheet);
+    }
 
     /// <summary>Finds the tile under a point in the world, when the point is on the map.</summary>
     public static bool TryGetTileAt(TileMap map, Vector2 world, out int tileX, out int tileY, out TileState state)
@@ -27,44 +36,28 @@ public sealed class MapRenderer
         return true;
     }
 
-    /// <summary>Draws the map, and only the tiles the camera can see.</summary>
-    public void Draw(TileMap map, Camera camera)
+    /// <summary>Tells whether the map is drawn from the chunk cache, rather than tile by tile.</summary>
+    public bool IsCached => _chunks is not null;
+
+    /// <summary>Redraws whatever changed in the map since the last frame. Call it before <c>BeginDrawing</c>.</summary>
+    public void Refresh() => _chunks?.Refresh();
+
+    /// <summary>Draws the map, and only the part the camera can see. Call it inside <c>BeginMode2D</c>.</summary>
+    public void Draw(Camera camera)
     {
-        var (minX, minY, maxX, maxY) = VisibleRange(map, camera);
-        var sheet = _assets?.TileSheet;
+        var (minX, minY, maxX, maxY) = VisibleRange(_map, camera);
 
-        for (var y = minY; y <= maxY; y++)
+        if (_chunks is not null)
         {
-            for (var x = minX; x <= maxX; x++)
+            _chunks.Draw(minX, minY, maxX, maxY);
+        }
+        else
+        {
+            for (var y = minY; y <= maxY; y++)
             {
-                var state = map.StateAt(x, y);
-                var destination = new Rectangle
+                for (var x = minX; x <= maxX; x++)
                 {
-                    X = x * TileSize,
-                    Y = y * TileSize,
-                    Width = TileSize,
-                    Height = TileSize,
-                };
-
-                if (sheet is null)
-                {
-                    Raylib.DrawRectangleRec(destination, state.IsRoad ? Theme.Road : Theme.For(state.Kind));
-                }
-                else
-                {
-                    var roads = RoadNetwork.ConnectionsAt(map, x, y);
-                    Raylib.DrawTexturePro(
-                        sheet.Value,
-                        TileAtlas.SourceFor(TileAtlas.IndexFor(state, roads, x, y)),
-                        destination,
-                        Vector2.Zero,
-                        0f,
-                        Color.White);
-                }
-
-                if (state.IsZoned)
-                {
-                    DrawZone(x, y, state);
+                    DrawTile(_map, _sheet, x, y, x * TileSize, y * TileSize);
                 }
             }
         }
@@ -75,11 +68,45 @@ public sealed class MapRenderer
         }
     }
 
+    /// <summary>Releases the chunk cache. Call it before the window closes.</summary>
+    public void Dispose() => _chunks?.Dispose();
+
+    /// <summary>
+    /// Draws one tile with its top-left corner at the given point: from the sheet, or in flat
+    /// colours when the sheet is missing. The chunk cache and the tile-by-tile path share it.
+    /// </summary>
+    internal static void DrawTile(TileMap map, Texture2D? sheet, int x, int y, int left, int top)
+    {
+        var state = map.StateAt(x, y);
+        var destination = new Rectangle { X = left, Y = top, Width = TileSize, Height = TileSize };
+
+        if (sheet is null)
+        {
+            Raylib.DrawRectangleRec(destination, state.IsRoad ? Theme.Road : Theme.For(state.Kind));
+        }
+        else
+        {
+            var roads = RoadNetwork.ConnectionsAt(map, x, y);
+            Raylib.DrawTexturePro(
+                sheet.Value,
+                TileAtlas.SourceFor(TileAtlas.IndexFor(state, roads, x, y)),
+                destination,
+                Vector2.Zero,
+                0f,
+                Color.White);
+        }
+
+        if (state.IsZoned)
+        {
+            DrawZone(left, top, state);
+        }
+    }
+
     /// <summary>Draws the outline around the tile under the mouse.</summary>
-    public void DrawHover(TileMap map, Camera camera, Vector2 mousePosition)
+    public void DrawHover(Camera camera, Vector2 mousePosition)
     {
         var world = camera.ScreenToWorld(mousePosition);
-        if (!TryGetTileAt(map, world, out var tileX, out var tileY, out _))
+        if (!TryGetTileAt(_map, world, out var tileX, out var tileY, out _))
         {
             return;
         }
@@ -96,10 +123,8 @@ public sealed class MapRenderer
             Theme.Hover);
     }
 
-    private static void DrawZone(int x, int y, TileState state)
+    private static void DrawZone(int left, int top, TileState state)
     {
-        var left = x * TileSize;
-        var top = y * TileSize;
         var color = Theme.For(state.Use);
 
         if (state.Development == 0)

@@ -21,7 +21,7 @@ change. Statuses are `done`, `partial`, and `missing`.
 | [Environment](#land-value-pollution-and-disasters) | 0 | 0 | 5 | 0 disasters |
 | [Interface](#player-interface) | 1 | 1 | 4 | 6 tools with icons, 1 status bar |
 | [Platform](#platform) | 6 | 0 | 2 | Raylib-cs 8.1.0, NLog 6.2.2, .NET 10 |
-| [Reliability](#reliability) | 6 | 0 | 0 | 148 tests, all passing, CI green |
+| [Reliability](#reliability) | 6 | 0 | 0 | 152 tests, all passing, CI green |
 | [Documentation](#documentation) | 3 | 0 | 2 | 3 of 5 documents exist |
 | [Known issues](#known-issues) | | | | 1 open, 3 resolved |
 
@@ -39,11 +39,12 @@ How the state was verified on 2026-10-20:
 
 ```sh
 dotnet build CityLimits.slnx                              # 4 projects: 0 warnings, 0 errors
-dotnet test  CityLimits.Tests/CityLimits.Tests.csproj     # 148 passed, 0 failed
+dotnet test  CityLimits.Tests/CityLimits.Tests.csproj     # 152 passed, 0 failed
 dotnet run --project CityLimits -- --headless --ticks 12  # 12 ticks logged to the console
 dotnet run --project CityLimits                           # window opened; roads, zones, buildings, the palette icons, and the tile readout were drawn
 dotnet run --project CityLimits -- --seed 7               # window opened and the assets loaded (the screen was not inspected)
 xvfb-run -a dotnet run --project CityLimits               # on a private display: roads drawn by xdotool came from the sheet (a crossroads, two T-junctions, corners, a closed loop)
+                                                          # the chunk cache drew the same pixels as tile by tile, at two zoom levels, across chunk edges
 ```
 
 The game was run on a virtual display and the window was captured and
@@ -75,7 +76,7 @@ there is something to grow.
 |---|---|---|---|
 | MAP-1 | A tile grid of a fixed size, stored as arrays | done | `CityLimits.Core/World/TileMap.cs`: a `TileState` array behind a width and a height, with the tile count checked against the size. `TileState` holds the ground, the use, and the development level, so a tile carries its own story |
 | MAP-2 | Terrain is generated from the seed, and the same seed gives the same map | done | `CityLimits.Core/World/TileMapGenerator.cs`: value noise over four octaves; `TileMapGeneratorTests` proves the same seed gives the same map |
-| MAP-3 | Terrain is rendered from a tile atlas with no per-frame allocation | done | `CityLimits/Rendering/MapRenderer.cs` draws each visible tile from `CityLimits/Assets/tiles.png` with `DrawTexturePro`; `CityLimits/Rendering/TileAtlas.cs` holds the tile indices, roads included, chosen from `RoadNetwork.ConnectionsAt`, and `GameAssets` loads the sheet once at startup and unloads it at shutdown. The captured window on 2026-10-20 holds the atlas colours: 61% clear ground, 6% water, 5% trees |
+| MAP-3 | Terrain is rendered from a tile atlas with no per-frame allocation | done | `CityLimits/Rendering/MapChunkCache.cs` draws the map into 32 by 32 tile render textures, redrawn only when `TileMap.TileChanged` reports a change, and a frame draws the visible chunks. On a private display on 2026-10-20, the cached map matched the tile-by-tile drawing pixel for pixel over 580 800 pixels, at two zoom levels and across chunk edges, and a cache that ignored changes was caught. `MapRenderer.DrawTile` draws each tile from `CityLimits/Assets/tiles.png` with `DrawTexturePro`; `CityLimits/Rendering/TileAtlas.cs` holds the tile indices, roads included, chosen from `RoadNetwork.ConnectionsAt`, and `GameAssets` loads the sheet once at startup and unloads it at shutdown. The captured window on 2026-10-20 holds the atlas colours: 61% clear ground, 6% water, 5% trees |
 | MAP-4 | The tile under the mouse is highlighted and readable | done | `MapRenderer.DrawHover` outlines the tile under the pointer, and `Hud.DrawTileReadout` names it: the tile's place and what can be done with it, from `CityLimits.Core/World/TileInfo.cs` |
 
 ## Roads and zoning
@@ -160,7 +161,7 @@ there is something to grow.
 | REL-1 | Nothing ends the player's session: the frame loop catches, reports, and keeps drawing | done | `WindowedGame` catches every exception around the update and the draw, and `GameLoop.ReportError` puts the message on screen; the game keeps running |
 | REL-2 | The world and the simulation never call the engine | done | `CityLimits.Core` references no package at all, and the game references the core library; no Raylib type appears in the core |
 | REL-3 | Input, tile indices, map sizes, and files are validated where they enter | done | Map sizes, tile counts, and the settings file are checked, and the tile indexer throws outside the map. The mouse position is turned into a tile by `MapRenderer.TryGetTileAt`, which reports when the pointer is off the map, and `CityBuilder.Apply` refuses a tile that is off the map, ground that cannot be built on, and work the city cannot pay for |
-| REL-4 | A test project covers the engine-free logic, and the tests pass | done | `CityLimits.Tests` references `CityLimits.Core` and `CityLimits.CommandLine` and holds 148 xUnit tests over the generator, the map, the tile state, the rules, the calendar, the clock, the simulation, the settings, the treasury, the road network and its connections, the builder, the option reader, and the dispatcher. All 148 passed on 2026-10-20. Letting an unknown option and an out-of-range number through on purpose failed 3 of them, and letting `--headless` reach a command that needs a window failed 2 |
+| REL-4 | A test project covers the engine-free logic, and the tests pass | done | `CityLimits.Tests` references `CityLimits.Core` and `CityLimits.CommandLine` and holds 152 xUnit tests over the generator, the map, the tile state, the rules, the calendar, the clock, the simulation, the settings, the treasury, the road network and its connections, the map's change event, the builder, the option reader, and the dispatcher. All 152 passed on 2026-10-20. Letting an unknown option and an out-of-range number through on purpose failed 3 of them, and letting `--headless` reach a command that needs a window failed 2 |
 | REL-5 | A determinism test proves the same seed gives the same city | done | `DeterministicRandomTests.TheSameSeedGivesTheSameSequence`, `CitySimulationTests.TheSameSeedAndTheSameTicksGiveTheSameCity`, and `CitySimulationTests.TheSameSeedAndTheSameWorkGiveTheSameCity`, which builds the same road and zones in two cities and compares the tiles and the money after 40 ticks |
 | REL-6 | CI builds and tests on every push | done | `.github/workflows/dotnet.yml` runs on a push to `main` and on a pull request: restore, build, and test. The first run, on the commit 273fd9f on 2026-10-20, finished with the conclusion `success` (run 39443031762) |
 
