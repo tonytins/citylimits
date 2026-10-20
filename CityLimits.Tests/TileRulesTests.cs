@@ -28,6 +28,8 @@ public class TileRulesTests
         Assert.False(TileRules.CanBuildOn(kind));
         Assert.False(TileRules.NeedsClearing(kind));
         Assert.False(TileRules.IsClearGround(kind));
+        Assert.False(TileRules.CanLayRoad(kind));
+        Assert.False(TileRules.CanZone(kind));
     }
 
     [Fact]
@@ -53,5 +55,26 @@ public class TileRulesTests
     {
         Assert.Equal("Trees - clear it before building", TileInfo.Describe(TileKind.Trees));
         Assert.Equal("Rock - cannot be built on", TileInfo.Describe(TileKind.Rock));
+    }
+
+    [Theory]
+    [InlineData(TileUse.Road, false)]
+    [InlineData(TileUse.Residential, true)]
+    [InlineData(TileUse.Commercial, true)]
+    [InlineData(TileUse.Industrial, true)]
+    [InlineData(TileUse.None, false)]
+    public void TheZonesAreTheThreeKindsOfUse(TileUse use, bool isZone)
+    {
+        Assert.Equal(isZone, TileRules.IsZone(use));
+    }
+
+    [Fact]
+    public void OnlyAUsedTileHasSomethingToClear()
+    {
+        Assert.False(TileRules.HasSomethingToClear(new TileState(TileKind.Grass)));
+        Assert.False(TileRules.HasSomethingToClear(new TileState(TileKind.Water)));
+        Assert.True(TileRules.HasSomethingToClear(new TileState(TileKind.Trees)));
+        Assert.True(TileRules.HasSomethingToClear(new TileState(TileKind.Grass, TileUse.Road)));
+        Assert.True(TileRules.HasSomethingToClear(new TileState(TileKind.Grass, TileUse.Industrial)));
     }
 }

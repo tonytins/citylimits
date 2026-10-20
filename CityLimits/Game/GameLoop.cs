@@ -27,6 +27,11 @@ public sealed class GameLoop
     private GameSettings _settings;
     private int _lastSpeed = 1;
     private string? _error;
+    private string? _notice;
+    private bool _noticeIsError;
+    private int _lastTileX = -1;
+    private int _lastTileY = -1;
+    private bool _painting;
 
     /// <summary>Creates the game with the settings it was started with.</summary>
     public GameLoop(GameSettings settings, string settingsPath, GameAssets assets, int seed = DefaultSeed)
@@ -51,6 +56,9 @@ public sealed class GameLoop
     /// <summary>The speed the game is running at, where zero is paused.</summary>
     public int Speed => _settings.Speed;
 
+    /// <summary>Tells whether the player asked to leave the game.</summary>
+    public bool ShouldClose { get; private set; }
+
     /// <summary>Reads the input and advances the city.</summary>
     public void Update()
     {
@@ -68,6 +76,7 @@ public sealed class GameLoop
             }
         }
 
+        _simulation.Roads.EnsureCurrent(_simulation.Map);
         _camera.ClampTo(MapWidth * MapRenderer.TileSize, MapHeight * MapRenderer.TileSize);
     }
 
@@ -87,22 +96,20 @@ public sealed class GameLoop
         _toolPaletteView.Draw(_tools);
 
         var world = _camera.ScreenToWorld(mouse);
-        var onMap = MapRenderer.TryGetTileAt(_simulation.Map, world, out var tileX, out var tileY, out var kind);
+        var onMap = MapRenderer.TryGetTileAt(_simulation.Map, world, out var tileX, out var tileY, out var state);
 
         _hud.DrawStatus(
             _simulation.Date,
             _simulation.TickCount,
             _settings.Speed,
             _tools.Selected,
+            _simulation.Treasury.Funds,
+            CostOfSelectedTool(),
             world,
             Raylib.GetFPS());
-        _hud.DrawTileReadout(onMap ? kind : null, tileX, tileY);
+        _hud.DrawTileReadout(onMap ? state : null, tileX, tileY);
         _hud.DrawHints();
-
-        if (_error is not null)
-        {
-            _hud.DrawError(_error);
-        }
+        _hud.DrawMessage(_error ?? _notice, _error is not null || _noticeIsError);
 
         Raylib.EndDrawing();
     }
@@ -180,6 +187,11 @@ public sealed class GameLoop
             ChangeSpeed(1);
         }
 
+        if (Raylib.IsKeyPressed(KeyboardKey.Escape))
+        {
+            ShouldClose = true;
+        }
+
         foreach (var key in ToolPaletteView.ToolKeys)
         {
             if (!Raylib.IsKeyPressed(key))
@@ -191,13 +203,75 @@ public sealed class GameLoop
             if (tool is not null)
             {
                 _tools.Select(tool.Value);
+                _painting = false;
             }
         }
+
+        HandlePainting(mouse);
 
         if (Raylib.IsWindowResized())
         {
             _settings = _settings with { WindowWidth = Raylib.GetScreenWidth(), WindowHeight = Raylib.GetScreenHeight() };
         }
+    }
+
+    private void HandlePainting(Vector2 mouse)
+    {
+        if (!Raylib.IsMouseButtonDown(MouseButton.Left))
+        {
+            _painting = false;
+            _lastTileX = -1;
+            _lastTileY = -1;
+            return;
+        }
+
+        var world = _camera.ScreenToWorld(mouse);
+        if (!MapRenderer.TryGetTileAt(_simulation.Map, world, out var tileX, out var tileY, out _))
+        {
+            return;
+        }
+
+        if (_painting && tileX == _lastTileX && tileY == _lastTileY)
+        {
+            return;
+        }
+
+        _painting = true;
+        _lastTileX = tileX;
+        _lastTileY = tileY;
+        ApplyTool(tileX, tileY);
+    }
+
+    private void ApplyTool(int tileX, int tileY)
+    {
+        var action = ToolActions.ActionFor(_tools.Selected);
+        if (action is null)
+        {
+            _notice = null;
+            return;
+        }
+
+        var result = _simulation.Builder.Apply(action.Value, tileX, tileY);
+        _noticeIsError = result.Status == BuildStatus.Refused;
+        _notice = Describe(result);
+    }
+
+    private static string Describe(BuildResult result) => result.Status switch
+    {
+        BuildStatus.Built when result.Refund > 0 => $"Cleared the tile, ${result.Refund} back",
+        BuildStatus.Built => "Done",
+        BuildStatus.Unchanged when result.Reason == BuildRefusal.AlreadyDone => "The tile is already like that",
+        BuildStatus.Unchanged => "There was nothing to clear",
+        BuildStatus.Refused when result.Reason == BuildRefusal.NotEnoughFunds => $"Not enough money, it costs ${result.Cost}",
+        BuildStatus.Refused when result.Reason == BuildRefusal.CannotBuildHere => "That ground cannot be built on",
+        BuildStatus.Refused when result.Reason == BuildRefusal.OffTheMap => "That tile is off the map",
+        _ => "The work was refused",
+    };
+
+    private int CostOfSelectedTool()
+    {
+        var action = ToolActions.ActionFor(_tools.Selected);
+        return action is null ? 0 : TileCosts.CostFor(action.Value);
     }
 
     private void TogglePause()

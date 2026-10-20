@@ -10,6 +10,7 @@ public sealed class ToolPalette
         Tool.Residential,
         Tool.Commercial,
         Tool.Industrial,
+        Tool.Bulldozer,
     ];
 
     /// <summary>The tool that is held when the game starts.</summary>

@@ -1,6 +1,6 @@
 # CityLimits roadmap
 
-> **Last reviewed:** 2026-10-20 · **Last updated:** 2026-10-20 · **Change:** major (Neat Map is complete) · **Stage:** pre-alpha
+> **Last reviewed:** 2026-10-20 · **Last updated:** 2026-10-20 · **Change:** major (Line City is complete) · **Stage:** pre-alpha
 
 Forward-looking: where CityLimits stands, what blocks the next milestone,
 and what comes next. Verified status and evidence are in the
@@ -25,20 +25,19 @@ it a later milestone.
 | Core workflow | Works end to end? | Evidence | Hours to pass (est.) |
 |---|---|---|---|
 | Start a game and look at a map | yes | A resizable "CityLimits" window opens on a 128 by 128 seeded map, drawn from a tile sheet, with a camera that pans, zooms, and clamps, and a readout of the tile under the mouse (CORE-1, MAP-1, MAP-2, MAP-3, MAP-4, CORE-6) | 0 |
-| Lay roads, zone land, and see the city grow | no | The tools are in the palette but do nothing yet, and the tick only moves the calendar (ZONE-1, SIM-1, SIM-4) | 30–50 |
-| Read the city's state: money, power, demand, and problems | no | The HUD shows the date, the tick, the speed, and the tool, but there is no budget or power model (UI-2, ECON-1, ECON-3) | 25–40 |
+| Lay roads, zone land, and see the city grow | partial | The player can draw roads, zone land, and bulldoze, the city charges for the work, and a zoned tile that touches a road grows a building. There is no population, no demand, and no decay yet, so the city cannot grow on its own (ZONE-1 to ZONE-5, SIM-1, SIM-4) | 20–35 |
+| Read the city's state: money, power, demand, and problems | no | The HUD shows the date, the tick, the speed, the funds, and what the held tool costs, and the tile readout names what is on the tile. There is no power, no demand, and no budget panel (UI-2, ECON-1, ECON-3) | 25–40 |
 | Keep the city running for a long session without a crash | partial | The frame loop catches and reports, the tick loop runs, and the settings survive a session (REL-1, CORE-8). The city itself cannot be saved yet (UI-5) | 10–20 |
 
-**Result: pre-alpha.** One row passes, one is partial, and two are open.
-Alpha is roughly 65–110 hours away, and the critical path runs through Line
-City and Kowloon.
+**Result: pre-alpha.** One row passes, two are partial, and one is open.
+Alpha is roughly 55–95 hours away, and the critical path runs through Kowloon.
 
 ## Current focus
 
 In order:
 
-1. **Line City: Roads and zoning.** The first tool that changes the world.
-2. **Kowloon: Simulation core.** The tick that grows the city.
+1. **Kowloon: Simulation core.** The tick that grows the city.
+2. **Joffburg: Services and economy.** Power, taxes, and the budget.
 
 ## Milestones
 
@@ -49,27 +48,26 @@ In order:
 |---|---:|---:|---|
 | New Dullsville: Foundation | 100% | 0 | The solution, the core library, the tests, the fixed timestep, the camera, the tools, and the settings are all in |
 | Neat Map: Terrain and the tile grid | 100% | 0 | The tile grid, the seeded generation, the terrain drawn from the tile sheet, the hover highlight, and the readout of the tile under the mouse are in |
-| Line City: Roads and zoning | 0% | 12–20 | Nothing yet |
-| Kowloon: Simulation core | 0% | 15–25 | Nothing yet. The heart of the game |
+| Line City: Roads and zoning | 100% | 0 | The tools change the world: roads, zones, a bulldozer, a price for each, and buildings that grow on served land |
+| Kowloon: Simulation core | 30% | 15–25 | The tick advances the date and grows the served zones, and the determinism test is in. No people, no demand, no decay yet. The heart of the game |
 | Joffburg: Services and economy | 0% | 15–25 | Nothing yet |
 | Radial: Traffic and commuting | 0% | 12–20 | Nothing yet |
 | Bad News: Land value, pollution, disasters | 0% | 12–20 | Nothing yet |
 | Happy Isle: Player-facing game | 0% | 15–25 | Nothing yet |
 | Yokohama: Polish and release | 0% | 10–20 | Nothing yet |
-| | **Total** | **≈ 64–117** | |
+| | **Total** | **≈ 52–97** | |
 
 ## Upcoming work, ranked
 
 | Rank | Work | Milestone | Estimate (h) |
 |---|---|---|---|
-| 1 | Road drawing, bulldozing, and zone painting | Line City | 8–12 |
-| 2 | Road connectivity, so a zone knows it is served | Line City | 4–8 |
-| 3 | The tick: population, migration, and development | Kowloon | 10–16 |
-| 4 | Demand: residential, commercial, industrial | Kowloon | 5–9 |
-| 5 | A tile for every kind of ground the tools can leave behind | Line City | 2–4 |
-| 6 | Panels for the budget and the demand bars | Happy Isle | 4–8 |
+| 1 | The tick: population, migration, and development | Kowloon | 10–16 |
+| 2 | Demand: residential, commercial, industrial | Kowloon | 5–9 |
+| 3 | Panels for the budget and the demand bars | Happy Isle | 4–8 |
+| 4 | Taxes, a budget, and a deficit the player has to answer | Joffburg | 6–10 |
+| 5 | A road graph with traffic volumes on it | Radial | 6–10 |
 
-Alpha needs ranks 1–4 in substance, about 27–45 hours.
+Alpha needs ranks 1–2 in substance, about 15–25 hours.
 
 ## Milestone checklists
 
@@ -110,30 +108,32 @@ Alpha needs ranks 1–4 in substance, about 27–45 hours.
 
 ### Line City: Roads and zoning
 
-- [ ] Draw and bulldoze roads, with a cost, and a refusal when the
+- [x] Draw and bulldoze roads, with a cost, and a refusal when the
   player cannot pay.
-- [ ] Zone residential, commercial, and industrial tiles, and paint zones
+- [x] Zone residential, commercial, and industrial tiles, and paint zones
   by dragging.
-- [ ] Road connectivity: a zoned tile counts as served only when it
+- [x] Road connectivity: a zoned tile counts as served only when it
   reaches the road network.
-- [ ] Buildings appear on zoned tiles as they develop, drawn from the
+- [x] Buildings appear on zoned tiles as they develop, drawn from the
   tile's own state and not from a second list of buildings.
-- [ ] Bulldozing clears a tile and refunds part of what it cost.
+- [x] Bulldozing clears a tile and refunds part of what it cost.
 
 ### Kowloon: Simulation core
 
-- [ ] A tick that advances the date and updates the world, and does the
+- [x] A tick that advances the date and updates the world, and does the
   same thing every time given the same inputs, in
   `CityLimits.Core/Simulation/`.
 - [ ] Population: people, jobs, and migration between zones.
 - [ ] Demand: residential, commercial, and industrial, shown as three
   values the player can read.
 - [ ] Development: zones develop and decay, and abandoned zones come back
-  when demand returns.
+  when demand returns. Zones develop today, on a fixed chance; the decay
+  and the return wait for the demand model.
 - [ ] Housing capacity by development level, so population follows
   density.
-- [ ] A determinism test, in `CityLimits.Tests/`: the same seed and the
-  same actions give the same city after a fixed number of ticks.
+- [x] A determinism test, in `CityLimits.Tests/`: the same seed and the
+  same actions give the same city after a fixed number of ticks. It covers
+  the tiles and the money today, and it grows with the population model.
 
 ### Joffburg: Services and economy
 
@@ -192,11 +192,13 @@ are written. Its last act is the seam between the game and
 simulation, and the test project references it, the simulation can be
 developed and proven on ordinary .NET while the game only draws it.
 
-Neat Map gives the game a world to put a city in. Line City and Kowloon
-are the real work and the real risk: roads, zones, and a tick that grows a
-city. Joffburg and Radial hang off Kowloon's data model, and Bad News hangs
-off Joffburg and Radial. Happy Isle can be built in parallel with the
-simulation once the shapes of the panels are agreed.
+Neat Map gives the game a world to put a city in, and Line City gave it the
+tools that change that world: roads, zones, a bulldozer, and a price for
+each. Kowloon is the real work and the real risk now, because a tick that
+grows a city needs people, demand, and a shape for all three. Joffburg and
+Radial hang off Kowloon's data model, and Bad News hangs off Joffburg and
+Radial. Happy Isle can be built in parallel with the simulation once the
+shapes of the panels are agreed.
 
 The long poles are Kowloon and Joffburg. If the simulation is slow to get
 right, cut scope inside Radial and Bad News first, not inside Kowloon.
@@ -224,6 +226,7 @@ right, cut scope inside Radial and Bad News first, not inside Kowloon.
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-20 | major | Line City is complete: the tools change the world. Roads can be drawn and bulldozed, land can be zoned by dragging, the city charges for the work and refuses what it cannot pay for, the bulldozer gives half the money back, and a zoned tile that touches a road grows a building drawn from the tile's own state. 52–97 h of work left in total, and the focus moves to Kowloon. |
 | 2026-10-20 | major | Neat Map is complete: the terrain is drawn from a tile sheet loaded once at startup, the tile under the mouse is highlighted and read out, the tool palette shows the icon of each tool, and the game can be run with no display and logged to the console. 64–117 h of work left in total, and the focus moves to Line City. |
 | 2026-10-20 | major | New Dullsville is complete: the solution, the core library, the tests, a resizable "CityLimits" window, a fixed timestep, pause and 1x–3x, a camera that pans, zooms, and clamps, a tool palette, and settings that survive a session. Neat Map is at 60%: the tile grid, the seeded terrain, and the terrain on screen are in. 68–125 h of work left in total. |
 | 2026-10-20 | minor | The solution, `CityLimits.Core`, and `CityLimits.Tests` are in. New Dullsville moves to 20%: the projects exist, but the test project is not wired to the core library and the game project's folders are not created yet. 13–21 h left in New Dullsville. |

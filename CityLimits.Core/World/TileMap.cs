@@ -3,12 +3,12 @@ namespace CityLimits.Core.World;
 /// <summary>A rectangular grid of tiles.</summary>
 public sealed class TileMap
 {
-    private readonly TileKind[] _tiles;
+    private readonly TileState[] _tiles;
 
-    /// <summary>Creates a map from a tile array laid out row by row.</summary>
+    /// <summary>Creates a map from a state array laid out row by row.</summary>
     /// <exception cref="ArgumentOutOfRangeException">The width or the height is not positive.</exception>
     /// <exception cref="ArgumentException">The tile count does not match the size.</exception>
-    public TileMap(int width, int height, TileKind[] tiles)
+    public TileMap(int width, int height, TileState[] tiles)
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(width);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(height);
@@ -22,7 +22,23 @@ public sealed class TileMap
 
         Width = width;
         Height = height;
-        _tiles = (TileKind[])tiles.Clone();
+        _tiles = (TileState[])tiles.Clone();
+    }
+
+    /// <summary>Creates a map of bare ground, with nothing built on it.</summary>
+    /// <exception cref="ArgumentOutOfRangeException">The width or the height is not positive.</exception>
+    /// <exception cref="ArgumentException">The tile count does not match the size.</exception>
+    public static TileMap FromTerrain(int width, int height, TileKind[] tiles)
+    {
+        ArgumentNullException.ThrowIfNull(tiles);
+
+        var states = new TileState[tiles.LongLength];
+        for (var i = 0; i < tiles.Length; i++)
+        {
+            states[i] = new TileState(tiles[i]);
+        }
+
+        return new TileMap(width, height, states);
     }
 
     /// <summary>The number of tiles across.</summary>
@@ -31,19 +47,32 @@ public sealed class TileMap
     /// <summary>The number of tiles down.</summary>
     public int Height { get; }
 
-    /// <summary>Gets the tile at the given coordinates.</summary>
+    /// <summary>Gets the ground of the tile at the given coordinates.</summary>
     /// <exception cref="ArgumentOutOfRangeException">The coordinates are outside the map.</exception>
-    public TileKind this[int x, int y]
-    {
-        get
-        {
-            if (!Contains(x, y))
-            {
-                throw new ArgumentOutOfRangeException(nameof(x), $"({x}, {y}) is outside a {Width} by {Height} map.");
-            }
+    public TileKind this[int x, int y] => StateAt(x, y).Kind;
 
-            return _tiles[(y * Width) + x];
+    /// <summary>Gets the whole state of the tile at the given coordinates.</summary>
+    /// <exception cref="ArgumentOutOfRangeException">The coordinates are outside the map.</exception>
+    public TileState StateAt(int x, int y)
+    {
+        if (!Contains(x, y))
+        {
+            throw new ArgumentOutOfRangeException(nameof(x), $"({x}, {y}) is outside a {Width} by {Height} map.");
         }
+
+        return _tiles[(y * Width) + x];
+    }
+
+    /// <summary>Replaces the whole state of the tile at the given coordinates.</summary>
+    /// <exception cref="ArgumentOutOfRangeException">The coordinates are outside the map.</exception>
+    public void SetState(int x, int y, TileState state)
+    {
+        if (!Contains(x, y))
+        {
+            throw new ArgumentOutOfRangeException(nameof(x), $"({x}, {y}) is outside a {Width} by {Height} map.");
+        }
+
+        _tiles[(y * Width) + x] = state;
     }
 
     /// <summary>Tells whether the given coordinates are on the map.</summary>
@@ -51,5 +80,9 @@ public sealed class TileMap
 
     /// <summary>Gets the tile at the given coordinates, or <paramref name="fallback"/> when they are off the map.</summary>
     public TileKind TileAtOrDefault(int x, int y, TileKind fallback = TileKind.Grass) =>
+        Contains(x, y) ? _tiles[(y * Width) + x].Kind : fallback;
+
+    /// <summary>Gets the state at the given coordinates, or <paramref name="fallback"/> when they are off the map.</summary>
+    public TileState StateAtOrDefault(int x, int y, TileState fallback = default) =>
         Contains(x, y) ? _tiles[(y * Width) + x] : fallback;
 }

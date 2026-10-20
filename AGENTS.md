@@ -29,8 +29,9 @@ CityLimits.Core/              engine-free library: the world and the simulation,
   CityLimits.Core.csproj        the project file; it must never reference Raylib-cs
   GlobalUsings.cs               global usings shared by the project
   Randomness/                   namespace CityLimits.Core.Randomness: the seeded generator the simulation owns
-  World/                        namespace CityLimits.Core.World: the map, the tiles, the terrain, the tile rules
+  World/                        namespace CityLimits.Core.World: the map, the tiles, the terrain, the tile rules, the build actions
   Simulation/                   namespace CityLimits.Core.Simulation: the clock, the date, the tick
+  Economy/                      namespace CityLimits.Core.Economy: the money, the costs, the treasury
   Settings/                     namespace CityLimits.Core.Settings: the settings that survive a session
 CityLimits.Tests/              xUnit 2 tests for CityLimits.Core
   CityLimits.Tests.csproj       references CityLimits.Core, never the game project
@@ -68,8 +69,19 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   moves the city's calendar on by one month. Space pauses the game, and
   the comma and period keys change the speed between 1x and 3x. The speed
   changes how many ticks run in a frame, never the size of a tick.
-- **The tools.** Five tools sit in the palette down the left, each with its
-  icon, and the number keys pick one. The tools do not do anything yet.
+- **The tick.** `CitySimulation.Tick` advances the date and then grows the
+  city: a zoned tile that the road network serves develops a step, up to
+  level 3, and the chance is taken from the simulation's own seeded
+  generator, so the same seed and the same work give the same city.
+- **The tools.** Six tools sit in the palette down the left, each with its
+  icon, and the number keys pick one: inspect, road, residential,
+  commercial, industrial, and bulldozer. Roads and zones are painted by
+  dragging the mouse over the map, and the tile under the cursor is
+  painted as it moves.
+- **The money.** The city starts with a treasury. Each tool has a price,
+  the HUD shows it, the treasury pays for the work, and a tool the city
+  cannot pay for is refused with a message and changes nothing. The
+  bulldozer gives half the price back.
 - **The tile readout.** The tile under the mouse is outlined, and a panel
   names it and says what can be done with it.
 - **The settings.** The window size and the speed are written to
@@ -86,10 +98,12 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
 - **The core library.** `CityLimits.Core` targets `net10.0` with nullable
   and implicit usings enabled, and references no package at all. It holds
   the map and its generator, the clock, the date, the simulation, the
-  seeded generator, the tile rules, and the settings.
+  seeded generator, the tile rules, the build actions, the road network,
+  the treasury, and the settings.
 - **The tests.** `CityLimits.Tests` uses xUnit 2 with the VSTest runner
-  and coverlet, and holds 46 tests over the generator, the map, the
-  calendar, the clock, the simulation, the settings, and the tile rules.
+  and coverlet, and holds 105 tests over the generator, the map, the
+  calendar, the clock, the simulation, the settings, the tile rules, the
+  build actions, the road network, and the treasury.
 - **The game project.** `CityLimits.csproj` targets `net10.0` with nullable
   and implicit usings enabled, and references `Raylib-cs` `8.1.0` and
   `NLog` `6.2.2`. The native `raylib` library ships inside the NuGet
@@ -160,6 +174,10 @@ A city builder lives or dies on its simulation, not its art. The rules:
   `CityLimits.Tests/` proves them on ordinary .NET. Parsing, generation,
   growth, power, and budget all belong there. If you cannot test something
   without opening a window, it probably belongs in the rendering layer.
+- **The map is the state.** A tile's kind, its zone, and its development
+  live in the map's own tile state, and the renderer reads them from
+  there. There is no second list of buildings or zones beside the map to
+  keep in step, because two lists drift.
 
 ### Raylib rules
 

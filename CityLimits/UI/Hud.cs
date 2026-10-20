@@ -9,24 +9,25 @@ public sealed class Hud
     private const int FontSize = 14;
     private const int Padding = 10;
     private const int ReadoutHeight = 46;
-    private const string Hints = "WASD pan   wheel zoom   space pause   , . speed   1-5 tools   esc quit";
+    private const string Hints = "WASD pan   wheel zoom   space pause   , . speed   1-6 tools   left mouse build   esc quit";
 
     /// <summary>Draws the top bar with the state of the city.</summary>
-    public void DrawStatus(GameDate date, long tickCount, int speed, Tool tool, Vector2 mouseWorld, int framesPerSecond)
+    public void DrawStatus(GameDate date, long tickCount, int speed, Tool tool, int funds, int toolCost, Vector2 mouseWorld, int framesPerSecond)
     {
         Raylib.DrawRectangle(0, 0, Raylib.GetScreenWidth(), BarHeight, Theme.Panel);
         Raylib.DrawRectangleLinesEx(new Rectangle { X = 0, Y = 0, Width = Raylib.GetScreenWidth(), Height = BarHeight }, 1f, Theme.PanelBorder);
 
         var speedText = speed == 0 ? "paused" : $"{speed}x";
-        var status = $"CityLimits   {date}   tick {tickCount}   {speedText}   tool {ToolName(tool)}   {mouseWorld.X:0}, {mouseWorld.Y:0}   {framesPerSecond} fps";
+        var costText = toolCost > 0 ? $" ${toolCost}" : string.Empty;
+        var status = $"CityLimits   {date}   tick {tickCount}   {speedText}   ${funds}   {ToolName(tool)}{costText}   {mouseWorld.X:0}, {mouseWorld.Y:0}   {framesPerSecond} fps";
         Raylib.DrawText(status, Padding, 8, FontSize, Theme.Text);
     }
 
     /// <summary>Draws the readout of the tile under the mouse.</summary>
-    public void DrawTileReadout(TileKind? kind, int tileX, int tileY)
+    public void DrawTileReadout(TileState? state, int tileX, int tileY)
     {
-        var heading = kind is null ? "Outside the map" : $"Tile {tileX}, {tileY}";
-        var detail = kind is null ? "Move the pointer over the map" : TileInfo.Describe(kind.Value);
+        var heading = state is null ? "Outside the map" : $"Tile {tileX}, {tileY}";
+        var detail = state is null ? "Move the pointer over the map" : TileInfo.Describe(state.Value);
 
         var width = Math.Max(Raylib.MeasureText(heading, FontSize), Raylib.MeasureText(detail, FontSize)) + (Padding * 2);
         var x = Raylib.GetScreenWidth() - width - 8;
@@ -35,7 +36,7 @@ public sealed class Hud
         Raylib.DrawRectangle(x, y, width, ReadoutHeight, Theme.Panel);
         Raylib.DrawRectangleLinesEx(new Rectangle { X = x, Y = y, Width = width, Height = ReadoutHeight }, 1f, Theme.PanelBorder);
         Raylib.DrawText(heading, x + Padding, y + 6, FontSize, Theme.Text);
-        Raylib.DrawText(detail, x + Padding, y + 24, FontSize, AdviceColor(kind));
+        Raylib.DrawText(detail, x + Padding, y + 24, FontSize, AdviceColor(state));
     }
 
     /// <summary>Draws the line of hints that tells the player what the keys do.</summary>
@@ -48,27 +49,42 @@ public sealed class Hud
         Raylib.DrawText(Hints, Padding, y, FontSize, Theme.TextDim);
     }
 
-    /// <summary>Draws a failure the player needs to know about.</summary>
-    public void DrawError(string message)
+    /// <summary>Draws a message the player needs to know about, or nothing when there is none.</summary>
+    public void DrawMessage(string? message, bool isError)
     {
+        if (string.IsNullOrEmpty(message))
+        {
+            return;
+        }
+
         var width = Raylib.MeasureText(message, FontSize);
         Raylib.DrawRectangle(Raylib.GetScreenWidth() - width - (Padding * 2), BarHeight + 8, width + (Padding * 2), 24, Theme.Panel);
-        Raylib.DrawText(message, Raylib.GetScreenWidth() - width - Padding, BarHeight + 12, FontSize, Theme.Error);
+        Raylib.DrawText(message, Raylib.GetScreenWidth() - width - Padding, BarHeight + 12, FontSize, isError ? Theme.Error : Theme.Accent);
     }
 
-    private static Color AdviceColor(TileKind? kind)
+    private static Color AdviceColor(TileState? state)
     {
-        if (kind is null)
+        if (state is null)
         {
             return Theme.TextDim;
         }
 
-        if (!TileRules.CanBuildOn(kind.Value))
+        if (state.Value.IsRoad)
+        {
+            return Theme.TextDim;
+        }
+
+        if (state.Value.IsZoned)
+        {
+            return Theme.Accent;
+        }
+
+        if (!TileRules.CanBuildOn(state.Value.Kind))
         {
             return Theme.Error;
         }
 
-        return TileRules.NeedsClearing(kind.Value) ? Theme.Accent : Theme.TextDim;
+        return TileRules.NeedsClearing(state.Value.Kind) ? Theme.Accent : Theme.TextDim;
     }
 
     private static string ToolName(Tool tool) => tool switch
@@ -77,6 +93,7 @@ public sealed class Hud
         Tool.Residential => "residential",
         Tool.Commercial => "commercial",
         Tool.Industrial => "industrial",
+        Tool.Bulldozer => "bulldozer",
         _ => "inspect",
     };
 }

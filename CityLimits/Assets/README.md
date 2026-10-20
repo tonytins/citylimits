@@ -11,6 +11,7 @@ tools/icroad.png     road
 tools/icres.png      residential
 tools/iccom.png      commercial
 tools/icind.png      industrial
+tools/icbulldozer.png bulldozer
 ```
 
 ## The tile sheet
@@ -31,9 +32,10 @@ is found by its index: the tile at index *n* is at column *n* mod 16 and row
 The tile sheet and the tool icons come from Micropolis
 (<https://github.com/SimCitySimulator/micropolis>), which is under the GNU
 General Public License version 3. CityLimits is under the same licence, so the
-art can be used and redistributed here. The art is the property of its
-authors, and CityLimits is not a SimCity product and does not use the SimCity
-name or trademarks.
+art can be used and redistributed here. The bulldozer icon is the Micropolis
+dozer icon, `icdozr`, converted to PNG in the same way as the others. The art
+is the property of its authors, and CityLimits is not a SimCity product and
+does not use the SimCity name or trademarks.
 
 Any art added later has to be the owner's own work, or come with a licence
 that is compatible with the GPL version 3 and be credited in this file.

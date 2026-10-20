@@ -1,4 +1,5 @@
 global using System.Numerics;
+global using CityLimits.Core.Economy;
 global using CityLimits.Core.Randomness;
 global using CityLimits.Core.Settings;
 global using CityLimits.Core.Simulation;

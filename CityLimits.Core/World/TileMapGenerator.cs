@@ -27,7 +27,7 @@ public static class TileMapGenerator
             }
         }
 
-        return new TileMap(width, height, tiles);
+        return TileMap.FromTerrain(width, height, tiles);
     }
 
     private static TileKind Classify(double elevation, double moisture)

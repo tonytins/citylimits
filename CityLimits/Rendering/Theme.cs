@@ -42,12 +42,43 @@ public static class Theme
     /// <summary>The color of a failure the player needs to know about.</summary>
     public static readonly Color Error = new() { R = 232, G = 106, B = 96, A = 255 };
 
+    /// <summary>The color of the surface of a road.</summary>
+    public static readonly Color Road = new() { R = 66, G = 66, B = 70, A = 255 };
+
+    /// <summary>The color of the edge of a road, where it does not join another.</summary>
+    public static readonly Color RoadEdge = new() { R = 104, G = 104, B = 108, A = 255 };
+
+    /// <summary>The color of the line down the middle of a road.</summary>
+    public static readonly Color RoadLine = new() { R = 214, G = 214, B = 200, A = 255 };
+
+    /// <summary>The color of a residential zone.</summary>
+    public static readonly Color Residential = new() { R = 74, G = 138, B = 66, A = 255 };
+
+    /// <summary>The color of a commercial zone.</summary>
+    public static readonly Color Commercial = new() { R = 62, G = 110, B = 190, A = 255 };
+
+    /// <summary>The color of an industrial zone.</summary>
+    public static readonly Color Industrial = new() { R = 198, G = 156, B = 58, A = 255 };
+
+    /// <summary>The color of the outline around a building.</summary>
+    public static readonly Color BuildingOutline = new() { R = 32, G = 30, B = 28, A = 255 };
+
     /// <summary>Returns the color of a kind of ground.</summary>
     public static Color For(TileKind kind) => kind switch
     {
         TileKind.Water => Water,
         TileKind.Trees => Trees,
         TileKind.Rock => Rock,
+        _ => Grass,
+    };
+
+    /// <summary>Returns the color of a use.</summary>
+    public static Color For(TileUse use) => use switch
+    {
+        TileUse.Road => Road,
+        TileUse.Residential => Residential,
+        TileUse.Commercial => Commercial,
+        TileUse.Industrial => Industrial,
         _ => Grass,
     };
 }

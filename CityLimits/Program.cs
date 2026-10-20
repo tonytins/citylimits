@@ -70,7 +70,7 @@ internal static class Program
         {
             var game = new GameLoop(settings, settingsPath, assets, options.Seed);
 
-            while (!Raylib.WindowShouldClose())
+            while (!Raylib.WindowShouldClose() && !game.ShouldClose)
             {
                 try
                 {

@@ -11,6 +11,7 @@ public sealed class ToolPaletteView
         KeyboardKey.Three,
         KeyboardKey.Four,
         KeyboardKey.Five,
+        KeyboardKey.Six,
     ];
 
     private const int FontSize = 14;
@@ -18,6 +19,7 @@ public sealed class ToolPaletteView
     private const int IconSize = 24;
     private const int Width = 176;
     private const int Padding = 8;
+    private const int CostWidth = 42;
 
     private readonly GameAssets? _assets;
 
@@ -32,6 +34,7 @@ public sealed class ToolPaletteView
         KeyboardKey.Three => Tool.Residential,
         KeyboardKey.Four => Tool.Commercial,
         KeyboardKey.Five => Tool.Industrial,
+        KeyboardKey.Six => Tool.Bulldozer,
         _ => null,
     };
 
@@ -63,7 +66,21 @@ public sealed class ToolPaletteView
 
             var label = $"{i + 1}  {Name(tool)}";
             Raylib.DrawText(label, Padding + 38, y + 7, FontSize, selected ? Theme.Accent : Theme.TextDim);
+
+            var cost = CostOf(tool);
+            if (cost > 0)
+            {
+                var text = $"${cost}";
+                var x = Padding + Width - CostWidth - Raylib.MeasureText(text, FontSize);
+                Raylib.DrawText(text, x, y + 7, FontSize, selected ? Theme.Accent : Theme.TextDim);
+            }
         }
+    }
+
+    private static int CostOf(Tool tool)
+    {
+        var action = ToolActions.ActionFor(tool);
+        return action is null ? 0 : TileCosts.CostFor(action.Value);
     }
 
     private static void DrawIcon(Texture2D texture, int x, int y, int box)
@@ -98,6 +115,7 @@ public sealed class ToolPaletteView
         Tool.Residential => "Residential",
         Tool.Commercial => "Commercial",
         Tool.Industrial => "Industrial",
+        Tool.Bulldozer => "Bulldozer",
         _ => "Inspect",
     };
 }

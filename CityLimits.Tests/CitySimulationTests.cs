@@ -58,5 +58,83 @@ public class CitySimulationTests
         Assert.Throws<ArgumentNullException>(() => new CitySimulation(null!, 1));
     }
 
+    [Fact]
+    public void AZoneWithARoadBesideItDevelops()
+    {
+        var simulation = new CitySimulation(FlatMap(), 1);
+        simulation.Builder.Apply(BuildAction.Road, 1, 1);
+        simulation.Builder.Apply(BuildAction.ZoneResidential, 2, 1);
+
+        for (var i = 0; i < 50; i++)
+        {
+            simulation.Tick();
+        }
+
+        Assert.Equal(TileState.MaxDevelopment, simulation.Map.StateAt(2, 1).Development);
+    }
+
+    [Fact]
+    public void AZoneWithNoRoadNeverDevelops()
+    {
+        var simulation = new CitySimulation(FlatMap(), 1);
+        simulation.Builder.Apply(BuildAction.ZoneResidential, 2, 1);
+
+        for (var i = 0; i < 50; i++)
+        {
+            simulation.Tick();
+        }
+
+        Assert.Equal(0, simulation.Map.StateAt(2, 1).Development);
+    }
+
+    [Fact]
+    public void AZoneNeverDevelopsPastTheLastLevel()
+    {
+        var simulation = new CitySimulation(FlatMap(), 1);
+        simulation.Builder.Apply(BuildAction.Road, 1, 1);
+        simulation.Builder.Apply(BuildAction.ZoneResidential, 2, 1);
+
+        for (var i = 0; i < 200; i++)
+        {
+            simulation.Tick();
+        }
+
+        Assert.Equal(TileState.MaxDevelopment, simulation.Map.StateAt(2, 1).Development);
+    }
+
+    [Fact]
+    public void TheSameSeedAndTheSameWorkGiveTheSameCity()
+    {
+        var first = new CitySimulation(FlatMap(), 7);
+        var second = new CitySimulation(FlatMap(), 7);
+
+        foreach (var city in new[] { first, second })
+        {
+            city.Builder.Apply(BuildAction.Road, 1, 1);
+            city.Builder.Apply(BuildAction.ZoneResidential, 2, 1);
+            city.Builder.Apply(BuildAction.ZoneCommercial, 2, 2);
+        }
+
+        for (var i = 0; i < 40; i++)
+        {
+            first.Tick();
+            second.Tick();
+        }
+
+        Assert.Equal(first.Map.StateAt(2, 1), second.Map.StateAt(2, 1));
+        Assert.Equal(first.Map.StateAt(2, 2), second.Map.StateAt(2, 2));
+        Assert.Equal(first.Treasury.Funds, second.Treasury.Funds);
+    }
+
+    [Fact]
+    public void TheCityStartsWithMoney()
+    {
+        var simulation = new CitySimulation(SmallMap(), 1);
+
+        Assert.Equal(Core.Economy.Treasury.StartingFunds, simulation.Treasury.Funds);
+    }
+
     private static TileMap SmallMap() => TileMapGenerator.Generate(1, 8, 8);
+
+    private static TileMap FlatMap() => TileMap.FromTerrain(8, 8, new TileKind[64]);
 }
