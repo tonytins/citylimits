@@ -35,6 +35,7 @@ CityLimits.Core/              engine-free library: the world and the simulation,
   Economy/                      namespace CityLimits.Core.Economy: the money, the costs, the treasury
   Settings/                     namespace CityLimits.Core.Settings: the settings that survive a session
   Scenarios/                    namespace CityLimits.Core.Scenarios: the scenario loader, the runner, the report, the demo town
+  Definitions/                  namespace CityLimits.Core.Definitions: the definitions as data, the base game's, and the mod loader
 CityLimits.CommandLine/       engine-free library: the command line, no Raylib
   CityLimits.CommandLine.csproj the project file; it references no package and no other project
   GlobalUsings.cs               global usings shared by the project
@@ -48,6 +49,7 @@ docs/
   ROADMAP.md                    milestones, current focus, estimates, revision history
   scorecard.md                  verified status per area, with evidence
   scenarios.md                  the scenario file and report formats
+  modding.md                    how a mod is laid out, what it can change, and how mods are applied
 ```
 
 The split is the point of the layout: `CityLimits.Core/` holds everything
@@ -134,8 +136,8 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   the whole stroke is refused when it runs off the map or the city can't
   pay for all of it. Escape cancels a stroke, or quits when there is none.
 - **The money.** The city starts with a treasury, and the prices are
-  Micropolis' (`Economy/TileCosts.cs`): $10 a road tile, $50 a bridge
-  tile, $100 a zone, $1 more for each tile of trees or rubble a tool
+  Micropolis' (`Economy/TileCosts.cs`, and the zones' in their
+  `ZoneSpec`): $10 a road tile, $50 a bridge tile, $100 a zone, $1 more for each tile of trees or rubble a tool
   clears first, and $1 for each tile the bulldozer clears or each zone it
   knocks down. Nothing is refunded. The palette and the HUD show the
   prices, the treasury pays for a stroke as a whole, and a stroke the city
@@ -186,17 +188,18 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   and implicit usings enabled, and references no package at all. It holds
   the map and its generator, the clock, the date, the simulation, the
   seeded generator, the tile rules, the build actions, the road network,
-  the treasury, the settings, and the scenarios.
+  the treasury, the settings, the scenarios, and the definitions and
+  mods.
 - **The command line library.** `CityLimits.CommandLine` targets `net10.0`
   with nullable and implicit usings enabled, and references no package
   and no project. It holds the parser, the dispatcher, the default
   command, the strict option reader, and the exit codes.
 - **The tests.** `CityLimits.Tests` uses xUnit 2 with the VSTest runner
-  and coverlet, and holds 278 tests over the generator, the map, the
+  and coverlet, and holds 295 tests over the generator, the map, the
   calendar, the clock, the simulation, the settings, the tile rules, the
   build actions, the road network, the treasury, the scenario loader and
-  runner, every built-in scenario, the option reader, and the
-  dispatcher.
+  runner, every built-in scenario, the definitions and the mod loader,
+  the option reader, and the dispatcher.
 - **The game project.** `CityLimits.csproj` targets `net10.0` with nullable
   and implicit usings enabled, and references `Raylib-cs` `8.1.0` and
   `NLog` `6.2.2`. The native `raylib` library ships inside the NuGet
@@ -334,6 +337,24 @@ A city builder lives or dies on its simulation, not its art. The rules:
   art. The flat colours in `Theme` are only for a missing sheet.
 - New dependencies need the owner's approval, and they must work with the
   pinned Raylib-cs and on both Linux and Windows.
+
+### Definitions and mods
+
+- **Behaviour is data where it can be.** A zone's name and price are a
+  `ZoneSpec` in `CityLimits.Core/Definitions/`, not a constant or a switch
+  statement, and a mod can change them. When a rule gains a number a
+  player or a modder could want to change, it goes in a spec, with a field
+  in the definitions format, a check in `DefinitionLoader`, a test, and a
+  line in `docs/modding.md`.
+- **The base game is a mod like any other.** `BaseGame.Json` is in the
+  same format and goes through the same loader, so the mod path runs every
+  time the game starts. It lives in code, so it can't go missing.
+- **A mod can't crash the game.** Mods are JSON only, checked before use,
+  and skipped whole on any problem, which is logged and shown. A city keeps
+  the definitions it was made with, so the same mods, seed, and work give
+  the same city.
+- **Scenarios run on the base game.** `ScenarioRunner` never reads
+  `Mods/`, so a scenario's result doesn't depend on the machine.
 
 ### The log and the headless run
 

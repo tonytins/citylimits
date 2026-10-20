@@ -1,3 +1,4 @@
+using CityLimits.Core.Definitions;
 using CityLimits.Core.Economy;
 using CityLimits.Core.World;
 
@@ -5,6 +6,9 @@ namespace CityLimits.Tests;
 
 public class BuildStrokeTests
 {
+    // The base game's price for a zone; DefinitionTests pins it at Micropolis' $100.
+    private static readonly int ZonePrice = CityDefinitions.Base.Zone(TileUse.Residential).Price;
+
     [Fact]
     public void AStrokeStartsAsOneTile() =>
         Assert.Equal(new TileRect(3, 4, 1, 1), new BuildStroke(BuildAction.Road, 3, 4).Bounds);
@@ -58,7 +62,7 @@ public class BuildStrokeTests
         var result = city.Builder.Apply(Drag(BuildAction.ZoneResidential, 1, 1, 7, 1));
 
         Assert.Equal(3 * ZoneLayout.Parts, result.TilesChanged);
-        Assert.Equal(1000 - (3 * TileCosts.Zone), city.Treasury.Funds);
+        Assert.Equal(1000 - (3 * ZonePrice), city.Treasury.Funds);
         Assert.True(city.Map.StateAt(1, 1).IsZoneCenter);
         Assert.True(city.Map.StateAt(4, 1).IsZoneCenter);
         Assert.True(city.Map.StateAt(7, 1).IsZoneCenter);

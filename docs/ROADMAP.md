@@ -1,6 +1,6 @@
 # CityLimits roadmap
 
-> **Last reviewed:** 2026-10-20 · **Last updated:** 2026-10-20 · **Change:** minor (scenarios, phase 1) · **Stage:** pre-alpha
+> **Last reviewed:** 2026-10-20 · **Last updated:** 2026-10-20 · **Change:** minor (zone specs as data, and data mods) · **Stage:** pre-alpha
 
 Forward-looking: where CityLimits stands, what blocks the next milestone,
 and what comes next. Verified status and evidence are in the
@@ -266,6 +266,7 @@ right, cut scope inside Radial and Bad News first, not inside Kowloon.
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-20 | minor | Step 4 begins with zones as data: a `ZoneSpec` holds each zone's name and price, the base game's definitions are JSON read by the same loader as a mod's, and data mods in `Mods/` change them, checked first and skipped whole when broken. Scenarios run on the base game. `docs/modding.md` is the guide. 295 tests; no milestone moves until growth lands. |
 | 2026-10-20 | minor | Scenarios, phase 1: `CityLimits.Core/Scenarios/` reads and checks scenario files, runs them deterministically, and reports in a versioned JSON format; `citylimits scenario` runs one by id or file with `--json`, falls back to the demo town when one can't be loaded, and exits 0 to 3. Three built-in scenarios (`demo-town`, `bridges`, `zones-and-bulldozer`) run as tests. Kowloon is at 50%, 85–145 h left, 278 tests. |
 | 2026-10-20 | patch | The scenario spec is revised for the Micropolis baseline: actions are tool strokes (`tool`, `from`, `to`) shaped and priced as in the game, ticks are phases (64 a month, 768 a year), zone checks read the zone's centre, counts give zones for the three zone kinds, and the example is the demo town, checked against the engine. Scenarios, phase 1, can now be built. |
 | 2026-10-20 | minor | Step 3 of the baseline refactor: time runs as in Micropolis. A tick is one phase of a 16-phase cycle; phase 0 moves the calendar on by a 48th of a year, from January 1900, and phases 1 to 8 scan the map in bands. A month takes 16 seconds and a year about 3 minutes at Normal, with Fast and Super fast at 5 and 50 times that. The headless run defaults to a year. Kowloon is at 38%, 91–155 h left, 219 tests. |

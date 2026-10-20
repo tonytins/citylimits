@@ -1,3 +1,4 @@
+using CityLimits.Core.Definitions;
 using CityLimits.Core.Economy;
 using CityLimits.Core.World;
 
@@ -5,6 +6,9 @@ namespace CityLimits.Tests;
 
 public class CityBuilderTests
 {
+    // The base game's price for a zone; DefinitionTests pins it at Micropolis' $100.
+    private static readonly int ZonePrice = CityDefinitions.Base.Zone(TileUse.Residential).Price;
+
     [Fact]
     public void ARoadIsLaidOnClearGround()
     {
@@ -139,7 +143,7 @@ public class CityBuilderTests
 
         Assert.Equal(BuildStatus.Built, result.Status);
         Assert.Equal(ZoneLayout.Parts, result.TilesChanged);
-        Assert.Equal(1000 - TileCosts.Zone, city.Treasury.Funds);
+        Assert.Equal(1000 - ZonePrice, city.Treasury.Funds);
         for (var y = 3; y <= 5; y++)
         {
             for (var x = 3; x <= 5; x++)
@@ -163,7 +167,7 @@ public class CityBuilderTests
 
         city.Builder.Apply(BuildAction.ZoneResidential, 4, 4);
 
-        Assert.Equal(1000 - TileCosts.Zone - (2 * TileCosts.AutoClear), city.Treasury.Funds);
+        Assert.Equal(1000 - ZonePrice - (2 * TileCosts.AutoClear), city.Treasury.Funds);
         Assert.Equal(TileKind.Grass, city.Map.StateAt(5, 5).Kind);
     }
 
@@ -190,7 +194,7 @@ public class CityBuilderTests
 
         Assert.Equal(BuildStatus.Unchanged, result.Status);
         Assert.Equal(BuildRefusal.AlreadyDone, result.Reason);
-        Assert.Equal(1000 - TileCosts.Zone, city.Treasury.Funds);
+        Assert.Equal(1000 - ZonePrice, city.Treasury.Funds);
     }
 
     [Fact]
@@ -277,7 +281,7 @@ public class CityBuilderTests
 
         Assert.Equal(BuildStatus.Built, result.Status);
         Assert.Equal(ZoneLayout.Parts, result.TilesChanged);
-        Assert.Equal(1000 - TileCosts.Zone - TileCosts.Bulldoze, city.Treasury.Funds);
+        Assert.Equal(1000 - ZonePrice - TileCosts.Bulldoze, city.Treasury.Funds);
         for (var y = 3; y <= 5; y++)
         {
             for (var x = 3; x <= 5; x++)
@@ -310,7 +314,7 @@ public class CityBuilderTests
 
         Assert.Equal(ZoneLayout.Parts, result.TilesChanged);
         Assert.Equal(TileKind.Rubble, city.Map.StateAt(5, 5).Kind);
-        Assert.Equal(1000 - TileCosts.Zone - TileCosts.Bulldoze, city.Treasury.Funds);
+        Assert.Equal(1000 - ZonePrice - TileCosts.Bulldoze, city.Treasury.Funds);
     }
 
     [Fact]
@@ -328,13 +332,13 @@ public class CityBuilderTests
     [Fact]
     public void TheCityCannotSpendWhatItDoesNotHave()
     {
-        var city = NewCity(funds: TileCosts.Zone - 1);
+        var city = NewCity(funds: ZonePrice - 1);
 
         var result = city.Builder.Apply(BuildAction.ZoneResidential, 4, 4);
 
         Assert.Equal(BuildStatus.Refused, result.Status);
         Assert.Equal(BuildRefusal.NotEnoughFunds, result.Reason);
-        Assert.Equal(TileCosts.Zone - 1, city.Treasury.Funds);
+        Assert.Equal(ZonePrice - 1, city.Treasury.Funds);
         Assert.Equal(TileUse.None, city.Map.StateAt(4, 4).Use);
     }
 

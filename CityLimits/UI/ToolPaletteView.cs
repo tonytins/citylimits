@@ -23,9 +23,15 @@ public sealed class ToolPaletteView
     private const int CostGap = 16;
 
     private readonly GameAssets? _assets;
+    private readonly CityDefinitions _definitions;
 
-    /// <summary>Creates a palette that draws the icons it has.</summary>
-    public ToolPaletteView(GameAssets? assets) => _assets = assets;
+    /// <summary>Creates a palette that draws the icons it has and the prices the city's definitions set.</summary>
+    public ToolPaletteView(GameAssets? assets, CityDefinitions definitions)
+    {
+        ArgumentNullException.ThrowIfNull(definitions);
+        _assets = assets;
+        _definitions = definitions;
+    }
 
     /// <summary>Returns the tool a key picks, or null when the key is not a tool key.</summary>
     public static Tool? ToolForKey(KeyboardKey key) => key switch
@@ -40,10 +46,10 @@ public sealed class ToolPaletteView
     };
 
     /// <summary>Tells whether a point on the screen is over the palette, so a click there isn't a click on the map.</summary>
-    public static bool Contains(ToolPalette palette, Vector2 point) => Raylib.CheckCollisionPointRec(point, Bounds(palette));
+    public bool Contains(ToolPalette palette, Vector2 point) => Raylib.CheckCollisionPointRec(point, Bounds(palette));
 
     /// <summary>The tool under a point on the screen, or null when the point isn't on one of the palette's rows.</summary>
-    public static Tool? ToolAt(ToolPalette palette, Vector2 point)
+    public Tool? ToolAt(ToolPalette palette, Vector2 point)
     {
         if (!Contains(palette, point))
         {
@@ -93,7 +99,7 @@ public sealed class ToolPaletteView
     }
 
     // The panel is as wide as its longest label and its widest price need, so they never overlap.
-    private static Rectangle Bounds(ToolPalette palette)
+    private Rectangle Bounds(ToolPalette palette)
     {
         var widest = 0;
         for (var i = 0; i < palette.Tools.Count; i++)
@@ -115,10 +121,10 @@ public sealed class ToolPaletteView
 
     private static string Label(int index, Tool tool) => $"{index + 1}  {Name(tool)}";
 
-    private static int CostOf(Tool tool)
+    private int CostOf(Tool tool)
     {
         var action = ToolActions.ActionFor(tool);
-        return action is null ? 0 : TileCosts.CostFor(action.Value);
+        return action is null ? 0 : _definitions.CostOf(action.Value);
     }
 
     private static void DrawIcon(Texture2D texture, int x, int y, int box)

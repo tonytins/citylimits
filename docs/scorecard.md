@@ -20,8 +20,8 @@ change. Statuses are `done`, `partial`, and `missing`.
 | [Traffic](#traffic-and-commuting) | 0 | 1 | 3 | 1 road network, 0 trips |
 | [Environment](#land-value-pollution-and-disasters) | 0 | 0 | 5 | 0 disasters |
 | [Interface](#player-interface) | 1 | 1 | 4 | 6 tools with icons, 1 status bar |
-| [Platform](#platform) | 6 | 0 | 2 | Raylib-cs 8.1.0, NLog 6.2.2, .NET 10 |
-| [Reliability](#reliability) | 6 | 0 | 0 | 278 tests, all passing, CI green |
+| [Platform](#platform) | 7 | 0 | 2 | Raylib-cs 8.1.0, NLog 6.2.2, .NET 10, data mods |
+| [Reliability](#reliability) | 6 | 0 | 0 | 295 tests, all passing, CI green |
 | [Documentation](#documentation) | 3 | 0 | 2 | 3 of 5 documents exist |
 | [Known issues](#known-issues) | | | | 1 open, 3 resolved |
 
@@ -39,7 +39,7 @@ How the state was verified on 2026-10-20:
 
 ```sh
 dotnet build CityLimits.slnx                              # 4 projects: 0 warnings, 0 errors
-dotnet test  CityLimits.Tests/CityLimits.Tests.csproj     # 278 passed, 0 failed
+dotnet test  CityLimits.Tests/CityLimits.Tests.csproj     # 295 passed, 0 failed
 dotnet run --project CityLimits -- --headless            # a year of steps, 12 months logged to the console
 dotnet run --project CityLimits                           # window opened; roads, zones, buildings, the palette icons, and the tile readout were drawn
 dotnet run --project CityLimits -- --seed 7               # window opened and the assets loaded (the screen was not inspected)
@@ -153,6 +153,7 @@ there is something to grow.
 | PLAT-6 | A release build can be handed to someone else | missing | No packaging, no version, no repository |
 | PLAT-7 | The city can be run and checked without a display | done | `dotnet run --project CityLimits -- --headless` runs the simulation for a year with no window and writes each month to the console; `CityLimits/Game/HeadlessRun.cs` and `CityLimits/Game/GameLog.cs`, which sends NLog to the console and nowhere else |
 | PLAT-8 | The command line refuses what it cannot use, and the game is the default | done | `CityLimits.CommandLine`: `CommandOptions` refuses an unknown option, a missing or malformed value, a value out of range, a repeat, and a stray argument, with exit code 2. Running with no command plays the game, and there is no `play` command. `--headless` is a global flag, and the dispatcher refuses it for a command that can't run without a window. On 2026-10-20, `--headless --ticks -1`, `--headless --bogus`, `--ticks 5` without `--headless`, `play`, `headless`, and `scenario town` without `--headless` were each refused with exit code 2; `--headless --ticks 2` and `--ticks 2 --headless --seed 9` ran; `scenario town --headless` reported that scenarios are not implemented and exited with 1 |
+| PLAT-9 | The game can be modded with data, safely | done | `CityLimits.Core/Definitions/`: zone specs are data, the base game's in `BaseGame.Json` read by the same `DefinitionLoader` as a mod's, and `ModLoader` applies the mods in `Mods/` in id order, skipping a broken one whole with its reason. `DefinitionTests` covers the base game, patches, every refusal, load order, and a city paying a modded price. On 2026-10-20 a real mod made the headless town's commercial zone $40 ($19,670 instead of $19,610), a broken one was skipped and named on screen, the palette showed the modded price, and `scenario demo-town` was unchanged. `docs/modding.md` is the guide |
 
 ## Reliability
 
@@ -161,7 +162,7 @@ there is something to grow.
 | REL-1 | Nothing ends the player's session: the frame loop catches, reports, and keeps drawing | done | `WindowedGame` catches every exception around the update and the draw, and `GameLoop.ReportError` puts the message on screen; the game keeps running |
 | REL-2 | The world and the simulation never call the engine | done | `CityLimits.Core` references no package at all, and the game references the core library; no Raylib type appears in the core |
 | REL-3 | Input, tile indices, map sizes, and files are validated where they enter | done | Map sizes, tile counts, and the settings file are checked, and the tile indexer throws outside the map. The mouse position is turned into a tile by `MapRenderer.TryGetTileAt`, which reports when the pointer is off the map, and `CityBuilder.Apply` refuses a tile that is off the map, ground that cannot be built on, and work the city cannot pay for |
-| REL-4 | A test project covers the engine-free logic, and the tests pass | done | `CityLimits.Tests` references `CityLimits.Core` and `CityLimits.CommandLine` and holds 278 xUnit tests over the generator, the map, the tile state, the rules, the calendar and the cycle, the clock, the simulation, the settings, the treasury, the road network and its connections, the map's change event, the builder and its strokes, the scenario loader and runner, every built-in scenario, the option reader, and the dispatcher. All 278 passed on 2026-10-20. Letting an unknown option and an out-of-range number through on purpose failed 3 of them, and letting `--headless` reach a command that needs a window failed 2 |
+| REL-4 | A test project covers the engine-free logic, and the tests pass | done | `CityLimits.Tests` references `CityLimits.Core` and `CityLimits.CommandLine` and holds 295 xUnit tests over the generator, the map, the tile state, the rules, the calendar and the cycle, the clock, the simulation, the settings, the treasury, the road network and its connections, the map's change event, the builder and its strokes, the scenario loader and runner, every built-in scenario, the definitions and the mod loader, the option reader, and the dispatcher. All 295 passed on 2026-10-20. Letting an unknown option and an out-of-range number through on purpose failed 3 of them, and letting `--headless` reach a command that needs a window failed 2 |
 | REL-5 | A determinism test proves the same seed gives the same city | done | `DeterministicRandomTests.TheSameSeedGivesTheSameSequence`, `CitySimulationTests.TheSameSeedAndTheSameTicksGiveTheSameCity`, and `CitySimulationTests.TheSameSeedAndTheSameWorkGiveTheSameCity`, which builds the same road and zones in two cities and compares the tiles and the money after 40 ticks |
 | REL-6 | CI builds and tests on every push | done | `.github/workflows/dotnet.yml` runs on a push to `main` and on a pull request: restore, build, and test. The first run, on the commit 273fd9f on 2026-10-20, finished with the conclusion `success` (run 39443031762) |
 

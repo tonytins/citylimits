@@ -34,11 +34,18 @@ public sealed class GameLoop : IDisposable
         _settingsPath = settingsPath;
 
         var map = TileMapGenerator.Generate(seed, MapSize.DefaultWidth, MapSize.DefaultHeight);
-        _simulation = new CitySimulation(map, seed);
+        var definitions = GameMods.Load(out var modProblems);
+        _simulation = new CitySimulation(map, seed, definitions: definitions);
+        if (modProblems.Count > 0)
+        {
+            // The log holds every skipped mod; the screen says how many, so the player knows to look.
+            _notice = modProblems.Count == 1 ? modProblems[0] : $"{modProblems.Count} mods were skipped; the log says why";
+            _noticeIsError = true;
+        }
 
         _mapRenderer = new MapRenderer(map, assets);
         Logger.Info(_mapRenderer.IsCached ? "The map is drawn from cached chunks" : "The map is drawn tile by tile");
-        _toolPaletteView = new ToolPaletteView(assets);
+        _toolPaletteView = new ToolPaletteView(assets, definitions);
 
         _camera.SetScreenSize(settings.WindowWidth, settings.WindowHeight);
         _camera.CenterOn(new Vector2(map.Width * MapRenderer.TileSize / 2f, map.Height * MapRenderer.TileSize / 2f));
@@ -123,7 +130,7 @@ public sealed class GameLoop : IDisposable
             CostOfSelectedTool(),
             world,
             Raylib.GetFPS());
-        _hud.DrawTileReadout(onMap ? state : null, tileX, tileY);
+        _hud.DrawTileReadout(onMap ? state : null, tileX, tileY, _simulation.Definitions);
         _hud.DrawHints();
         _hud.DrawMessage(_error ?? _notice, _error is not null || _noticeIsError);
 
@@ -261,9 +268,9 @@ public sealed class GameLoop : IDisposable
             }
 
             // A press on the palette picks a tool; it never reaches the map underneath.
-            if (ToolPaletteView.Contains(_tools, mouse))
+            if (_toolPaletteView.Contains(_tools, mouse))
             {
-                var picked = ToolPaletteView.ToolAt(_tools, mouse);
+                var picked = _toolPaletteView.ToolAt(_tools, mouse);
                 if (picked is not null)
                 {
                     _tools.Select(picked.Value);
@@ -319,7 +326,7 @@ public sealed class GameLoop : IDisposable
     private int CostOfSelectedTool()
     {
         var action = ToolActions.ActionFor(_tools.Selected);
-        return action is null ? 0 : TileCosts.CostFor(action.Value);
+        return action is null ? 0 : _simulation.Definitions.CostOf(action.Value);
     }
 
     private void TogglePause()

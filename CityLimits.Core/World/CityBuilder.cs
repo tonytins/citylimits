@@ -8,6 +8,7 @@ public sealed class CityBuilder
     private readonly TileMap _map;
     private readonly Treasury _treasury;
     private readonly RoadNetwork _roads;
+    private readonly CityDefinitions _definitions;
 
     // Apply works the stroke out again here, so a preview the player saw earlier can't go stale.
     private readonly BuildPlan _applying = new();
@@ -15,9 +16,9 @@ public sealed class CityBuilder
     // The water a road stroke has still to bridge; kept so planning every frame doesn't allocate.
     private readonly List<(int X, int Y)> _water = [];
 
-    /// <summary>Creates a builder that works on the given map.</summary>
+    /// <summary>Creates a builder that works on the given map, at the prices its definitions set: the base game's when none are given.</summary>
     /// <exception cref="ArgumentNullException">One of the parts of the city is null.</exception>
-    public CityBuilder(TileMap map, Treasury treasury, RoadNetwork roads)
+    public CityBuilder(TileMap map, Treasury treasury, RoadNetwork roads, CityDefinitions? definitions = null)
     {
         ArgumentNullException.ThrowIfNull(map);
         ArgumentNullException.ThrowIfNull(treasury);
@@ -26,6 +27,7 @@ public sealed class CityBuilder
         _map = map;
         _treasury = treasury;
         _roads = roads;
+        _definitions = definitions ?? CityDefinitions.Base;
     }
 
     /// <summary>
@@ -206,7 +208,7 @@ public sealed class CityBuilder
             return;
         }
 
-        var cost = TileCosts.Zone;
+        var cost = _definitions.Zone(use).Price;
         for (var row = 0; row < ZoneLayout.Size; row++)
         {
             for (var column = 0; column < ZoneLayout.Size; column++)

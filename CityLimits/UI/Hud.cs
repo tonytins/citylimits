@@ -29,11 +29,11 @@ public sealed class Hud
         Raylib.DrawText(status, Padding, 8, FontSize, Theme.Text);
     }
 
-    /// <summary>Draws the readout of the tile under the mouse.</summary>
-    public void DrawTileReadout(TileState? state, int tileX, int tileY)
+    /// <summary>Draws the readout of the tile under the mouse, naming zones as the city's definitions do.</summary>
+    public void DrawTileReadout(TileState? state, int tileX, int tileY, CityDefinitions definitions)
     {
         var heading = state is null ? "Outside the map" : $"Tile {tileX}, {tileY}";
-        var detail = state is null ? "Move the pointer over the map" : TileInfo.Describe(state.Value);
+        var detail = state is null ? "Move the pointer over the map" : TileInfo.Describe(state.Value, definitions);
 
         var width = Math.Max(Raylib.MeasureText(heading, FontSize), Raylib.MeasureText(detail, FontSize)) + (Padding * 2);
         var x = Raylib.GetScreenWidth() - width - 8;

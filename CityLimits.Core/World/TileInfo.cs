@@ -58,14 +58,15 @@ public static class TileInfo
         _ => BuildAdvice(state.Kind),
     };
 
-    /// <summary>The line the readout shows for a tile.</summary>
-    public static string Describe(TileState state)
+    /// <summary>The line the readout shows for a tile; a zone is named by its spec in the given definitions.</summary>
+    public static string Describe(TileState state, CityDefinitions? definitions = null)
     {
         if (state.Use == TileUse.None)
         {
             return Describe(state.Kind);
         }
 
-        return $"{Name(state.Use)} - {BuildAdvice(state)}";
+        var name = state.IsZoned && definitions is not null ? definitions.Zone(state.Use).Name : Name(state.Use);
+        return $"{name} - {BuildAdvice(state)}";
     }
 }

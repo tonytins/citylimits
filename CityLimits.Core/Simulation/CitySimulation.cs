@@ -9,10 +9,13 @@ public sealed class CitySimulation
     /// <summary>The chance a served zone develops each time the scan reaches it, until demand decides it.</summary>
     private const float DevelopmentChance = 0.2f;
 
-    /// <summary>Creates a simulation over the given map, with the money the city starts with.</summary>
+    /// <summary>
+    /// Creates a simulation over the given map, with the money the city starts with and the
+    /// definitions it runs on: the base game's when none are given.
+    /// </summary>
     /// <exception cref="ArgumentNullException">The map is null.</exception>
     /// <exception cref="ArgumentOutOfRangeException">The starting money is negative.</exception>
-    public CitySimulation(TileMap map, int seed, int funds = Treasury.StartingFunds)
+    public CitySimulation(TileMap map, int seed, int funds = Treasury.StartingFunds, CityDefinitions? definitions = null)
     {
         ArgumentNullException.ThrowIfNull(map);
 
@@ -21,8 +24,12 @@ public sealed class CitySimulation
         Random = new DeterministicRandom(seed);
         Treasury = new Treasury(funds);
         Roads = new RoadNetwork();
-        Builder = new CityBuilder(map, Treasury, Roads);
+        Definitions = definitions ?? CityDefinitions.Base;
+        Builder = new CityBuilder(map, Treasury, Roads, Definitions);
     }
+
+    /// <summary>The definitions the city runs on: the base game's, with any mods applied.</summary>
+    public CityDefinitions Definitions { get; }
 
     /// <summary>The map the city sits on.</summary>
     public TileMap Map { get; }

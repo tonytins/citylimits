@@ -1,5 +1,19 @@
 # CityLimits Changelog
 
+## 0.1.113
+
+CityLimits can be modded. A mod is a folder in `Mods/` beside the game,
+holding a `mod.json` that names it and a `zones.json` that changes the
+zones: today, a zone's name and its price. The game's own rules are
+written in the same format and read the same way, so a mod changes them
+on equal terms. Mods apply in id order, and each is checked before it is
+used: a mod with any problem is skipped whole, never half-applied, and
+the game says which one and why, on screen and in the log.
+`docs/modding.md` explains how to write one.
+
+The game and the headless run use mods. Scenarios always run on the game
+as it ships, so they give the same result on every machine.
+
 ## 0.1.112
 
 Scenarios. A scenario is a city set up from a file: a seed, tool strokes
