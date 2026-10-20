@@ -20,6 +20,9 @@ public static class DefinitionLoader
     /// <summary>The most a zone may cost.</summary>
     public const int MaxPrice = 1_000_000;
 
+    /// <summary>The most population one building level may hold.</summary>
+    public const int MaxPopulation = 100_000;
+
     private const int MaxNameLength = 80;
     private const int MaxVersionLength = 32;
     private const int MaxDescriptionLength = 500;
@@ -59,7 +62,10 @@ public static class DefinitionLoader
                 var use = ZoneUse(entry.Id, at, zones.Keys);
                 var name = Name(entry.Name ?? throw new InvalidDefinitions($"{at}.name: is required."), $"{at}.name");
                 var price = Price(entry.Price ?? throw new InvalidDefinitions($"{at}.price: is required."), $"{at}.price");
-                zones[use] = new ZoneSpec(entry.Id!, use, name, price);
+                var populations = Populations(entry.Populations ?? throw new InvalidDefinitions($"{at}.populations: is required."), null, $"{at}.populations");
+                var valueClasses = InRange(entry.ValueClasses ?? throw new InvalidDefinitions($"{at}.valueClasses: is required."), 1, TileState.MaxValueClass + 1, $"{at}.valueClasses");
+                var houses = Houses(entry.Houses ?? throw new InvalidDefinitions($"{at}.houses: is required."), use, $"{at}.houses");
+                zones[use] = new ZoneSpec(entry.Id!, use, name, price, populations, valueClasses, houses);
             }
 
             var missing = ZoneIds.Where(pair => !zones.ContainsKey(pair.Value)).Select(pair => pair.Key).ToList();
@@ -136,9 +142,17 @@ public static class DefinitionLoader
                     var at = $"zones.json: zones[{i}]";
                     var entry = entries[i] ?? throw new InvalidDefinitions($"{at}: needs a zone, not null.");
                     var use = ZoneUse(entry.Id, at, zones.Keys);
+                    if (entry.ValueClasses is not null)
+                    {
+                        throw new InvalidDefinitions($"{at}.valueClasses: a mod can't change it, because each class needs its own drawings.");
+                    }
+
+                    var levels = CityDefinitions.Base.Zone(use).Levels;
                     zones[use] = new ZonePatch(
                         entry.Name is null ? null : Name(entry.Name, $"{at}.name"),
-                        entry.Price is null ? null : Price(entry.Price.Value, $"{at}.price"));
+                        entry.Price is null ? null : Price(entry.Price.Value, $"{at}.price"),
+                        entry.Populations is null ? null : Populations(entry.Populations, levels, $"{at}.populations"),
+                        entry.Houses is null ? null : Houses(entry.Houses.Value, use, $"{at}.houses"));
                 }
             }
 
@@ -227,6 +241,49 @@ public static class DefinitionLoader
         return name;
     }
 
+    // The number of levels is fixed by the drawings: the base game sets it, and a mod must keep it.
+    private static IReadOnlyList<int> Populations(List<int> populations, int? levels, string at)
+    {
+        if (levels is { } required && populations.Count != required)
+        {
+            throw new InvalidDefinitions($"{at}: needs {required} levels, one for each building drawing, not {populations.Count}.");
+        }
+
+        if (populations.Count is 0 or > TileState.MaxDevelopment)
+        {
+            throw new InvalidDefinitions($"{at}: needs 1 to {TileState.MaxDevelopment} levels, not {populations.Count}.");
+        }
+
+        for (var i = 0; i < populations.Count; i++)
+        {
+            InRange(populations[i], 0, MaxPopulation, $"{at}[{i}]");
+        }
+
+        return populations.ToArray();
+    }
+
+    // Single houses stand on a zone's outer tiles, and only residential zones have house drawings.
+    private static int Houses(int houses, TileUse use, string at)
+    {
+        InRange(houses, 0, ZoneLayout.Parts - 1, at);
+        if (houses > 0 && use != TileUse.Residential)
+        {
+            throw new InvalidDefinitions($"{at}: only a residential zone grows single houses.");
+        }
+
+        return houses;
+    }
+
+    private static int InRange(int value, int minimum, int maximum, string at)
+    {
+        if (value < minimum || value > maximum)
+        {
+            throw new InvalidDefinitions($"{at}: needs a number from {minimum} to {maximum}, not {value}.");
+        }
+
+        return value;
+    }
+
     private static int Price(int price, string at)
     {
         if (price < 0 || price > MaxPrice)
@@ -254,6 +311,12 @@ public static class DefinitionLoader
         public string? Name { get; set; }
 
         public int? Price { get; set; }
+
+        public List<int>? Populations { get; set; }
+
+        public int? ValueClasses { get; set; }
+
+        public int? Houses { get; set; }
     }
 
     private sealed class ManifestDocument
@@ -271,10 +334,16 @@ public static class DefinitionLoader
 }
 
 /// <summary>What a mod changes in one zone's spec; a field left null keeps the value it had.</summary>
-public sealed record ZonePatch(string? Name, int? Price)
+public sealed record ZonePatch(string? Name, int? Price, IReadOnlyList<int>? Populations = null, int? Houses = null)
 {
     /// <summary>The zone's spec with this mod's changes.</summary>
-    public ZoneSpec ApplyTo(ZoneSpec zone) => zone with { Name = Name ?? zone.Name, Price = Price ?? zone.Price };
+    public ZoneSpec ApplyTo(ZoneSpec zone) => zone with
+    {
+        Name = Name ?? zone.Name,
+        Price = Price ?? zone.Price,
+        Populations = Populations ?? zone.Populations,
+        Houses = Houses ?? zone.Houses,
+    };
 }
 
 /// <summary>A mod, read and checked: who it is, and what it changes.</summary>

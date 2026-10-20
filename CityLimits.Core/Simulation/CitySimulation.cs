@@ -92,7 +92,7 @@ public sealed class CitySimulation
             for (var x = first; x < end; x++)
             {
                 var state = Map.StateAt(x, y);
-                if (!state.IsZoneCenter || state.Development >= TileState.MaxDevelopment)
+                if (!state.IsZoneCenter || state.Development >= Definitions.Zone(state.Use).Levels)
                 {
                     continue;
                 }
@@ -107,7 +107,7 @@ public sealed class CitySimulation
                     continue;
                 }
 
-                Map.SetState(x, y, new TileState(state.Kind, state.Use, state.Development + 1));
+                ZoneGrowth.GrowOneStep(Map, Random, Definitions.Zone(state.Use), x, y);
             }
         }
     }

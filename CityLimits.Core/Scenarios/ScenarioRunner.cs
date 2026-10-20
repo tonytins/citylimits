@@ -92,16 +92,20 @@ public sealed class ScenarioRunner
             Scenario = new ScenarioSummary(scenario.Name, source, scenario.Seed, end),
             Passed = checkReports.All(c => c.Passed) && actionReports.All(a => a.Met != false),
             Fallback = fallback,
-            Final = new ScenarioFinal(city.TickCount, city.CityTime, city.Date.ToString(), city.Treasury.Funds, Count(map)),
+            Final = new ScenarioFinal(city.TickCount, city.CityTime, city.Date.ToString(), city.Treasury.Funds, Count(map, city.Definitions)),
             Actions = actionReports,
             Checks = checkReports,
         };
     }
 
-    /// <summary>What stands on a map: road tiles, bridges among them, zones of each kind, and developed zones.</summary>
-    public static CityCounts Count(TileMap map)
+    /// <summary>
+    /// What stands on a map: road tiles, bridges among them, zones of each kind, and developed
+    /// zones, which are those with any population, houses included.
+    /// </summary>
+    public static CityCounts Count(TileMap map, CityDefinitions definitions)
     {
         ArgumentNullException.ThrowIfNull(map);
+        ArgumentNullException.ThrowIfNull(definitions);
 
         int road = 0, bridge = 0, residential = 0, commercial = 0, industrial = 0, developed = 0;
         for (var y = 0; y < map.Height; y++)
@@ -123,7 +127,7 @@ public sealed class ScenarioRunner
                 residential += state.Use == TileUse.Residential ? 1 : 0;
                 commercial += state.Use == TileUse.Commercial ? 1 : 0;
                 industrial += state.Use == TileUse.Industrial ? 1 : 0;
-                developed += state.Development > 0 ? 1 : 0;
+                developed += definitions.Zone(state.Use).PopulationOf(map, x, y) > 0 ? 1 : 0;
             }
         }
 
@@ -168,7 +172,7 @@ public sealed class ScenarioRunner
         {
             CheckSubject.Tile => CheckTile(city, check),
             CheckSubject.Funds => CheckFunds(city.Treasury.Funds, check),
-            _ => CheckCount(Count(city.Map).Of(check.CountOf), check),
+            _ => CheckCount(Count(city.Map, city.Definitions).Of(check.CountOf), check),
         };
 
         return failure is { } found

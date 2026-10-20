@@ -1,5 +1,17 @@
 # CityLimits Changelog
 
+## 0.1.114
+
+Zones grow as they do in Micropolis. A residential zone first grows single
+houses on its outer tiles, the first ones by the road, and once it holds
+eight they make way for a building. Buildings grow a level at a time: four
+levels for residential and industrial zones, five for commercial. Each
+level holds more people, and the tile readout shows a zone's houses, its
+level, and its population.
+
+Mods can now change how many people each building level holds and how many
+houses a residential zone grows before its first building.
+
 ## 0.1.113
 
 CityLimits can be modded. A mod is a folder in `Mods/` beside the game,

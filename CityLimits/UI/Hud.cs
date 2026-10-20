@@ -30,10 +30,10 @@ public sealed class Hud
     }
 
     /// <summary>Draws the readout of the tile under the mouse, naming zones as the city's definitions do.</summary>
-    public void DrawTileReadout(TileState? state, int tileX, int tileY, CityDefinitions definitions)
+    public void DrawTileReadout(TileMap map, TileState? state, int tileX, int tileY, CityDefinitions definitions)
     {
         var heading = state is null ? "Outside the map" : $"Tile {tileX}, {tileY}";
-        var detail = state is null ? "Move the pointer over the map" : TileInfo.Describe(state.Value, definitions);
+        var detail = state is null ? "Move the pointer over the map" : TileInfo.Describe(map, tileX, tileY, definitions);
 
         var width = Math.Max(Raylib.MeasureText(heading, FontSize), Raylib.MeasureText(detail, FontSize)) + (Padding * 2);
         var x = Raylib.GetScreenWidth() - width - 8;

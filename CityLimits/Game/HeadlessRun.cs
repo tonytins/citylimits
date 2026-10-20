@@ -144,7 +144,7 @@ public sealed class HeadlessRun
                 {
                     zones++;
 
-                    if (state.Development > 0)
+                    if (simulation.Definitions.Zone(state.Use).PopulationOf(map, x, y) > 0)
                     {
                         developed++;
                     }

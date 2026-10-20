@@ -189,9 +189,11 @@ past `ticks` is refused when the file is loaded.
 | `count`: a subject below | `equals`, `atLeast`, `atMost` |
 
 A tile check reads the tile as the game's readout does. On any tile of a
-zone, `development` is the zone's, which its centre holds
-(`TileMap.ZoneStateAt`), and `served` is whether a road lies along the
-zone's edge (`RoadNetwork.IsZoneServed`). `served` on a tile that isn't
+zone, `development` is the zone's building level, which its centre holds:
+0 while it has no building (a residential zone may have houses), then 1
+up to its spec's levels, 4 for residential, 5 for commercial, and 4 for
+industrial (`TileMap.ZoneStateAt`); a file may give it from 0 to 5.
+`served` is whether a road lies along the zone's edge (`RoadNetwork.IsZoneServed`). `served` on a tile that isn't
 part of a zone fails, with the reason that the tile has no zone.
 
 | Count | What it counts |
@@ -199,7 +201,7 @@ part of a zone fails, with the reason that the tile has no zone.
 | `Road` | Road tiles, bridges included |
 | `Bridge` | Road tiles over water |
 | `Residential`, `Commercial`, `Industrial` | Zones of that kind, by their centres, not tiles |
-| `Developed` | Zones with a development level above zero, as the `--headless` summary does |
+| `Developed` | Zones with any population, single houses included, as the `--headless` summary does |
 
 Phase 2 adds `population` and the demand values as subjects.
 

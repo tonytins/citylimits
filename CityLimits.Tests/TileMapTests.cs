@@ -138,15 +138,15 @@ public class TileMapTests
         var changes = new List<(int X, int Y)>();
         map.TileChanged += (x, y) => changes.Add((x, y));
 
-        for (var i = 0; i < 40 * CityLimits.Core.Simulation.CityCalendar.StepsPerCount; i++)
+        for (var i = 0; i < 200 * CityLimits.Core.Simulation.CityCalendar.StepsPerCount; i++)
         {
             simulation.Tick();
         }
 
-        // Only the centre changes; it holds the zone's development.
-        Assert.Equal(TileState.MaxDevelopment, map.StateAt(2, 2).Development);
-        Assert.Equal(TileState.MaxDevelopment, changes.Count);
-        Assert.All(changes, change => Assert.Equal((2, 2), change));
+        // The houses go up on the outer tiles and come down for the building; the building is the centre's.
+        Assert.Equal(CityLimits.Core.Definitions.CityDefinitions.Base.Zone(TileUse.Residential).Levels, map.StateAt(2, 2).Development);
+        Assert.Contains((2, 2), changes);
+        Assert.All(changes, change => Assert.True(Math.Abs(change.X - 2) <= 1 && Math.Abs(change.Y - 2) <= 1, $"{change} is outside the zone"));
     }
 
     [Fact]

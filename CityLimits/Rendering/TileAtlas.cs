@@ -36,19 +36,22 @@ public static class TileAtlas
     /// <summary>A bridge running down, north to south.</summary>
     private const int BridgeDownTile = 65;
 
+    /// <summary>The first of the twelve single-house drawings, three for each land-value class.</summary>
+    private const int FirstHouseTile = 249;
+
     /// <summary>
-    /// The first tile of each zone's 3 by 3 drawings, by development level: the empty zone, then
-    /// the buildings it grows into. A zone's nine tiles follow each other in the sheet, across and
-    /// then down, so a part's tile is the first tile plus its part number. Levels 1 to 3 show the
-    /// first, lowest-value buildings until population and land value choose among them.
+    /// Where each zone's drawings are. A drawing is 3 by 3, its nine tiles following each other in
+    /// the sheet across and then down, so a part's tile is the drawing's first tile plus its part
+    /// number. The empty zone comes first; then the buildings, one per development level within
+    /// each land-value class, the lowest class first.
     /// </summary>
-    private static readonly int[] ResidentialTiles = [240, 261, 270, 279];
+    private static readonly ZoneDrawings Residential = new(EmptyZone: 240, FirstBuilding: 261, Levels: 4, ValueClasses: 4);
 
-    /// <inheritdoc cref="ResidentialTiles"/>
-    private static readonly int[] CommercialTiles = [423, 432, 441, 450];
+    /// <inheritdoc cref="Residential"/>
+    private static readonly ZoneDrawings Commercial = new(EmptyZone: 423, FirstBuilding: 432, Levels: 5, ValueClasses: 4);
 
-    /// <inheritdoc cref="ResidentialTiles"/>
-    private static readonly int[] IndustrialTiles = [612, 621, 630, 639];
+    /// <inheritdoc cref="Residential"/>
+    private static readonly ZoneDrawings Industrial = new(EmptyZone: 612, FirstBuilding: 621, Levels: 4, ValueClasses: 2);
 
     /// <summary>
     /// The road drawing for each set of joined sides, indexed by <see cref="RoadConnections"/>.
@@ -76,9 +79,9 @@ public static class TileAtlas
 
     /// <summary>
     /// The sheet index that draws a tile, given the sides of it that join a road and, for a zone,
-    /// the development its centre holds.
+    /// the state of its centre, which holds the zone's building.
     /// </summary>
-    public static int IndexFor(TileState state, RoadConnections roads, int zoneDevelopment, int tileX, int tileY)
+    public static int IndexFor(TileState state, RoadConnections roads, TileState zoneCenter, int tileX, int tileY)
     {
         if (state.IsBridge)
         {
@@ -95,14 +98,19 @@ public static class TileAtlas
 
         if (state.IsZoned)
         {
-            var tiles = state.Use switch
+            if (zoneCenter.Development == 0 && state.HasHouse)
             {
-                TileUse.Commercial => CommercialTiles,
-                TileUse.Industrial => IndustrialTiles,
-                _ => ResidentialTiles,
+                return FirstHouseTile + state.House - 1;
+            }
+
+            var drawings = state.Use switch
+            {
+                TileUse.Commercial => Commercial,
+                TileUse.Industrial => Industrial,
+                _ => Residential,
             };
 
-            return tiles[Math.Clamp(zoneDevelopment, 0, TileState.MaxDevelopment)] + state.ZonePart;
+            return drawings.FirstTile(zoneCenter.Development, zoneCenter.ValueClass) + state.ZonePart;
         }
 
         // The same tile always picks the same drawing, so the ground doesn't flicker as the view moves.
@@ -125,4 +133,20 @@ public static class TileAtlas
         Width = CellSize,
         Height = CellSize,
     };
+
+    // A zone's drawings: its empty zone, and its buildings by land-value class and level.
+    private readonly record struct ZoneDrawings(int EmptyZone, int FirstBuilding, int Levels, int ValueClasses)
+    {
+        public int FirstTile(int development, int valueClass)
+        {
+            if (development <= 0)
+            {
+                return EmptyZone;
+            }
+
+            var level = Math.Min(development, Levels) - 1;
+            var valueClassIndex = Math.Clamp(valueClass, 0, ValueClasses - 1);
+            return FirstBuilding + (ZoneLayout.Parts * ((valueClassIndex * Levels) + level));
+        }
+    }
 }

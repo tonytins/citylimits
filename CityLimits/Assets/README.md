@@ -53,19 +53,22 @@ Rubble, which a bulldozed zone leaves, is tiles 44 to 47, chosen by the
 tile's place. Rock borrows tile 44 until the new terrain removes it.
 
 A zone is 3 by 3. Its nine tiles are nine tiles in a row in the sheet,
-read across and then down, so a tile's drawing is the zone's first tile
-plus its part number (0 to 8, with 4 the centre):
+read across and then down, so a tile's drawing is the drawing's first
+tile plus its part number (0 to 8, with 4 the centre). Each zone has an
+empty-zone drawing, then a building for each development level within
+each land-value class, the lowest class first, nine tiles apart:
 
-| Zone        | Empty zone | Development 1 | Development 2 | Development 3 |
-| ----------- | ---------- | ------------- | ------------- | ------------- |
-| Residential | 240        | 261           | 270           | 279           |
-| Commercial  | 423        | 432           | 441           | 450           |
-| Industrial  | 612        | 621           | 630           | 639           |
+| Zone        | Empty zone | First building | Levels | Land-value classes | Last building |
+| ----------- | ---------- | -------------- | ------ | ------------------ | ------------- |
+| Residential | 240        | 261            | 4      | 4                  | 396           |
+| Commercial  | 423        | 432            | 5      | 4                  | 603           |
+| Industrial  | 612        | 621            | 4      | 2                  | 684           |
 
-The buildings are the first three of each zone's drawings, the lowest
-land value, until population and land value choose among them. The
-residential buildings start at 261, after the twelve single houses at 249
-to 260; 405 and 414 are a hospital and a church.
+A building's first tile is the zone's first building plus 9 times
+(class times levels plus level minus 1). A residential zone with no
+building shows its single houses on its outer tiles: tiles 249 to 260,
+three for each land-value class. 405 and 414, after the residential
+buildings, are a hospital and a church.
 
 ## Licensing
 

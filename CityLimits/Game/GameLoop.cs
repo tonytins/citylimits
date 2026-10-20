@@ -115,11 +115,6 @@ public sealed class GameLoop : IDisposable
 
         var world = _camera.ScreenToWorld(mouse);
         var onMap = MapRenderer.TryGetTileAt(_simulation.Map, world, out var tileX, out var tileY, out var state);
-        if (onMap && state.IsZoned)
-        {
-            // A zone is described by its centre, which holds its development.
-            state = _simulation.Map.ZoneStateAt(tileX, tileY);
-        }
 
         _hud.DrawStatus(
             _simulation.Date,
@@ -130,7 +125,7 @@ public sealed class GameLoop : IDisposable
             CostOfSelectedTool(),
             world,
             Raylib.GetFPS());
-        _hud.DrawTileReadout(onMap ? state : null, tileX, tileY, _simulation.Definitions);
+        _hud.DrawTileReadout(_simulation.Map, onMap ? state : null, tileX, tileY, _simulation.Definitions);
         _hud.DrawHints();
         _hud.DrawMessage(_error ?? _notice, _error is not null || _noticeIsError);
 

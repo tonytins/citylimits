@@ -116,15 +116,23 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   how many steps run in a frame, never the size of a step.
 - **The zones.** A zone is 3 by 3 tiles, as in Micropolis. Each tile
   knows its part of the zone (`TileState.ZonePart`, 0 to 8, with 4 the
-  centre), and the zone's development is kept on its centre only.
-  `TileMap.ZoneCenterOf` and `ZoneStateAt` find a zone's centre from any of
-  its tiles. A zone is served when a road lies on one of the 12 tiles along
+  centre). As in Micropolis, a zone's building is kept on its centre: its
+  development level (0 for no building, then up to the levels its
+  `ZoneSpec` has) and its land-value class. A residential zone with no
+  building grows single houses first, each kept on the outer tile it
+  stands on (`TileState.House`); at its spec's number of houses they make
+  way for a level-1 building. A zone's population comes from its spec:
+  one per house, or the building's figure for its level
+  (`ZoneSpec.PopulationOf`). `TileMap.ZoneCenterOf` and `ZoneStateAt`
+  find a zone's centre from any of its tiles. A zone is served when a road lies on one of the 12 tiles along
   its edges, just outside it, not at a corner (`RoadNetwork.IsZoneServed`).
 - **The tick.** `CitySimulation.Tick` advances the date and then grows the
-  city: a served zone's centre develops a step, up to level 3, on a flat
-  chance from the simulation's own seeded generator, so the same seed and
-  the same work give the same city. The flat chance stands in until
-  population and demand decide growth.
+  city: when the scan reaches a served zone's centre, the zone takes a
+  step up on a flat chance from the simulation's own seeded generator
+  (`ZoneGrowth`: a house on the free outer tile with the most roads
+  beside it, or a building level), so the same seed and the same work give
+  the same city. The flat chance stands in until demand, trips, and land
+  value decide growth and decline.
 - **The tools.** Six tools sit in the palette down the left, each with its
   icon, and the number keys pick one: inspect, road, residential,
   commercial, industrial, and bulldozer. A tool is used in a stroke, as
@@ -195,10 +203,10 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   and no project. It holds the parser, the dispatcher, the default
   command, the strict option reader, and the exit codes.
 - **The tests.** `CityLimits.Tests` uses xUnit 2 with the VSTest runner
-  and coverlet, and holds 295 tests over the generator, the map, the
+  and coverlet, and holds 312 tests over the generator, the map, the
   calendar, the clock, the simulation, the settings, the tile rules, the
   build actions, the road network, the treasury, the scenario loader and
-  runner, every built-in scenario, the definitions and the mod loader,
+  runner, every built-in scenario, the definitions and the mod loader, zone growth,
   the option reader, and the dispatcher.
 - **The game project.** `CityLimits.csproj` targets `net10.0` with nullable
   and implicit usings enabled, and references `Raylib-cs` `8.1.0` and

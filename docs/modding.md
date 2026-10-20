@@ -1,8 +1,9 @@
 # Modding
 
-> **Status:** the first piece of modding support. A mod can change a zone's
-> name and price today. More of the game becomes data as it is built, and
-> each piece that does is listed here.
+> **Status:** the first pieces of modding support. A mod can change a
+> zone's name, price, population per building level, and house limit
+> today. More of the game becomes data as it is built, and each piece
+> that does is listed here.
 
 CityLimits is built to be modded. The game's rules live in definitions:
 data, not code. The base game's definitions are Micropolis' numbers, and a
@@ -65,6 +66,12 @@ the value it had.
 | `id` | The zone to change: `residential`, `commercial`, or `industrial` |
 | `name` | The zone's name, as the tile readout shows it, 1 to 80 characters |
 | `price` | What one 3 by 3 zone costs to lay, from 0 to 1 000 000 |
+| `populations` | The population of the zone's building at each level, from level 1 up, each from 0 to 100 000. It must have as many levels as the base game's zone: 4 residential, 5 commercial, 4 industrial |
+| `houses` | How many single houses a residential zone grows before its first building, from 0 to 8, each counting one person; only a residential zone can have houses |
+
+The number of building levels and the land-value classes (`valueClasses`)
+can't be changed by a mod, because each level and class needs its own
+drawings in the tile sheet.
 
 ## How mods are applied
 

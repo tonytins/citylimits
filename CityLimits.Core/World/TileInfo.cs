@@ -69,4 +69,34 @@ public static class TileInfo
         var name = state.IsZoned && definitions is not null ? definitions.Zone(state.Use).Name : Name(state.Use);
         return $"{name} - {BuildAdvice(state)}";
     }
+
+    /// <summary>
+    /// The line the readout shows for a tile on a map. A zone is described as a whole, from its
+    /// centre and its houses: its name, how far it has grown, and its population.
+    /// </summary>
+    public static string Describe(TileMap map, int x, int y, CityDefinitions definitions)
+    {
+        ArgumentNullException.ThrowIfNull(map);
+        ArgumentNullException.ThrowIfNull(definitions);
+
+        var state = map.StateAt(x, y);
+        if (!state.IsZoned)
+        {
+            return Describe(state, definitions);
+        }
+
+        var spec = definitions.Zone(state.Use);
+        var (centerX, centerY) = map.ZoneCenterOf(x, y);
+        var center = map.StateAt(centerX, centerY);
+        var population = spec.PopulationOf(map, centerX, centerY);
+
+        var growth = center.Development switch
+        {
+            > 0 => $"level {center.Development} of {spec.Levels}, population {population}",
+            _ when population > 0 => population == 1 ? "1 house" : $"{population} houses",
+            _ => "not developed yet",
+        };
+
+        return $"{spec.Name} - {growth}";
+    }
 }
