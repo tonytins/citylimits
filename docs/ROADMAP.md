@@ -76,7 +76,7 @@ Then Joffburg: power, taxes, and the budget.
 
 | Rank | Work | Milestone | Estimate (h) |
 |---|---|---|---|
-| 1 | Scenarios, phase 1, with the spec revised for the new rules ([spec](./scenarios.md)) | Kowloon | 6–10 |
+| 1 | Scenarios, phase 1, to the revised [spec](./scenarios.md): tool strokes, 3 by 3 zones, and ticks as phases | Kowloon | 6–10 |
 | 2 | Growth per zone: population, demand, growth and decline | Kowloon | 15–25 |
 | 3 | Terrain: rivers, lakes, islands, and smoothed edges, on a 120 by 100 map | Neat Map | 6–10 |
 
@@ -170,7 +170,7 @@ debugged as it is built.
   same actions give the same city after a fixed number of ticks. It covers
   the tiles and the money today, and it grows with the population model.
 - [ ] Scenarios, phase 1, as [docs/scenarios.md](./scenarios.md)
-  specifies. A scenario file holds a seed, timed build actions, and
+  specifies. A scenario file holds a seed, timed tool strokes, and
   checks, and `CityLimits.Core/Scenarios/` loads and runs it.
   `citylimits scenario` runs it with no window, logs it, and writes a
   versioned JSON report with `--json`. The built-in scenarios live in
@@ -269,6 +269,7 @@ right, cut scope inside Radial and Bad News first, not inside Kowloon.
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-20 | patch | The scenario spec is revised for the Micropolis baseline: actions are tool strokes (`tool`, `from`, `to`) shaped and priced as in the game, ticks are phases (64 a month, 768 a year), zone checks read the zone's centre, counts give zones for the three zone kinds, and the example is the demo town, checked against the engine. Scenarios, phase 1, can now be built. |
 | 2026-10-20 | minor | Step 3 of the baseline refactor: time runs as in Micropolis. A tick is one phase of a 16-phase cycle; phase 0 moves the calendar on by a 48th of a year, from January 1900, and phases 1 to 8 scan the map in bands. A month takes 16 seconds and a year about 3 minutes at Normal, with Fast and Super fast at 5 and 50 times that. The headless run defaults to a year. Kowloon is at 38%, 91–155 h left, 219 tests. |
 | 2026-10-20 | major | Step 2 of the baseline refactor: Line City meets Micropolis. Roads bridge water at $50 a tile from a road beside them; zones are 3 by 3, laid as a grid, served by a road along their edge, and drawn from the sheet with their buildings; the bulldozer costs $1 a tile, refunds nothing, and knocks a zone down to rubble through its centre; a tool clears trees and rubble for $1. The palette is sized to its text and picks a tool when clicked, instead of building on the map under it. Line City is complete again (100%), 97–165 h left, 201 tests. |
 | 2026-10-20 | minor | Step 1 of the baseline refactor: tools are strokes. Pressing starts a `BuildStroke`, dragging stretches it (roads in a straight line, other tools in a rectangle), the map previews its tiles and its total cost, and releasing applies it all at once or refuses it whole. Escape cancels. The per-tile rules and prices are unchanged until step 2. Line City is at 50%, 107–181 h left, 170 tests. |

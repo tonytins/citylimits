@@ -2,16 +2,13 @@
 
 > **Status:** design, not implemented. The `scenario` command reads its
 > command line today and runs nothing. This document is the contract
-> for phase 1, which is on the [roadmap](./ROADMAP.md) under Kowloon.
->
-> **To be revised before it is built.** It was written against the rules
-> the Micropolis baseline refactor on the [roadmap](./ROADMAP.md) replaces:
-> single-tile actions, a bulldozer refund, and a tick of a month. Its
-> actions become tool strokes, its prices and checks follow the new rules,
-> and its `ticks` follow the new calendar.
+> for phase 1, which is on the [roadmap](./ROADMAP.md) under Kowloon. It
+> follows the Micropolis baseline: tools are strokes, zones are 3 by 3,
+> the bulldozer refunds nothing, and a tick is one phase of the
+> simulation's 16-phase cycle.
 
-A scenario is a city set up from a file: a seed, a script of work done to
-the map at set ticks, and what should be true at the end. It serves two
+A scenario is a city set up from a file: a seed, a script of tool strokes
+made at set ticks, and what should be true at the end. It serves two
 audiences with one format:
 
 - **Players** get a challenge: a starting city, maybe a problem along the
@@ -31,7 +28,7 @@ connection to the game.
 
 | Phase | Adds | Depends on |
 |---|---|---|
-| 1 | Seed, map size, starting funds, timed build actions, checks on tiles, funds, and counts, the report | Today's simulation |
+| 1 | Seed, map size, starting funds, timed tool strokes, checks on tiles, zones, funds, and counts, the report | Today's simulation |
 | 2 | Goals that win or lose: population, demand, the date | Kowloon's population and demand |
 | 3 | Picking a scenario in the game, with its briefing and goal on screen | Happy Isle |
 
@@ -44,7 +41,7 @@ when their dependencies land.
 citylimits scenario list                                # the built-in scenarios, by id
 citylimits scenario demo-town --headless                # run a built-in scenario by id
 citylimits scenario --file my-bug.json --headless       # run a scenario from a file
-citylimits scenario demo-town --headless --ticks 240    # override the file's tick count
+citylimits scenario demo-town --headless --ticks 768    # override the file's tick count
 citylimits scenario demo-town --headless --json         # the report as JSON on stdout
 ```
 
@@ -85,28 +82,43 @@ NLog still writes to the console and nowhere else. This already works:
 `scenario <id> --headless --json` leaves stdout empty today, because
 there is no report yet.
 
+## Time
+
+A tick is one step of the simulation: one phase of Micropolis' 16-phase
+cycle, the same unit as `citylimits --headless --ticks`. The calendar
+moves on by a 48th of a year every 16 ticks, so there are 64 ticks in a
+month and 768 in a year, and a city starts in January 1900. A zone gets
+its chance to grow when the scan reaches its band, once every 16 ticks.
+`CityCalendar` holds these numbers.
+
+Phase 1 counts time in ticks only, because a tick is the unit the
+simulation is deterministic in. Phase 2 adds goals by date, such as
+"5 000 people by 1910".
+
 ## The file, version 1
 
 ```json
 {
   "format": 1,
   "name": "Demo town",
-  "description": "A road and three zones near the middle of the map.",
+  "description": "A road with a residential, a commercial, and an industrial zone; the industry is knocked down after a year.",
   "seed": 2000,
-  "map": { "width": 128, "height": 128 },
   "funds": 20000,
-  "ticks": 12,
+  "ticks": 1536,
   "actions": [
-    { "tick": 0, "do": "Road", "x": 64, "y": 64, "width": 3 },
-    { "tick": 0, "do": "ZoneResidential", "x": 64, "y": 63, "width": 2 },
-    { "tick": 0, "do": "ZoneCommercial", "x": 66, "y": 63, "expect": "Built" },
-    { "tick": 6, "do": "Bulldoze", "x": 66, "y": 64 }
+    { "tick": 0, "tool": "Road", "from": { "x": 64, "y": 67 }, "to": { "x": 72, "y": 67 }, "expect": "Built" },
+    { "tick": 0, "tool": "ZoneResidential", "from": { "x": 65, "y": 65 } },
+    { "tick": 0, "tool": "ZoneCommercial", "from": { "x": 68, "y": 65 } },
+    { "tick": 0, "tool": "ZoneIndustrial", "from": { "x": 71, "y": 65 } },
+    { "tick": 768, "tool": "Bulldoze", "from": { "x": 71, "y": 65 }, "expect": "Built" }
   ],
   "checks": [
-    { "tick": 12, "tile": { "x": 64, "y": 63 }, "use": "Residential", "developmentAtLeast": 1 },
-    { "tick": 12, "tile": { "x": 66, "y": 64 }, "use": "None" },
-    { "tick": 12, "fundsAtLeast": 19900 },
-    { "tick": 12, "count": "Road", "equals": 2 }
+    { "tick": 1536, "tile": { "x": 65, "y": 65 }, "use": "Residential", "developmentAtLeast": 1 },
+    { "tick": 1536, "tile": { "x": 68, "y": 64 }, "served": true },
+    { "tick": 1536, "tile": { "x": 72, "y": 66 }, "kind": "Rubble", "use": "None" },
+    { "tick": 1536, "fundsEquals": 19609 },
+    { "tick": 1536, "count": "Road", "equals": 9 },
+    { "tick": 1536, "count": "Industrial", "equals": 0 }
   ]
 }
 ```
@@ -119,36 +131,50 @@ there is no report yet.
 | `name` | yes | A display name, 1 to 80 characters |
 | `description` | no | One or two sentences, up to 500 characters |
 | `seed` | yes | The seed the map and the simulation are built from: any 32-bit integer |
-| `map` | no | `width` and `height`, each from 16 to 512. Default: 128 by 128, the game's map |
+| `map` | no | `width` and `height`, each from 16 to 512. Default: the game's map, `MapSize.DefaultWidth` by `MapSize.DefaultHeight` |
 | `funds` | no | The starting treasury, from 0 to 1 000 000. Default: `Treasury.StartingFunds` |
-| `ticks` | yes | How many ticks the run takes, from 0 to `HeadlessRun.MaxTicks` |
-| `actions` | no | Work done to the map; see below. Up to 10 000 entries |
+| `ticks` | yes | How many ticks the run takes, from 0 to 100 000, the same limit as `--ticks` |
+| `actions` | no | Tool strokes made on the map; see below. Up to 10 000 entries |
 | `checks` | no | What must be true; see below. Up to 10 000 entries |
 
 ### Actions
 
-An action is one `BuildAction` applied to a tile or a rectangle of tiles.
+An action is one tool stroke, made exactly as a player makes it: the
+tool pressed on `from` and dragged to `to`.
 
 | Field | Required | Meaning |
 |---|---|---|
-| `tick` | yes | The action runs after this many ticks, before the next one. `0` is the start |
-| `do` | yes | A `BuildAction` name: `Road`, `ZoneResidential`, `ZoneCommercial`, `ZoneIndustrial`, `Bulldoze` |
-| `x`, `y` | yes | The top-left tile |
-| `width`, `height` | no | The size of the rectangle, default 1. At most 4 096 tiles per action |
-| `expect` | no | A `BuildStatus` (`Built`, `Unchanged`, `Refused`), or `Refused:<BuildRefusal>` such as `Refused:NotEnoughFunds` |
+| `tick` | yes | The stroke is made after this many ticks, before the next one. `0` is the start |
+| `tool` | yes | A `BuildAction` name: `Road`, `ZoneResidential`, `ZoneCommercial`, `ZoneIndustrial`, `Bulldoze` |
+| `from` | yes | `{ "x", "y" }`: the tile the stroke starts on |
+| `to` | no | `{ "x", "y" }`: the tile the stroke is dragged to. Default: `from`, a stroke that doesn't move |
+| `expect` | no | A `BuildStatus` (`Built`, `Unchanged`, `Refused`), or a status and a `BuildRefusal`, as in `Refused:NotEnoughFunds`, `Refused:PartOfAZone`, or `Unchanged:AlreadyDone` |
 
-Actions on the same tick run in file order, and a rectangle runs row by
-row, left to right. That's the same order the city would see from a
-player dragging the tool. Every action goes through `CityBuilder.Apply`,
-so it pays, refuses, and refunds exactly as the tools do.
+A stroke covers what `BuildStroke.Bounds` says it covers, as in the
+game:
 
-A refusal is not an error, because a scenario may set out to show one. It is
-recorded in the report. It fails the run only if `expect` says otherwise.
-For a rectangle, `expect` must hold for every tile in it.
+- **A road** runs in one straight line from `from`, across or down,
+  whichever way `to` is further; across wins a tie. Over water it is a
+  bridge, which needs a road beside it to start from.
+- **Zones** are laid as a grid of 3 by 3 zones, the first centred on
+  `from`, adding a zone for each whole 3 tiles `to` lies away. A single
+  zone is a stroke with no `to`, centred on `from`.
+- **The bulldozer** covers the rectangle from `from` to `to`. It knocks a
+  zone down only when the zone's centre is inside that rectangle.
 
-A rectangle may reach past the map edge. The tiles outside it are refused
-with `OffTheMap` like any other tile, so `expect: "Built"` on such a
-rectangle fails.
+Every action goes through `CityBuilder.Apply`, so it is priced, refused,
+and skipped exactly as the tools are: $10 a road tile, $50 a bridge
+tile, $100 a zone, $1 more for each tile of trees or rubble cleared, $1
+for each tile bulldozed or zone knocked down, and nothing refunded. A
+stroke the city can't pay for, or that runs off the map, changes
+nothing; within a stroke, a tile or zone that can't be built on is
+skipped and the rest is built. Actions on the same tick run in file
+order.
+
+A refusal is not an error, because a scenario may set out to show one. It
+is recorded in the report, and it fails the run only if `expect` says
+otherwise. `expect` describes the stroke's result as a whole, the same
+`BuildResult` the game turns into its message.
 
 ### Checks
 
@@ -158,29 +184,40 @@ past `ticks` is refused when the file is loaded.
 
 | Subject | Conditions |
 |---|---|
-| `tile`: `{ "x", "y" }` | `kind` (a `TileKind`), `use` (a `TileUse`), `development`, `developmentAtLeast`, `developmentAtMost`, `served` (true or false, from `RoadNetwork.IsServed`) |
+| `tile`: `{ "x", "y" }` | `kind` (a `TileKind`), `use` (a `TileUse`), `development`, `developmentAtLeast`, `developmentAtMost`, `served` (true or false) |
 | `funds`, no value | `fundsAtLeast`, `fundsAtMost`, `fundsEquals` |
-| `count`: a `TileUse`, or `Developed` | `equals`, `atLeast`, `atMost` |
+| `count`: a subject below | `equals`, `atLeast`, `atMost` |
 
-`Developed` counts the zoned tiles with a development level above zero, as
-the `--headless` summary does. Phase 2 adds `population` and the demand
-values as subjects.
+A tile check reads the tile as the game's readout does. On any tile of a
+zone, `development` is the zone's, which its centre holds
+(`TileMap.ZoneStateAt`), and `served` is whether a road lies along the
+zone's edge (`RoadNetwork.IsZoneServed`). `served` on a tile that isn't
+part of a zone fails, with the reason that the tile has no zone.
+
+| Count | What it counts |
+|---|---|
+| `Road` | Road tiles, bridges included |
+| `Bridge` | Road tiles over water |
+| `Residential`, `Commercial`, `Industrial` | Zones of that kind, by their centres, not tiles |
+| `Developed` | Zones with a development level above zero, as the `--headless` summary does |
+
+Phase 2 adds `population` and the demand values as subjects.
 
 ### Validation
 
 The file crosses a boundary, so it is checked before anything runs, and the
 first problem is reported with its location, as in
-`actions[3].width: needs a number from 1 to 64, not 0.`.
+`actions[3].from.x: needs a number from -512 to 1023, not 5000.`.
 
 - A file over 1 MiB is refused before it is parsed.
 - An unknown field is refused, so a misspelt check can't silently pass.
   (`System.Text.Json`'s `UnmappedMemberHandling.Disallow`.)
 - Enum names are matched exactly, with the casing of the C# names.
-- Every number is range-checked as the tables above say. A rectangle's
-  tile count is computed in `long` before it is compared with the limit.
-- A tile check outside the map is refused at load time. An action outside
-  the map is not refused, because the builder's refusal is part of what a
-  scenario can test.
+- Every number is range-checked as the tables above say. A stroke's
+  coordinates run from -512 to 1023, so a stroke can be made to run off
+  the map on purpose; the builder refuses it with `OffTheMap`, which is
+  part of what a scenario can test.
+- A tile check outside the map is refused at load time.
 
 `System.Text.Json` ships with .NET, so this needs no new package, and
 `CityLimits.Core` keeps its rule of no package references.
@@ -194,21 +231,23 @@ or changing the meaning of a field means bumping `format`.
 ```json
 {
   "format": 1,
-  "scenario": { "name": "Demo town", "source": "demo-town", "seed": 2000, "ticks": 12 },
+  "scenario": { "name": "Demo town", "source": "demo-town", "seed": 2000, "ticks": 1536 },
   "passed": true,
   "final": {
-    "tick": 12,
-    "date": "2001-01",
-    "funds": 19960,
-    "counts": { "Road": 2, "Residential": 2, "Commercial": 1, "Industrial": 0, "Developed": 3 }
+    "tick": 1536,
+    "cityTime": 96,
+    "date": "1902-01",
+    "funds": 19609,
+    "counts": { "Road": 9, "Bridge": 0, "Residential": 1, "Commercial": 1, "Industrial": 0, "Developed": 2 }
   },
   "actions": [
-    { "index": 0, "tick": 0, "do": "Road", "tiles": 3, "built": 3, "unchanged": 0, "refused": {}, "cost": 30, "refund": 0 },
-    { "index": 2, "tick": 0, "do": "ZoneCommercial", "tiles": 1, "built": 1, "unchanged": 0, "refused": {}, "cost": 5, "refund": 0, "met": true }
+    { "index": 0, "tick": 0, "tool": "Road", "status": "Built", "tiles": 9, "skipped": {}, "cost": 90, "met": true },
+    { "index": 1, "tick": 0, "tool": "ZoneResidential", "status": "Built", "tiles": 9, "skipped": {}, "cost": 100 },
+    { "index": 4, "tick": 768, "tool": "Bulldoze", "status": "Built", "tiles": 9, "skipped": {}, "cost": 1, "met": true }
   ],
   "checks": [
-    { "index": 0, "tick": 12, "passed": true },
-    { "index": 3, "tick": 12, "passed": true }
+    { "index": 0, "tick": 1536, "passed": true },
+    { "index": 3, "tick": 1536, "passed": true }
   ]
 }
 ```
@@ -217,16 +256,19 @@ A failed check carries what was expected and what was found, and sets the
 top-level `passed` to false:
 
 ```json
-{ "index": 3, "tick": 12, "passed": false, "expected": "Road count equals 2", "actual": "3" }
+{ "index": 3, "tick": 1536, "passed": false, "expected": "funds equal 19609", "actual": "19599" }
 ```
 
-`source` is the built-in id, or the file path as given on the command line.
-`fallback` is present only when the requested scenario could not be loaded
-and `demo-town` ran instead.
-`refused` maps each `BuildRefusal` to how many tiles it stopped. `met` is
-present only when the action had an `expect`. The example shows the shape
-of the report. It is not the output of a real run, and the `Developed`
-count in particular depends on the seed's growth rolls.
+`source` is the built-in id, or the file path as given on the command
+line. `fallback` is present only when the requested scenario could not
+be loaded and `demo-town` ran instead. For an action, `status` and, when
+it wasn't built, `reason` are its `BuildResult`; `tiles` is how many
+tiles it changed; `skipped` maps each `BuildRefusal` to how many tiles it
+skipped for that reason, or how many zones for a zone stroke, as
+`BuildPlan.SkippedBecause` counts them; and `met` is present only when
+the action had an `expect`. The example shows the shape of the report. It
+is not the output of a real run, and growth in particular depends on the
+seed's rolls.
 
 ## Where the code goes
 
@@ -291,9 +333,11 @@ fixes only the parts the rest of the design depends on:
   run, even though `demo-town` did. An agent or script then never
   mistakes the fallback for the scenario it asked for.
 
-`citylimits --headless` builds its own demo town today, in `HeadlessRun`.
-It doesn't depend on scenarios, but it may build its town
-from the `demo-town` definition once that exists, so the two can't drift.
+`demo-town` is the town `citylimits --headless` builds today, in
+`HeadlessRun`: a road nine tiles long with a residential, a commercial,
+and an industrial zone along its north side. The headless run doesn't
+depend on scenarios, but it should build its town from the `demo-town`
+definition once that exists, so the two can't drift.
 
 ## Open questions
 
