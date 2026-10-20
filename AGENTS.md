@@ -110,31 +110,7 @@ grows. Do not describe planned behavior as if it exists.
 
 ## 3. Golden rules
 
-### The simulation is the product
-
-A city builder lives or dies on its simulation, not its art. The rules:
-
-- **The simulation is deterministic.** The same seed and the same player
-  actions must produce the same city, tick for tick. Use a seeded PRNG
-  owned by the simulation, never `Random.Shared` and never the system
-  clock. `DateTime.Now` may label a save file; it may not steer a
-  simulation.
-- **Ticks are fixed size.** The world advances in discrete ticks of a fixed
-  duration. Rendering runs once per frame and may draw more or fewer ticks
-  than the last frame, but it never changes the tick size. Pause, 1x, 2x,
-  and 3x change how many ticks run per frame, not how big a tick is.
-- **The simulation never touches the engine.** No Raylib call, no window
-  state, no frame timing, and no input inside the simulation or world code.
-  Rendering reads simulation state and never writes it. This is what makes
-  the simulation testable on ordinary .NET, and it is the rule that decides
-  where every new file goes.
-- **Engine-free code goes behind a test.** The world and the simulation
-  are plain C# in `CityLimits.Core/` that never calls Raylib, and
-  `CityLimits.Tests/` proves them on ordinary .NET. Parsing, generation,
-  growth, power, and budget all belong there. If you cannot test something
-  without opening a window, it probably belongs in the rendering layer.
-
-### Never crash the game
+### Never crash the game (outranks feature work )
 
 Players trust CityLimits with their city, and a crash loses it. An unhandled
 exception closes the window and ends the session with no explanation; nothing
@@ -160,6 +136,30 @@ restarts it. Fix a crash before building on top of it.
 - **Don't allocate in the frame loop.** Reuse buffers. A frame that
   allocates a new list per tile is a frame that will stutter when the city
   grows.
+
+  ### The simulation is the product
+
+A city builder lives or dies on its simulation, not its art. The rules:
+
+- **The simulation is deterministic.** The same seed and the same player
+  actions must produce the same city, tick for tick. Use a seeded PRNG
+  owned by the simulation, never `Random.Shared` and never the system
+  clock. `DateTime.Now` may label a save file; it may not steer a
+  simulation.
+- **Ticks are fixed size.** The world advances in discrete ticks of a fixed
+  duration. Rendering runs once per frame and may draw more or fewer ticks
+  than the last frame, but it never changes the tick size. Pause, 1x, 2x,
+  and 3x change how many ticks run per frame, not how big a tick is.
+- **The simulation never touches the engine.** No Raylib call, no window
+  state, no frame timing, and no input inside the simulation or world code.
+  Rendering reads simulation state and never writes it. This is what makes
+  the simulation testable on ordinary .NET, and it is the rule that decides
+  where every new file goes.
+- **Engine-free code goes behind a test.** The world and the simulation
+  are plain C# in `CityLimits.Core/` that never calls Raylib, and
+  `CityLimits.Tests/` proves them on ordinary .NET. Parsing, generation,
+  growth, power, and budget all belong there. If you cannot test something
+  without opening a window, it probably belongs in the rendering layer.
 
 ### Raylib rules
 
