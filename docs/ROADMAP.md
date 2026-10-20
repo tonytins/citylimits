@@ -67,7 +67,7 @@ Then Joffburg: power, taxes, and the budget.
 | Kowloon: Simulation core | 100% | 0 | Time runs as in Micropolis: the 16-phase cycle, the 48ths-of-a-year calendar, and its pace. Scenarios run from files and from the command line. Per-zone growth with population and demand is still to come. The heart of the game |
 | Joffburg: Services and economy | 0% | 15–25 | Nothing yet |
 | Radial: Traffic and commuting | 0% | 12–20 | Nothing yet |
-| Bad News: Land value, pollution, disasters | 0% | 12–20 | Nothing yet |
+| Deadwood: Land value, pollution, disasters | 0% | 12–20 | Nothing yet |
 | Happy Isle: Player-facing game | 0% | 15–25 | Nothing yet |
 | Yokohama: Polish and release | 0% | 10–20 | Nothing yet |
 | | **Total** | **≈ 70–120** | |
@@ -201,7 +201,7 @@ baseline refactor.
   land value.
 - [ ] A traffic overlay, and a test on a small hand-made map.
 
-### Bad News: Land value, pollution, disasters
+### Deadwood: Land value, pollution, disasters
 
 - [ ] Land value, from a set of desirability factors, with an overlay.
 - [ ] Pollution from industry and traffic, and its effect on land value.
@@ -242,12 +242,12 @@ Neat Map gives the game a world to put a city in, and Line City gave it the
 tools that change that world: roads, zones, a bulldozer, and a price for
 each. Kowloon is the real work and the real risk now, because a tick that
 grows a city needs people, demand, and a shape for all three. Joffburg and
-Radial hang off Kowloon's data model, and Bad News hangs off Joffburg and
+Radial hang off Kowloon's data model, and Deadwood hangs off Joffburg and
 Radial. Happy Isle can be built in parallel with the simulation once the
 shapes of the panels are agreed.
 
 The long poles are Kowloon and Joffburg. If the simulation is slow to get
-right, cut scope inside Radial and Bad News first, not inside Kowloon.
+right, cut scope inside Radial and Deadwood first, not inside Kowloon.
 
 ## Risks most likely to push estimates up
 
@@ -272,6 +272,7 @@ right, cut scope inside Radial and Bad News first, not inside Kowloon.
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-20 | patch | The land value, pollution, and disasters milestone is renamed from Bad News to Deadwood, another of the cities Micropolis ships with, like the other milestones' names. No change to its scope. |
 | 2026-10-20 | major | Kowloon is complete, and with it step 4 of the baseline refactor: zones grow and decline as in Micropolis. Each zone takes trips, and demand plus its worth against a roll decide each step; residential zones grow houses and then buildings where they cluster, commerce is held to what land value carries, and zones without a road decline. Land value comes from distance to the city's centre and nearby trees and water, and population density from the zones around. A new built-in scenario, `small-town`, grows twelve zones for ten years. The alpha gate's growth row passes; 70–120 h left, 343 tests. |
 | 2026-10-20 | patch | Step 4d: zones' trips, as in Micropolis. A trip sets out from the first road along a zone's edge and drives up to 30 road tiles, picking its way with the seeded generator, looking for a zone of a kind the zone's spec lists, which a mod can change. Growth uses trips from 4e. 76–130 h left, 331 tests. |
 | 2026-10-20 | minor | Step 4c: the census and demand, as in Micropolis. The scan counts each zone's population, the census is recorded monthly with ten years of history, and residential, commercial, and industrial demand move every second count from employment, births, and the market. The HUD shows the population and an R, C, I demand panel; the headless run logs both monthly. Kowloon is at 75%, 79–135 h left, 319 tests. |
