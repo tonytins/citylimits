@@ -30,10 +30,14 @@ is found by its index: the tile at index *n* is at column *n* mod 16 and row
 ## Licensing
 
 The tile sheet and the tool icons come from Micropolis
-(<https://github.com/SimCitySimulator/micropolis>), which is under the GNU
-General Public License version 3. CityLimits is under the same licence, so the
-art can be used and redistributed here. The bulldozer icon is the Micropolis
-dozer icon, `icdozr`, converted to PNG in the same way as the others. The art
+(<https://github.com/SimHacker/micropolis>), the canonical and official
+Micropolis repository, maintained by
+[Don Hopkins](https://en.wikipedia.org/wiki/Don_Hopkins), which is under the
+GNU General Public License version 3. CityLimits is under the same licence, so the
+art can be used and redistributed here. The tile sheet is the core's
+`MicropolisCore/src/images/micropolisEngine/tiles.png`, byte for byte. The
+tool icons are the same drawings, converted to PNG in the same way as the
+others; the bulldozer icon is the Micropolis dozer icon, `icdozr`. The art
 is the property of its authors, and CityLimits is not a SimCity product and
 does not use the SimCity name or trademarks.
 

@@ -117,8 +117,8 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   when a change is worth a version, with a changelog entry to match.
   `BuildNumber` is derived from the commit hash. The changelog only records
   versions with user-facing and developer changes, so its latest entry is
-  expected to lag behind the version the game reports. "Developer" changes
-  include developer APIs, tools, debugging, and modding support.
+  expected to lag behind the version the game reports. Developer changes
+  include any public APIs, tools, debugging, and modding support.
 
 Everything else in this file describes the rules the code must follow as it
 grows. Do not describe planned behavior as if it exists.
@@ -235,24 +235,6 @@ A city builder lives or dies on its simulation, not its art. The rules:
   `--headless`, `--ticks`, `--seed`, and `--help`, and reports an option it
   does not understand instead of ignoring it.
 
-### Originality and licensing
-
-SimCity and the open-source reimplementations of it are under the GNU GPL,
-and their art, sounds, and city files belong to their authors. CityLimits
-is under the GPL version 3, and the art it ships is the Micropolis art,
-which is under the same licence: `Assets/tiles.png` and the tool icons come
-from [Micropolis](https://github.com/SimCitySimulator/micropolis), and
-`Assets/README.md` records where they came from.
-
-- **New art has to be the owner's own work, or come with a licence that is
-  compatible with the GPL version 3.** Credit it in `Assets/README.md`.
-- **Don't copy source, assets, or data files from another project.**
-  Mechanics are not copyrightable, but a close reimplementation of someone
-  else's code or assets is. If you are unsure whether something is an idea
-  or a copy, say so and ask.
-- **CityLimits is not a SimCity product.** The SimCity name and trademarks
-  belong to their owners, and neither the code nor the art may claim them.
-
 ### Code style
 
 - Follow the `dotnet-guidelines` skill for naming, comments, control flow,
@@ -274,7 +256,70 @@ from [Micropolis](https://github.com/SimCitySimulator/micropolis), and
 - Match the surrounding code when it disagrees with this file, and mention
   the disagreement.
 
-## 4. Before you finish a task
+## 4. Legal
+
+Micropolis, the open source version of SimCity, and the reimplementations
+of it are under the GNU GPL, and their art, sounds, and city files belong to
+their authors. The [SimHacker repository](https://github.com/SimHacker/micropolis)
+is the canonical and official Micropolis repository, maintained by
+[Don Hopkins](https://en.wikipedia.org/wiki/Don_Hopkins). CityLimits is
+under the GPL version 3, and the art it ships is Micropolis' art, which is
+under the same licence: `Assets/tiles.png` and the tool icons come from the
+Micropolis core's images, and `Assets/README.md` records where they came
+from.
+
+- **New art has to be the owner's own work, or come with a licence that is
+  compatible with the GPL version 3.** Credit it in `Assets/README.md`.
+- **Don't copy source, assets, or data files from another project.**
+  Mechanics are not copyrightable, but a close reimplementation of someone
+  else's code or assets is. If you are unsure whether something is an idea
+  or a copy, say so and ask.
+- **CityLimits is not a SimCity product.** The SimCity and Micropolis name
+  and trademarks belong to their owners, and neither the code nor the art may
+  claim them.
+- **Micropolis is the reference implementation.** It is the yardstick for
+  what the game does, not a source to copy from.
+
+  **Which tree to read.** Read the ports that ship the whole game, because
+  they show the behaviour and not only the engine behind it:
+  [`micropolis-java`](https://github.com/SimHacker/micropolis/tree/master/micropolis-java)
+  is the main reference (MicropolisJ, the complete game in Java, with its
+  GUI and its gameplay; it is forked and maintained at
+  [dheid/micropolis](https://github.com/dheid/micropolis)), and
+  [`micropolis-activity`](https://github.com/SimHacker/micropolis/tree/master/micropolis-activity),
+  the same game packaged as an OLPC activity, with the classic Tk GUI, the
+  editor, and the original C simulation in `src/sim/`, is the second
+  reference for the same questions. The core,
+  [`MicropolisCore`](https://github.com/SimHacker/MicropolisCore), is the
+  engine with no GUI: read it only to cross-reference a detail the GUI
+  does not show, such as a constant, a formula, or a data table.
+
+  **What it settles.** When a rule is in question (how a zoned tile
+  develops, how demand and power will behave, what a road network has to
+  serve, how a city grows over time), Micropolis is the behaviour
+  CityLimits aims to match. Watch it in the Java port to see the rule
+  work, and read the core only to pin the numbers down. Its scenarios are
+  the names the roadmap's milestones borrow.
+
+  **What it does not license.** Both projects are under the GPL version 3,
+  so copying Micropolis source into CityLimits would be legal. The rule
+  above forbids it anyway: the licences line up, the originality rule does
+  not bend. Write the behaviour down in CityLimits' own terms first,
+  implement it in C# in this codebase's idiom, and prove it with a test.
+
+  **Where the line is.** Don't port, translate, transliterate, or
+  transcribe Micropolis' source in any language, the C, C++, and Java
+  alike, and don't take its data tables or its city files. Don't rename
+  identifiers to disguise a transcription. Reading Micropolis to learn
+  what a rule does is fine; lifting it into the tree is not. When a
+  mechanic is unclear, ask the owner.
+
+  **What is borrowed, and it is only this.** The tile sheet and the tool
+  icons, from the Micropolis core's images, credited in
+  `Assets/README.md`. Anything else taken from Micropolis needs the
+  owner's approval, and it has to be recorded there too.
+
+## 5. Before you finish a task
 
 The build, the tests, and the game itself are the gate. A change to the
 simulation is proven by a test; a change to the rendering is proven by
@@ -307,7 +352,7 @@ dotnet run   --project CityLimits                 # run it and look at the windo
 
 Describe only what works today, and keep the tree building at every step.
 
-## 5. Calling things out
+## 6. Calling things out
 
 The owner often reviews changes alone, so make review easy:
 
