@@ -3,6 +3,9 @@ namespace CityLimits.Rendering;
 /// <summary>The colors the game draws with, in one place.</summary>
 public static class Theme
 {
+    /// <summary>The background of the splash screen.</summary>
+    public static readonly Color SplashBackground = new() { R = 78, G = 95, B = 187, A = 255 };
+
     /// <summary>The color of open land.</summary>
     public static readonly Color Grass = new() { R = 92, G = 132, B = 74, A = 255 };
 

@@ -59,6 +59,13 @@ internal static class Program
             Logger.Error("{Problem}", problem);
         }
 
+        var splash = new SplashScreen(assets);
+        while (!splash.IsDone && !Raylib.WindowShouldClose())
+        {
+            splash.Update();
+            splash.Draw();
+        }
+
         try
         {
             var game = new GameLoop(settings, settingsPath, assets, options.Seed);

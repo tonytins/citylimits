@@ -98,8 +98,6 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
 - **The assets.** `CityLimits/Assets/` holds the tile sheet and the tool
   icons. The project file copies them to the output folder, and the game
   loads them once, after the window is open.
-- **Version control.** The tree is under git on `main`, but nothing has been
-  committed yet. There is no `README`, no changelog, and no CI.
 
 Everything else in this file describes the rules the code must follow as it
 grows. Do not describe planned behavior as if it exists.
@@ -295,3 +293,9 @@ The owner often reviews changes alone, so make review easy:
   but the game was not run".
 - If you notice a risk outside your task, report it. Don't fix it quietly
   in an unrelated change.
+
+## Commit attribution
+
+If Kilo authored the changes, append `Co-authored-by: Kilo AI <kilo@local>` to
+the commit message, in the same area as other `Co-authored-by` trailers. Do
+not invent or impose attribution when Kilo did not author the changes.

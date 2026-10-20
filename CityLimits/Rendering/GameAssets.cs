@@ -9,6 +9,9 @@ public sealed class GameAssets : IDisposable
     /// <summary>The name of the file that holds every tile of ground.</summary>
     public const string TileSheetFileName = "tiles.png";
 
+    /// <summary>The name of the file that holds the splash-screen logo.</summary>
+    public const string LogoFileName = "logo.png";
+
     private const string ToolFolderName = "tools";
 
     private static readonly (Tool Tool, string FileName)[] ToolIconFiles =
@@ -25,6 +28,9 @@ public sealed class GameAssets : IDisposable
 
     /// <summary>The sheet that holds every tile of ground, or null when it is missing.</summary>
     public Texture2D? TileSheet { get; private set; }
+
+    /// <summary>The splash-screen logo, or null when it is missing.</summary>
+    public Texture2D? Logo { get; private set; }
 
     /// <summary>The icon for a tool, or null when the tool has none.</summary>
     public Texture2D? IconFor(Tool tool) => _icons.GetValueOrDefault(tool);
@@ -45,6 +51,18 @@ public sealed class GameAssets : IDisposable
         else
         {
             missing.Add($"The tile sheet is missing: {sheetPath}");
+        }
+
+        var logoPath = Path.Combine(directory, LogoFileName);
+        var logo = LoadTexture(logoPath);
+        if (logo.HasValue)
+        {
+            assets.Logo = logo.Value;
+            assets._textures.Add(logo.Value);
+        }
+        else
+        {
+            missing.Add($"The splash-screen logo is missing: {logoPath}");
         }
 
         var toolDirectory = Path.Combine(directory, ToolFolderName);
