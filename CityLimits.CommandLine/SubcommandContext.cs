@@ -12,6 +12,12 @@ public sealed record SubcommandContext
     /// <summary>Whether help was requested.</summary>
     public bool HelpRequested { get; init; }
 
-    /// <summary>The subcommand that was invoked, if any.</summary>
+    /// <summary>The subcommand that was invoked, or null when none was named.</summary>
     public string? Subcommand { get; init; }
+
+    /// <summary>Where the command writes what it was asked for.</summary>
+    public TextWriter Output { get; init; } = Console.Out;
+
+    /// <summary>Where the command reports a command line it could not use.</summary>
+    public TextWriter Error { get; init; } = Console.Error;
 }

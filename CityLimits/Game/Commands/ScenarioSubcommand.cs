@@ -1,77 +1,72 @@
 namespace CityLimits.Game.Commands;
 
 using CityLimits.CommandLine;
-using NLog;
 
-/// <summary>Scenario subcommand - load and run a scenario.</summary>
+/// <summary>Scenario subcommand - load and run a scenario. Only its command line exists so far.</summary>
 public sealed class ScenarioSubcommand : ISubcommand
 {
     private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
 
+    private static readonly OptionSpec Options = new(["--file", "--ticks"], ["--json"], MaxPositionals: 1);
+
     public string Name => "scenario";
 
-    public string Description => "Load and run a scenario for debugging";
+    public string Description => "Load and run a scenario for debugging (not implemented yet)";
+
+    public string Usage => $"""
+        Usage: citylimits scenario <id> [options]
+               citylimits scenario --file <path> [options]
+               citylimits scenario list
+
+        Options:
+          --file <path>     load a scenario from a JSON file
+          --ticks <count>   advance this many ticks, then exit, 0 to {HeadlessSubcommand.MaxTicks} (default 0)
+          --json            write machine-readable JSON to stdout
+        """;
 
     public int Execute(SubcommandContext context)
     {
-        var args = context.Args;
-        if (args.Length == 0 || args.Any(a => a is "--help" or "-h"))
+        if (!CommandOptions.TryParse(context.Args, Options, out var options, out var error)
+            || !options.TryGetInt("--ticks", 0, 0, HeadlessSubcommand.MaxTicks, out var ticks, out error))
         {
-            PrintHelp();
-            return args.Length == 0 ? 2 : 0;
+            return Refuse(context, error);
         }
 
-        // Simple initial implementation - just list for now
-        if (args[0] == "list" || args.Contains("--list"))
+        var scenarioId = options.Positionals.FirstOrDefault();
+        var scenarioFile = options.ValueOf("--file");
+
+        if (scenarioId == "list")
         {
-            Console.WriteLine("Available scenarios: (none yet - coming soon)");
-            return 0;
+            return options.Has("--json") || scenarioFile is not null || ticks != 0
+                ? Refuse(context, "'scenario list' takes no options.")
+                : ListScenarios(context);
         }
 
-        // Try to get scenario id (positional)
-        string? scenarioId = null;
-        string? scenarioFile = null;
-        int ticks = 0;
-        bool json = false;
-
-        for (int i = 0; i < args.Length; i++)
+        if (scenarioId is null == scenarioFile is null)
         {
-            if (args[i] == "--file" && i + 1 < args.Length)
-            {
-                scenarioFile = args[i + 1];
-                continue;
-            }
-            if (args[i] == "--ticks" && i + 1 < args.Length && int.TryParse(args[i + 1], out var t))
-            {
-                ticks = t;
-                continue;
-            }
-            if (args[i] == "--json")
-            {
-                json = true;
-                continue;
-            }
-            if (!args[i].StartsWith("--") && scenarioId == null && scenarioFile == null && args[i] != "list")
-            {
-                scenarioId = args[i];
-            }
+            return Refuse(context, "Name a scenario or give --file, but not both.");
         }
 
-        Logger.Info("Scenario mode requested (placeholder): id={Id}, file={File}, ticks={Ticks}, json={Json}",
-            scenarioId, scenarioFile, ticks, json);
-        Console.WriteLine("Scenario mode is not yet implemented. This is the scaffolding.");
-        return 0;
+        Logger.Info(
+            "Scenario requested: id={Id}, file={File}, ticks={Ticks}, json={Json}",
+            scenarioId,
+            scenarioFile,
+            ticks,
+            options.Has("--json"));
+        context.Error.WriteLine("Scenarios are not implemented yet, so nothing was run.");
+        return ExitCodes.Failure;
     }
 
-    private static void PrintHelp()
+    private static int ListScenarios(SubcommandContext context)
     {
-        Console.WriteLine("Usage: citylimits scenario <id> [options]");
-        Console.WriteLine("       citylimits scenario --file <path> [options]");
-        Console.WriteLine("       citylimits scenario list");
-        Console.WriteLine();
-        Console.WriteLine("Options:");
-        Console.WriteLine("  --file <path>   Load a scenario from a JSON file");
-        Console.WriteLine("  --ticks <n>     Advance N ticks then exit (default 0)");
-        Console.WriteLine("  --json          Emit machine-readable JSON to stdout");
+        context.Output.WriteLine("Available scenarios: none yet.");
+        return ExitCodes.Success;
+    }
+
+    private static int Refuse(SubcommandContext context, string error)
+    {
+        context.Error.WriteLine(error);
+        context.Error.WriteLine("Run 'citylimits scenario --help' for the options.");
+        return ExitCodes.Usage;
     }
 }

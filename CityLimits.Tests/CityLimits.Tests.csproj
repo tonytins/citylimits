@@ -20,6 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\CityLimits.CommandLine\CityLimits.CommandLine.csproj" />
     <ProjectReference Include="..\CityLimits.Core\CityLimits.Core.csproj" />
   </ItemGroup>
 

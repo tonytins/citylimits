@@ -1,37 +1,36 @@
 namespace CityLimits.Game.Commands;
 
 using CityLimits.CommandLine;
-using NLog;
 
 /// <summary>Headless subcommand - runs a city with no window.</summary>
 public sealed class HeadlessSubcommand : ISubcommand
 {
-    private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
+    /// <summary>The most ticks a headless run takes, so a mistyped count cannot run for hours.</summary>
+    public const int MaxTicks = 100_000;
+
+    private static readonly OptionSpec Options = new(["--seed", "--ticks"], []);
 
     public string Name => "headless";
 
     public string Description => "Run a generated city with no window";
 
+    public string Usage => $"""
+        Usage: citylimits headless [options]
+
+        Options:
+          --seed <seed>     the seed the city is built from (default {GameLoop.DefaultSeed})
+          --ticks <count>   how many ticks the run takes, 0 to {MaxTicks} (default 100)
+        """;
+
     public int Execute(SubcommandContext context)
     {
-        int seed = GameLoop.DefaultSeed;
-        int ticks = 100;
-        var args = context.Args;
-        for (int i = 0; i < args.Length; i++)
+        if (!CommandOptions.TryParse(context.Args, Options, out var options, out var error)
+            || !options.TryGetInt("--seed", GameLoop.DefaultSeed, int.MinValue, int.MaxValue, out var seed, out error)
+            || !options.TryGetInt("--ticks", 100, 0, MaxTicks, out var ticks, out error))
         {
-            if (args[i] == "--seed" && i + 1 < args.Length && int.TryParse(args[i + 1], out var parsedSeed))
-            {
-                seed = parsedSeed;
-                continue;
-            }
-            if (args[i] == "--ticks" && i + 1 < args.Length && int.TryParse(args[i + 1], out var parsedTicks))
-            {
-                if (parsedTicks >= 0)
-                {
-                    ticks = parsedTicks;
-                }
-                continue;
-            }
+            context.Error.WriteLine(error);
+            context.Error.WriteLine("Run 'citylimits headless --help' for the options.");
+            return ExitCodes.Usage;
         }
 
         return new HeadlessRun(seed, ticks).Run();

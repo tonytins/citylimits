@@ -1,110 +1,112 @@
-using System.Text;
-
 namespace CityLimits.CommandLine;
 
-/// <summary>Dispatches CLI arguments to registered subcommands.</summary>
+/// <summary>Dispatches CLI arguments to registered subcommands, or to the default command when none is named.</summary>
 public sealed class SubcommandDispatcher
 {
+    private const int NameColumn = 12;
+
     private readonly IReadOnlyList<ISubcommand> _subcommands;
-    private readonly ISubcommand? _defaultSubcommand;
+    private readonly DefaultCommand _defaultCommand;
+    private readonly TextWriter _output;
+    private readonly TextWriter _error;
 
     /// <summary>Creates a new dispatcher.</summary>
-    public SubcommandDispatcher(IEnumerable<ISubcommand> subcommands, ISubcommand? defaultSubcommand = null)
+    /// <param name="subcommands">The named subcommands; their names must be unique and must not start with '-'.</param>
+    /// <param name="defaultCommand">What runs when no subcommand is named.</param>
+    /// <param name="output">Where usage and command output go; the console by default.</param>
+    /// <param name="error">Where command-line errors go; the console's error stream by default.</param>
+    public SubcommandDispatcher(
+        IEnumerable<ISubcommand> subcommands,
+        DefaultCommand defaultCommand,
+        TextWriter? output = null,
+        TextWriter? error = null)
     {
+        ArgumentNullException.ThrowIfNull(subcommands);
+        ArgumentNullException.ThrowIfNull(defaultCommand);
+
         _subcommands = subcommands.ToList();
-        _defaultSubcommand = defaultSubcommand;
+        _defaultCommand = defaultCommand;
+        _output = output ?? Console.Out;
+        _error = error ?? Console.Error;
+
+        var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var subcommand in _subcommands)
+        {
+            if (string.IsNullOrWhiteSpace(subcommand.Name) || subcommand.Name.StartsWith('-'))
+            {
+                throw new ArgumentException($"'{subcommand.Name}' is not a usable subcommand name.", nameof(subcommands));
+            }
+
+            if (!names.Add(subcommand.Name))
+            {
+                throw new ArgumentException($"Two subcommands are named '{subcommand.Name}'.", nameof(subcommands));
+            }
+        }
     }
 
     /// <summary>Dispatches the given arguments and returns the exit code.</summary>
     public int Dispatch(string[] args)
     {
-        var parseResult = SubcommandParser.Parse(args);
-
-        if (!parseResult.Success || parseResult.Context is null)
-        {
-            if (parseResult.Error is not null)
-            {
-                Console.Error.WriteLine(parseResult.Error);
-            }
-            WriteUsage();
-            return 2;
-        }
-
-        var context = parseResult.Context;
-
-        if (context.HelpRequested && context.Subcommand is null)
-        {
-            WriteUsage();
-            return 0;
-        }
+        var context = SubcommandParser.Parse(args) with { Output = _output, Error = _error };
 
         if (context.Subcommand is null)
         {
-            if (_defaultSubcommand is not null)
+            if (context.HelpRequested)
             {
-                return _defaultSubcommand.Execute(context with { Subcommand = _defaultSubcommand.Name });
+                WriteUsage(_output);
+                return ExitCodes.Success;
             }
 
-            WriteUsage();
-            return 0;
+            return _defaultCommand.Execute(context);
         }
 
         var subcommand = _subcommands.FirstOrDefault(s => string.Equals(s.Name, context.Subcommand, StringComparison.OrdinalIgnoreCase));
 
         if (subcommand is null)
         {
-            Console.Error.WriteLine($"Unknown command '{context.Subcommand}'.");
-            WriteUsage();
-            return 2;
+            _error.WriteLine($"Unknown command '{context.Subcommand}'.");
+            WriteUsage(_error);
+            return ExitCodes.Usage;
         }
 
         if (context.HelpRequested)
         {
-            WriteSubcommandHelp(subcommand);
-            return 0;
+            WriteSubcommandHelp(subcommand, _output);
+            return ExitCodes.Success;
         }
 
         return subcommand.Execute(context);
     }
 
-    /// <summary>Writes the general usage text to stdout.</summary>
-    public void WriteUsage()
+    /// <summary>Writes the general usage text.</summary>
+    public void WriteUsage(TextWriter writer)
     {
         var builder = new StringBuilder();
         builder.AppendLine("CityLimits");
         builder.AppendLine();
         builder.AppendLine("Usage:");
-        builder.AppendLine("  citylimits [command] [options]");
+        builder.AppendLine($"  citylimits [options]             {_defaultCommand.Description}");
+        builder.AppendLine("  citylimits <command> [options]");
         builder.AppendLine();
-
-        if (_defaultSubcommand is not null)
+        builder.AppendLine("Options:");
+        builder.AppendLine(_defaultCommand.Usage.TrimEnd());
+        builder.AppendLine();
+        builder.AppendLine("Commands:");
+        foreach (var subcommand in _subcommands)
         {
-            builder.AppendLine("Commands:");
-            builder.AppendLine($"  {_defaultSubcommand.Name.PadRight(12)} {_defaultSubcommand.Description}");
-            foreach (var subcommand in _subcommands.Where(s => s != _defaultSubcommand))
-            {
-                builder.AppendLine($"  {subcommand.Name.PadRight(12)} {subcommand.Description}");
-            }
-        }
-        else
-        {
-            builder.AppendLine("Commands:");
-            foreach (var subcommand in _subcommands)
-            {
-                builder.AppendLine($"  {subcommand.Name.PadRight(12)} {subcommand.Description}");
-            }
+            builder.AppendLine($"  {subcommand.Name.PadRight(NameColumn)} {subcommand.Description}");
         }
 
         builder.AppendLine();
         builder.AppendLine("Use 'citylimits <command> --help' for more information about a command.");
-        Console.WriteLine(builder.ToString().TrimEnd());
+        writer.WriteLine(builder.ToString().TrimEnd());
     }
 
     /// <summary>Writes help for a specific subcommand.</summary>
-    public void WriteSubcommandHelp(ISubcommand subcommand)
+    public static void WriteSubcommandHelp(ISubcommand subcommand, TextWriter writer)
     {
-        Console.WriteLine($"Usage: citylimits {subcommand.Name} [options]");
-        Console.WriteLine();
-        Console.WriteLine(subcommand.Description);
+        writer.WriteLine(subcommand.Description);
+        writer.WriteLine();
+        writer.WriteLine(subcommand.Usage.TrimEnd());
     }
 }

@@ -16,12 +16,13 @@ the scorecard says what is true today, with evidence.
 ## 1. Workspace map
 
 ```text
-CityLimits.slnx             solution: the game, the core library, and the tests
+CityLimits.slnx             solution: the game, the core library, the command line library, and the tests
 CityLimits/                  the game project (Raylib-cs, NLog, net10.0)
-  CityLimits.csproj            package references, the core library reference, the target framework, and the asset copy
-  Program.cs                    entry point: the options, the window, the main loop, shutdown
+  CityLimits.csproj            package references, the library references, the target framework, and the asset copy
+  Program.cs                    entry point: the log, the command dispatcher, shutdown
   GlobalUsings.cs               global usings shared by the project
-  Game/                         namespace CityLimits.Game: the loop, the tools, the state, the options, the headless run, the log
+  Game/                         namespace CityLimits.Game: the windowed game, the loop, the tools, the state, the headless run, the log
+    Commands/                   namespace CityLimits.Game.Commands: the subcommands, one class each
   Rendering/                    namespace CityLimits.Rendering: the camera, the tile drawing, the tile sheet, the theme
   UI/                           namespace CityLimits.UI: the HUD, the tool palette
   Assets/                       images, fonts, and sounds, copied to the output folder
@@ -33,17 +34,23 @@ CityLimits.Core/              engine-free library: the world and the simulation,
   Simulation/                   namespace CityLimits.Core.Simulation: the clock, the date, the tick
   Economy/                      namespace CityLimits.Core.Economy: the money, the costs, the treasury
   Settings/                     namespace CityLimits.Core.Settings: the settings that survive a session
-CityLimits.Tests/              xUnit 2 tests for CityLimits.Core
-  CityLimits.Tests.csproj       references CityLimits.Core, never the game project
+CityLimits.CommandLine/       engine-free library: the command line, no Raylib
+  CityLimits.CommandLine.csproj the project file; it references no package and no other project
+  GlobalUsings.cs               global usings shared by the project
+  *.cs                          namespace CityLimits.CommandLine: the parser, the dispatcher, the option reader, the exit codes
+CityLimits.Tests/              xUnit 2 tests for CityLimits.Core and CityLimits.CommandLine
+  CityLimits.Tests.csproj       references the two libraries, never the game project
 docs/
   ROADMAP.md                    milestones, current focus, estimates, revision history
   scorecard.md                  verified status per area, with evidence
 ```
 
 The split is the point of the layout: `CityLimits.Core/` holds everything
-that can be decided without a window, and `CityLimits/` holds everything
-that draws it. The game project may reference the core library; the core
-library may never reference the game.
+that can be decided without a window, `CityLimits.CommandLine/` holds the
+command line, which knows nothing of the city, and `CityLimits/` holds
+everything that draws it and the commands that run it. The game project may
+reference both libraries; neither library may reference the game, and
+neither references the other.
 
 The folders above are the target shape, and the code follows it today:
 the world, the simulation, the generator, and the settings live in
@@ -55,7 +62,16 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
 
 ## 2. How it works today
 
-- **The game.** `Program.Main` reads the options, opens a resizable window
+- **The command line.** `Program.Main` sets up the log and hands the
+  arguments to the `SubcommandDispatcher`. With no command named, the game
+  itself runs; `headless` and `scenario` are the only subcommands, and
+  there is no `play` command, because playing is the default. `--help`
+  prints the usage, and `<command> --help` describes one command. Every
+  option is read strictly: an unknown option, a missing or malformed value,
+  a value out of range, an option given twice, or a stray argument is
+  reported on stderr with exit code 2, and nothing runs. The old
+  `--headless` flag is refused with a pointer to the `headless` command.
+- **The game.** `WindowedGame.Run` reads `--seed`, opens a resizable window
   titled "CityLimits" at the saved size, runs the frame loop until the
   window is closed, saves the settings, and closes the window. Every frame is
   guarded: a failure is reported on the screen and the game keeps running.
@@ -87,23 +103,33 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
 - **The settings.** The window size and the speed are written to
   `settings.json` beside the executable when the game ends, and read back
   when it starts. A damaged file is reported and the defaults are used.
-- **The headless run.** `--headless` runs the city with no window at all and
+- **The headless run.** `headless` runs the city with no window at all and
   writes each tick to the console, so the simulation can be checked on a
-  machine with no screen.
+  machine with no screen. It takes `--seed` and `--ticks`, from 0 to
+  100 000, and builds a small demo town first so there is something to grow.
+- **The scenario command.** `scenario` reads its command line (an id or
+  `--file`, `--ticks`, `--json`, and `scenario list`) but loads nothing yet:
+  `list` reports that there are no scenarios, and a run reports that
+  scenarios are not implemented and exits with code 1.
 - **The log.** NLog writes to the console and nowhere else. Failures go to
   the log as well as to the screen.
-- **The solution.** `CityLimits.slnx` holds three projects: the game, the
-  core library, and the tests. Every .NET project in the repository lives
+- **The solution.** `CityLimits.slnx` holds four projects: the game, the
+  core library, the command line library, and the tests. Every .NET project in the repository lives
   in its own folder and is listed in the solution.
 - **The core library.** `CityLimits.Core` targets `net10.0` with nullable
   and implicit usings enabled, and references no package at all. It holds
   the map and its generator, the clock, the date, the simulation, the
   seeded generator, the tile rules, the build actions, the road network,
   the treasury, and the settings.
+- **The command line library.** `CityLimits.CommandLine` targets `net10.0`
+  with nullable and implicit usings enabled, and references no package
+  and no project. It holds the parser, the dispatcher, the default
+  command, the strict option reader, and the exit codes.
 - **The tests.** `CityLimits.Tests` uses xUnit 2 with the VSTest runner
-  and coverlet, and holds 105 tests over the generator, the map, the
+  and coverlet, and holds 133 tests over the generator, the map, the
   calendar, the clock, the simulation, the settings, the tile rules, the
-  build actions, the road network, and the treasury.
+  build actions, the road network, the treasury, the option reader, and
+  the dispatcher.
 - **The game project.** `CityLimits.csproj` targets `net10.0` with nullable
   and implicit usings enabled, and references `Raylib-cs` `8.1.0` and
   `NLog` `6.2.2`. The native `raylib` library ships inside the NuGet
@@ -135,7 +161,7 @@ restarts it. Fix a crash before building on top of it.
   off the map, or a tool applied to an invalid tile is reported to the
   player and the game continues. Don't swallow a failure, don't substitute
   a silent default, and don't show success for a step that was skipped.
-- **The frame loop is the last resort, not the plan.** `Program.Main`
+- **The frame loop is the last resort, not the plan.** `WindowedGame`
   catches everything as a backstop, reports it, and keeps running. Do not
   rely on it in place of handling an error at its source.
 - **Validate everything that crosses a boundary:** saved files, mouse and
@@ -197,10 +223,11 @@ A city builder lives or dies on its simulation, not its art. The rules:
 - **Every frame is bracketed.** `GameLoop.Draw` opens with
   `Raylib.BeginDrawing()` and closes with `Raylib.EndDrawing()`. Without
   them the window stays black, because the buffer is never presented.
-- **`CityLimits.Core` never references Raylib-cs.** It has no package
-  references at all, and it must keep it that way. The game project may
-  reference the core library; the core library may never reference the
-  game, and the test project may never reference the game either.
+- **The libraries never reference Raylib-cs.** `CityLimits.Core` and
+  `CityLimits.CommandLine` have no package references at all, and they must
+  keep it that way. The game project may reference them; they may never
+  reference the game, and the test project may never reference the game
+  either.
 - **Load assets once.** Create textures and fonts at startup, keep them for
   the life of the game, and unload them at shutdown. Never load a texture
   inside the frame loop. Textures need an OpenGL context, so they are loaded
@@ -228,12 +255,19 @@ A city builder lives or dies on its simulation, not its art. The rules:
   screen, so the log is the record of what went wrong after the window is
   gone.
 - **The headless run is the way to check the simulation on a machine with no
-  screen.** `dotnet run --project CityLimits -- --headless --ticks 100`
+  screen.** `dotnet run --project CityLimits -- headless --ticks 100`
   opens no window, runs the city for a hundred ticks, and writes each tick
   to the console. It must not touch Raylib, or it is not headless.
-- **The options are parsed, not guessed.** `Game/CommandLine.cs` reads
-  `--headless`, `--ticks`, `--seed`, and `--help`, and reports an option it
-  does not understand instead of ignoring it.
+- **The options are parsed, not guessed.** Every command reads its
+  arguments with `CommandOptions.TryParse` against an `OptionSpec`, and its
+  numbers with `TryGetInt` and a range. A bad command line is written to
+  the command's `Error` writer with a pointer to `--help`, and returns
+  `ExitCodes.Usage`; it is never ignored and never replaced by a default.
+- **The game is the default, not a subcommand.** Running CityLimits with
+  no command plays it. Don't add a `play` command or another name for the
+  default.
+- **Don't report success for work a command did not do.** A command that
+  is not implemented yet says so and returns `ExitCodes.Failure`.
 
 ### Code style
 
@@ -248,11 +282,12 @@ A city builder lives or dies on its simulation, not its art. The rules:
   top of each file, and don't add duplicates there.
 - Give public and internal APIs `///` doc comments. Comments explain why,
   not what.
-- Keep `Program.cs` thin: it opens the window, owns the loop, and shuts
-  down. Everything else belongs in `CityLimits.Core/Randomness/`,
+- Keep `Program.cs` thin: it sets up the log, registers the commands with
+  the dispatcher, and shuts the log down. The window and the frame loop
+  belong in `Game/WindowedGame.cs`, and everything else belongs in `CityLimits.Core/Randomness/`,
   `CityLimits.Core/World/`, `CityLimits.Core/Simulation/`,
-  `CityLimits.Core/Settings/`, `CityLimits/Game/`, `CityLimits/Rendering/`,
-  or `CityLimits/UI/`.
+  `CityLimits.Core/Settings/`, `CityLimits.CommandLine/`, `CityLimits/Game/`,
+  `CityLimits/Rendering/`, or `CityLimits/UI/`.
 - Match the surrounding code when it disagrees with this file, and mention
   the disagreement.
 
@@ -322,21 +357,36 @@ from.
 ## 5. Before you finish a task
 
 The build, the tests, and the game itself are the gate. A change to the
-simulation is proven by a test; a change to the rendering is proven by
-running the game and looking at it.
+simulation is proven by a test and a headless run; a change to the
+rendering is proven by running the game and looking at it.
 
 ```sh
-dotnet build CityLimits.slnx                     # must build with no new warnings
-dotnet test  CityLimits.Tests/CityLimits.Tests.csproj  # all tests must pass
-dotnet run   --project CityLimits                 # run it and look at the window
+dotnet build CityLimits.slnx                                  # must build with no new warnings
+dotnet test  CityLimits.Tests/CityLimits.Tests.csproj         # all tests must pass
+dotnet run   --project CityLimits -- headless --ticks 100     # run the city with no window and read the log
+dotnet run   --project CityLimits                             # play the game: open the window and look at it
 ```
 
-- If the machine has no display, run the game under a virtual display and
-  read the log: `xvfb-run -a dotnet run --project CityLimits`. If you
-  could not run it, say that you couldn't. A run with no display at all is
-  `dotnet run --project CityLimits -- --headless --ticks 100`.
+- **The command line is the way in.** With no command, CityLimits opens
+  the window; `headless` runs the city with no window, and `scenario` is
+  scaffolding that runs nothing yet. `--help` lists them, and
+  `<command> --help` describes one. Use these to run the game; don't wrap
+  it in another launcher.
+- **Check the simulation with `headless`.** It needs no display, so it
+  works on any machine. Pass `--seed` and `--ticks` to reproduce a city,
+  and read the per-tick log for the change you made. A run that exits
+  with anything other than 0 is a failure.
+- **A visual change needs a real window.** `headless` never draws, so it
+  cannot confirm what the player sees. If the machine has no display,
+  say that the game was not looked at, rather than reporting it as
+  checked.
 - A black window means a frame was never presented. Check that the draw is
   bracketed by `BeginDrawing` and `EndDrawing` before looking anywhere else.
+- A new subcommand is a class in `CityLimits/Game/Commands/` that
+  implements `ISubcommand`, registered with the dispatcher in
+  `Program.cs`. It reads its options with `CommandOptions`, and its tests
+  go beside `CommandOptionsTests` and `SubcommandDispatcherTests` when it
+  adds anything to the library.
 - If you changed the world or the simulation, add or update its tests in
   the same change, and check that a new test fails without your fix.
 - If you changed what the player sees, run the game and confirm the

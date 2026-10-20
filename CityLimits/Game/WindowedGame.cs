@@ -1,34 +1,45 @@
-namespace CityLimits.Game.Commands;
+namespace CityLimits.Game;
 
 using CityLimits.CommandLine;
-using CityLimits.Core.Settings;
-using CityLimits.Rendering;
-using CityLimits.UI;
-using NLog;
-using Raylib_cs;
 
-/// <summary>Default subcommand - starts a new city in a window.</summary>
-public sealed class PlaySubcommand : ISubcommand
+/// <summary>The game itself: what runs when no subcommand is named. It starts a new city in a window.</summary>
+public static class WindowedGame
 {
+    /// <summary>The options the game accepts, as the usage text shows them.</summary>
+    public const string Usage = """
+          --seed <seed>   the seed the city is built from (default 2000)
+          --help          print this text
+        """;
+
     private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
 
-    public string Name => "play";
+    private static readonly OptionSpec Options = new(["--seed"], []);
 
-    public string Description => "Start a new city in a window (default)";
+    /// <summary>The game as the dispatcher runs it by default.</summary>
+    public static DefaultCommand Command { get; } = new("Start a new city in a window", Usage, Run);
 
-    public int Execute(SubcommandContext context)
+    /// <summary>Reads the options, then opens the window and runs the game until it is closed.</summary>
+    public static int Run(SubcommandContext context)
     {
-        int seed = GameLoop.DefaultSeed;
-        var args = context.Args;
-        for (int i = 0; i < args.Length; i++)
+        if (context.Args.Contains("--headless"))
         {
-            if (args[i] == "--seed" && i + 1 < args.Length && int.TryParse(args[i + 1], out var parsedSeed))
-            {
-                seed = parsedSeed;
-                break;
-            }
+            context.Error.WriteLine("--headless is now a command: run 'citylimits headless'.");
+            return ExitCodes.Usage;
         }
 
+        if (!CommandOptions.TryParse(context.Args, Options, out var options, out var error)
+            || !options.TryGetInt("--seed", GameLoop.DefaultSeed, int.MinValue, int.MaxValue, out var seed, out error))
+        {
+            context.Error.WriteLine(error);
+            context.Error.WriteLine("Run 'citylimits --help' for the options.");
+            return ExitCodes.Usage;
+        }
+
+        return Play(seed);
+    }
+
+    private static int Play(int seed)
+    {
         var settingsPath = Path.Combine(AppContext.BaseDirectory, "settings.json");
         var settings = SettingsStore.Load(settingsPath, out var warning);
         if (warning is not null)
@@ -75,7 +86,7 @@ public sealed class PlaySubcommand : ISubcommand
         catch (Exception ex)
         {
             Logger.Error(ex, "CityLimits stopped");
-            return 1;
+            return ExitCodes.Failure;
         }
         finally
         {
@@ -83,6 +94,6 @@ public sealed class PlaySubcommand : ISubcommand
             Raylib.CloseWindow();
         }
 
-        return 0;
+        return ExitCodes.Success;
     }
 }

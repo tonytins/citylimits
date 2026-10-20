@@ -4,53 +4,34 @@ namespace CityLimits.CommandLine;
 public static class SubcommandParser
 {
     /// <summary>Parses the given arguments into a subcommand context.</summary>
-    public static ParseResult Parse(string[] args)
+    /// <remarks>
+    /// The first argument names the subcommand unless it is an option, in which case every
+    /// argument belongs to the default command. Help is requested by <c>--help</c> or <c>-h</c>
+    /// anywhere on the line.
+    /// </remarks>
+    public static SubcommandContext Parse(string[] args)
     {
-        if (args.Length == 0)
+        ArgumentNullException.ThrowIfNull(args);
+
+        var helpRequested = args.Any(a => a is "--help" or "-h");
+
+        if (args.Length == 0 || args[0].StartsWith('-'))
         {
-            return ParseResult.Ok(new SubcommandContext
+            return new SubcommandContext
             {
-                RawArgs = Array.Empty<string>(),
-                Args = Array.Empty<string>(),
+                RawArgs = args,
+                Args = args.Where(a => a is not ("--help" or "-h")).ToArray(),
                 Subcommand = null,
-                HelpRequested = false,
-            });
+                HelpRequested = helpRequested,
+            };
         }
 
-        var rawArgs = args;
-        var subcommand = args[0];
-        var rest = args.Skip(1).ToArray();
-
-        if (subcommand is "--help" or "-h")
+        return new SubcommandContext
         {
-            return ParseResult.Ok(new SubcommandContext
-            {
-                RawArgs = rawArgs,
-                Args = Array.Empty<string>(),
-                Subcommand = null,
-                HelpRequested = true,
-            });
-        }
-
-        if (subcommand.StartsWith("--") || subcommand.StartsWith("-"))
-        {
-            // Old-style flag without subcommand
-            return ParseResult.Ok(new SubcommandContext
-            {
-                RawArgs = rawArgs,
-                Args = rawArgs,
-                Subcommand = null,
-                HelpRequested = false,
-            });
-        }
-
-        var helpRequested = rest.Any(a => a is "--help" or "-h");
-        return ParseResult.Ok(new SubcommandContext
-        {
-            RawArgs = rawArgs,
-            Args = rest,
-            Subcommand = subcommand,
+            RawArgs = args,
+            Args = args.Skip(1).Where(a => a is not ("--help" or "-h")).ToArray(),
+            Subcommand = args[0],
             HelpRequested = helpRequested,
-        });
+        };
     }
 }

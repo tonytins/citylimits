@@ -20,8 +20,8 @@ change. Statuses are `done`, `partial`, and `missing`.
 | [Traffic](#traffic-and-commuting) | 0 | 1 | 3 | 1 road network, 0 trips |
 | [Environment](#land-value-pollution-and-disasters) | 0 | 0 | 5 | 0 disasters |
 | [Interface](#player-interface) | 1 | 1 | 4 | 6 tools with icons, 1 status bar |
-| [Platform](#platform) | 5 | 0 | 2 | Raylib-cs 8.1.0, NLog 6.2.2, .NET 10 |
-| [Reliability](#reliability) | 6 | 0 | 0 | 105 tests, all passing, CI green |
+| [Platform](#platform) | 6 | 0 | 2 | Raylib-cs 8.1.0, NLog 6.2.2, .NET 10 |
+| [Reliability](#reliability) | 6 | 0 | 0 | 133 tests, all passing, CI green |
 | [Documentation](#documentation) | 3 | 0 | 2 | 3 of 5 documents exist |
 | [Known issues](#known-issues) | | | | 1 open, 3 resolved |
 
@@ -38,10 +38,11 @@ that is the point of the table: it is the contract the work has to meet.
 How the state was verified on 2026-10-20:
 
 ```sh
-dotnet build CityLimits.slnx                              # 3 projects: 0 warnings, 0 errors
-dotnet test  CityLimits.slnx                              # 105 passed, 0 failed
-dotnet run --project CityLimits -- --headless --ticks 12 # 12 ticks logged to the console
+dotnet build CityLimits.slnx                              # 4 projects: 0 warnings, 0 errors
+dotnet test  CityLimits.Tests/CityLimits.Tests.csproj     # 133 passed, 0 failed
+dotnet run --project CityLimits -- headless --ticks 12    # 12 ticks logged to the console
 dotnet run --project CityLimits                           # window opened; roads, zones, buildings, the palette icons, and the tile readout were drawn
+dotnet run --project CityLimits -- --seed 7               # window opened and the assets loaded (the screen was not inspected)
 ```
 
 The game was run on a virtual display and the window was captured and
@@ -59,7 +60,7 @@ there is something to grow.
 
 | Id | Target | Status | Evidence |
 |---|---|---|---|
-| CORE-1 | The game opens a window and closes cleanly | done | `CityLimits/Program.cs`: `InitWindow` / `BeginDrawing` / `EndDrawing` / `CloseWindow`; the run on 2026-10-20 reached the render loop and exited when the window closed |
+| CORE-1 | The game opens a window and closes cleanly | done | `CityLimits/Game/WindowedGame.cs`, the default command: `InitWindow` / `BeginDrawing` / `EndDrawing` / `CloseWindow`; the run on 2026-10-20 reached the render loop and exited when the window closed |
 | CORE-2 | The engine-free half of the game lives in a core library that no engine can reach | done | `CityLimits.Core/CityLimits.Core.csproj` references no package at all, and `CityLimits.csproj` references the core library, never the other way round |
 | CORE-3 | The simulation advances in fixed-size ticks, independent of the frame rate | done | `CityLimits.Core/Simulation/GameClock.cs`: a 0.25 s tick with an accumulator; `GameLoop.Update` runs the ticks that are due |
 | CORE-4 | Pause and speed control (1x, 2x, 3x) change how many ticks run per frame, not the tick size | done | `GameLoop.HandleInput`: space toggles pause, comma and period change the speed; the speed multiplies the time fed to the clock, so the tick stays 0.25 s |
@@ -142,22 +143,23 @@ there is something to grow.
 
 | Id | Target | Status | Evidence |
 |---|---|---|---|
-| PLAT-1 | The solution builds with no new warnings | done | `dotnet build CityLimits.slnx` on 2026-10-20: 3 projects, 0 warnings, 0 errors (see BUG-1) |
+| PLAT-1 | The solution builds with no new warnings | done | `dotnet build CityLimits.slnx` on 2026-10-20: 4 projects, 0 warnings, 0 errors (see BUG-1) |
 | PLAT-2 | The engine is pinned to a known version | done | `CityLimits/CityLimits.csproj`: `Raylib-cs` `8.1.0` and `NLog` `6.2.2`; `CityLimits.Core.csproj` references no package |
 | PLAT-3 | The native engine ships with the package, so no system install is needed | done | `~/.nuget/packages/raylib-cs/8.1.0/runtimes/`: `linux-x64/native/libraylib.so`, `win-x64/native/raylib.dll`, `win-x86/native/raylib.dll` |
 | PLAT-4 | The game runs on Linux | done | `xvfb-run -a dotnet run --project CityLimits` on 2026-10-20: window created, shaders compiled, default font loaded, clean exit. On the same day the game was driven on a private X display: roads, zones, and buildings were drawn, the palette picked up the bulldozer, and the game exited on escape |
 | PLAT-5 | The game builds and runs on Windows | missing | Not attempted; no Windows machine or build check yet |
 | PLAT-6 | A release build can be handed to someone else | missing | No packaging, no version, no repository |
-| PLAT-7 | The city can be run and checked without a display | done | `dotnet run --project CityLimits -- --headless --ticks 100` runs the simulation with no window and writes each tick to the console; `CityLimits/Game/HeadlessRun.cs` and `CityLimits/Game/GameLog.cs`, which sends NLog to the console and nowhere else |
+| PLAT-7 | The city can be run and checked without a display | done | `dotnet run --project CityLimits -- headless --ticks 100` runs the simulation with no window and writes each tick to the console; `CityLimits/Game/HeadlessRun.cs` and `CityLimits/Game/GameLog.cs`, which sends NLog to the console and nowhere else |
+| PLAT-8 | The command line refuses what it cannot use, and the game is the default | done | `CityLimits.CommandLine`: `CommandOptions` refuses an unknown option, a missing or malformed value, a value out of range, a repeat, and a stray argument, with exit code 2. Running with no command plays the game, and there is no `play` command. On 2026-10-20, `headless --ticks -1`, `--ticks abc`, `--tick 5`, `--seed` with no value, `headless extra`, `--bogus`, `play`, and the old `--headless` were each refused with exit code 2; `scenario town` reported that scenarios are not implemented and exited with 1 |
 
 ## Reliability
 
 | Id | Target | Status | Evidence |
 |---|---|---|---|
-| REL-1 | Nothing ends the player's session: the frame loop catches, reports, and keeps drawing | done | `Program.Main` catches every exception around the update and the draw, and `GameLoop.ReportError` puts the message on screen; the game keeps running |
+| REL-1 | Nothing ends the player's session: the frame loop catches, reports, and keeps drawing | done | `WindowedGame` catches every exception around the update and the draw, and `GameLoop.ReportError` puts the message on screen; the game keeps running |
 | REL-2 | The world and the simulation never call the engine | done | `CityLimits.Core` references no package at all, and the game references the core library; no Raylib type appears in the core |
 | REL-3 | Input, tile indices, map sizes, and files are validated where they enter | done | Map sizes, tile counts, and the settings file are checked, and the tile indexer throws outside the map. The mouse position is turned into a tile by `MapRenderer.TryGetTileAt`, which reports when the pointer is off the map, and `CityBuilder.Apply` refuses a tile that is off the map, ground that cannot be built on, and work the city cannot pay for |
-| REL-4 | A test project covers the engine-free logic, and the tests pass | done | `CityLimits.Tests` references `CityLimits.Core` and holds 105 xUnit tests over the generator, the map, the tile state, the rules, the calendar, the clock, the simulation, the settings, the treasury, the road network, and the builder. All 105 passed on 2026-10-20 |
+| REL-4 | A test project covers the engine-free logic, and the tests pass | done | `CityLimits.Tests` references `CityLimits.Core` and `CityLimits.CommandLine` and holds 133 xUnit tests over the generator, the map, the tile state, the rules, the calendar, the clock, the simulation, the settings, the treasury, the road network, the builder, the option reader, and the dispatcher. All 133 passed on 2026-10-20. Letting an unknown option and an out-of-range number through on purpose failed 3 of them |
 | REL-5 | A determinism test proves the same seed gives the same city | done | `DeterministicRandomTests.TheSameSeedGivesTheSameSequence`, `CitySimulationTests.TheSameSeedAndTheSameTicksGiveTheSameCity`, and `CitySimulationTests.TheSameSeedAndTheSameWorkGiveTheSameCity`, which builds the same road and zones in two cities and compares the tiles and the money after 40 ticks |
 | REL-6 | CI builds and tests on every push | done | `.github/workflows/dotnet.yml` runs on a push to `main` and on a pull request: restore, build, and test. The first run, on the commit 273fd9f on 2026-10-20, finished with the conclusion `success` (run 39443031762) |
 
@@ -165,7 +167,7 @@ there is something to grow.
 
 | Id | Target | Status | Evidence |
 |---|---|---|---|
-| DOC-1 | An agent and contributor guide matches the code | done | `AGENTS.md`, reframed for CityLimits on 2026-10-20 and updated the same day for the three-project layout, the `Economy/` folder, the six tools, the tick, and the rule that the map holds the tile state |
+| DOC-1 | An agent and contributor guide matches the code | done | `AGENTS.md`, reframed for CityLimits on 2026-10-20 and updated the same day for the four-project layout, the command line, the `Economy/` folder, the six tools, the tick, and the rule that the map holds the tile state |
 | DOC-2 | A roadmap says what comes next, with estimates and a history | done | `docs/ROADMAP.md`, written 2026-10-20 |
 | DOC-3 | A scorecard says what is true today, with evidence | done | This file, written 2026-10-20 |
 | DOC-4 | An architecture overview in `docs/` | missing | Not written yet; write it once the layout settles in New Dullsville |
