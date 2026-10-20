@@ -1,6 +1,6 @@
 # CityLimits roadmap
 
-> **Last reviewed:** 2026-10-20 · **Last updated:** 2026-10-20 · **Change:** major (Line City meets the Micropolis baseline: bridges, 3 by 3 zones, the $1 bulldozer) · **Stage:** pre-alpha
+> **Last reviewed:** 2026-10-20 · **Last updated:** 2026-10-20 · **Change:** minor (Micropolis' calendar, 16-phase cycle, and pace) · **Stage:** pre-alpha
 
 Forward-looking: where CityLimits stands, what blocks the next milestone,
 and what comes next. Verified status and evidence are in the
@@ -25,12 +25,12 @@ it a later milestone.
 | Core workflow | Works end to end? | Evidence | Hours to pass (est.) |
 |---|---|---|---|
 | Start a game and look at a map | yes | A resizable "CityLimits" window opens on a 128 by 128 seeded map, drawn from a tile sheet, with a camera that pans, zooms, and clamps, and a readout of the tile under the mouse (CORE-1, MAP-1, MAP-2, MAP-3, MAP-4, CORE-6) | 0 |
-| Lay roads, zone land, and see the city grow | partial | The player can lay roads and bridges, zone 3 by 3 land, and bulldoze, as in Micropolis and at its prices, and a zone with a road along its edge grows buildings. But growth and time still follow other rules than the Micropolis baseline, and there is no population, no demand, and no decay yet (ZONE-1 to ZONE-5, SIM-1, SIM-4) | 21–35 |
+| Lay roads, zone land, and see the city grow | partial | The player can lay roads and bridges, zone 3 by 3 land, and bulldoze, as in Micropolis and at its prices, and a zone with a road along its edge grows buildings. But growth and time still follow other rules than the Micropolis baseline, and there is no population, no demand, and no decay yet (ZONE-1 to ZONE-5, SIM-1, SIM-4) | 15–25 |
 | Read the city's state: money, power, demand, and problems | no | The HUD shows the date, the tick, the speed, the funds, and what the held tool costs, and the tile readout names what is on the tile. There is no power, no demand, and no budget panel (UI-2, ECON-1, ECON-3) | 25–40 |
 | Keep the city running for a long session without a crash | partial | The frame loop catches and reports, the tick loop runs, and the settings survive a session (REL-1, CORE-8). The city itself cannot be saved yet (UI-5) | 10–20 |
 
 **Result: pre-alpha.** One row passes, two are partial, and one is open.
-Alpha is roughly 56–95 hours away, and the critical path runs through the
+Alpha is roughly 50–85 hours away, and the critical path runs through the
 baseline refactor in Kowloon.
 
 ## Current focus
@@ -46,8 +46,8 @@ baseline, in order:
    nothing (Line City).~~ Done.
 2. ~~**Roads, 3 by 3 zones, and the bulldozer** on strokes, with the
    baseline's rules and prices (Line City).~~ Done.
-3. **Time and the 16-phase simulation cycle**, at the baseline's pace
-   (Kowloon).
+3. ~~**Time and the 16-phase simulation cycle**, at the baseline's pace
+   (Kowloon).~~ Done.
 4. **Growth per zone**: population, demand, growth and decline (Kowloon).
 5. **Terrain**: rivers, lakes, and smoothed edges, on Micropolis' 120 by
    100 map (Neat Map).
@@ -64,26 +64,25 @@ Then Joffburg: power, taxes, and the budget.
 | New Dullsville: Foundation | 100% | 0 | The solution, the core library, the tests, the fixed timestep, the camera, the tools, and the settings are all in |
 | Neat Map: Terrain and the tile grid | 83% | 6–10 | Reopened for the baseline: the terrain needs rivers, lakes, and smoothed edges, and no rock |
 | Line City: Roads and zoning | 100% | 0 | Meets the baseline: strokes with a preview, straight roads and bridges, 3 by 3 zones laid as a grid and served from their edges, and the $1 bulldozer, at Micropolis' prices |
-| Kowloon: Simulation core | 25% | 27–45 | The tick advances the date, and the determinism test is in. The baseline's calendar and 16-phase cycle, per-zone growth, demand, and the scenario runner are still to come. The heart of the game |
+| Kowloon: Simulation core | 38% | 21–35 | Time runs as in Micropolis: the 16-phase cycle, the 48ths-of-a-year calendar, and its pace. Per-zone growth with population and demand, and the scenario runner, are still to come. The heart of the game |
 | Joffburg: Services and economy | 0% | 15–25 | Nothing yet |
 | Radial: Traffic and commuting | 0% | 12–20 | Nothing yet |
 | Bad News: Land value, pollution, disasters | 0% | 12–20 | Nothing yet |
 | Happy Isle: Player-facing game | 0% | 15–25 | Nothing yet |
 | Yokohama: Polish and release | 0% | 10–20 | Nothing yet |
-| | **Total** | **≈ 97–165** | |
+| | **Total** | **≈ 91–155** | |
 
 ## Upcoming work, ranked
 
 | Rank | Work | Milestone | Estimate (h) |
 |---|---|---|---|
-| 1 | Time and the 16-phase simulation cycle, at the baseline's pace | Kowloon | 6–10 |
-| 2 | Scenarios, phase 1, with the spec revised for the new rules ([spec](./scenarios.md)) | Kowloon | 6–10 |
-| 3 | Growth per zone: population, demand, growth and decline | Kowloon | 15–25 |
-| 4 | Terrain: rivers, lakes, islands, and smoothed edges, on a 120 by 100 map | Neat Map | 6–10 |
+| 1 | Scenarios, phase 1, with the spec revised for the new rules ([spec](./scenarios.md)) | Kowloon | 6–10 |
+| 2 | Growth per zone: population, demand, growth and decline | Kowloon | 15–25 |
+| 3 | Terrain: rivers, lakes, islands, and smoothed edges, on a 120 by 100 map | Neat Map | 6–10 |
 
-Alpha needs ranks 1 and 3 in substance, about 21–35 hours. Rank 2
-doesn't block alpha, but it comes before rank 3 because it is how growth
-is watched and debugged as it is built.
+Alpha needs rank 2 in substance, about 15–25 hours. Rank 1 doesn't block
+alpha, but it comes first because it is how growth is watched and
+debugged as it is built.
 
 ## Milestone checklists
 
@@ -97,7 +96,7 @@ is watched and debugged as it is built.
 - [x] The window carries the game's name and can be resized.
 - [x] A fixed-timestep loop: the simulation ticks at a fixed rate, the
   renderer draws once per frame, and the tick size never changes.
-- [x] Speed control: pause, 1x, 2x, and 3x, changing how many ticks run
+- [x] Speed control: pause, Normal, Fast, and Super fast, changing how many ticks run
   per frame and nothing else.
 - [x] Input: the mouse position in world space, keyboard shortcuts, and a
   selected tool.
@@ -153,9 +152,11 @@ is watched and debugged as it is built.
 - [x] A tick that advances the date and updates the world, and does the
   same thing every time given the same inputs, in
   `CityLimits.Core/Simulation/`.
-- [ ] The baseline's calendar and cycle: the year counted in 48ths, each
-  count run as 16 phases with the map scanned in bands, at about 3
-  minutes a year at normal speed.
+- [x] The baseline's calendar and cycle: the year counted in 48ths from
+  January 1900, each count run as 16 phases with the map scanned in 8
+  bands, at about 3 minutes a year at Normal speed, with Fast and Super
+  fast at 5 and 50 times that. `CityCalendar`, `GameSpeed`, and
+  `CitySimulation.Tick`.
 - [ ] Population: people, jobs, and migration between zones.
 - [ ] Demand: residential, commercial, and industrial, shown as three
   values the player can read.
@@ -268,6 +269,7 @@ right, cut scope inside Radial and Bad News first, not inside Kowloon.
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-20 | minor | Step 3 of the baseline refactor: time runs as in Micropolis. A tick is one phase of a 16-phase cycle; phase 0 moves the calendar on by a 48th of a year, from January 1900, and phases 1 to 8 scan the map in bands. A month takes 16 seconds and a year about 3 minutes at Normal, with Fast and Super fast at 5 and 50 times that. The headless run defaults to a year. Kowloon is at 38%, 91–155 h left, 219 tests. |
 | 2026-10-20 | major | Step 2 of the baseline refactor: Line City meets Micropolis. Roads bridge water at $50 a tile from a road beside them; zones are 3 by 3, laid as a grid, served by a road along their edge, and drawn from the sheet with their buildings; the bulldozer costs $1 a tile, refunds nothing, and knocks a zone down to rubble through its centre; a tool clears trees and rubble for $1. The palette is sized to its text and picks a tool when clicked, instead of building on the map under it. Line City is complete again (100%), 97–165 h left, 201 tests. |
 | 2026-10-20 | minor | Step 1 of the baseline refactor: tools are strokes. Pressing starts a `BuildStroke`, dragging stretches it (roads in a straight line, other tools in a rectangle), the map previews its tiles and its total cost, and releasing applies it all at once or refuses it whole. Escape cancels. The per-tile rules and prices are unchanged until step 2. Line City is at 50%, 107–181 h left, 170 tests. |
 | 2026-10-20 | major | The Micropolis baseline: the owner set the first goal as an engine that plays like Micropolis, with creative liberties later. A comparison with the Java port found that tools, roads, zones, the bulldozer, growth, time, and terrain were built to other rules. Neat Map (83%) and Line City (38%) reopen, Kowloon gains the calendar and cycle (25%), and the focus becomes the five-step refactor, starting with tool strokes. The map becomes 120 by 100, Micropolis' size, with the terrain step. 113–191 h of work left in total. |

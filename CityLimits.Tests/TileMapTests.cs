@@ -138,7 +138,7 @@ public class TileMapTests
         var changes = new List<(int X, int Y)>();
         map.TileChanged += (x, y) => changes.Add((x, y));
 
-        for (var i = 0; i < 40; i++)
+        for (var i = 0; i < 40 * CityLimits.Core.Simulation.CityCalendar.StepsPerCount; i++)
         {
             simulation.Tick();
         }

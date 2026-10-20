@@ -17,7 +17,13 @@ public sealed class Hud
         Raylib.DrawRectangle(0, 0, Raylib.GetScreenWidth(), BarHeight, Theme.Panel);
         Raylib.DrawRectangleLinesEx(new Rectangle { X = 0, Y = 0, Width = Raylib.GetScreenWidth(), Height = BarHeight }, 1f, Theme.PanelBorder);
 
-        var speedText = speed == 0 ? "paused" : $"{speed}x";
+        var speedText = speed switch
+        {
+            GameSpeed.Normal => "normal",
+            GameSpeed.Fast => "fast",
+            GameSpeed.SuperFast => "super fast",
+            _ => "paused",
+        };
         var costText = toolCost > 0 ? $" ${toolCost}" : string.Empty;
         var status = $"CityLimits   {date}   tick {tickCount}   {speedText}   ${funds}   {ToolName(tool)}{costText}   {mouseWorld.X:0}, {mouseWorld.Y:0}   {framesPerSecond} fps";
         Raylib.DrawText(status, Padding, 8, FontSize, Theme.Text);

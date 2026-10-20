@@ -1,5 +1,17 @@
 # CityLimits Changelog
 
+## 0.1.111
+
+Time runs as in Micropolis. A city starts in January 1900, and at Normal
+speed a month takes 16 seconds and a year about 3 minutes. Fast is five
+times that and Super fast fifty times, and the status bar names the speed.
+Each step of the simulation is one phase of Micropolis' 16-phase cycle:
+one phase moves the calendar on by a 48th of a year, and eight scan the
+map a band at a time, which is when a zone gets its chance to grow.
+
+The headless run takes a year of steps by default and writes a line each
+month.
+
 ## 0.1.110
 
 Roads, zones, and the bulldozer now play like Micropolis, at its prices.

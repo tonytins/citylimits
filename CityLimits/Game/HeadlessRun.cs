@@ -6,8 +6,8 @@ public sealed class HeadlessRun
     /// <summary>The most ticks a headless run takes, so a mistyped count cannot run for hours.</summary>
     public const int MaxTicks = 100_000;
 
-    /// <summary>How many ticks a headless run takes when it isn't told.</summary>
-    public const int DefaultTicks = 100;
+    /// <summary>How many ticks a headless run takes when it isn't told: a year of the city's time.</summary>
+    public const int DefaultTicks = CityCalendar.StepsPerYear;
 
     private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
 
@@ -37,10 +37,16 @@ public sealed class HeadlessRun
 
         BuildDemoTown(simulation);
 
+        // A month is 64 steps, so the log writes a line when the month changes, not every step.
+        var month = simulation.Date;
         for (var i = 0; i < _ticks; i++)
         {
             simulation.Tick();
-            Logger.Info("tick {Tick}: {Date}   ${Funds}", simulation.TickCount, simulation.Date, simulation.Treasury.Funds);
+            if (simulation.Date != month)
+            {
+                month = simulation.Date;
+                Logger.Info("tick {Tick}: {Date}   ${Funds}", simulation.TickCount, simulation.Date, simulation.Treasury.Funds);
+            }
         }
 
         LogSummary(simulation);

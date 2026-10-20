@@ -63,7 +63,7 @@ public sealed class GameLoop : IDisposable
 
         if (_settings.Speed > 0)
         {
-            var due = _clock.Advance(elapsed * _settings.Speed);
+            var due = _clock.Advance(elapsed * GameSpeed.Multiplier(_settings.Speed));
             for (var i = 0; i < due; i++)
             {
                 _simulation.Tick();

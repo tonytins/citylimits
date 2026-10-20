@@ -5,13 +5,8 @@ namespace CityLimits.Core.Simulation;
 /// <summary>The city itself: the map, the calendar, the money, and the tick that advances all of them.</summary>
 public sealed class CitySimulation
 {
-    /// <summary>The year the city starts in.</summary>
-    public const int StartYear = 2000;
 
-    /// <summary>The month the city starts in.</summary>
-    public const int StartMonth = 1;
-
-    /// <summary>The chance a served zone develops in a tick, until demand decides it.</summary>
+    /// <summary>The chance a served zone develops each time the scan reaches it, until demand decides it.</summary>
     private const float DevelopmentChance = 0.2f;
 
     /// <summary>Creates a simulation over the given map.</summary>
@@ -23,7 +18,6 @@ public sealed class CitySimulation
         Map = map;
         Seed = seed;
         Random = new DeterministicRandom(seed);
-        Date = new GameDate(StartYear, StartMonth);
         Treasury = new Treasury();
         Roads = new RoadNetwork();
         Builder = new CityBuilder(map, Treasury, Roads);
@@ -38,10 +32,13 @@ public sealed class CitySimulation
     /// <summary>The generator the simulation owns.</summary>
     public DeterministicRandom Random { get; }
 
-    /// <summary>The current date.</summary>
-    public GameDate Date { get; private set; }
+    /// <summary>The current month, from the calendar's count.</summary>
+    public GameDate Date => CityCalendar.DateAt(CityTime);
 
-    /// <summary>The number of ticks that have run.</summary>
+    /// <summary>How many 48ths of a year have passed since the city started.</summary>
+    public long CityTime { get; private set; }
+
+    /// <summary>The number of steps that have run; each is one phase of the cycle.</summary>
     public long TickCount { get; private set; }
 
     /// <summary>The money the city has.</summary>
@@ -53,23 +50,38 @@ public sealed class CitySimulation
     /// <summary>The builder that does the player's work on the map.</summary>
     public CityBuilder Builder { get; }
 
-    /// <summary>Advances the city by one tick.</summary>
+    /// <summary>
+    /// Runs one step of the simulation: one phase of Micropolis' 16-phase cycle. Phase 0
+    /// advances the calendar by a 48th of a year, and phases 1 to 8 scan the map in vertical
+    /// bands, one band each. Phases 9 to 15 are where the census and taxes, decay, power,
+    /// pollution and land value, crime, population density, and fire and disasters will run.
+    /// </summary>
     public void Tick()
     {
         TickCount++;
-        Date = Date.AddMonths(1);
-        Grow();
+        var phase = (int)(TickCount % CityCalendar.StepsPerCount);
+
+        if (phase == 0)
+        {
+            CityTime++;
+        }
+        else if (phase <= CityCalendar.ScanBands)
+        {
+            ScanBand(phase - 1);
+        }
     }
 
-    // Growth is decided per zone, at its centre, as in Micropolis; the centre holds the zone's
-    // development. The flat chance is a stand-in until demand and population replace it.
-    private void Grow()
+    // Growth is decided per zone, at its centre, as in Micropolis, when the scan reaches the
+    // centre's column; the centre holds the zone's development. The flat chance is a stand-in
+    // until demand and population replace it.
+    private void ScanBand(int band)
     {
         Roads.EnsureCurrent(Map);
+        var (first, end) = CityCalendar.BandColumns(band, Map.Width);
 
         for (var y = 0; y < Map.Height; y++)
         {
-            for (var x = 0; x < Map.Width; x++)
+            for (var x = first; x < end; x++)
             {
                 var state = Map.StateAt(x, y);
                 if (!state.IsZoneCenter || state.Development >= TileState.MaxDevelopment)

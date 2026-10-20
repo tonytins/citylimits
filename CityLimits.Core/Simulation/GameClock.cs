@@ -10,7 +10,8 @@ public sealed class GameClock
     public const double DefaultTickSeconds = 0.25;
 
     /// <summary>The default number of ticks a single frame may run, which caps the backlog after a stall.</summary>
-    public const int DefaultMaxTicksPerFrame = 8;
+    /// <remarks>Super fast runs about four steps a frame at 60 frames a second, so this leaves room for a slow frame.</remarks>
+    public const int DefaultMaxTicksPerFrame = 16;
 
     /// <summary>Creates a clock.</summary>
     /// <exception cref="ArgumentOutOfRangeException">The tick length or the tick cap is not positive.</exception>

@@ -6,23 +6,57 @@ namespace CityLimits.Tests;
 public class CitySimulationTests
 {
     [Fact]
-    public void ATickMovesTheCalendarOneMonth()
+    public void TheCalendarMovesOnOnceEverySixteenSteps()
     {
         var simulation = new CitySimulation(SmallMap(), 1);
 
-        simulation.Tick();
+        Run(simulation, CityCalendar.StepsPerCount - 1);
+        Assert.Equal(0, simulation.CityTime);
 
-        Assert.Equal(new GameDate(CitySimulation.StartYear, CitySimulation.StartMonth + 1), simulation.Date);
-        Assert.Equal(1, simulation.TickCount);
+        simulation.Tick();
+        Assert.Equal(1, simulation.CityTime);
+        Assert.Equal(CityCalendar.StepsPerCount, simulation.TickCount);
     }
 
     [Fact]
-    public void TheCityStartsInJanuaryOfTheFirstYear()
+    public void AMonthIsFourCountsAndAYearIsFortyEight()
     {
         var simulation = new CitySimulation(SmallMap(), 1);
 
-        Assert.Equal(new GameDate(2000, 1), simulation.Date);
+        Run(simulation, CityCalendar.StepsPerMonth);
+        Assert.Equal(new GameDate(1900, 2), simulation.Date);
+
+        Run(simulation, CityCalendar.StepsPerYear - CityCalendar.StepsPerMonth);
+        Assert.Equal(new GameDate(1901, 1), simulation.Date);
+        Assert.Equal(CityCalendar.CountsPerYear, simulation.CityTime);
+    }
+
+    [Fact]
+    public void TheCityStartsInJanuary1900LikeMicropolis()
+    {
+        var simulation = new CitySimulation(SmallMap(), 1);
+
+        Assert.Equal(new GameDate(1900, 1), simulation.Date);
         Assert.Equal(0, simulation.TickCount);
+    }
+
+    [Fact]
+    public void EachZoneIsScannedOnceACountInItsColumnsBand()
+    {
+        // 16 columns make 8 bands of 2: a zone centred in column 1 is in band 0, column 13 in band 6.
+        var map = TileMap.FromTerrain(16, 9, new TileKind[16 * 9]);
+        var simulation = new CitySimulation(map, 1);
+        simulation.Builder.Apply(BuildAction.Road, 1, 6);
+        simulation.Builder.Apply(BuildAction.Road, 13, 6);
+        simulation.Builder.Apply(BuildAction.ZoneResidential, 1, 4);
+        simulation.Builder.Apply(BuildAction.ZoneIndustrial, 13, 4);
+        var phases = new List<(int X, int Phase)>();
+        map.TileChanged += (x, _) => phases.Add((x, (int)(simulation.TickCount % CityCalendar.StepsPerCount)));
+
+        Run(simulation, 60 * CityCalendar.StepsPerCount);
+
+        Assert.Equal(2 * TileState.MaxDevelopment, phases.Count);
+        Assert.All(phases, change => Assert.Equal(change.X == 1 ? 1 : 7, change.Phase));
     }
 
     [Fact]
@@ -38,6 +72,7 @@ public class CitySimulationTests
         }
 
         Assert.Equal(first.Date, second.Date);
+        Assert.Equal(first.CityTime, second.CityTime);
         Assert.Equal(first.TickCount, second.TickCount);
         Assert.Equal(first.Random.NextUInt64(), second.Random.NextUInt64());
     }
@@ -65,7 +100,7 @@ public class CitySimulationTests
         simulation.Builder.Apply(BuildAction.Road, 3, 1);
         simulation.Builder.Apply(BuildAction.ZoneResidential, 3, 3);
 
-        for (var i = 0; i < 50; i++)
+        for (var i = 0; i < 50 * CityCalendar.StepsPerCount; i++)
         {
             simulation.Tick();
         }
@@ -81,7 +116,7 @@ public class CitySimulationTests
         simulation.Builder.Apply(BuildAction.ZoneResidential, 3, 3);
         simulation.Builder.Apply(BuildAction.Road, 1, 1);
 
-        for (var i = 0; i < 50; i++)
+        for (var i = 0; i < 50 * CityCalendar.StepsPerCount; i++)
         {
             simulation.Tick();
         }
@@ -97,7 +132,7 @@ public class CitySimulationTests
         simulation.Builder.Apply(BuildAction.Road, 3, 1);
         simulation.Builder.Apply(BuildAction.ZoneResidential, 3, 3);
 
-        for (var i = 0; i < 200; i++)
+        for (var i = 0; i < 200 * CityCalendar.StepsPerCount; i++)
         {
             simulation.Tick();
         }
@@ -119,7 +154,7 @@ public class CitySimulationTests
             city.Builder.Apply(BuildAction.ZoneCommercial, 6, 3);
         }
 
-        for (var i = 0; i < 40; i++)
+        for (var i = 0; i < 40 * CityCalendar.StepsPerCount; i++)
         {
             first.Tick();
             second.Tick();
@@ -141,4 +176,12 @@ public class CitySimulationTests
     private static TileMap SmallMap() => TileMapGenerator.Generate(1, 8, 8);
 
     private static TileMap FlatMap() => TileMap.FromTerrain(9, 9, new TileKind[81]);
+
+    private static void Run(CitySimulation simulation, int steps)
+    {
+        for (var i = 0; i < steps; i++)
+        {
+            simulation.Tick();
+        }
+    }
 }

@@ -12,22 +12,22 @@ change. Statuses are `done`, `partial`, and `missing`.
 
 | Area | Done | Partial | Missing | Key numbers |
 |---|---:|---:|---:|---|
-| [Core](#core) | 8 | 0 | 0 | 0.25 s ticks, seed 2000, 128 by 128 map |
+| [Core](#core) | 8 | 0 | 0 | 0.25 s steps at Normal, seed 2000, 128 by 128 map |
 | [Map](#map-and-terrain) | 4 | 0 | 0 | 4 kinds of ground, one 256 by 960 atlas |
 | [Zoning](#roads-and-zoning) | 5 | 0 | 0 | 5 tools that change the world, $10 a road, $50 a bridge, $100 a 3 by 3 zone, $1 to bulldoze |
-| [Simulation](#simulation) | 2 | 1 | 4 | 1 month a tick, zones develop to level 3 |
+| [Simulation](#simulation) | 2 | 1 | 4 | 16 phases a 48th of a year, 3 minutes a year at Normal, zones develop to level 3 |
 | [Economy](#economy-and-services) | 0 | 1 | 4 | $20 000 in the treasury, no taxes yet |
 | [Traffic](#traffic-and-commuting) | 0 | 1 | 3 | 1 road network, 0 trips |
 | [Environment](#land-value-pollution-and-disasters) | 0 | 0 | 5 | 0 disasters |
 | [Interface](#player-interface) | 1 | 1 | 4 | 6 tools with icons, 1 status bar |
 | [Platform](#platform) | 6 | 0 | 2 | Raylib-cs 8.1.0, NLog 6.2.2, .NET 10 |
-| [Reliability](#reliability) | 6 | 0 | 0 | 201 tests, all passing, CI green |
+| [Reliability](#reliability) | 6 | 0 | 0 | 219 tests, all passing, CI green |
 | [Documentation](#documentation) | 3 | 0 | 2 | 3 of 5 documents exist |
 | [Known issues](#known-issues) | | | | 1 open, 3 resolved |
 
 The game today opens a resizable window on a seeded map of water, grass,
 trees, and rock, drawn from a tile sheet. The camera pans and zooms, the
-clock runs the city a month at a time, the tool palette shows the icon of each
+clock runs the city at Micropolis' pace, the tool palette shows the icon of each
 tool, the status bar is in place, and the tile under the mouse is highlighted
 and read out. The player can draw roads, zone land, and bulldoze, and the
 city charges for the work and refuses what it cannot pay for. A zoned tile
@@ -39,8 +39,8 @@ How the state was verified on 2026-10-20:
 
 ```sh
 dotnet build CityLimits.slnx                              # 4 projects: 0 warnings, 0 errors
-dotnet test  CityLimits.Tests/CityLimits.Tests.csproj     # 201 passed, 0 failed
-dotnet run --project CityLimits -- --headless --ticks 12  # 12 ticks logged to the console
+dotnet test  CityLimits.Tests/CityLimits.Tests.csproj     # 219 passed, 0 failed
+dotnet run --project CityLimits -- --headless            # a year of steps, 12 months logged to the console
 dotnet run --project CityLimits                           # window opened; roads, zones, buildings, the palette icons, and the tile readout were drawn
 dotnet run --project CityLimits -- --seed 7               # window opened and the assets loaded (the screen was not inspected)
 xvfb-run -a dotnet run --project CityLimits               # on a private display: roads drawn by xdotool came from the sheet (a crossroads, two T-junctions, corners, a closed loop)
@@ -63,8 +63,8 @@ there is something to grow.
 |---|---|---|---|
 | CORE-1 | The game opens a window and closes cleanly | done | `CityLimits/Game/WindowedGame.cs`, run by the default command in `GameCommand.cs`: `InitWindow` / `BeginDrawing` / `EndDrawing` / `CloseWindow`; the run on 2026-10-20 reached the render loop and exited when the window closed |
 | CORE-2 | The engine-free half of the game lives in a core library that no engine can reach | done | `CityLimits.Core/CityLimits.Core.csproj` references no package at all, and `CityLimits.csproj` references the core library, never the other way round |
-| CORE-3 | The simulation advances in fixed-size ticks, independent of the frame rate | done | `CityLimits.Core/Simulation/GameClock.cs`: a 0.25 s tick with an accumulator; `GameLoop.Update` runs the ticks that are due |
-| CORE-4 | Pause and speed control (1x, 2x, 3x) change how many ticks run per frame, not the tick size | done | `GameLoop.HandleInput`: space toggles pause, comma and period change the speed; the speed multiplies the time fed to the clock, so the tick stays 0.25 s |
+| CORE-3 | The simulation advances in fixed-size ticks, independent of the frame rate | done | `CityLimits.Core/Simulation/GameClock.cs`: a 0.25 s step with an accumulator; `GameLoop.Update` runs the steps that are due, at most 16 a frame |
+| CORE-4 | Pause and speed control change how many ticks run per frame, not the tick size | done | `GameSpeed`: Normal, Fast (5 times), and Super fast (50 times), as in Micropolis, multiply the time fed to the clock, so a step stays 0.25 s. On a private display on 2026-10-20, Normal ran 69 steps in 17 seconds and moved the date a month, and Super fast ran 811 steps in 4 seconds, about 200 a second |
 | CORE-5 | The mouse position is known in world space, and the keyboard is read | done | `Camera.ScreenToWorld` and `Raylib.GetMousePosition`; the HUD shows the world position, and the keys pan, zoom, and pick tools |
 | CORE-6 | A camera pans and zooms, clamped to the map | done | `CityLimits/Rendering/Camera.cs`: `Pan`, `ZoomAt`, and `ClampTo`; the run on 2026-10-20 showed the view clamped to the 128 by 128 map |
 | CORE-7 | One seeded PRNG owned by the simulation makes a run reproducible | done | `CityLimits.Core/Randomness/DeterministicRandom.cs`; the simulation owns it, and `GameLoop` builds the map from the seed 2000 |
@@ -93,7 +93,7 @@ there is something to grow.
 
 | Id | Target | Status | Evidence |
 |---|---|---|---|
-| SIM-1 | A tick advances the date and updates the world | done | `CitySimulation.Tick` moves the calendar on by a month, counts the tick, and grows the world: a served zone's centre moves up one development level, to a maximum of three. Micropolis' calendar and 16-phase cycle replace the month-long tick in the baseline refactor |
+| SIM-1 | A tick advances the date and updates the world | done | `CitySimulation.Tick` runs one phase of Micropolis' 16-phase cycle: phase 0 moves the calendar on by a 48th of a year (`CityCalendar`: 4 counts a month, from January 1900), and phases 1 to 8 scan the map in vertical bands, growing the served zones whose centres are in the band. `CitySimulationTests` and `CityCalendarTests` cover the count, the months, the year, the bands, and that each zone is scanned once a count in its own phase |
 | SIM-2 | Population, jobs, and migration between zones | missing | No population model |
 | SIM-3 | Residential, commercial, and industrial demand exist and are readable | missing | No demand model |
 | SIM-4 | Zones develop and decay, and abandoned zones come back | partial | Zones develop: `CitySimulation.Grow` moves a served zone up a level. There is no decay, and an abandoned zone does not come back, because there is no demand to bring it back |
@@ -151,7 +151,7 @@ there is something to grow.
 | PLAT-4 | The game runs on Linux | done | `xvfb-run -a dotnet run --project CityLimits` on 2026-10-20: window created, shaders compiled, default font loaded, clean exit. On the same day the game was driven on a private X display: roads, zones, and buildings were drawn, the palette picked up the bulldozer, and the game exited on escape |
 | PLAT-5 | The game builds and runs on Windows | missing | Not attempted; no Windows machine or build check yet |
 | PLAT-6 | A release build can be handed to someone else | missing | No packaging, no version, no repository |
-| PLAT-7 | The city can be run and checked without a display | done | `dotnet run --project CityLimits -- --headless --ticks 100` runs the simulation with no window and writes each tick to the console; `CityLimits/Game/HeadlessRun.cs` and `CityLimits/Game/GameLog.cs`, which sends NLog to the console and nowhere else |
+| PLAT-7 | The city can be run and checked without a display | done | `dotnet run --project CityLimits -- --headless` runs the simulation for a year with no window and writes each month to the console; `CityLimits/Game/HeadlessRun.cs` and `CityLimits/Game/GameLog.cs`, which sends NLog to the console and nowhere else |
 | PLAT-8 | The command line refuses what it cannot use, and the game is the default | done | `CityLimits.CommandLine`: `CommandOptions` refuses an unknown option, a missing or malformed value, a value out of range, a repeat, and a stray argument, with exit code 2. Running with no command plays the game, and there is no `play` command. `--headless` is a global flag, and the dispatcher refuses it for a command that can't run without a window. On 2026-10-20, `--headless --ticks -1`, `--headless --bogus`, `--ticks 5` without `--headless`, `play`, `headless`, and `scenario town` without `--headless` were each refused with exit code 2; `--headless --ticks 2` and `--ticks 2 --headless --seed 9` ran; `scenario town --headless` reported that scenarios are not implemented and exited with 1 |
 
 ## Reliability
@@ -161,7 +161,7 @@ there is something to grow.
 | REL-1 | Nothing ends the player's session: the frame loop catches, reports, and keeps drawing | done | `WindowedGame` catches every exception around the update and the draw, and `GameLoop.ReportError` puts the message on screen; the game keeps running |
 | REL-2 | The world and the simulation never call the engine | done | `CityLimits.Core` references no package at all, and the game references the core library; no Raylib type appears in the core |
 | REL-3 | Input, tile indices, map sizes, and files are validated where they enter | done | Map sizes, tile counts, and the settings file are checked, and the tile indexer throws outside the map. The mouse position is turned into a tile by `MapRenderer.TryGetTileAt`, which reports when the pointer is off the map, and `CityBuilder.Apply` refuses a tile that is off the map, ground that cannot be built on, and work the city cannot pay for |
-| REL-4 | A test project covers the engine-free logic, and the tests pass | done | `CityLimits.Tests` references `CityLimits.Core` and `CityLimits.CommandLine` and holds 201 xUnit tests over the generator, the map, the tile state, the rules, the calendar, the clock, the simulation, the settings, the treasury, the road network and its connections, the map's change event, the builder and its strokes, the option reader, and the dispatcher. All 201 passed on 2026-10-20. Letting an unknown option and an out-of-range number through on purpose failed 3 of them, and letting `--headless` reach a command that needs a window failed 2 |
+| REL-4 | A test project covers the engine-free logic, and the tests pass | done | `CityLimits.Tests` references `CityLimits.Core` and `CityLimits.CommandLine` and holds 219 xUnit tests over the generator, the map, the tile state, the rules, the calendar and the cycle, the clock, the simulation, the settings, the treasury, the road network and its connections, the map's change event, the builder and its strokes, the option reader, and the dispatcher. All 219 passed on 2026-10-20. Letting an unknown option and an out-of-range number through on purpose failed 3 of them, and letting `--headless` reach a command that needs a window failed 2 |
 | REL-5 | A determinism test proves the same seed gives the same city | done | `DeterministicRandomTests.TheSameSeedGivesTheSameSequence`, `CitySimulationTests.TheSameSeedAndTheSameTicksGiveTheSameCity`, and `CitySimulationTests.TheSameSeedAndTheSameWorkGiveTheSameCity`, which builds the same road and zones in two cities and compares the tiles and the money after 40 ticks |
 | REL-6 | CI builds and tests on every push | done | `.github/workflows/dotnet.yml` runs on a push to `main` and on a pull request: restore, build, and test. The first run, on the commit 273fd9f on 2026-10-20, finished with the conclusion `success` (run 39443031762) |
 

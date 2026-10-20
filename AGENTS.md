@@ -99,10 +99,18 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   the map is drawn tile by tile, which gives the same picture.
 - **The camera.** The WASD keys and the arrow keys pan, the mouse wheel
   zooms toward the pointer, and the view is clamped to the map.
-- **The clock.** A tick is a quarter of a second of real time, and it
-  moves the city's calendar on by one month. Space pauses the game, and
-  the comma and period keys change the speed between 1x and 3x. The speed
-  changes how many ticks run in a frame, never the size of a tick.
+- **The clock.** Time runs as in Micropolis. A tick is one step of the
+  simulation, and each step is one phase of a 16-phase cycle
+  (`CitySimulation.Tick`): phase 0 moves the calendar on by a 48th of a
+  year, and phases 1 to 8 scan the map in 8 vertical bands; phases 9 to
+  15 are kept for the census and taxes, decay, power, pollution and land
+  value, crime, population density, and fire and disasters.
+  `CityCalendar` turns the count into a month: 4 counts a month, 48 a
+  year, from January 1900. At Normal speed a step runs every quarter of a
+  second, so a month takes 16 seconds and a year about 3 minutes; Fast is
+  5 times that and Super fast 50 times (`GameSpeed`). Space pauses the
+  game, and the comma and period keys change the speed. The speed changes
+  how many steps run in a frame, never the size of a step.
 - **The zones.** A zone is 3 by 3 tiles, as in Micropolis. Each tile
   knows its part of the zone (`TileState.ZonePart`, 0 to 8, with 4 the
   centre), and the zone's development is kept on its centre only.
@@ -146,10 +154,11 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   `settings.json` beside the executable when the game ends, and read back
   when it starts. A damaged file is reported and the defaults are used.
 - **The headless run.** `citylimits --headless` runs the city with no
-  window at all and writes each tick to the console, so the simulation can
-  be checked on a machine with no screen. It takes `--seed` and `--ticks`,
-  from 0 to 100 000, and builds a small demo town first so there is
-  something to grow. `--ticks` without `--headless` is refused, because
+  window at all and writes a line to the console each month, so the
+  simulation can be checked on a machine with no screen. It takes `--seed`
+  and `--ticks`, the number of steps, from 0 to 100 000 (768 by default, a
+  year), and builds a small demo town first so there is something to
+  grow. `--ticks` without `--headless` is refused, because
   the window runs until it is closed.
 - **The scenario command.** `scenario` reads its command line (an id or
   `--file`, `--ticks`, `--json`, and `scenario list`) but loads nothing yet.
@@ -173,7 +182,7 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   and no project. It holds the parser, the dispatcher, the default
   command, the strict option reader, and the exit codes.
 - **The tests.** `CityLimits.Tests` uses xUnit 2 with the VSTest runner
-  and coverlet, and holds 201 tests over the generator, the map, the
+  and coverlet, and holds 219 tests over the generator, the map, the
   calendar, the clock, the simulation, the settings, the tile rules, the
   build actions, the road network, the treasury, the option reader, and
   the dispatcher.
@@ -241,8 +250,9 @@ A city builder lives or dies on its simulation, not its art. The rules:
   simulation.
 - **Ticks are fixed size.** The world advances in discrete ticks of a fixed
   duration. Rendering runs once per frame and may draw more or fewer ticks
-  than the last frame, but it never changes the tick size. Pause, 1x, 2x,
-  and 3x change how many ticks run per frame, not how big a tick is.
+  than the last frame, but it never changes the tick size. Pause, Normal,
+  Fast, and Super fast change how many ticks run per frame, not how big a
+  tick is.
 - **The simulation never touches the engine.** No Raylib call, no window
   state, no frame timing, and no input inside the simulation or world code.
   Rendering reads simulation state and never writes it. This is what makes
@@ -326,9 +336,9 @@ A city builder lives or dies on its simulation, not its art. The rules:
   screen, so the log is the record of what went wrong after the window is
   gone.
 - **The headless run is the way to check the simulation on a machine with no
-  screen.** `dotnet run --project CityLimits -- --headless --ticks 100`
-  opens no window, runs the city for a hundred ticks, and writes each tick
-  to the console. It must not touch Raylib, or it is not headless.
+  screen.** `dotnet run --project CityLimits -- --headless --ticks 768`
+  opens no window, runs the city for a year of steps, and writes each
+  month to the console. It must not touch Raylib, or it is not headless.
 - **`--headless` is a global flag, not a command.** It means the same
   thing for every command: run with no window. A command declares
   `SupportsHeadless`, and the dispatcher refuses the flag for a command
@@ -448,7 +458,7 @@ change works in play is the owner's call, not yours.
 ```sh
 dotnet build CityLimits.slnx                                  # must build with no new warnings
 dotnet test  CityLimits.Tests/CityLimits.Tests.csproj         # all tests must pass
-dotnet run   --project CityLimits -- --headless --ticks 100   # run the city with no window and read the log
+dotnet run   --project CityLimits -- --headless --ticks 768   # run the city for a year with no window and read the log
 dotnet run   --project CityLimits                             # open the window and look at it
 ```
 
