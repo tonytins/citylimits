@@ -371,13 +371,14 @@ from.
 
 The build, the tests, and the game itself are the gate. A change to the
 simulation is proven by a test and a `--headless` run; a change to the
-rendering is proven by running the game and looking at it.
+rendering is proven by running the game and looking at it. Whether the
+change works in play is the owner's call, not yours.
 
 ```sh
 dotnet build CityLimits.slnx                                  # must build with no new warnings
 dotnet test  CityLimits.Tests/CityLimits.Tests.csproj         # all tests must pass
 dotnet run   --project CityLimits -- --headless --ticks 100   # run the city with no window and read the log
-dotnet run   --project CityLimits                             # play the game: open the window and look at it
+dotnet run   --project CityLimits                             # open the window and look at it
 ```
 
 - **The command line is the way in.** With no command, CityLimits opens
@@ -393,6 +394,15 @@ dotnet run   --project CityLimits                             # play the game: o
   cannot confirm what the player sees. If the machine has no display,
   say that the game was not looked at, rather than reporting it as
   checked.
+- **Playing the game is the owner's call.** Your check ends at showing
+  that the change runs in both modes: the window opens, draws, and closes
+  cleanly, and the `--headless` run finishes with exit code 0 and the log
+  you expect. Anything that needs the game actually played to judge (how
+  a tool feels, whether the city grows sensibly, whether a balance number
+  is right, whether a screen reads well) is the owner's judgment. Don't
+  report it as verified, and don't change the game to suit your own sense
+  of it. Say what you checked, and list what is left for the owner to
+  play-test.
 - A black window means a frame was never presented. Check that the draw is
   bracketed by `BeginDrawing` and `EndDrawing` before looking anywhere else.
 - A new subcommand is a class in `CityLimits/Game/Commands/` that
@@ -404,7 +414,8 @@ dotnet run   --project CityLimits                             # play the game: o
 - If you changed the world or the simulation, add or update its tests in
   the same change, and check that a new test fails without your fix.
 - If you changed what the player sees, run the game and confirm the
-  change on screen. A build is not a visual check.
+  change appears on screen. A build is not a visual check, and seeing the
+  change drawn is not the same as knowing it plays well.
 - Bring [docs/scorecard.md](./docs/scorecard.md) up to date: flip the rows
   you moved, with their new evidence, and update the summary counts.
 - Bring [docs/ROADMAP.md](./docs/ROADMAP.md) up to date: tick checklist
@@ -425,6 +436,8 @@ The owner often reviews changes alone, so make review easy:
   demand, power, or the economy changes every saved city.
 - List judgment calls and anything you couldn't verify, such as "builds,
   but the game was not run".
+- List what needs play-testing, such as "the window opens and the new
+  tool draws, but it hasn't been played". That's the owner's call to make.
 - If you notice a risk outside your task, report it. Don't fix it quietly
   in an unrelated change.
 
