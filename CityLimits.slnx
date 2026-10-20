@@ -1,4 +1,5 @@
 <Solution>
+  <Project Path="CityLimits.CommandLine/CityLimits.CommandLine.csproj" />
   <Project Path="CityLimits.Core/CityLimits.Core.csproj" />
   <Project Path="CityLimits.Tests/CityLimits.Tests.csproj" />
   <Project Path="CityLimits/CityLimits.csproj" />
