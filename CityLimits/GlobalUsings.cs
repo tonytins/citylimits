@@ -1,0 +1,12 @@
+global using System.Numerics;
+global using CityLimits.Core.Randomness;
+global using CityLimits.Core.Settings;
+global using CityLimits.Core.Simulation;
+global using CityLimits.Core.World;
+global using CityLimits.Game;
+global using CityLimits.Rendering;
+global using CityLimits.UI;
+global using NLog;
+global using NLog.Config;
+global using NLog.Targets;
+global using Raylib_cs;

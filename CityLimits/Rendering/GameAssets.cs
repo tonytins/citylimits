@@ -1,0 +1,107 @@
+namespace CityLimits.Rendering;
+
+/// <summary>The textures the game loads once, at startup, and unloads at shutdown.</summary>
+public sealed class GameAssets : IDisposable
+{
+    /// <summary>The name of the folder, inside the game, that holds the assets.</summary>
+    public const string FolderName = "Assets";
+
+    /// <summary>The name of the file that holds every tile of ground.</summary>
+    public const string TileSheetFileName = "tiles.png";
+
+    private const string ToolFolderName = "tools";
+
+    private static readonly (Tool Tool, string FileName)[] ToolIconFiles =
+    [
+        (Tool.Inspect, "icqry.png"),
+        (Tool.Road, "icroad.png"),
+        (Tool.Residential, "icres.png"),
+        (Tool.Commercial, "iccom.png"),
+        (Tool.Industrial, "icind.png"),
+    ];
+
+    private readonly Dictionary<Tool, Texture2D> _icons = new();
+    private readonly List<Texture2D> _textures = [];
+
+    /// <summary>The sheet that holds every tile of ground, or null when it is missing.</summary>
+    public Texture2D? TileSheet { get; private set; }
+
+    /// <summary>The icon for a tool, or null when the tool has none.</summary>
+    public Texture2D? IconFor(Tool tool) => _icons.GetValueOrDefault(tool);
+
+    /// <summary>Loads the assets from a folder, and names the ones that are missing.</summary>
+    public static GameAssets Load(string directory, out IReadOnlyList<string> problems)
+    {
+        var assets = new GameAssets();
+        var missing = new List<string>();
+
+        var sheetPath = Path.Combine(directory, TileSheetFileName);
+        var sheet = LoadTexture(sheetPath);
+        if (sheet.HasValue)
+        {
+            assets.TileSheet = sheet.Value;
+            assets._textures.Add(sheet.Value);
+        }
+        else
+        {
+            missing.Add($"The tile sheet is missing: {sheetPath}");
+        }
+
+        var toolDirectory = Path.Combine(directory, ToolFolderName);
+        foreach (var (tool, fileName) in ToolIconFiles)
+        {
+            var path = Path.Combine(toolDirectory, fileName);
+            var icon = LoadTexture(path);
+            if (!icon.HasValue)
+            {
+                missing.Add($"The icon for the {tool} tool is missing: {path}");
+                continue;
+            }
+
+            assets._icons[tool] = icon.Value;
+            assets._textures.Add(icon.Value);
+        }
+
+        problems = missing;
+        return assets;
+    }
+
+    /// <summary>Unloads every texture the game loaded.</summary>
+    public void Dispose()
+    {
+        foreach (var texture in _textures)
+        {
+            Raylib.UnloadTexture(texture);
+        }
+
+        _textures.Clear();
+        _icons.Clear();
+        TileSheet = null;
+    }
+
+    private static Texture2D? LoadTexture(string path)
+    {
+        if (!File.Exists(path))
+        {
+            return null;
+        }
+
+        var image = Raylib.LoadImage(path);
+        if (image.Width <= 0 || image.Height <= 0)
+        {
+            Raylib.UnloadImage(image);
+            return null;
+        }
+
+        var texture = Raylib.LoadTextureFromImage(image);
+        Raylib.UnloadImage(image);
+
+        if (!Raylib.IsTextureValid(texture))
+        {
+            return null;
+        }
+
+        Raylib.SetTextureFilter(texture, TextureFilter.Point);
+        return texture;
+    }
+}

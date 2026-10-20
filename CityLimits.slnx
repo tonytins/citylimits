@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="CityLimits.Core/CityLimits.Core.csproj" />
+  <Project Path="CityLimits.Tests/CityLimits.Tests.csproj" />
+  <Project Path="CityLimits/CityLimits.csproj" />
+</Solution>
