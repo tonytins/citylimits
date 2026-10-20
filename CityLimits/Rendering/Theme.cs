@@ -42,14 +42,8 @@ public static class Theme
     /// <summary>The color of a failure the player needs to know about.</summary>
     public static readonly Color Error = new() { R = 232, G = 106, B = 96, A = 255 };
 
-    /// <summary>The color of the surface of a road.</summary>
+    /// <summary>The color of a road, when the tile sheet could not be loaded.</summary>
     public static readonly Color Road = new() { R = 66, G = 66, B = 70, A = 255 };
-
-    /// <summary>The color of the edge of a road, where it does not join another.</summary>
-    public static readonly Color RoadEdge = new() { R = 104, G = 104, B = 108, A = 255 };
-
-    /// <summary>The color of the line down the middle of a road.</summary>
-    public static readonly Color RoadLine = new() { R = 214, G = 214, B = 200, A = 255 };
 
     /// <summary>The color of a residential zone.</summary>
     public static readonly Color Residential = new() { R = 74, G = 138, B = 66, A = 255 };

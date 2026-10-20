@@ -81,7 +81,12 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
 - **The map.** `GameLoop` builds a 128 by 128 map at startup from the seed
   2000: value-noise terrain with water, grass, trees, and rock. The renderer
   draws only the tiles the camera can see, and it draws them from the tile
-  sheet in `Assets/tiles.png`.
+  sheet in `Assets/tiles.png`. Each tile is one lookup and one draw:
+  `Rendering/TileAtlas.cs` turns a tile's state into a sheet index, and a
+  road's index comes from the sides that join another road, which
+  `RoadNetwork.ConnectionsAt` reads from the map. Zones are still drawn as
+  coloured shapes until they become 3 by 3 and take their buildings from
+  the sheet.
 - **The camera.** The WASD keys and the arrow keys pan, the mouse wheel
   zooms toward the pointer, and the view is clamped to the map.
 - **The clock.** A tick is a quarter of a second of real time, and it
@@ -134,7 +139,7 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   and no project. It holds the parser, the dispatcher, the default
   command, the strict option reader, and the exit codes.
 - **The tests.** `CityLimits.Tests` uses xUnit 2 with the VSTest runner
-  and coverlet, and holds 140 tests over the generator, the map, the
+  and coverlet, and holds 148 tests over the generator, the map, the
   calendar, the clock, the simulation, the settings, the tile rules, the
   build actions, the road network, the treasury, the option reader, and
   the dispatcher.
@@ -251,6 +256,13 @@ A city builder lives or dies on its simulation, not its art. The rules:
 - **Colors and layouts live in one place.** Tile colors, the UI palette, and
   the sprite sizes belong in a theme file, not scattered through the draw
   code.
+- **The map is drawn from the sheet, not with shapes.** Every sheet index
+  lives in `Rendering/TileAtlas.cs` and is listed in `Assets/README.md`, so
+  new art is a change to that table, not to the renderer. Which drawing a
+  tile needs is decided from the map's state (for a road, by
+  `RoadNetwork.ConnectionsAt`), and the renderer only looks it up. Don't
+  draw a map feature with rectangles and lines when the sheet has its
+  art. The flat colours in `Theme` are only for a missing sheet.
 - New dependencies need the owner's approval, and they must work with the
   pinned Raylib-cs and on both Linux and Windows.
 

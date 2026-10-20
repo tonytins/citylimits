@@ -61,6 +61,43 @@ public sealed class RoadNetwork
         _dirty = false;
     }
 
+    /// <summary>
+    /// Tells which sides of a road tile join another road, read straight from the map so it
+    /// is never out of date. A tile with no road has no connections, and the map edge joins nothing.
+    /// </summary>
+    public static RoadConnections ConnectionsAt(TileMap map, int x, int y)
+    {
+        ArgumentNullException.ThrowIfNull(map);
+
+        if (!map.StateAtOrDefault(x, y).IsRoad)
+        {
+            return RoadConnections.None;
+        }
+
+        var connections = RoadConnections.None;
+        if (map.StateAtOrDefault(x, y - 1).IsRoad)
+        {
+            connections |= RoadConnections.North;
+        }
+
+        if (map.StateAtOrDefault(x + 1, y).IsRoad)
+        {
+            connections |= RoadConnections.East;
+        }
+
+        if (map.StateAtOrDefault(x, y + 1).IsRoad)
+        {
+            connections |= RoadConnections.South;
+        }
+
+        if (map.StateAtOrDefault(x - 1, y).IsRoad)
+        {
+            connections |= RoadConnections.West;
+        }
+
+        return connections;
+    }
+
     /// <summary>Tells whether there is a road on the given tile.</summary>
     public bool HasRoad(int x, int y) =>
         (uint)x < (uint)_width && (uint)y < (uint)_height && _roads[(y * _width) + x];

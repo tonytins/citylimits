@@ -27,6 +27,24 @@ is found by its index: the tile at index *n* is at column *n* mod 16 and row
 | Trees  | 21 to 28   | eight drawings of trees   |
 | Rock   | 44         | bare rubble               |
 
+A road is drawn from the sides of it that join another road, which
+`RoadNetwork.ConnectionsAt` reads from the map. The table was made by
+looking at the drawings in this copy of the sheet:
+
+| Road joins                     | Tile index | What it looks like                  |
+| ------------------------------ | ---------- | ----------------------------------- |
+| nothing, east, west, or both   | 66         | a straight road, east to west       |
+| north, south, or both          | 67         | a straight road, north to south     |
+| north and east                 | 68         | a corner                            |
+| east and south                 | 69         | a corner                            |
+| south and west                 | 70         | a corner                            |
+| north and west                 | 71         | a corner                            |
+| east, west, and north          | 72         | a junction, with a crossing north   |
+| north, south, and east         | 73         | a junction, with a crossing east    |
+| east, west, and south          | 74         | a junction, with a crossing south   |
+| north, south, and west         | 75         | a junction, with a crossing west    |
+| all four sides                 | 76         | a crossroads with a signal          |
+
 ## Licensing
 
 The tile sheet and the tool icons come from Micropolis
