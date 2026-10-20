@@ -6,12 +6,6 @@ public sealed class GameLoop
     /// <summary>The seed the starting city is built from.</summary>
     public const int DefaultSeed = 2000;
 
-    /// <summary>The width of the starting map, in tiles.</summary>
-    public const int MapWidth = 128;
-
-    /// <summary>The height of the starting map, in tiles.</summary>
-    public const int MapHeight = 128;
-
     private const float PanSpeed = 600f;
 
     private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
@@ -40,7 +34,7 @@ public sealed class GameLoop
         _lastSpeed = settings.Speed == 0 ? 1 : settings.Speed;
         _settingsPath = settingsPath;
 
-        var map = TileMapGenerator.Generate(seed, MapWidth, MapHeight);
+        var map = TileMapGenerator.Generate(seed, MapSize.DefaultWidth, MapSize.DefaultHeight);
         _simulation = new CitySimulation(map, seed);
 
         _mapRenderer = new MapRenderer(assets);
@@ -77,7 +71,7 @@ public sealed class GameLoop
         }
 
         _simulation.Roads.EnsureCurrent(_simulation.Map);
-        _camera.ClampTo(MapWidth * MapRenderer.TileSize, MapHeight * MapRenderer.TileSize);
+        _camera.ClampTo(MapSize.DefaultWidth * MapRenderer.TileSize, MapSize.DefaultHeight * MapRenderer.TileSize);
     }
 
     /// <summary>Draws the game.</summary>

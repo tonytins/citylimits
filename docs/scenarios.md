@@ -63,7 +63,7 @@ and hyphens, so an id can never name a path outside that folder.
 | 2 | The command line was wrong (`ExitCodes.Usage`) |
 | 3 | The scenario ran, and at least one check failed |
 
-Code 3 is new: phase 1 adds it to `ExitCodes` as `ChecksFailed`. A caller
+Code 3 is `ExitCodes.ChecksFailed`, added for scenarios. A caller
 can then tell a broken scenario (1) from a city that didn't do what was
 expected (3) without reading the output.
 
@@ -73,9 +73,11 @@ Without `--json`, the run writes to the log as `citylimits --headless` does: the
 each action and its result, the checks, and a summary line.
 
 With `--json`, stdout carries the report and nothing else, so it can be
-piped into a parser. For that run, the log moves to stderr: `GameLog`
-points the console target at the error stream. NLog still writes to the
-console and nowhere else.
+piped into a parser. For that run, the log moves to stderr:
+`GameLog.UseStandardError` points the console target at the error stream.
+NLog still writes to the console and nowhere else. This already works:
+`scenario <id> --headless --json` leaves stdout empty today, because
+there is no report yet.
 
 ## The file, version 1
 
@@ -240,10 +242,9 @@ The runner takes no logger. It returns the report and raises an event per
 action and per check, and the command turns those into log lines. That
 keeps the core library free of NLog and of any package.
 
-`GameLoop.MapWidth` and `GameLoop.MapHeight` live in the game project
-today, so the core can't read them. Phase 1 moves the default map size
-into `CityLimits.Core/World/` so the game and the scenario defaults
-can't drift apart.
+The default map size is `MapSize.DefaultWidth` and `MapSize.DefaultHeight`
+in `CityLimits.Core/World/`, which the game, the headless run, and the
+scenario defaults all read, so they can't drift apart.
 
 ## What it is not
 

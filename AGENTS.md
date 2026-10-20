@@ -30,7 +30,7 @@ CityLimits.Core/              engine-free library: the world and the simulation,
   CityLimits.Core.csproj        the project file; it must never reference Raylib-cs
   GlobalUsings.cs               global usings shared by the project
   Randomness/                   namespace CityLimits.Core.Randomness: the seeded generator the simulation owns
-  World/                        namespace CityLimits.Core.World: the map, the tiles, the terrain, the tile rules, the build actions
+  World/                        namespace CityLimits.Core.World: the map and its default size, the tiles, the terrain, the tile rules, the build actions
   Simulation/                   namespace CityLimits.Core.Simulation: the clock, the date, the tick
   Economy/                      namespace CityLimits.Core.Economy: the money, the costs, the treasury
   Settings/                     namespace CityLimits.Core.Settings: the settings that survive a session
@@ -117,7 +117,8 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   A run needs `--headless`, because a scenario will open a window once
   scenarios can be played; `list` doesn't. `list` reports that there are
   no scenarios, and a run reports that scenarios are not implemented and
-  exits with code 1. The design is in `docs/scenarios.md`.
+  exits with code 1. With `--json`, the log moves to stderr so stdout is
+  left for the report. The design is in `docs/scenarios.md`.
 - **The log.** NLog writes to the console and nowhere else. Failures go to
   the log as well as to the screen.
 - **The solution.** `CityLimits.slnx` holds four projects: the game, the
@@ -258,6 +259,9 @@ A city builder lives or dies on its simulation, not its art. The rules:
 - **NLog writes to the console and nowhere else.** `Game/GameLog.cs` sets
   the rule up once, at startup, and `LogManager.Shutdown()` flushes it at
   the end. There is no file target, no database target, and no mail target.
+  A command whose output stream carries a report for a script, such as
+  `scenario --json`, calls `GameLog.UseStandardError` to move the log to
+  stderr. It is still the console.
 - **Log what the player cannot see.** A failure goes to the log and to the
   screen, so the log is the record of what went wrong after the window is
   gone.

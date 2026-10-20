@@ -24,7 +24,7 @@ public sealed class HeadlessRun
     /// <summary>Runs the city, and writes what happened to the log.</summary>
     public int Run()
     {
-        var map = TileMapGenerator.Generate(_seed, GameLoop.MapWidth, GameLoop.MapHeight);
+        var map = TileMapGenerator.Generate(_seed, MapSize.DefaultWidth, MapSize.DefaultHeight);
         var simulation = new CitySimulation(map, _seed);
 
         Logger.Info(

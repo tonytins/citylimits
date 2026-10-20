@@ -58,6 +58,12 @@ public sealed class ScenarioSubcommand : ISubcommand
             return Refuse(context, "Scenarios run only with --headless for now.");
         }
 
+        // The output stream belongs to the report, so the log moves out of its way.
+        if (options.Has("--json"))
+        {
+            GameLog.UseStandardError();
+        }
+
         Logger.Info(
             "Scenario requested: id={Id}, file={File}, ticks={Ticks}, json={Json}",
             scenarioId,
