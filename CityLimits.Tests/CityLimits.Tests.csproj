@@ -20,6 +20,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- The built-in scenarios, so each one runs as a test; the game project itself stays unreferenced. -->
+    <None Include="..\CityLimits\Assets\Scenarios\*.json" LinkBase="Scenarios" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\CityLimits.CommandLine\CityLimits.CommandLine.csproj" />
     <ProjectReference Include="..\CityLimits.Core\CityLimits.Core.csproj" />
   </ItemGroup>

@@ -1,5 +1,25 @@
 # CityLimits Changelog
 
+## 0.1.112
+
+Scenarios. A scenario is a city set up from a file: a seed, tool strokes
+made at set times, and checks on what the city should look like along the
+way. `citylimits scenario <id> --headless` runs one with no window and
+logs each stroke and check; `--file <path>` runs any scenario file, and
+`citylimits scenario list` lists the built-in ones: the demo town,
+`bridges`, and `zones-and-bulldozer`.
+
+`--json` writes a report a script can read, in a versioned format, with the
+log moved to stderr. The exit code says what happened: 0 when every check
+passed, 3 when one failed, 2 for a mistake on the command line, and 1 when
+the scenario couldn't be loaded; then the demo town runs in its place and
+the report says why.
+
+A scenario file is checked before anything runs, and the first problem is
+reported with where it is, so a misspelt field or a number out of range is
+caught instead of quietly ignored. Every built-in scenario runs as a test,
+so a rule that changes is caught by the scenarios that depend on it.
+
 ## 0.1.111
 
 Time runs as in Micropolis. A city starts in January 1900, and at Normal

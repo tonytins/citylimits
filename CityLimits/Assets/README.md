@@ -12,6 +12,7 @@ tools/icres.png      residential
 tools/iccom.png      commercial
 tools/icind.png      industrial
 tools/icbulldozer.png bulldozer
+Scenarios/           the built-in scenarios, one JSON file each, named for its id
 ```
 
 ## The tile sheet

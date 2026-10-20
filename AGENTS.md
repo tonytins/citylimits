@@ -25,7 +25,7 @@ CityLimits/                  the game project (Raylib-cs, NLog, net10.0)
     Commands/                   namespace CityLimits.Game.Commands: the subcommands, one class each
   Rendering/                    namespace CityLimits.Rendering: the camera, the tile drawing, the chunk cache, the tile sheet, the theme
   UI/                           namespace CityLimits.UI: the HUD, the tool palette
-  Assets/                       images, fonts, and sounds, copied to the output folder
+  Assets/                       images, fonts, sounds, and the built-in scenarios (Scenarios/*.json), copied to the output folder
 CityLimits.Core/              engine-free library: the world and the simulation, no Raylib
   CityLimits.Core.csproj        the project file; it must never reference Raylib-cs
   GlobalUsings.cs               global usings shared by the project
@@ -34,11 +34,12 @@ CityLimits.Core/              engine-free library: the world and the simulation,
   Simulation/                   namespace CityLimits.Core.Simulation: the clock, the date, the tick
   Economy/                      namespace CityLimits.Core.Economy: the money, the costs, the treasury
   Settings/                     namespace CityLimits.Core.Settings: the settings that survive a session
+  Scenarios/                    namespace CityLimits.Core.Scenarios: the scenario loader, the runner, the report, the demo town
 CityLimits.CommandLine/       engine-free library: the command line, no Raylib
   CityLimits.CommandLine.csproj the project file; it references no package and no other project
   GlobalUsings.cs               global usings shared by the project
   *.cs                          namespace CityLimits.CommandLine: the parser, the dispatcher, the option reader, the exit codes
-CityLimits.Tests/              xUnit 2 tests for CityLimits.Core and CityLimits.CommandLine
+CityLimits.Tests/              xUnit 2 tests for CityLimits.Core and CityLimits.CommandLine, and every built-in scenario
   CityLimits.Tests.csproj       references the two libraries, never the game project
 .agents/skills/                skills for agents and contributors
   dotnet-guidelines/            C# and .NET conventions
@@ -46,7 +47,7 @@ CityLimits.Tests/              xUnit 2 tests for CityLimits.Core and CityLimits.
 docs/
   ROADMAP.md                    milestones, current focus, estimates, revision history
   scorecard.md                  verified status per area, with evidence
-  scenarios.md                  the scenario file and report formats (designed, not implemented yet)
+  scenarios.md                  the scenario file and report formats
 ```
 
 The split is the point of the layout: `CityLimits.Core/` holds everything
@@ -160,13 +161,22 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   year), and builds a small demo town first so there is something to
   grow. `--ticks` without `--headless` is refused, because
   the window runs until it is closed.
-- **The scenario command.** `scenario` reads its command line (an id or
-  `--file`, `--ticks`, `--json`, and `scenario list`) but loads nothing yet.
-  A run needs `--headless`, because a scenario will open a window once
-  scenarios can be played; `list` doesn't. `list` reports that there are
-  no scenarios, and a run reports that scenarios are not implemented and
-  exits with code 1. With `--json`, the log moves to stderr so stdout is
-  left for the report. The design is in `docs/scenarios.md`.
+- **Scenarios.** A scenario is a city set up from a file: a seed, tool
+  strokes made at set ticks, and checks on tiles, zones, funds, and
+  counts (`docs/scenarios.md`, phase 1). `ScenarioLoader` reads and checks
+  a file, reporting the first problem with where it is; `ScenarioRunner`
+  runs it deterministically and returns a `ScenarioReport`, raising an
+  event per action and check instead of logging. `citylimits scenario
+  <id> --headless` runs a built-in one (`demo-town`, defined in code, and
+  the files in `Assets/Scenarios/`), `--file <path>` runs any file, and
+  `scenario list` lists them. `--json` writes the report to stdout and the
+  log to stderr. A scenario that can't be loaded falls back to the demo
+  town, logged and recorded in the report. Exit codes: 0 passed, 1 could
+  not run, 2 a bad command line, 3 a check or expectation failed. A run
+  needs `--headless`, because a scenario will open a window once
+  scenarios can be played; `list` doesn't. Scenarios are how agents test
+  the simulation: every built-in scenario runs as a test, so a rule that
+  changes is caught by the scenarios that depend on it.
 - **The log.** NLog writes to the console and nowhere else. Failures go to
   the log as well as to the screen.
 - **The solution.** `CityLimits.slnx` holds four projects: the game, the
@@ -176,16 +186,17 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   and implicit usings enabled, and references no package at all. It holds
   the map and its generator, the clock, the date, the simulation, the
   seeded generator, the tile rules, the build actions, the road network,
-  the treasury, and the settings.
+  the treasury, the settings, and the scenarios.
 - **The command line library.** `CityLimits.CommandLine` targets `net10.0`
   with nullable and implicit usings enabled, and references no package
   and no project. It holds the parser, the dispatcher, the default
   command, the strict option reader, and the exit codes.
 - **The tests.** `CityLimits.Tests` uses xUnit 2 with the VSTest runner
-  and coverlet, and holds 219 tests over the generator, the map, the
+  and coverlet, and holds 278 tests over the generator, the map, the
   calendar, the clock, the simulation, the settings, the tile rules, the
-  build actions, the road network, the treasury, the option reader, and
-  the dispatcher.
+  build actions, the road network, the treasury, the scenario loader and
+  runner, every built-in scenario, the option reader, and the
+  dispatcher.
 - **The game project.** `CityLimits.csproj` targets `net10.0` with nullable
   and implicit usings enabled, and references `Raylib-cs` `8.1.0` and
   `NLog` `6.2.2`. The native `raylib` library ships inside the NuGet

@@ -1,6 +1,6 @@
 # CityLimits roadmap
 
-> **Last reviewed:** 2026-10-20 · **Last updated:** 2026-10-20 · **Change:** minor (Micropolis' calendar, 16-phase cycle, and pace) · **Stage:** pre-alpha
+> **Last reviewed:** 2026-10-20 · **Last updated:** 2026-10-20 · **Change:** minor (scenarios, phase 1) · **Stage:** pre-alpha
 
 Forward-looking: where CityLimits stands, what blocks the next milestone,
 and what comes next. Verified status and evidence are in the
@@ -64,25 +64,22 @@ Then Joffburg: power, taxes, and the budget.
 | New Dullsville: Foundation | 100% | 0 | The solution, the core library, the tests, the fixed timestep, the camera, the tools, and the settings are all in |
 | Neat Map: Terrain and the tile grid | 83% | 6–10 | Reopened for the baseline: the terrain needs rivers, lakes, and smoothed edges, and no rock |
 | Line City: Roads and zoning | 100% | 0 | Meets the baseline: strokes with a preview, straight roads and bridges, 3 by 3 zones laid as a grid and served from their edges, and the $1 bulldozer, at Micropolis' prices |
-| Kowloon: Simulation core | 38% | 21–35 | Time runs as in Micropolis: the 16-phase cycle, the 48ths-of-a-year calendar, and its pace. Per-zone growth with population and demand, and the scenario runner, are still to come. The heart of the game |
+| Kowloon: Simulation core | 50% | 15–25 | Time runs as in Micropolis: the 16-phase cycle, the 48ths-of-a-year calendar, and its pace. Scenarios run from files and from the command line. Per-zone growth with population and demand is still to come. The heart of the game |
 | Joffburg: Services and economy | 0% | 15–25 | Nothing yet |
 | Radial: Traffic and commuting | 0% | 12–20 | Nothing yet |
 | Bad News: Land value, pollution, disasters | 0% | 12–20 | Nothing yet |
 | Happy Isle: Player-facing game | 0% | 15–25 | Nothing yet |
 | Yokohama: Polish and release | 0% | 10–20 | Nothing yet |
-| | **Total** | **≈ 91–155** | |
+| | **Total** | **≈ 85–145** | |
 
 ## Upcoming work, ranked
 
 | Rank | Work | Milestone | Estimate (h) |
 |---|---|---|---|
-| 1 | Scenarios, phase 1, to the revised [spec](./scenarios.md): tool strokes, 3 by 3 zones, and ticks as phases | Kowloon | 6–10 |
-| 2 | Growth per zone: population, demand, growth and decline | Kowloon | 15–25 |
-| 3 | Terrain: rivers, lakes, islands, and smoothed edges, on a 120 by 100 map | Neat Map | 6–10 |
+| 1 | Growth per zone: population, demand, growth and decline, watched through scenarios | Kowloon | 15–25 |
+| 2 | Terrain: rivers, lakes, islands, and smoothed edges, on a 120 by 100 map | Neat Map | 6–10 |
 
-Alpha needs rank 2 in substance, about 15–25 hours. Rank 1 doesn't block
-alpha, but it comes first because it is how growth is watched and
-debugged as it is built.
+Alpha needs rank 1 in substance, about 15–25 hours.
 
 ## Milestone checklists
 
@@ -169,7 +166,7 @@ debugged as it is built.
 - [x] A determinism test, in `CityLimits.Tests/`: the same seed and the
   same actions give the same city after a fixed number of ticks. It covers
   the tiles and the money today, and it grows with the population model.
-- [ ] Scenarios, phase 1, as [docs/scenarios.md](./scenarios.md)
+- [x] Scenarios, phase 1, as [docs/scenarios.md](./scenarios.md)
   specifies. A scenario file holds a seed, timed tool strokes, and
   checks, and `CityLimits.Core/Scenarios/` loads and runs it.
   `citylimits scenario` runs it with no window, logs it, and writes a
@@ -269,6 +266,7 @@ right, cut scope inside Radial and Bad News first, not inside Kowloon.
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-20 | minor | Scenarios, phase 1: `CityLimits.Core/Scenarios/` reads and checks scenario files, runs them deterministically, and reports in a versioned JSON format; `citylimits scenario` runs one by id or file with `--json`, falls back to the demo town when one can't be loaded, and exits 0 to 3. Three built-in scenarios (`demo-town`, `bridges`, `zones-and-bulldozer`) run as tests. Kowloon is at 50%, 85–145 h left, 278 tests. |
 | 2026-10-20 | patch | The scenario spec is revised for the Micropolis baseline: actions are tool strokes (`tool`, `from`, `to`) shaped and priced as in the game, ticks are phases (64 a month, 768 a year), zone checks read the zone's centre, counts give zones for the three zone kinds, and the example is the demo town, checked against the engine. Scenarios, phase 1, can now be built. |
 | 2026-10-20 | minor | Step 3 of the baseline refactor: time runs as in Micropolis. A tick is one phase of a 16-phase cycle; phase 0 moves the calendar on by a 48th of a year, from January 1900, and phases 1 to 8 scan the map in bands. A month takes 16 seconds and a year about 3 minutes at Normal, with Fast and Super fast at 5 and 50 times that. The headless run defaults to a year. Kowloon is at 38%, 91–155 h left, 219 tests. |
 | 2026-10-20 | major | Step 2 of the baseline refactor: Line City meets Micropolis. Roads bridge water at $50 a tile from a road beside them; zones are 3 by 3, laid as a grid, served by a road along their edge, and drawn from the sheet with their buildings; the bulldozer costs $1 a tile, refunds nothing, and knocks a zone down to rubble through its centre; a tool clears trees and rubble for $1. The palette is sized to its text and picks a tool when clicked, instead of building on the map under it. Line City is complete again (100%), 97–165 h left, 201 tests. |

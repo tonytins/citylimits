@@ -1,0 +1,26 @@
+{
+  "format": 1,
+  "name": "Zones and the bulldozer",
+  "description": "A grid of zones along a road, a zone with no road, and the bulldozer's rules for zones.",
+  "seed": 2000,
+  "ticks": 768,
+  "actions": [
+    { "tick": 0, "tool": "Road", "from": { "x": 64, "y": 68 }, "to": { "x": 75, "y": 68 }, "expect": "Built" },
+    { "tick": 0, "tool": "ZoneResidential", "from": { "x": 65, "y": 66 }, "to": { "x": 71, "y": 66 }, "expect": "Built" },
+    { "tick": 0, "tool": "ZoneCommercial", "from": { "x": 74, "y": 62 }, "expect": "Built" },
+    { "tick": 0, "tool": "ZoneIndustrial", "from": { "x": 66, "y": 66 }, "expect": "Refused:CannotBuildHere" },
+    { "tick": 0, "tool": "Bulldoze", "from": { "x": 64, "y": 65 }, "expect": "Refused:PartOfAZone" },
+    { "tick": 0, "tool": "Bulldoze", "from": { "x": 64, "y": 62 }, "expect": "Unchanged:NothingToClear" },
+    { "tick": 768, "tool": "Bulldoze", "from": { "x": 67, "y": 66 }, "to": { "x": 69, "y": 66 }, "expect": "Built" }
+  ],
+  "checks": [
+    { "tick": 0, "count": "Residential", "equals": 3 },
+    { "tick": 0, "tile": { "x": 65, "y": 66 }, "served": true },
+    { "tick": 0, "tile": { "x": 74, "y": 62 }, "served": false },
+    { "tick": 767, "tile": { "x": 66, "y": 67 }, "developmentAtLeast": 1 },
+    { "tick": 767, "tile": { "x": 74, "y": 62 }, "development": 0 },
+    { "tick": 768, "tile": { "x": 68, "y": 66 }, "kind": "Rubble", "use": "None" },
+    { "tick": 768, "count": "Residential", "equals": 2 },
+    { "tick": 768, "fundsEquals": 19479 }
+  ]
+}

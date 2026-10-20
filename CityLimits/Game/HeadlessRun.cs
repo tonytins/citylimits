@@ -4,7 +4,7 @@ namespace CityLimits.Game;
 public sealed class HeadlessRun
 {
     /// <summary>The most ticks a headless run takes, so a mistyped count cannot run for hours.</summary>
-    public const int MaxTicks = 100_000;
+    public const int MaxTicks = CityLimits.Core.Scenarios.Scenario.MaxTicks;
 
     /// <summary>How many ticks a headless run takes when it isn't told: a year of the city's time.</summary>
     public const int DefaultTicks = CityCalendar.StepsPerYear;

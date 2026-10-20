@@ -1,9 +1,9 @@
 # Scenarios
 
-> **Status:** design, not implemented. The `scenario` command reads its
-> command line today and runs nothing. This document is the contract
-> for phase 1, which is on the [roadmap](./ROADMAP.md) under Kowloon. It
-> follows the Micropolis baseline: tools are strokes, zones are 3 by 3,
+> **Status:** phase 1 is built: `CityLimits.Core/Scenarios/` and
+> `citylimits scenario`, with `demo-town` and the built-in scenarios
+> `bridges` and `zones-and-bulldozer`, each run as a test. This document
+> is the contract it was built to. It follows the Micropolis baseline: tools are strokes, zones are 3 by 3,
 > the bulldozer refunds nothing, and a tick is one phase of the
 > simulation's 16-phase cycle.
 
