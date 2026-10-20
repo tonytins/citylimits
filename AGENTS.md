@@ -133,6 +133,16 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   beside it, or a building level), so the same seed and the same work give
   the same city. The flat chance stands in until demand, trips, and land
   value decide growth and decline.
+- **The census and demand.** As in Micropolis, the scan adds each zone's
+  population to the census (`CityCensus`), which starts again every
+  cycle and is recorded once a month, keeping ten years of history; the
+  city's population is residents plus eight per commercial and industrial
+  unit, times twenty. Every second count, each of the three demands
+  (`CityDemand`) moves by how far its population is from what jobs,
+  births, and the market call for. The HUD shows the population and an
+  R, C, I demand panel under the palette, and the headless run logs both
+  each month. Until their systems exist, the difficulty is Easy, the tax
+  has no effect, and the demand caps are off.
 - **The tools.** Six tools sit in the palette down the left, each with its
   icon, and the number keys pick one: inspect, road, residential,
   commercial, industrial, and bulldozer. A tool is used in a stroke, as
@@ -203,10 +213,10 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   and no project. It holds the parser, the dispatcher, the default
   command, the strict option reader, and the exit codes.
 - **The tests.** `CityLimits.Tests` uses xUnit 2 with the VSTest runner
-  and coverlet, and holds 312 tests over the generator, the map, the
+  and coverlet, and holds 319 tests over the generator, the map, the
   calendar, the clock, the simulation, the settings, the tile rules, the
   build actions, the road network, the treasury, the scenario loader and
-  runner, every built-in scenario, the definitions and the mod loader, zone growth,
+  runner, every built-in scenario, the definitions and the mod loader, zone growth, the census and demand,
   the option reader, and the dispatcher.
 - **The game project.** `CityLimits.csproj` targets `net10.0` with nullable
   and implicit usings enabled, and references `Raylib-cs` `8.1.0` and

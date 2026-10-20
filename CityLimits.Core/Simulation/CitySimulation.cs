@@ -6,6 +6,9 @@ namespace CityLimits.Core.Simulation;
 public sealed class CitySimulation
 {
 
+    /// <summary>The phase the census is recorded in, once a month.</summary>
+    private const int CensusPhase = 9;
+
     /// <summary>The chance a served zone develops each time the scan reaches it, until demand decides it.</summary>
     private const float DevelopmentChance = 0.2f;
 
@@ -49,6 +52,12 @@ public sealed class CitySimulation
     /// <summary>The number of steps that have run; each is one phase of the cycle.</summary>
     public long TickCount { get; private set; }
 
+    /// <summary>The census: the population counted as the scan passes each zone, and its monthly history.</summary>
+    public CityCensus Census { get; } = new();
+
+    /// <summary>How much the city wants more of each kind of zone.</summary>
+    public CityDemand Demand { get; } = new();
+
     /// <summary>The money the city has.</summary>
     public Treasury Treasury { get; }
 
@@ -60,9 +69,11 @@ public sealed class CitySimulation
 
     /// <summary>
     /// Runs one step of the simulation: one phase of Micropolis' 16-phase cycle. Phase 0
-    /// advances the calendar by a 48th of a year, and phases 1 to 8 scan the map in vertical
-    /// bands, one band each. Phases 9 to 15 are where the census and taxes, decay, power,
-    /// pollution and land value, crime, population density, and fire and disasters will run.
+    /// advances the calendar by a 48th of a year, updates demand every second count from the
+    /// census the last cycle took, and starts the census again. Phases 1 to 8 scan the map in
+    /// vertical bands, one band each, counting each zone and growing it. Phase 9 records the
+    /// census once a month. Phases 10 to 15 are where decay, power, pollution and land value,
+    /// crime, population density, and fire and disasters will run.
     /// </summary>
     public void Tick()
     {
@@ -72,10 +83,20 @@ public sealed class CitySimulation
         if (phase == 0)
         {
             CityTime++;
+            if (CityTime % 2 == 0)
+            {
+                Demand.Update(Census);
+            }
+
+            Census.Clear();
         }
         else if (phase <= CityCalendar.ScanBands)
         {
             ScanBand(phase - 1);
+        }
+        else if (phase == CensusPhase && CityTime % CityCalendar.CountsPerMonth == 0)
+        {
+            Census.RecordMonth();
         }
     }
 
@@ -92,7 +113,14 @@ public sealed class CitySimulation
             for (var x = first; x < end; x++)
             {
                 var state = Map.StateAt(x, y);
-                if (!state.IsZoneCenter || state.Development >= Definitions.Zone(state.Use).Levels)
+                if (!state.IsZoneCenter)
+                {
+                    continue;
+                }
+
+                var spec = Definitions.Zone(state.Use);
+                Census.Add(state.Use, spec.PopulationOf(Map, x, y));
+                if (state.Development >= spec.Levels)
                 {
                     continue;
                 }
@@ -107,7 +135,7 @@ public sealed class CitySimulation
                     continue;
                 }
 
-                ZoneGrowth.GrowOneStep(Map, Random, Definitions.Zone(state.Use), x, y);
+                ZoneGrowth.GrowOneStep(Map, Random, spec, x, y);
             }
         }
     }

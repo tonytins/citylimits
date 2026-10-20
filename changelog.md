@@ -1,5 +1,17 @@
 # CityLimits Changelog
 
+## 0.1.115
+
+The city takes a census and feels demand, as in Micropolis. The status bar
+shows the city's population, and a panel under the tool palette shows how
+much the city wants more residential, commercial, and industrial zones: a
+bar rising above the line when it wants more, falling below when it wants
+less. Demand follows jobs, births, and the market, a month behind the
+census, so a new town's first residents look unemployed until its shops
+and factories are counted. Zones don't follow demand yet; that comes next.
+
+The headless run writes the population and the three demands each month.
+
 ## 0.1.114
 
 Zones grow as they do in Micropolis. A residential zone first grows single

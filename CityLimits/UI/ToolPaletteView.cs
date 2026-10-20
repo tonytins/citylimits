@@ -60,6 +60,13 @@ public sealed class ToolPaletteView
         return row >= 0 && row < palette.Tools.Count ? palette.Tools[row] : null;
     }
 
+    /// <summary>Where the palette ends on the screen, so the panels below it can sit under it.</summary>
+    public int Bottom(ToolPalette palette)
+    {
+        var bounds = Bounds(palette);
+        return (int)(bounds.Y + bounds.Height);
+    }
+
     /// <summary>Draws the palette down the left edge of the screen.</summary>
     public void Draw(ToolPalette palette)
     {

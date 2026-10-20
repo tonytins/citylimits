@@ -45,7 +45,15 @@ public sealed class HeadlessRun
             if (simulation.Date != month)
             {
                 month = simulation.Date;
-                Logger.Info("tick {Tick}: {Date}   ${Funds}", simulation.TickCount, simulation.Date, simulation.Treasury.Funds);
+                Logger.Info(
+                    "tick {Tick}: {Date}   ${Funds}   population {Population}   demand R {Residential} C {Commercial} I {Industrial}",
+                    simulation.TickCount,
+                    simulation.Date,
+                    simulation.Treasury.Funds,
+                    simulation.Census.CityPopulation,
+                    simulation.Demand.Residential,
+                    simulation.Demand.Commercial,
+                    simulation.Demand.Industrial);
             }
         }
 

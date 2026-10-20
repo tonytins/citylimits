@@ -120,12 +120,14 @@ public sealed class GameLoop : IDisposable
             _simulation.Date,
             _simulation.TickCount,
             _settings.Speed,
+            _simulation.Census.CityPopulation,
             _tools.Selected,
             _simulation.Treasury.Funds,
             CostOfSelectedTool(),
             world,
             Raylib.GetFPS());
         _hud.DrawTileReadout(_simulation.Map, onMap ? state : null, tileX, tileY, _simulation.Definitions);
+        _hud.DrawDemand(_simulation.Demand, _toolPaletteView.Bottom(_tools) + 8);
         _hud.DrawHints();
         _hud.DrawMessage(_error ?? _notice, _error is not null || _noticeIsError);
 
@@ -262,7 +264,13 @@ public sealed class GameLoop : IDisposable
                 return;
             }
 
-            // A press on the palette picks a tool; it never reaches the map underneath.
+            // A press on a panel never reaches the map underneath.
+            if (Raylib.CheckCollisionPointRec(mouse, Hud.DemandBounds(_toolPaletteView.Bottom(_tools) + 8)))
+            {
+                return;
+            }
+
+            // A press on the palette picks a tool.
             if (_toolPaletteView.Contains(_tools, mouse))
             {
                 var picked = _toolPaletteView.ToolAt(_tools, mouse);
