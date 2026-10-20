@@ -6,11 +6,12 @@ namespace CityLimits.Core.Simulation;
 public sealed class CitySimulation
 {
 
-    /// <summary>The phase the census is recorded in, once a month.</summary>
+    // The phases of the cycle that do more than scan the map.
     private const int CensusPhase = 9;
+    private const int LandValuePhase = 12;
+    private const int DensityPhase = 14;
 
-    /// <summary>The chance a served zone develops each time the scan reaches it, until demand decides it.</summary>
-    private const float DevelopmentChance = 0.2f;
+    private readonly ZoneGrowth _growth;
 
     /// <summary>
     /// Creates a simulation over the given map, with the money the city starts with and the
@@ -29,6 +30,8 @@ public sealed class CitySimulation
         Roads = new RoadNetwork();
         Definitions = definitions ?? CityDefinitions.Base;
         Builder = new CityBuilder(map, Treasury, Roads, Definitions);
+        Maps = new CityMaps(map);
+        _growth = new ZoneGrowth(map, Random, Trips, Definitions, Demand, Maps);
     }
 
     /// <summary>The definitions the city runs on: the base game's, with any mods applied.</summary>
@@ -61,6 +64,9 @@ public sealed class CitySimulation
     /// <summary>Sends zones' trips out along the roads, reusing one route buffer.</summary>
     public TripPlanner Trips { get; } = new();
 
+    /// <summary>The city's land value, population density, and commercial rate, and its centre of mass.</summary>
+    public CityMaps Maps { get; }
+
     /// <summary>The money the city has.</summary>
     public Treasury Treasury { get; }
 
@@ -74,9 +80,10 @@ public sealed class CitySimulation
     /// Runs one step of the simulation: one phase of Micropolis' 16-phase cycle. Phase 0
     /// advances the calendar by a 48th of a year, updates demand every second count from the
     /// census the last cycle took, and starts the census again. Phases 1 to 8 scan the map in
-    /// vertical bands, one band each, counting each zone and growing it. Phase 9 records the
-    /// census once a month. Phases 10 to 15 are where decay, power, pollution and land value,
-    /// crime, population density, and fire and disasters will run.
+    /// vertical bands, one band each, counting each zone and deciding whether it grows or
+    /// declines. Phase 9 records the census once a month, phase 12 works out land value, and
+    /// phase 14 population density and the city's centre. Phases 10, 11, 13, and 15 are where
+    /// decay, power, crime, and fire and disasters will run.
     /// </summary>
     public void Tick()
     {
@@ -101,6 +108,14 @@ public sealed class CitySimulation
         {
             Census.RecordMonth();
         }
+        else if (phase == LandValuePhase)
+        {
+            Maps.UpdateLandValue();
+        }
+        else if (phase == DensityPhase)
+        {
+            Maps.UpdateDensity(Definitions);
+        }
     }
 
     // Growth is decided per zone, at its centre, as in Micropolis, when the scan reaches the
@@ -121,24 +136,8 @@ public sealed class CitySimulation
                     continue;
                 }
 
-                var spec = Definitions.Zone(state.Use);
-                Census.Add(state.Use, spec.PopulationOf(Map, x, y));
-                if (state.Development >= spec.Levels)
-                {
-                    continue;
-                }
-
-                if (!Roads.IsZoneServed(x, y))
-                {
-                    continue;
-                }
-
-                if (Random.NextFloat() >= DevelopmentChance)
-                {
-                    continue;
-                }
-
-                ZoneGrowth.GrowOneStep(Map, Random, spec, x, y);
+                Census.Add(state.Use, Definitions.Zone(state.Use).PopulationOf(Map, x, y));
+                _growth.Visit(x, y);
             }
         }
     }

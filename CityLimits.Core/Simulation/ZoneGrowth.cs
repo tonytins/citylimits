@@ -3,14 +3,38 @@ using CityLimits.Core.Randomness;
 namespace CityLimits.Core.Simulation;
 
 /// <summary>
-/// How a zone takes a step up, as in Micropolis: a residential zone with no building grows single
-/// houses on its outer tiles, and once it holds its spec's number of houses they make way for a
-/// building; a building grows a level at a time, to the most its spec has.
+/// What happens to a zone when the scan reaches it, as in Micropolis. A zone with people sometimes
+/// sends a trip out; a zone with no road along its edge declines. Otherwise, now and then, the
+/// city's demand for the zone's kind and the zone's own worth make a score, and a roll against
+/// it decides whether the zone grows a step, declines a step, or stays as it is.
 /// </summary>
-internal static class ZoneGrowth
+/// <remarks>
+/// A residential zone grows single houses until its spec's number, then a building once the
+/// population density around it is high enough; buildings grow and decline a level at a time, in
+/// the land-value class of the moment. Until the systems they come from exist, every zone counts
+/// as powered, pollution is none, and an empty residential zone never becomes a hospital or a
+/// church; in Micropolis that roll does nothing when the city needs neither.
+/// </remarks>
+internal sealed class ZoneGrowth
 {
-    // The outer tiles in the order Micropolis looks at them for a house: across the top, the two
-    // sides, then across the bottom.
+    // A score this low or lower never grows, and this high or higher never declines.
+    private const int GrowthFloor = -350;
+    private const int DeclineCeiling = 350;
+
+    // The roll a score is measured against runs from -32768 to 32767; this offset makes growth rare.
+    private const int RollOffset = 26380;
+
+    // A zone with no road along its edge scores this; industry minds less.
+    private const int NoRoadScore = -3000;
+    private const int IndustryNoRoadScore = -1000;
+
+    // A residential zone's worth: land value times 32, at most 6000, less 3000.
+    private const int MostResidentialWorth = 6000;
+
+    // The density around a residential zone its houses need before it builds.
+    private const int DensityForBuilding = 64;
+
+    // The outer tiles in the order a house is looked for: across the top, the sides, the bottom.
     private static readonly (int Dx, int Dy)[] Lots =
     [
         (-1, -1), (0, -1), (1, -1),
@@ -18,89 +42,300 @@ internal static class ZoneGrowth
         (-1, 1), (0, 1), (1, 1),
     ];
 
-    /// <summary>Takes the zone centred on a tile one step up, if it has a step left to take.</summary>
-    public static void GrowOneStep(TileMap map, DeterministicRandom random, ZoneSpec spec, int centerX, int centerY)
-    {
-        var center = map.StateAt(centerX, centerY);
+    // The order a declining zone loses a house: down each column, left to right.
+    private static readonly (int Dx, int Dy)[] HouseLossOrder =
+    [
+        (-1, -1), (-1, 0), (-1, 1),
+        (0, -1), (0, 1),
+        (1, -1), (1, 0), (1, 1),
+    ];
 
-        if (center.Development == 0 && spec.Houses > 0)
+    private readonly TileMap _map;
+    private readonly DeterministicRandom _random;
+    private readonly TripPlanner _trips;
+    private readonly CityDefinitions _definitions;
+    private readonly CityDemand _demand;
+    private readonly CityMaps _maps;
+
+    public ZoneGrowth(TileMap map, DeterministicRandom random, TripPlanner trips, CityDefinitions definitions, CityDemand demand, CityMaps maps)
+    {
+        _map = map;
+        _random = random;
+        _trips = trips;
+        _definitions = definitions;
+        _demand = demand;
+        _maps = maps;
+    }
+
+    /// <summary>Decides what happens to the zone centred on a tile, as the scan reaches it.</summary>
+    public void Visit(int x, int y)
+    {
+        var center = _map.StateAt(x, y);
+        var spec = _definitions.Zone(center.Use);
+
+        switch (center.Use)
         {
-            if (CountHouses(map, centerX, centerY) < spec.Houses)
+            case TileUse.Residential:
+                VisitResidential(x, y, center, spec);
+                break;
+            case TileUse.Commercial:
+                VisitCommercial(x, y, center, spec);
+                break;
+            default:
+                VisitIndustrial(x, y, center, spec);
+                break;
+        }
+    }
+
+    private void VisitResidential(int x, int y, TileState center, ZoneSpec spec)
+    {
+        var population = spec.PopulationOf(_map, x, y);
+        var trip = population > _random.NextInt(0, 36) ? _trips.Drive(_map, _definitions, _random, x, y) : TripOutcome.Arrived;
+        if (trip == TripOutcome.NoRoad)
+        {
+            DeclineResidential(x, y, center, spec, ValueClass(x, y));
+            return;
+        }
+
+        // An empty zone, with no building, is weighed every time; any other one time in eight.
+        if (center.Development > 0 && _random.NextInt(0, 8) != 0)
+        {
+            return;
+        }
+
+        var score = _demand.Residential + ResidentialWorth(x, y);
+        if (Grows(score))
+        {
+            // Where Micropolis might put a hospital or a church, nothing happens yet.
+            if (population == 0 && _random.NextInt(0, 4) == 0)
             {
-                BuildHouse(map, random, centerX, centerY, center.ValueClass);
                 return;
             }
 
-            ClearHouses(map, centerX, centerY);
+            GrowResidential(x, y, center, spec, ValueClass(x, y));
+            return;
         }
 
-        if (center.Development < spec.Levels)
+        if (Declines(score))
         {
-            map.SetState(centerX, centerY, new TileState(center.Kind, center.Use, center.Development + 1, valueClass: center.ValueClass));
+            DeclineResidential(x, y, center, spec, ValueClass(x, y));
         }
     }
 
-    private static int CountHouses(TileMap map, int centerX, int centerY)
+    private void VisitCommercial(int x, int y, TileState center, ZoneSpec spec)
     {
-        var houses = 0;
-        foreach (var (dx, dy) in Lots)
+        var level = center.Development;
+        var trip = level > _random.NextInt(0, 6) ? _trips.Drive(_map, _definitions, _random, x, y) : TripOutcome.Arrived;
+        if (trip == TripOutcome.NoRoad)
         {
-            houses += map.StateAt(centerX + dx, centerY + dy).HasHouse ? 1 : 0;
+            SetLevel(x, y, center, Math.Max(level - 1, 0), ValueClass(x, y));
+            return;
         }
 
-        return houses;
+        if (_random.NextInt(0, 8) != 0)
+        {
+            return;
+        }
+
+        var score = _demand.Commercial + _maps.CommercialRateAt(x, y);
+        if (trip != TripOutcome.NoDestination && Grows(score))
+        {
+            // Commerce grows only as far as land value can carry it.
+            if (level < spec.Levels && level <= _maps.LandValueAt(x, y) / 32)
+            {
+                SetLevel(x, y, center, level + 1, ValueClass(x, y));
+            }
+
+            return;
+        }
+
+        if (Declines(score) && level > 0)
+        {
+            SetLevel(x, y, center, level - 1, ValueClass(x, y));
+        }
+    }
+
+    private void VisitIndustrial(int x, int y, TileState center, ZoneSpec spec)
+    {
+        var level = center.Development;
+        var trip = level > _random.NextInt(0, 6) ? _trips.Drive(_map, _definitions, _random, x, y) : TripOutcome.Arrived;
+        if (trip == TripOutcome.NoRoad)
+        {
+            SetLevel(x, y, center, Math.Max(level - 1, 0), _random.NextInt(0, 2));
+            return;
+        }
+
+        if (_random.NextInt(0, 8) != 0)
+        {
+            return;
+        }
+
+        // Industry cares only for demand; its land-value class is a toss of a coin.
+        var score = _demand.Industrial;
+        if (Grows(score))
+        {
+            var valueClass = _random.NextInt(0, 2);
+            if (level < spec.Levels)
+            {
+                SetLevel(x, y, center, level + 1, valueClass);
+            }
+
+            return;
+        }
+
+        if (Declines(score) && level > 0)
+        {
+            SetLevel(x, y, center, level - 1, _random.NextInt(0, 2));
+        }
+    }
+
+    private bool Grows(int score) => score > GrowthFloor && score - RollOffset > Roll();
+
+    private bool Declines(int score) => score < DeclineCeiling && score + RollOffset < Roll();
+
+    private int Roll() => _random.NextInt(0, 0x10000) - 0x8000;
+
+    // Land value, less pollution (none yet), times 32, between -3000 and 3000.
+    private int ResidentialWorth(int x, int y)
+    {
+        var value = _maps.LandValueAt(x, y);
+        return Math.Min(Math.Max(value, 0) * 32, MostResidentialWorth) - (MostResidentialWorth / 2);
+    }
+
+    // The land-value class a zone's building takes: thresholds at 30, 80, and 150.
+    private int ValueClass(int x, int y) => _maps.LandValueAt(x, y) switch
+    {
+        < 30 => 0,
+        < 80 => 1,
+        < 150 => 2,
+        _ => 3,
+    };
+
+    private void GrowResidential(int x, int y, TileState center, ZoneSpec spec, int valueClass)
+    {
+        if (center.Development > 0)
+        {
+            if (center.Development < spec.Levels)
+            {
+                SetLevel(x, y, center, center.Development + 1, valueClass);
+            }
+
+            return;
+        }
+
+        if (CountHouses(x, y) < spec.Houses)
+        {
+            BuildHouse(x, y, valueClass);
+            return;
+        }
+
+        if (_maps.DensityAt(x, y) > DensityForBuilding && spec.Levels > 0)
+        {
+            ClearHouses(x, y);
+            SetLevel(x, y, center, 1, valueClass);
+        }
+    }
+
+    private void DeclineResidential(int x, int y, TileState center, ZoneSpec spec, int valueClass)
+    {
+        if (center.Development > 1)
+        {
+            SetLevel(x, y, center, center.Development - 1, valueClass);
+            return;
+        }
+
+        if (center.Development == 1)
+        {
+            // The building makes way for a full set of houses again.
+            SetLevel(x, y, center, 0, 0);
+            var houses = 0;
+            foreach (var (dx, dy) in Lots)
+            {
+                if (houses++ >= spec.Houses)
+                {
+                    break;
+                }
+
+                SetHouse(x + dx, y + dy, (valueClass * 3) + _random.NextInt(0, 3) + 1);
+            }
+
+            return;
+        }
+
+        foreach (var (dx, dy) in HouseLossOrder)
+        {
+            if (_map.StateAt(x + dx, y + dy).HasHouse)
+            {
+                SetHouse(x + dx, y + dy, 0);
+                return;
+            }
+        }
     }
 
     // A house goes on the free outer tile with the most roads beside it; a tie goes to a later
-    // tile one time in eight, from the city's own generator.
-    private static void BuildHouse(TileMap map, DeterministicRandom random, int centerX, int centerY, int valueClass)
+    // tile one time in eight.
+    private void BuildHouse(int x, int y, int valueClass)
     {
         var best = -1;
         var bestScore = 0;
 
         for (var i = 0; i < Lots.Length; i++)
         {
-            var (x, y) = (centerX + Lots[i].Dx, centerY + Lots[i].Dy);
-            if (map.StateAt(x, y).HasHouse)
+            var (lotX, lotY) = (x + Lots[i].Dx, y + Lots[i].Dy);
+            if (_map.StateAt(lotX, lotY).HasHouse)
             {
                 continue;
             }
 
-            var score = 1 + RoadsBeside(map, x, y);
+            var score = 1 + RoadsBeside(lotX, lotY);
             if (score > bestScore)
             {
                 bestScore = score;
                 best = i;
             }
-            else if (score == bestScore && random.NextInt(0, 8) == 0)
+            else if (score == bestScore && _random.NextInt(0, 8) == 0)
             {
                 best = i;
             }
         }
 
-        if (best < 0)
+        if (best >= 0)
         {
-            return;
+            SetHouse(x + Lots[best].Dx, y + Lots[best].Dy, (valueClass * 3) + _random.NextInt(0, 3) + 1);
         }
-
-        var (lotX, lotY) = (centerX + Lots[best].Dx, centerY + Lots[best].Dy);
-        var lot = map.StateAt(lotX, lotY);
-        var house = (valueClass * 3) + random.NextInt(0, 3) + 1;
-        map.SetState(lotX, lotY, new TileState(lot.Kind, lot.Use, zonePart: lot.ZonePart, house: house));
     }
 
-    private static void ClearHouses(TileMap map, int centerX, int centerY)
+    private int CountHouses(int x, int y)
+    {
+        var houses = 0;
+        foreach (var (dx, dy) in Lots)
+        {
+            houses += _map.StateAt(x + dx, y + dy).HasHouse ? 1 : 0;
+        }
+
+        return houses;
+    }
+
+    private void ClearHouses(int x, int y)
     {
         foreach (var (dx, dy) in Lots)
         {
-            var lot = map.StateAt(centerX + dx, centerY + dy);
-            map.SetState(centerX + dx, centerY + dy, new TileState(lot.Kind, lot.Use, zonePart: lot.ZonePart));
+            SetHouse(x + dx, y + dy, 0);
         }
     }
 
-    private static int RoadsBeside(TileMap map, int x, int y) =>
-        (map.StateAtOrDefault(x, y - 1).IsRoad ? 1 : 0) +
-        (map.StateAtOrDefault(x + 1, y).IsRoad ? 1 : 0) +
-        (map.StateAtOrDefault(x, y + 1).IsRoad ? 1 : 0) +
-        (map.StateAtOrDefault(x - 1, y).IsRoad ? 1 : 0);
+    private void SetHouse(int x, int y, int house)
+    {
+        var lot = _map.StateAt(x, y);
+        _map.SetState(x, y, new TileState(lot.Kind, lot.Use, zonePart: lot.ZonePart, house: house));
+    }
+
+    private void SetLevel(int x, int y, TileState center, int level, int valueClass) =>
+        _map.SetState(x, y, new TileState(center.Kind, center.Use, level, valueClass: level > 0 ? valueClass : 0));
+
+    private int RoadsBeside(int x, int y) =>
+        (_map.StateAtOrDefault(x, y - 1).IsRoad ? 1 : 0) +
+        (_map.StateAtOrDefault(x + 1, y).IsRoad ? 1 : 0) +
+        (_map.StateAtOrDefault(x, y + 1).IsRoad ? 1 : 0) +
+        (_map.StateAtOrDefault(x - 1, y).IsRoad ? 1 : 0);
 }

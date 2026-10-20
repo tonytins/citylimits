@@ -96,7 +96,7 @@ public class CitySimulationTests
     }
 
     [Fact]
-    public void AZoneWithARoadBesideItDevelops()
+    public void AServedZoneGetsPeople()
     {
         var simulation = new CitySimulation(FlatMap(), 1);
         simulation.Builder.Apply(BuildAction.Road, 3, 1);
@@ -107,8 +107,7 @@ public class CitySimulationTests
             simulation.Tick();
         }
 
-        Assert.Equal(CityDefinitions.Base.Zone(TileUse.Residential).Levels, simulation.Map.StateAt(3, 3).Development);
-        Assert.Equal(0, simulation.Map.StateAt(2, 2).Development);
+        Assert.True(CityDefinitions.Base.Zone(TileUse.Residential).PopulationOf(simulation.Map, 3, 3) > 0);
     }
 
     [Fact]
@@ -123,23 +122,8 @@ public class CitySimulationTests
             simulation.Tick();
         }
 
-        // A road at the zone's corner doesn't serve it.
-        Assert.Equal(0, simulation.Map.StateAt(3, 3).Development);
-    }
-
-    [Fact]
-    public void AZoneNeverDevelopsPastTheLastLevel()
-    {
-        var simulation = new CitySimulation(FlatMap(), 1);
-        simulation.Builder.Apply(BuildAction.Road, 3, 1);
-        simulation.Builder.Apply(BuildAction.ZoneResidential, 3, 3);
-
-        for (var i = 0; i < 200 * CityCalendar.StepsPerCount; i++)
-        {
-            simulation.Tick();
-        }
-
-        Assert.Equal(CityDefinitions.Base.Zone(TileUse.Residential).Levels, simulation.Map.StateAt(3, 3).Development);
+        // A road at the zone's corner doesn't serve it, so it never gets anyone.
+        Assert.Equal(0, CityDefinitions.Base.Zone(TileUse.Residential).PopulationOf(simulation.Map, 3, 3));
     }
 
     [Fact]

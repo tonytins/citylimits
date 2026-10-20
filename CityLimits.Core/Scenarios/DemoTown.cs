@@ -29,7 +29,9 @@ public static class DemoTown
           ],
           "checks": [
             { "tick": 0, "count": "Road", "equals": 9 },
-            { "tick": 1536, "tile": { "x": 65, "y": 65 }, "use": "Residential", "developmentAtLeast": 1 },
+            { "tick": 1536, "tile": { "x": 65, "y": 65 }, "use": "Residential", "development": 0 },
+            { "tick": 1536, "tile": { "x": 68, "y": 65 }, "use": "Commercial", "development": 0 },
+            { "tick": 1536, "count": "Developed", "equals": 1 },
             { "tick": 1536, "tile": { "x": 68, "y": 64 }, "served": true },
             { "tick": 1536, "tile": { "x": 72, "y": 66 }, "kind": "Rubble", "use": "None" },
             { "tick": 1536, "fundsEquals": 19609 },

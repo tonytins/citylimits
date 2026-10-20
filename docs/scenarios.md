@@ -2,7 +2,7 @@
 
 > **Status:** phase 1 is built: `CityLimits.Core/Scenarios/` and
 > `citylimits scenario`, with `demo-town` and the built-in scenarios
-> `bridges` and `zones-and-bulldozer`, each run as a test. This document
+> `bridges`, `zones-and-bulldozer`, and `small-town`, each run as a test. This document
 > is the contract it was built to. It follows the Micropolis baseline: tools are strokes, zones are 3 by 3,
 > the bulldozer refunds nothing, and a tick is one phase of the
 > simulation's 16-phase cycle.
@@ -113,7 +113,9 @@ simulation is deterministic in. Phase 2 adds goals by date, such as
     { "tick": 768, "tool": "Bulldoze", "from": { "x": 71, "y": 65 }, "expect": "Built" }
   ],
   "checks": [
-    { "tick": 1536, "tile": { "x": 65, "y": 65 }, "use": "Residential", "developmentAtLeast": 1 },
+    { "tick": 1536, "tile": { "x": 65, "y": 65 }, "use": "Residential", "development": 0 },
+    { "tick": 1536, "tile": { "x": 68, "y": 65 }, "use": "Commercial", "development": 0 },
+    { "tick": 1536, "count": "Developed", "equals": 1 },
     { "tick": 1536, "tile": { "x": 68, "y": 64 }, "served": true },
     { "tick": 1536, "tile": { "x": 72, "y": 66 }, "kind": "Rubble", "use": "None" },
     { "tick": 1536, "fundsEquals": 19609 },
@@ -240,7 +242,7 @@ or changing the meaning of a field means bumping `format`.
     "cityTime": 96,
     "date": "1902-01",
     "funds": 19609,
-    "counts": { "Road": 9, "Bridge": 0, "Residential": 1, "Commercial": 1, "Industrial": 0, "Developed": 2 }
+    "counts": { "Road": 9, "Bridge": 0, "Residential": 1, "Commercial": 1, "Industrial": 0, "Developed": 1 }
   },
   "actions": [
     { "index": 0, "tick": 0, "tool": "Road", "status": "Built", "tiles": 9, "skipped": {}, "cost": 90, "met": true },

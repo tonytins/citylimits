@@ -126,21 +126,36 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   (`ZoneSpec.PopulationOf`). `TileMap.ZoneCenterOf` and `ZoneStateAt`
   find a zone's centre from any of its tiles. A zone is served when a road lies on one of the 12 tiles along
   its edges, just outside it, not at a corner (`RoadNetwork.IsZoneServed`).
-- **The tick.** `CitySimulation.Tick` advances the date and then grows the
-  city: when the scan reaches a served zone's centre, the zone takes a
-  step up on a flat chance from the simulation's own seeded generator
-  (`ZoneGrowth`: a house on the free outer tile with the most roads
-  beside it, or a building level), so the same seed and the same work give
-  the same city. The flat chance stands in until demand, trips, and land
-  value decide growth and decline.
+- **Growth and decline.** As in Micropolis, when the scan reaches a
+  zone's centre (`ZoneGrowth.Visit`), a zone with people sometimes sends a
+  trip out, and a zone with no road along its edge declines. Otherwise,
+  now and then, the city's demand for the zone's kind plus the zone's own
+  worth (residential: land value; commercial: the commercial rate;
+  industrial: nothing) make a score, and a roll from the simulation's
+  seeded generator decides whether it grows a step, declines a step, or
+  stays. A residential zone grows houses, on the free outer tile with the
+  most roads beside it, until its spec's number, then a building once the
+  population density around it passes 64, so a lone zone stays at houses
+  and buildings come where zones cluster. Buildings take their land-value
+  class from land value, except industry's, which is a coin toss.
+  Commerce grows only as far as land value divided by 32. The same seed
+  and the same work give the same city. Until their systems exist, every
+  zone counts as powered, pollution and crime are none, and an empty
+  residential zone never becomes a hospital or a church.
+- **The city maps.** `CityMaps` holds land value and population density
+  on 2 by 2 tile blocks, as Micropolis does. Land value (phase 12) is, for
+  a block with something built on it, 34 less the distance to the city's
+  centre of mass, times four, plus 15 for each tree or water tile in the
+  4 by 4 area around it, smoothed, from 1 to 250. Population density
+  (phase 14) spreads each zone's population, smoothed three times, and
+  sets the centre of mass and the commercial rate.
 - **Trips.** As in Micropolis, a zone's trip (`TripPlanner`) sets out
   from the first road along its edge and drives up to 30 road tiles, each
   step in a direction picked by the simulation's seeded generator, never
   straight back, looking for a zone of a kind its spec lists
   (`ZoneSpec.TripsTo`); a residential zone counts only once it has
   people. The outcome is no road, nowhere to go, or arrived, and the
-  route is remembered every other step for traffic later. Growth uses
-  trips from step 4e.
+  route is remembered every other step for traffic later.
 - **The census and demand.** As in Micropolis, the scan adds each zone's
   population to the census (`CityCensus`), which starts again every
   cycle and is recorded once a month, keeping ten years of history; the
@@ -221,10 +236,10 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   and no project. It holds the parser, the dispatcher, the default
   command, the strict option reader, and the exit codes.
 - **The tests.** `CityLimits.Tests` uses xUnit 2 with the VSTest runner
-  and coverlet, and holds 331 tests over the generator, the map, the
+  and coverlet, and holds 343 tests over the generator, the map, the
   calendar, the clock, the simulation, the settings, the tile rules, the
   build actions, the road network, the treasury, the scenario loader and
-  runner, every built-in scenario, the definitions and the mod loader, zone growth, the census and demand, trips,
+  runner, every built-in scenario, the definitions and the mod loader, zone growth, the census and demand, trips, growth and the city maps,
   the option reader, and the dispatcher.
 - **The game project.** `CityLimits.csproj` targets `net10.0` with nullable
   and implicit usings enabled, and references `Raylib-cs` `8.1.0` and

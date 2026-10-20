@@ -27,7 +27,7 @@ public class ScenarioRunnerTests
         Assert.Equal(96, report.Final.CityTime);
         Assert.Equal("1902-01", report.Final.Date);
         Assert.Equal(19609, report.Final.Funds);
-        Assert.Equal(new CityCounts(9, 0, 1, 1, 0, 2), report.Final.Counts);
+        Assert.Equal(new CityCounts(9, 0, 1, 1, 0, 1), report.Final.Counts);
         Assert.Equal([90, 100, 100, 100, 1], report.Actions.Select(a => a.Cost));
         Assert.All(report.Actions, a => Assert.Equal(9, a.Tiles));
         Assert.All(report.Actions, a => Assert.True(a.Met));
@@ -140,7 +140,7 @@ public class ScenarioRunnerTests
 
         runner.Run(DemoTown.Scenario, DemoTown.Id);
 
-        Assert.Equal(["action 0", "action 1", "action 2", "action 3", "check 0", "action 4", "check 1", "check 2", "check 3", "check 4", "check 5"], heard);
+        Assert.Equal(["action 0", "action 1", "action 2", "action 3", "check 0", "action 4", "check 1", "check 2", "check 3", "check 4", "check 5", "check 6", "check 7"], heard);
     }
 
     [Fact]

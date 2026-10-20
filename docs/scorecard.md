@@ -15,13 +15,13 @@ change. Statuses are `done`, `partial`, and `missing`.
 | [Core](#core) | 8 | 0 | 0 | 0.25 s steps at Normal, seed 2000, 128 by 128 map |
 | [Map](#map-and-terrain) | 4 | 0 | 0 | 4 kinds of ground, one 256 by 960 atlas |
 | [Zoning](#roads-and-zoning) | 5 | 0 | 0 | 5 tools that change the world, $10 a road, $50 a bridge, $100 a 3 by 3 zone, $1 to bulldoze |
-| [Simulation](#simulation) | 5 | 2 | 0 | 16 phases a 48th of a year, 3 minutes a year at Normal, houses then 4 to 5 building levels, 3 built-in scenarios |
+| [Simulation](#simulation) | 7 | 0 | 0 | 16 phases a 48th of a year, 3 minutes a year at Normal, houses then 4 to 5 building levels, 3 built-in scenarios |
 | [Economy](#economy-and-services) | 0 | 1 | 4 | $20 000 in the treasury, no taxes yet |
 | [Traffic](#traffic-and-commuting) | 0 | 2 | 2 | 1 road network, trips of up to 30 tiles |
-| [Environment](#land-value-pollution-and-disasters) | 0 | 0 | 5 | 0 disasters |
+| [Environment](#land-value-pollution-and-disasters) | 0 | 1 | 4 | land value from distance and terrain, 0 disasters |
 | [Interface](#player-interface) | 2 | 0 | 4 | 6 tools with icons, 1 status bar, the demand panel |
 | [Platform](#platform) | 7 | 0 | 2 | Raylib-cs 8.1.0, NLog 6.2.2, .NET 10, data mods |
-| [Reliability](#reliability) | 6 | 0 | 0 | 331 tests, all passing, CI green |
+| [Reliability](#reliability) | 6 | 0 | 0 | 343 tests, all passing, CI green |
 | [Documentation](#documentation) | 3 | 0 | 2 | 3 of 5 documents exist |
 | [Known issues](#known-issues) | | | | 1 open, 3 resolved |
 
@@ -39,7 +39,7 @@ How the state was verified on 2026-10-20:
 
 ```sh
 dotnet build CityLimits.slnx                              # 4 projects: 0 warnings, 0 errors
-dotnet test  CityLimits.Tests/CityLimits.Tests.csproj     # 331 passed, 0 failed
+dotnet test  CityLimits.Tests/CityLimits.Tests.csproj     # 343 passed, 0 failed
 dotnet run --project CityLimits -- --headless            # a year of steps, 12 months logged to the console
 dotnet run --project CityLimits                           # window opened; roads, zones, buildings, the palette icons, and the tile readout were drawn
 dotnet run --project CityLimits -- --seed 7               # window opened and the assets loaded (the screen was not inspected)
@@ -94,9 +94,9 @@ there is something to grow.
 | Id | Target | Status | Evidence |
 |---|---|---|---|
 | SIM-1 | A tick advances the date and updates the world | done | `CitySimulation.Tick` runs one phase of Micropolis' 16-phase cycle: phase 0 moves the calendar on by a 48th of a year (`CityCalendar`: 4 counts a month, from January 1900), and phases 1 to 8 scan the map in vertical bands, growing the served zones whose centres are in the band. `CitySimulationTests` and `CityCalendarTests` cover the count, the months, the year, the bands, and that each zone is scanned once a count in its own phase |
-| SIM-2 | Population, jobs, and migration between zones | partial | Each zone has a population from its spec (`ZoneSpec.PopulationOf`): one per single house, or 16 to 40 for a residential building and 1 to 5 for commercial and 1 to 4 for industrial, by level. There are no jobs, no migration, and no census yet |
+| SIM-2 | Population, jobs, and migration between zones | done | As in Micropolis: each zone's population comes from its spec, the census counts it, demand follows jobs and births, and residents move in and out through growth and decline. `CensusAndDemandTests` and `ZoneGrowthTests` cover them, and the `small-town` scenario grows twelve zones for ten years and checks the result |
 | SIM-3 | Residential, commercial, and industrial demand exist and are readable | done | `CityCensus` counts each zone's population as the scan passes it and records the month; `CityDemand` moves each demand every second count from employment, births, the market, and labour, as Micropolis does, within ±2,000 and ±1,500. `CensusAndDemandTests` works two cities by hand (an empty one: +180, -600, +600; 160 residents with no jobs: -588, +600, +600), the limits, the timing, and the census. The HUD's demand panel and the headless run's monthly line show them; on a private display on 2026-10-20 the bars rose and fell from the middle line as the town grew |
-| SIM-4 | Zones develop and decay, and abandoned zones come back | partial | Zones develop: `CitySimulation.Grow` moves a served zone up a level. There is no decay, and an abandoned zone does not come back, because there is no demand to bring it back |
+| SIM-4 | Zones develop and decay, and abandoned zones come back | done | `ZoneGrowth.Visit`: a score from demand and the zone's worth, against a roll, grows or declines a zone a step at a time, as Micropolis does; a zone with no road declines. A zone that declined grows again when demand returns: in a ten-year run of `small-town` on 2026-10-20, residential zones filled with houses, emptied, and filled again as demand swung between -2,000 and +1,200, and buildings came where houses clustered. `ZoneGrowthTests` checks one-level steps, the density rule, declines without a road, commerce's land-value limit (a mutation that dropped it reached level 4 where the rule allows 1), and land-value classes |
 | SIM-5 | Housing capacity follows the development level of a tile | done | As in Micropolis, a residential zone grows up to 8 single houses on its outer tiles, one person each, then 3 by 3 buildings of 16, 24, 32, and 40 by level; commercial and industrial buildings hold 1 to 5 and 1 to 4. The numbers are data in the zone's `ZoneSpec`, which a mod can change. `ZoneGrowthTests` covers the houses, the first house beside the road, the change to a building, every level, and a modded house limit |
 | SIM-6 | The same seed and the same actions give the same city after N ticks | done | `CitySimulationTests.TheSameSeedAndTheSameTicksGiveTheSameCity`: 100 ticks on two cities from the same seed agree on the date, the tick count, and the generator |
 | SIM-7 | A scenario file sets up a city, runs it with no window, and checks it | done | `CityLimits.Core/Scenarios/`: `ScenarioLoader` checks a file (unknown fields, exact enum names, every range, the first problem reported with its path), `ScenarioRunner` makes tool strokes and checks at their ticks and returns a format-1 `ScenarioReport`, and `DemoTown` is the fallback, defined in code and read through the same loader. `citylimits scenario` runs one by id or `--file`, with `--json`, the fallback, and exit codes 0 to 3. `BuiltInScenarioTests` runs `demo-town`, `bridges`, and `zones-and-bulldozer`, and pricing bridges at $40 on purpose failed `bridges` with "expected funds equal 19260, found 19390". `ScenarioLoaderTests` and `ScenarioRunnerTests` hold 55 more tests |
@@ -124,7 +124,7 @@ there is something to grow.
 
 | Id | Target | Status | Evidence |
 |---|---|---|---|
-| ENV-1 | Land value comes from desirability factors and has an overlay | missing | No land value model |
+| ENV-1 | Land value comes from desirability factors and has an overlay | partial | `CityMaps.UpdateLandValue`, as Micropolis: closeness to the city's centre of mass and the trees and water nearby, from 1 to 250, on 2 by 2 blocks. Pollution and crime aren't in it yet, and there is no overlay. `CityMapsTests` works the values out by hand |
 | ENV-2 | Pollution comes from industry and traffic and lowers land value | missing | No pollution model |
 | ENV-3 | Fires start, spread, and are answered by the fire service | missing | No fire model |
 | ENV-4 | Earthquakes and floods happen on a timer, with a warning first | missing | No disasters |
@@ -162,7 +162,7 @@ there is something to grow.
 | REL-1 | Nothing ends the player's session: the frame loop catches, reports, and keeps drawing | done | `WindowedGame` catches every exception around the update and the draw, and `GameLoop.ReportError` puts the message on screen; the game keeps running |
 | REL-2 | The world and the simulation never call the engine | done | `CityLimits.Core` references no package at all, and the game references the core library; no Raylib type appears in the core |
 | REL-3 | Input, tile indices, map sizes, and files are validated where they enter | done | Map sizes, tile counts, and the settings file are checked, and the tile indexer throws outside the map. The mouse position is turned into a tile by `MapRenderer.TryGetTileAt`, which reports when the pointer is off the map, and `CityBuilder.Apply` refuses a tile that is off the map, ground that cannot be built on, and work the city cannot pay for |
-| REL-4 | A test project covers the engine-free logic, and the tests pass | done | `CityLimits.Tests` references `CityLimits.Core` and `CityLimits.CommandLine` and holds 331 xUnit tests over the generator, the map, the tile state, the rules, the calendar and the cycle, the clock, the simulation, the settings, the treasury, the road network and its connections, the map's change event, the builder and its strokes, the scenario loader and runner, every built-in scenario, the definitions and the mod loader, zone growth, the census and demand, trips, the option reader, and the dispatcher. All 331 passed on 2026-10-20. Letting an unknown option and an out-of-range number through on purpose failed 3 of them, and letting `--headless` reach a command that needs a window failed 2 |
+| REL-4 | A test project covers the engine-free logic, and the tests pass | done | `CityLimits.Tests` references `CityLimits.Core` and `CityLimits.CommandLine` and holds 343 xUnit tests over the generator, the map, the tile state, the rules, the calendar and the cycle, the clock, the simulation, the settings, the treasury, the road network and its connections, the map's change event, the builder and its strokes, the scenario loader and runner, every built-in scenario, the definitions and the mod loader, zone growth, the census and demand, trips, growth and the city maps, the option reader, and the dispatcher. All 343 passed on 2026-10-20. Letting an unknown option and an out-of-range number through on purpose failed 3 of them, and letting `--headless` reach a command that needs a window failed 2 |
 | REL-5 | A determinism test proves the same seed gives the same city | done | `DeterministicRandomTests.TheSameSeedGivesTheSameSequence`, `CitySimulationTests.TheSameSeedAndTheSameTicksGiveTheSameCity`, and `CitySimulationTests.TheSameSeedAndTheSameWorkGiveTheSameCity`, which builds the same road and zones in two cities and compares the tiles and the money after 40 ticks |
 | REL-6 | CI builds and tests on every push | done | `.github/workflows/dotnet.yml` runs on a push to `main` and on a pull request: restore, build, and test. The first run, on the commit 273fd9f on 2026-10-20, finished with the conclusion `success` (run 39443031762) |
 

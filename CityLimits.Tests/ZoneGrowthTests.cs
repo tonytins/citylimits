@@ -1,4 +1,5 @@
 using CityLimits.Core.Definitions;
+using CityLimits.Core.Scenarios;
 using CityLimits.Core.Simulation;
 using CityLimits.Core.World;
 
@@ -7,32 +8,46 @@ namespace CityLimits.Tests;
 public class ZoneGrowthTests
 {
     private static readonly ZoneSpec Residential = CityDefinitions.Base.Zone(TileUse.Residential);
-    private static readonly ZoneSpec Commercial = CityDefinitions.Base.Zone(TileUse.Commercial);
 
-    // A zone centred at (4, 4), served by a road along its bottom edge on row 6.
-    private static CitySimulation ServedZone(BuildAction zone, int seed = 1, CityDefinitions? definitions = null)
+    // A zone centred at (4, 4), with a road along its bottom edge on row 6 unless asked not to.
+    private static CitySimulation LoneZone(BuildAction zone, bool road = true, CityDefinitions? definitions = null)
     {
         var map = TileMap.FromTerrain(9, 9, new TileKind[81]);
-        var city = new CitySimulation(map, seed, definitions: definitions);
-        var road = new BuildStroke(BuildAction.Road, 2, 6);
-        road.DragTo(6, 6);
-        city.Builder.Apply(road);
+        var city = new CitySimulation(map, 1, definitions: definitions);
+        if (road)
+        {
+            var stroke = new BuildStroke(BuildAction.Road, 2, 6);
+            stroke.DragTo(6, 6);
+            city.Builder.Apply(stroke);
+        }
+
         city.Builder.Apply(zone, 4, 4);
         return city;
     }
 
-    // Runs the city until a condition holds, a count at a time, or fails after a long while.
-    private static void RunUntil(CitySimulation city, Func<bool> done)
+    // The small-town scenario's city, built and ready to run.
+    private static CitySimulation SmallTown()
     {
-        for (var count = 0; count < 2000 && !done(); count++)
+        var path = Path.Combine(AppContext.BaseDirectory, "Scenarios", "small-town.json");
+        Assert.True(ScenarioLoader.TryLoadFile(path, out var scenario, out var error), error);
+        var map = TileMapGenerator.Generate(scenario.Seed, scenario.MapWidth, scenario.MapHeight);
+        var city = new CitySimulation(map, scenario.Seed);
+        foreach (var action in scenario.Actions)
         {
-            for (var step = 0; step < CityCalendar.StepsPerCount; step++)
-            {
-                city.Tick();
-            }
+            var stroke = new BuildStroke(action.Tool, action.FromX, action.FromY);
+            stroke.DragTo(action.ToX, action.ToY);
+            city.Builder.Apply(stroke);
         }
 
-        Assert.True(done(), "The zone never got there.");
+        return city;
+    }
+
+    private static void RunCounts(CitySimulation city, int counts)
+    {
+        for (var i = 0; i < counts * CityCalendar.StepsPerCount; i++)
+        {
+            city.Tick();
+        }
     }
 
     private static int Houses(TileMap map) =>
@@ -41,38 +56,122 @@ public class ZoneGrowthTests
     [Fact]
     public void AResidentialZoneGrowsItsFirstHouseBesideTheRoad()
     {
-        var city = ServedZone(BuildAction.ZoneResidential);
+        var city = LoneZone(BuildAction.ZoneResidential);
+        (int X, int Y)? first = null;
+        city.Map.TileChanged += (x, y) => first ??= city.Map.StateAt(x, y).HasHouse ? (x, y) : null;
 
-        RunUntil(city, () => Houses(city.Map) == 1);
+        RunCounts(city, 200);
 
-        // The bottom row of the zone touches the road; the other outer tiles don't.
-        var house = Enumerable.Range(3, 3).SelectMany(y => Enumerable.Range(3, 3).Select(x => (x, y))).Single(p => city.Map.StateAt(p.x, p.y).HasHouse);
-        Assert.Equal(5, house.y);
-        Assert.Equal(0, city.Map.StateAt(4, 4).Development);
-        Assert.Equal(1, Residential.PopulationOf(city.Map, 4, 4));
+        Assert.NotNull(first);
+        Assert.Equal(5, first.Value.Y);
     }
 
     [Fact]
-    public void EightHousesMakeWayForABuilding()
+    public void ALoneResidentialZoneStaysAtHousesBecauseNothingAroundItIsDense()
     {
-        var city = ServedZone(BuildAction.ZoneResidential);
+        var city = LoneZone(BuildAction.ZoneResidential);
         var mostHouses = 0;
+        city.Map.TileChanged += (_, _) => mostHouses = Math.Max(mostHouses, Houses(city.Map));
 
-        RunUntil(city, () =>
-        {
-            mostHouses = Math.Max(mostHouses, Houses(city.Map));
-            return city.Map.StateAt(4, 4).Development == 1;
-        });
+        RunCounts(city, 400);
 
-        Assert.Equal(Residential.Houses, mostHouses);
-        Assert.Equal(0, Houses(city.Map));
-        Assert.Equal(Residential.Populations[0], Residential.PopulationOf(city.Map, 4, 4));
+        Assert.Equal(0, city.Map.StateAt(4, 4).Development);
+        Assert.InRange(mostHouses, 1, Residential.Houses);
     }
 
     [Fact]
-    public void ABuildingGrowsALevelAtATimeToItsSpecsTop()
+    public void AModdedHouseLimitHolds()
     {
-        var city = ServedZone(BuildAction.ZoneResidential);
+        var folder = Directory.CreateTempSubdirectory().FullName;
+        try
+        {
+            var mod = Directory.CreateDirectory(Path.Combine(folder, "few-houses")).FullName;
+            File.WriteAllText(Path.Combine(mod, "mod.json"), """{ "format": 1, "id": "few-houses", "name": "Few houses" }""");
+            File.WriteAllText(Path.Combine(mod, "zones.json"), """{ "format": 1, "zones": [ { "id": "residential", "houses": 2 } ] }""");
+            var definitions = ModLoader.Load(folder, out var problems);
+            Assert.Empty(problems);
+            var city = LoneZone(BuildAction.ZoneResidential, definitions: definitions);
+            var mostHouses = 0;
+            city.Map.TileChanged += (_, _) => mostHouses = Math.Max(mostHouses, Houses(city.Map));
+
+            RunCounts(city, 400);
+
+            Assert.Equal(2, mostHouses);
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void ZonesChangeALevelAtATimeAndNeverPassTheirSpecsTop()
+    {
+        var city = SmallTown();
+        var levels = new Dictionary<(int, int), int>();
+        var jumps = new List<string>();
+        city.Map.TileChanged += (x, y) =>
+        {
+            var state = city.Map.StateAt(x, y);
+            if (!state.IsZoneCenter)
+            {
+                return;
+            }
+
+            var before = levels.GetValueOrDefault((x, y));
+            if (Math.Abs(state.Development - before) > 1 || state.Development > city.Definitions.Zone(state.Use).Levels)
+            {
+                jumps.Add($"{state.Use} at ({x}, {y}): {before} to {state.Development}");
+            }
+
+            levels[(x, y)] = state.Development;
+        };
+
+        RunCounts(city, CityCalendar.CountsPerYear * 10);
+
+        Assert.Empty(jumps);
+        Assert.Contains(levels, pair => pair.Value > 1);
+    }
+
+    [Fact]
+    public void BusinessesNeverHoldHousesAndBuildingsNeverStandAmongHouses()
+    {
+        var city = SmallTown();
+        var problems = new List<string>();
+        city.Map.TileChanged += (x, y) =>
+        {
+            var state = city.Map.StateAt(x, y);
+            if (state.HasHouse && (state.Use != TileUse.Residential || city.Map.ZoneStateAt(x, y).Development > 0))
+            {
+                problems.Add($"a house at ({x}, {y}) in a {state.Use} zone at level {city.Map.ZoneStateAt(x, y).Development}");
+            }
+        };
+
+        RunCounts(city, CityCalendar.CountsPerYear * 10);
+
+        Assert.Empty(problems);
+    }
+
+    [Theory]
+    [InlineData(BuildAction.ZoneCommercial, TileUse.Commercial)]
+    [InlineData(BuildAction.ZoneIndustrial, TileUse.Industrial)]
+    public void ABusinessWithNoRoadDeclinesToNothing(BuildAction zone, TileUse use)
+    {
+        var city = LoneZone(zone, road: false);
+        city.Map.SetState(4, 4, new TileState(TileKind.Grass, use, 3, valueClass: 1));
+
+        RunCounts(city, 400);
+
+        Assert.Equal(0, city.Map.StateAt(4, 4).Development);
+    }
+
+    [Fact]
+    public void AResidentialBuildingWithNoRoadDeclinesAndNeverBuildsAgain()
+    {
+        // As in Micropolis, an empty zone takes no trip, so it can grow a few houses before their
+        // own trips find no road and they go again; but it never gets a building back.
+        var city = LoneZone(BuildAction.ZoneResidential, road: false);
+        city.Map.SetState(4, 4, new TileState(TileKind.Grass, TileUse.Residential, 2, valueClass: 1));
         var levels = new List<int>();
         city.Map.TileChanged += (x, y) =>
         {
@@ -82,62 +181,60 @@ public class ZoneGrowthTests
             }
         };
 
-        RunUntil(city, () => city.Map.StateAt(4, 4).Development == Residential.Levels);
+        RunCounts(city, 400);
 
-        Assert.Equal([1, 2, 3, 4], levels);
-        Assert.Equal(40, Residential.PopulationOf(city.Map, 4, 4));
+        Assert.Equal([1, 0], levels);
     }
 
     [Fact]
-    public void ACommercialZoneBuildsStraightAwayAndHasFiveLevels()
+    public void CommerceGrowsOnlyAsFarAsLandValueCarriesIt()
     {
-        var city = ServedZone(BuildAction.ZoneCommercial);
-
-        RunUntil(city, () => city.Map.StateAt(4, 4).Development == Commercial.Levels);
-
-        Assert.Equal(0, Houses(city.Map));
-        Assert.Equal(5, Commercial.Levels);
-        Assert.Equal(5, Commercial.PopulationOf(city.Map, 4, 4));
-    }
-
-    [Fact]
-    public void AModdedHouseLimitTakesEffect()
-    {
-        var folder = Directory.CreateTempSubdirectory().FullName;
-        try
+        // A shop in one corner with residents beside it, and a large industrial district in the
+        // far corner that pulls the city's centre away, so the shop's land value is only 8.
+        var map = TileMap.FromTerrain(128, 128, new TileKind[128 * 128]);
+        var city = new CitySimulation(map, 3, funds: 1_000_000);
+        var road = new BuildStroke(BuildAction.Road, 1, 6);
+        road.DragTo(30, 6);
+        city.Builder.Apply(road);
+        for (var x = 2; x <= 14; x += 3)
         {
-            var mod = Directory.CreateDirectory(Path.Combine(folder, "few-houses")).FullName;
-            File.WriteAllText(Path.Combine(mod, "mod.json"), """{ "format": 1, "id": "few-houses", "name": "Few houses" }""");
-            File.WriteAllText(Path.Combine(mod, "zones.json"), """{ "format": 1, "zones": [ { "id": "residential", "houses": 2, "populations": [10, 20, 30, 50] } ] }""");
-            var definitions = ModLoader.Load(folder, out var problems);
-            Assert.Empty(problems);
-            var city = ServedZone(BuildAction.ZoneResidential, definitions: definitions);
-            var mostHouses = 0;
+            city.Builder.Apply(BuildAction.ZoneResidential, x, 4);
+            map.SetState(x, 4, new TileState(TileKind.Grass, TileUse.Residential, 4));
+        }
 
-            RunUntil(city, () =>
+        city.Builder.Apply(BuildAction.ZoneCommercial, 20, 4);
+        var district = new BuildStroke(BuildAction.ZoneIndustrial, 100, 100);
+        district.DragTo(124, 124);
+        city.Builder.Apply(district);
+        var mostLevel = 0;
+        map.TileChanged += (x, y) =>
+        {
+            if ((x, y) == (20, 4))
             {
-                mostHouses = Math.Max(mostHouses, Houses(city.Map));
-                return city.Map.StateAt(4, 4).Development == 1;
-            });
+                mostLevel = Math.Max(mostLevel, map.StateAt(20, 4).Development);
+            }
+        };
 
-            Assert.Equal(2, mostHouses);
-            Assert.Equal(10, definitions.Zone(TileUse.Residential).PopulationOf(city.Map, 4, 4));
-        }
-        finally
-        {
-            Directory.Delete(folder, recursive: true);
-        }
+        RunCounts(city, CityCalendar.CountsPerYear * 20);
+
+        Assert.Equal(8, city.Maps.LandValueAt(20, 4));
+        Assert.Equal(1, mostLevel);
     }
 
-    [Theory]
-    [InlineData("""{ "format": 1, "zones": [ { "id": "residential", "populations": [1, 2] } ] }""", "zones.json: zones[0].populations: needs 4 levels, one for each building drawing, not 2.")]
-    [InlineData("""{ "format": 1, "zones": [ { "id": "industrial", "valueClasses": 4 } ] }""", "zones.json: zones[0].valueClasses: a mod can't change it, because each class needs its own drawings.")]
-    [InlineData("""{ "format": 1, "zones": [ { "id": "industrial", "houses": 3 } ] }""", "zones.json: zones[0].houses: only a residential zone grows single houses.")]
-    [InlineData("""{ "format": 1, "zones": [ { "id": "residential", "houses": 9 } ] }""", "zones.json: zones[0].houses: needs a number from 0 to 8, not 9.")]
-    public void AModCantChangeWhatTheDrawingsFix(string zones, string expected)
+    [Fact]
+    public void ResidentialBuildingsTakeTheirClassFromLandValue()
     {
-        Assert.False(DefinitionLoader.TryParseMod("m", """{ "format": 1, "id": "m", "name": "M" }""", zones, out _, out var error));
-        Assert.Equal(expected, error);
+        var city = SmallTown();
+
+        RunCounts(city, CityCalendar.CountsPerYear * 10);
+
+        // The town is near the centre, where land value puts buildings in the middle classes.
+        var classes = Enumerable.Range(0, city.Map.Height).SelectMany(y => Enumerable.Range(0, city.Map.Width).Select(x => city.Map.StateAt(x, y)))
+            .Where(s => s.IsZoneCenter && s.Use == TileUse.Residential && s.Development > 0)
+            .Select(s => s.ValueClass)
+            .ToList();
+        Assert.NotEmpty(classes);
+        Assert.All(classes, valueClass => Assert.InRange(valueClass, 1, 3));
     }
 
     [Fact]
@@ -155,6 +252,17 @@ public class ZoneGrowthTests
 
         map.SetState(4, 4, new TileState(TileKind.Grass, TileUse.Residential, development: 3, valueClass: 2));
         Assert.Equal("Residential zone - level 3 of 4, population 32", TileInfo.Describe(map, 5, 3, city.Definitions));
+    }
+
+    [Theory]
+    [InlineData("""{ "format": 1, "zones": [ { "id": "residential", "populations": [1, 2] } ] }""", "zones.json: zones[0].populations: needs 4 levels, one for each building drawing, not 2.")]
+    [InlineData("""{ "format": 1, "zones": [ { "id": "industrial", "valueClasses": 4 } ] }""", "zones.json: zones[0].valueClasses: a mod can't change it, because each class needs its own drawings.")]
+    [InlineData("""{ "format": 1, "zones": [ { "id": "industrial", "houses": 3 } ] }""", "zones.json: zones[0].houses: only a residential zone grows single houses.")]
+    [InlineData("""{ "format": 1, "zones": [ { "id": "residential", "houses": 9 } ] }""", "zones.json: zones[0].houses: needs a number from 0 to 8, not 9.")]
+    public void AModCantChangeWhatTheDrawingsFix(string zones, string expected)
+    {
+        Assert.False(DefinitionLoader.TryParseMod("m", """{ "format": 1, "id": "m", "name": "M" }""", zones, out _, out var error));
+        Assert.Equal(expected, error);
     }
 
     [Theory]

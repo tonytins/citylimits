@@ -17,7 +17,7 @@
     { "tick": 0, "count": "Residential", "equals": 3 },
     { "tick": 0, "tile": { "x": 65, "y": 66 }, "served": true },
     { "tick": 0, "tile": { "x": 74, "y": 62 }, "served": false },
-    { "tick": 767, "count": "Developed", "equals": 3 },
+    { "tick": 767, "count": "Developed", "atLeast": 1 },
     { "tick": 767, "tile": { "x": 74, "y": 62 }, "development": 0 },
     { "tick": 768, "tile": { "x": 68, "y": 66 }, "kind": "Rubble", "use": "None" },
     { "tick": 768, "count": "Residential", "equals": 2 },

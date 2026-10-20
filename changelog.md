@@ -1,5 +1,21 @@
 # CityLimits Changelog
 
+## 0.1.116
+
+The city grows on its own, as in Micropolis. Each zone sends trips along
+the roads, and the city's demand for its kind, with what the land around
+it is worth, decides whether it grows, declines, or stays. Residential
+zones fill with houses, then build up where zones cluster together; a
+zone on its own stays at houses. Shops grow only as far as land value
+lets them, factories follow demand, and a zone with no road along its
+edge declines. Land is worth most near the city's centre and beside trees
+and water, and buildings come in styles that follow its value.
+
+Growth swings as demand does: zones fill, empty, and fill again as the
+balance of residents, shops, and factories shifts.
+
+A new built-in scenario, `small-town`, grows twelve zones for ten years.
+
 ## 0.1.115
 
 The city takes a census and feels demand, as in Micropolis. The status bar
