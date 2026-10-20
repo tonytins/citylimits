@@ -191,17 +191,19 @@ reach the builder.
 
 ## 8. Input
 
-- Raylib polls input **once per frame**. `IsMouseButtonDown` is true while
-  the button is held during a frame. `IsMouseButtonPressed` is true only
-  on the frame it went down. Road painting uses `Down`, so dragging paints
-  every tile the pointer crosses. A one-shot tool, like placing a 3 by 3
-  zone, uses `Pressed`.
+- Raylib polls input **once per frame**. `IsMouseButtonPressed` is true
+  only on the frame the button went down, `IsMouseButtonDown` while it is
+  held, and `IsMouseButtonReleased` on the frame it came up. Building
+  tools use all three, through a stroke: `Pressed` starts a
+  `BuildStroke`, `Down` drags it, and the first frame the button is no
+  longer down applies it (`GameLoop.HandleStroke`). Don't apply work on
+  `Down` frame by frame; that was the old painting, and it had no preview.
 - `IsKeyPressed` for toggles (pause, speed, tools), `IsKeyDown` for held
   movement (panning).
-- Escape: raylib's default exit key makes `WindowShouldClose()` true, and
-  `GameLoop` also handles `KeyboardKey.Escape`. If Escape ever needs
-  another meaning, call `SetExitKey(KeyboardKey.Null)` and handle closing
-  yourself.
+- Escape: raylib's default exit key would make `WindowShouldClose()` true,
+  so `WindowedGame` calls `SetExitKey(KeyboardKey.Null)` and `GameLoop`
+  handles Escape itself: it cancels a stroke in progress, and quits when
+  there is none.
 - Input crosses a boundary: check a mouse position against the map before
   using it as a tile.
 

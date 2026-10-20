@@ -21,6 +21,9 @@ public static class WindowedGame
         Raylib.InitWindow(settings.WindowWidth, settings.WindowHeight, "CityLimits");
         Raylib.SetTargetFPS(60);
 
+        // Escape cancels a stroke in progress, so it can't also close the window; GameLoop quits on it otherwise.
+        Raylib.SetExitKey(KeyboardKey.Null);
+
         var assets = GameAssets.Load(Path.Combine(AppContext.BaseDirectory, GameAssets.FolderName), out var problems);
         foreach (var problem in problems)
         {

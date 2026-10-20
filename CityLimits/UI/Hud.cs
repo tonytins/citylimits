@@ -9,7 +9,7 @@ public sealed class Hud
     private const int FontSize = 14;
     private const int Padding = 10;
     private const int ReadoutHeight = 46;
-    private const string Hints = "WASD pan   wheel zoom   space pause   , . speed   1-6 tools   left mouse build   esc quit";
+    private const string Hints = "WASD pan   wheel zoom   space pause   , . speed   1-6 tools   drag to build   esc cancel or quit";
 
     /// <summary>Draws the top bar with the state of the city.</summary>
     public void DrawStatus(GameDate date, long tickCount, int speed, Tool tool, int funds, int toolCost, Vector2 mouseWorld, int framesPerSecond)
@@ -47,6 +47,26 @@ public sealed class Hud
 
         Raylib.DrawRectangle(0, y - 6, width + (Padding * 2), 26, Theme.Panel);
         Raylib.DrawText(Hints, Padding, y, FontSize, Theme.TextDim);
+    }
+
+    /// <summary>Draws what the stroke being dragged would cost, beside the pointer, or why it can't be built.</summary>
+    public void DrawStrokeCost(Vector2 mouse, BuildPlan plan)
+    {
+        var (text, color) = plan switch
+        {
+            { Refusal: BuildRefusal.OffTheMap } => ("Runs off the map", Theme.Error),
+            { Refusal: BuildRefusal.NotEnoughFunds } => ($"${plan.Cost} - not enough money", Theme.Error),
+            { Tiles.Count: 0 } => ("Nothing to do here", Theme.TextDim),
+            { Refund: > 0 } => ($"${plan.Refund} back", Theme.Accent),
+            _ => ($"${plan.Cost}", Theme.Accent),
+        };
+
+        var width = Raylib.MeasureText(text, FontSize) + (Padding * 2);
+        var x = (int)mouse.X + 16;
+        var y = (int)mouse.Y + 16;
+
+        Raylib.DrawRectangle(x, y, width, 22, Theme.Panel);
+        Raylib.DrawText(text, x + Padding, y + 4, FontSize, color);
     }
 
     /// <summary>Draws a message the player needs to know about, or nothing when there is none.</summary>

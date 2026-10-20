@@ -23,9 +23,8 @@ public sealed class GameLoop : IDisposable
     private string? _error;
     private string? _notice;
     private bool _noticeIsError;
-    private int _lastTileX = -1;
-    private int _lastTileY = -1;
-    private bool _painting;
+    private readonly BuildPlan _preview = new();
+    private BuildStroke? _stroke;
 
     /// <summary>Creates the game with the settings it was started with.</summary>
     public GameLoop(GameSettings settings, string settingsPath, GameAssets assets, int seed = DefaultSeed)
@@ -72,6 +71,12 @@ public sealed class GameLoop : IDisposable
         }
 
         _simulation.Roads.EnsureCurrent(_simulation.Map);
+
+        // The preview is worked out every frame, so it keeps up with the city growing under it.
+        if (_stroke is not null)
+        {
+            _simulation.Builder.Plan(_stroke, _preview);
+        }
         _camera.ClampTo(MapSize.DefaultWidth * MapRenderer.TileSize, MapSize.DefaultHeight * MapRenderer.TileSize);
     }
 
@@ -88,7 +93,15 @@ public sealed class GameLoop : IDisposable
 
         Raylib.BeginMode2D(_camera.ToRaylib());
         _mapRenderer.Draw(_camera);
-        _mapRenderer.DrawHover(_camera, mouse);
+        if (_stroke is not null)
+        {
+            _mapRenderer.DrawPreview(_preview, _camera);
+        }
+        else
+        {
+            _mapRenderer.DrawHover(_camera, mouse);
+        }
+
         Raylib.EndMode2D();
 
         _toolPaletteView.Draw(_tools);
@@ -108,6 +121,11 @@ public sealed class GameLoop : IDisposable
         _hud.DrawTileReadout(onMap ? state : null, tileX, tileY);
         _hud.DrawHints();
         _hud.DrawMessage(_error ?? _notice, _error is not null || _noticeIsError);
+
+        if (_stroke is not null)
+        {
+            _hud.DrawStrokeCost(mouse, _preview);
+        }
 
         Raylib.EndDrawing();
     }
@@ -190,7 +208,15 @@ public sealed class GameLoop : IDisposable
 
         if (Raylib.IsKeyPressed(KeyboardKey.Escape))
         {
-            ShouldClose = true;
+            if (_stroke is not null)
+            {
+                _stroke = null;
+                _notice = null;
+            }
+            else
+            {
+                ShouldClose = true;
+            }
         }
 
         foreach (var key in ToolPaletteView.ToolKeys)
@@ -204,11 +230,11 @@ public sealed class GameLoop : IDisposable
             if (tool is not null)
             {
                 _tools.Select(tool.Value);
-                _painting = false;
+                _stroke = null;
             }
         }
 
-        HandlePainting(mouse);
+        HandleStroke(mouse);
 
         if (Raylib.IsWindowResized())
         {
@@ -216,58 +242,54 @@ public sealed class GameLoop : IDisposable
         }
     }
 
-    private void HandlePainting(Vector2 mouse)
+    // A stroke starts where the button goes down, stretches while it is held, and is applied
+    // when it is let go, as in Micropolis. The pointer leaving the map stops the stretch there.
+    private void HandleStroke(Vector2 mouse)
     {
-        if (!Raylib.IsMouseButtonDown(MouseButton.Left))
+        var onMap = MapRenderer.TryGetTileAt(_simulation.Map, _camera.ScreenToWorld(mouse), out var tileX, out var tileY, out _);
+
+        if (_stroke is null)
         {
-            _painting = false;
-            _lastTileX = -1;
-            _lastTileY = -1;
+            var action = ToolActions.ActionFor(_tools.Selected);
+            if (action is not null && onMap && Raylib.IsMouseButtonPressed(MouseButton.Left))
+            {
+                _stroke = new BuildStroke(action.Value, tileX, tileY);
+                _simulation.Builder.Plan(_stroke, _preview);
+                _notice = null;
+            }
+
             return;
         }
 
-        var world = _camera.ScreenToWorld(mouse);
-        if (!MapRenderer.TryGetTileAt(_simulation.Map, world, out var tileX, out var tileY, out _))
+        if (Raylib.IsMouseButtonDown(MouseButton.Left))
         {
+            if (onMap)
+            {
+                _stroke.DragTo(tileX, tileY);
+            }
+
             return;
         }
 
-        if (_painting && tileX == _lastTileX && tileY == _lastTileY)
-        {
-            return;
-        }
-
-        _painting = true;
-        _lastTileX = tileX;
-        _lastTileY = tileY;
-        ApplyTool(tileX, tileY);
-    }
-
-    private void ApplyTool(int tileX, int tileY)
-    {
-        var action = ToolActions.ActionFor(_tools.Selected);
-        if (action is null)
-        {
-            _notice = null;
-            return;
-        }
-
-        var result = _simulation.Builder.Apply(action.Value, tileX, tileY);
+        var result = _simulation.Builder.Apply(_stroke);
+        _stroke = null;
         _noticeIsError = result.Status == BuildStatus.Refused;
         _notice = Describe(result);
     }
 
     private static string Describe(BuildResult result) => result.Status switch
     {
-        BuildStatus.Built when result.Refund > 0 => $"Cleared the tile, ${result.Refund} back",
-        BuildStatus.Built => "Done",
-        BuildStatus.Unchanged when result.Reason == BuildRefusal.AlreadyDone => "The tile is already like that",
+        BuildStatus.Built when result.Refund > 0 => $"Cleared {Tiles(result.TilesChanged)}, ${result.Refund} back",
+        BuildStatus.Built => $"Built {Tiles(result.TilesChanged)} for ${result.Cost}",
+        BuildStatus.Unchanged when result.Reason == BuildRefusal.AlreadyDone => "The land is already like that",
         BuildStatus.Unchanged => "There was nothing to clear",
         BuildStatus.Refused when result.Reason == BuildRefusal.NotEnoughFunds => $"Not enough money, it costs ${result.Cost}",
         BuildStatus.Refused when result.Reason == BuildRefusal.CannotBuildHere => "That ground cannot be built on",
-        BuildStatus.Refused when result.Reason == BuildRefusal.OffTheMap => "That tile is off the map",
+        BuildStatus.Refused when result.Reason == BuildRefusal.OffTheMap => "That runs off the map",
         _ => "The work was refused",
     };
+
+    private static string Tiles(int count) => count == 1 ? "1 tile" : $"{count} tiles";
 
     private int CostOfSelectedTool()
     {

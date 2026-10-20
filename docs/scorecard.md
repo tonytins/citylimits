@@ -21,7 +21,7 @@ change. Statuses are `done`, `partial`, and `missing`.
 | [Environment](#land-value-pollution-and-disasters) | 0 | 0 | 5 | 0 disasters |
 | [Interface](#player-interface) | 1 | 1 | 4 | 6 tools with icons, 1 status bar |
 | [Platform](#platform) | 6 | 0 | 2 | Raylib-cs 8.1.0, NLog 6.2.2, .NET 10 |
-| [Reliability](#reliability) | 6 | 0 | 0 | 152 tests, all passing, CI green |
+| [Reliability](#reliability) | 6 | 0 | 0 | 170 tests, all passing, CI green |
 | [Documentation](#documentation) | 3 | 0 | 2 | 3 of 5 documents exist |
 | [Known issues](#known-issues) | | | | 1 open, 3 resolved |
 
@@ -39,7 +39,7 @@ How the state was verified on 2026-10-20:
 
 ```sh
 dotnet build CityLimits.slnx                              # 4 projects: 0 warnings, 0 errors
-dotnet test  CityLimits.Tests/CityLimits.Tests.csproj     # 152 passed, 0 failed
+dotnet test  CityLimits.Tests/CityLimits.Tests.csproj     # 170 passed, 0 failed
 dotnet run --project CityLimits -- --headless --ticks 12  # 12 ticks logged to the console
 dotnet run --project CityLimits                           # window opened; roads, zones, buildings, the palette icons, and the tile readout were drawn
 dotnet run --project CityLimits -- --seed 7               # window opened and the assets loaded (the screen was not inspected)
@@ -83,8 +83,8 @@ there is something to grow.
 
 | Id | Target | Status | Evidence |
 |---|---|---|---|
-| ZONE-1 | Roads can be drawn and bulldozed, with a cost the player must be able to pay | done | `CityLimits.Core/World/CityBuilder.cs`: `LayRoad` charges `TileCosts.Road`, and `Bulldoze` clears it again. The work is refused with `BuildRefusal.NotEnoughFunds` when `Treasury.TrySpend` fails, and the refusal is put on screen by `GameLoop.ApplyTool`. `CityBuilderTests` covers the charge, the refusal, and the refund |
-| ZONE-2 | Residential, commercial, and industrial tiles can be zoned, by dragging | done | `BuildAction.ZoneResidential`, `ZoneCommercial`, and `ZoneIndustrial` map to `TileUse.Residential`, `Commercial`, and `Industrial`. `GameLoop.HandlePainting` applies the held tool to every tile the pointer crosses while the left button is down, so a zone is painted by dragging |
+| ZONE-1 | Roads can be drawn and bulldozed, with a cost the player must be able to pay | done | `CityLimits.Core/World/CityBuilder.cs`: `LayRoad` charges `TileCosts.Road`, and `Bulldoze` clears it again. Work is done in strokes: `CityBuilder.Plan` previews a `BuildStroke` into a `BuildPlan` with its total cost, and `CityBuilder.Apply` applies all of it or refuses it whole with `BuildRefusal.NotEnoughFunds` or `OffTheMap`. `GameLoop.HandleStroke` puts the result on screen. `CityBuilderTests` and `BuildStrokeTests` cover the charge, the refusals, the skipped tiles, and the refund. On a private display on 2026-10-20, a diagonal road drag previewed and built a straight road of 11 tiles for $115, the money matched, and Escape cancelled a bulldozer stroke with nothing changed |
+| ZONE-2 | Residential, commercial, and industrial tiles can be zoned, by dragging | done | `BuildAction.ZoneResidential`, `ZoneCommercial`, and `ZoneIndustrial` map to `TileUse.Residential`, `Commercial`, and `Industrial`. A zone stroke covers the rectangle dragged, with a preview and its total cost, and is applied on release. Zones are still 1 by 1 here, where Micropolis' are 3 by 3 |
 | ZONE-3 | A zoned tile counts as served only when it reaches the road network | done | `CityLimits.Core/World/RoadNetwork.cs`: `IsServed` is true for a road tile and for a tile orthogonally next to one, and false for a tile that only touches a road at a corner. `CitySimulation.Grow` develops a zone only when it is served, and `CityBuilderTests` and `RoadNetworkTests` prove both halves |
 | ZONE-4 | Buildings are drawn from the tile's own state, not a second list of buildings | done | The building lives in the tile: `TileState` holds the use and the development level, and `MapRenderer.DrawZone` draws the building from `map.StateAt(x, y)`. There is no list of buildings anywhere in the tree |
 | ZONE-5 | Bulldozing clears a tile and refunds part of its cost | done | `CityBuilder.Bulldoze` puts the tile back to clear ground and refunds `TileCosts.RefundFor`, half of what the tile cost. The refund is tested for a road, for a zone, and for a tile with nothing on it |
@@ -161,7 +161,7 @@ there is something to grow.
 | REL-1 | Nothing ends the player's session: the frame loop catches, reports, and keeps drawing | done | `WindowedGame` catches every exception around the update and the draw, and `GameLoop.ReportError` puts the message on screen; the game keeps running |
 | REL-2 | The world and the simulation never call the engine | done | `CityLimits.Core` references no package at all, and the game references the core library; no Raylib type appears in the core |
 | REL-3 | Input, tile indices, map sizes, and files are validated where they enter | done | Map sizes, tile counts, and the settings file are checked, and the tile indexer throws outside the map. The mouse position is turned into a tile by `MapRenderer.TryGetTileAt`, which reports when the pointer is off the map, and `CityBuilder.Apply` refuses a tile that is off the map, ground that cannot be built on, and work the city cannot pay for |
-| REL-4 | A test project covers the engine-free logic, and the tests pass | done | `CityLimits.Tests` references `CityLimits.Core` and `CityLimits.CommandLine` and holds 152 xUnit tests over the generator, the map, the tile state, the rules, the calendar, the clock, the simulation, the settings, the treasury, the road network and its connections, the map's change event, the builder, the option reader, and the dispatcher. All 152 passed on 2026-10-20. Letting an unknown option and an out-of-range number through on purpose failed 3 of them, and letting `--headless` reach a command that needs a window failed 2 |
+| REL-4 | A test project covers the engine-free logic, and the tests pass | done | `CityLimits.Tests` references `CityLimits.Core` and `CityLimits.CommandLine` and holds 170 xUnit tests over the generator, the map, the tile state, the rules, the calendar, the clock, the simulation, the settings, the treasury, the road network and its connections, the map's change event, the builder and its strokes, the option reader, and the dispatcher. All 170 passed on 2026-10-20. Letting an unknown option and an out-of-range number through on purpose failed 3 of them, and letting `--headless` reach a command that needs a window failed 2 |
 | REL-5 | A determinism test proves the same seed gives the same city | done | `DeterministicRandomTests.TheSameSeedGivesTheSameSequence`, `CitySimulationTests.TheSameSeedAndTheSameTicksGiveTheSameCity`, and `CitySimulationTests.TheSameSeedAndTheSameWorkGiveTheSameCity`, which builds the same road and zones in two cities and compares the tiles and the money after 40 ticks |
 | REL-6 | CI builds and tests on every push | done | `.github/workflows/dotnet.yml` runs on a push to `main` and on a pull request: restore, build, and test. The first run, on the commit 273fd9f on 2026-10-20, finished with the conclusion `success` (run 39443031762) |
 

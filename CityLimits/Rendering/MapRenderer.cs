@@ -75,9 +75,52 @@ public sealed class MapRenderer : IDisposable
     /// Draws one tile with its top-left corner at the given point: from the sheet, or in flat
     /// colours when the sheet is missing. The chunk cache and the tile-by-tile path share it.
     /// </summary>
-    internal static void DrawTile(TileMap map, Texture2D? sheet, int x, int y, int left, int top)
+    internal static void DrawTile(TileMap map, Texture2D? sheet, int x, int y, int left, int top) =>
+        DrawTileAs(sheet, map.StateAt(x, y), RoadNetwork.ConnectionsAt(map, x, y), x, y, left, top);
+
+    /// <summary>
+    /// Draws a stroke's preview over the map, as Micropolis does: each tile it would change, as
+    /// it would look, and the roads beside them that would join it. The outline shows what the
+    /// stroke covers, in the warning colour when it would be refused.
+    /// </summary>
+    public void DrawPreview(BuildPlan plan, Camera camera)
     {
-        var state = map.StateAt(x, y);
+        foreach (var tile in plan.Tiles)
+        {
+            DrawPlanned(plan, tile.X, tile.Y);
+            DrawJoiningRoad(plan, tile.X, tile.Y - 1);
+            DrawJoiningRoad(plan, tile.X + 1, tile.Y);
+            DrawJoiningRoad(plan, tile.X, tile.Y + 1);
+            DrawJoiningRoad(plan, tile.X - 1, tile.Y);
+        }
+
+        var bounds = plan.Bounds;
+        Raylib.DrawRectangleLinesEx(
+            new Rectangle
+            {
+                X = bounds.X * TileSize,
+                Y = bounds.Y * TileSize,
+                Width = bounds.Width * TileSize,
+                Height = bounds.Height * TileSize,
+            },
+            2f / camera.Zoom,
+            plan.Refusal == BuildRefusal.None ? Theme.Hover : Theme.Error);
+    }
+
+    private void DrawPlanned(BuildPlan plan, int x, int y) =>
+        DrawTileAs(_sheet, plan.StateAt(x, y), plan.RoadConnectionsAt(x, y), x, y, x * TileSize, y * TileSize);
+
+    // An existing road beside the stroke changes shape when a new road joins it.
+    private void DrawJoiningRoad(BuildPlan plan, int x, int y)
+    {
+        if (_map.Contains(x, y) && !plan.TryGetPlanned(x, y, out _) && _map.StateAt(x, y).IsRoad)
+        {
+            DrawPlanned(plan, x, y);
+        }
+    }
+
+    private static void DrawTileAs(Texture2D? sheet, TileState state, RoadConnections roads, int x, int y, int left, int top)
+    {
         var destination = new Rectangle { X = left, Y = top, Width = TileSize, Height = TileSize };
 
         if (sheet is null)
@@ -86,7 +129,6 @@ public sealed class MapRenderer : IDisposable
         }
         else
         {
-            var roads = RoadNetwork.ConnectionsAt(map, x, y);
             Raylib.DrawTexturePro(
                 sheet.Value,
                 TileAtlas.SourceFor(TileAtlas.IndexFor(state, roads, x, y)),

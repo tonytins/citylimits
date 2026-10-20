@@ -109,9 +109,14 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   generator, so the same seed and the same work give the same city.
 - **The tools.** Six tools sit in the palette down the left, each with its
   icon, and the number keys pick one: inspect, road, residential,
-  commercial, industrial, and bulldozer. Roads and zones are painted by
-  dragging the mouse over the map, and the tile under the cursor is
-  painted as it moves.
+  commercial, industrial, and bulldozer. A tool is used in a stroke, as
+  in Micropolis: pressing on the map starts a `BuildStroke`, dragging
+  stretches it (a road runs in one straight line, the other tools cover
+  a rectangle), and the map shows a preview of the tiles it would change
+  and its total cost while the button is held. Releasing applies the
+  stroke all at once: the tiles that can't be built on are skipped, and
+  the whole stroke is refused when it runs off the map or the city can't
+  pay for all of it. Escape cancels a stroke, or quits when there is none.
 - **The money.** The city starts with a treasury. Each tool has a price,
   the HUD shows it, the treasury pays for the work, and a tool the city
   cannot pay for is refused with a message and changes nothing. The
@@ -149,7 +154,7 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   and no project. It holds the parser, the dispatcher, the default
   command, the strict option reader, and the exit codes.
 - **The tests.** `CityLimits.Tests` uses xUnit 2 with the VSTest runner
-  and coverlet, and holds 152 tests over the generator, the map, the
+  and coverlet, and holds 170 tests over the generator, the map, the
   calendar, the clock, the simulation, the settings, the tile rules, the
   build actions, the road network, the treasury, the option reader, and
   the dispatcher.
