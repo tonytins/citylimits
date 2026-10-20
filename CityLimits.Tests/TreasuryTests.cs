@@ -53,11 +53,4 @@ public class TreasuryTests
         Assert.Throws<ArgumentOutOfRangeException>(() => treasury.TrySpend(-1));
         Assert.Throws<ArgumentOutOfRangeException>(() => treasury.Refund(-1));
     }
-
-    [Fact]
-    public void TheBulldozerGivesBackHalfOfWhatATileCost()
-    {
-        Assert.Equal(TileCosts.Road / 2, TileCosts.RefundFor(TileCosts.Road));
-        Assert.Equal(TileCosts.Zone / 2, TileCosts.RefundFor(TileCosts.Zone));
-    }
 }

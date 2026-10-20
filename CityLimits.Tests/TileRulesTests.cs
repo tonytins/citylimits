@@ -12,12 +12,14 @@ public class TileRulesTests
         Assert.True(TileRules.IsClearGround(TileKind.Grass));
     }
 
-    [Fact]
-    public void TreesHaveToBeClearedFirst()
+    [Theory]
+    [InlineData(TileKind.Trees)]
+    [InlineData(TileKind.Rubble)]
+    public void TreesAndRubbleAreClearedByTheTools(TileKind kind)
     {
-        Assert.True(TileRules.CanBuildOn(TileKind.Trees));
-        Assert.True(TileRules.NeedsClearing(TileKind.Trees));
-        Assert.False(TileRules.IsClearGround(TileKind.Trees));
+        Assert.True(TileRules.CanBuildOn(kind));
+        Assert.True(TileRules.NeedsClearing(kind));
+        Assert.False(TileRules.IsClearGround(kind));
     }
 
     [Theory]
@@ -39,21 +41,23 @@ public class TileRulesTests
         Assert.Equal("Water", TileInfo.Name(TileKind.Water));
         Assert.Equal("Trees", TileInfo.Name(TileKind.Trees));
         Assert.Equal("Rock", TileInfo.Name(TileKind.Rock));
+        Assert.Equal("Rubble", TileInfo.Name(TileKind.Rubble));
     }
 
     [Fact]
     public void TheAdviceFollowsTheRules()
     {
         Assert.Equal("ready to build on", TileInfo.BuildAdvice(TileKind.Grass));
-        Assert.Equal("clear it before building", TileInfo.BuildAdvice(TileKind.Trees));
-        Assert.Equal("cannot be built on", TileInfo.BuildAdvice(TileKind.Water));
+        Assert.Equal("cleared for $1 a tile when built on", TileInfo.BuildAdvice(TileKind.Trees));
+        Assert.Equal("cleared for $1 a tile when built on", TileInfo.BuildAdvice(TileKind.Rubble));
+        Assert.Equal("only a bridge can cross it", TileInfo.BuildAdvice(TileKind.Water));
         Assert.Equal("cannot be built on", TileInfo.BuildAdvice(TileKind.Rock));
     }
 
     [Fact]
     public void TheDescriptionNamesTheGroundAndTheAdvice()
     {
-        Assert.Equal("Trees - clear it before building", TileInfo.Describe(TileKind.Trees));
+        Assert.Equal("Trees - cleared for $1 a tile when built on", TileInfo.Describe(TileKind.Trees));
         Assert.Equal("Rock - cannot be built on", TileInfo.Describe(TileKind.Rock));
     }
 
@@ -69,12 +73,14 @@ public class TileRulesTests
     }
 
     [Fact]
-    public void OnlyAUsedTileHasSomethingToClear()
+    public void TheBulldozerClearsRoadsBridgesTreesAndRubbleButNotZonesTileByTile()
     {
         Assert.False(TileRules.HasSomethingToClear(new TileState(TileKind.Grass)));
         Assert.False(TileRules.HasSomethingToClear(new TileState(TileKind.Water)));
         Assert.True(TileRules.HasSomethingToClear(new TileState(TileKind.Trees)));
+        Assert.True(TileRules.HasSomethingToClear(new TileState(TileKind.Rubble)));
         Assert.True(TileRules.HasSomethingToClear(new TileState(TileKind.Grass, TileUse.Road)));
-        Assert.True(TileRules.HasSomethingToClear(new TileState(TileKind.Grass, TileUse.Industrial)));
+        Assert.True(TileRules.HasSomethingToClear(new TileState(TileKind.Water, TileUse.Road)));
+        Assert.False(TileRules.HasSomethingToClear(new TileState(TileKind.Grass, TileUse.Industrial)));
     }
 }

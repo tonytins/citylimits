@@ -93,6 +93,31 @@ public sealed class TileMap
         TileChanged?.Invoke(x, y);
     }
 
+    /// <summary>
+    /// Finds the centre of the zone a tile belongs to, where the zone's development is kept.
+    /// A tile that isn't part of a zone is its own centre.
+    /// </summary>
+    /// <exception cref="ArgumentOutOfRangeException">The coordinates are outside the map.</exception>
+    public (int X, int Y) ZoneCenterOf(int x, int y)
+    {
+        var state = StateAt(x, y);
+        if (!state.IsZoned)
+        {
+            return (x, y);
+        }
+
+        var (dx, dy) = ZoneLayout.OffsetFromCenter(state.ZonePart);
+        return (x - dx, y - dy);
+    }
+
+    /// <summary>The state of the centre of the zone a tile belongs to, or the tile's own state when it isn't part of one.</summary>
+    /// <exception cref="ArgumentOutOfRangeException">The coordinates are outside the map.</exception>
+    public TileState ZoneStateAt(int x, int y)
+    {
+        var (centerX, centerY) = ZoneCenterOf(x, y);
+        return StateAtOrDefault(centerX, centerY, StateAt(x, y));
+    }
+
     /// <summary>Tells whether the given coordinates are on the map.</summary>
     public bool Contains(int x, int y) => (uint)x < (uint)Width && (uint)y < (uint)Height;
 

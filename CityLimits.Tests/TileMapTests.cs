@@ -133,8 +133,8 @@ public class TileMapTests
     {
         var map = TileMap.FromTerrain(6, 6, new TileKind[36]);
         var simulation = new CityLimits.Core.Simulation.CitySimulation(map, 2000);
-        simulation.Builder.Apply(BuildAction.Road, 2, 2);
-        simulation.Builder.Apply(BuildAction.ZoneResidential, 2, 1);
+        simulation.Builder.Apply(BuildAction.Road, 2, 4);
+        simulation.Builder.Apply(BuildAction.ZoneResidential, 2, 2);
         var changes = new List<(int X, int Y)>();
         map.TileChanged += (x, y) => changes.Add((x, y));
 
@@ -143,8 +143,31 @@ public class TileMapTests
             simulation.Tick();
         }
 
-        Assert.Equal(TileState.MaxDevelopment, map.StateAt(2, 1).Development);
+        // Only the centre changes; it holds the zone's development.
+        Assert.Equal(TileState.MaxDevelopment, map.StateAt(2, 2).Development);
         Assert.Equal(TileState.MaxDevelopment, changes.Count);
-        Assert.All(changes, change => Assert.Equal((2, 1), change));
+        Assert.All(changes, change => Assert.Equal((2, 2), change));
+    }
+
+    [Fact]
+    public void EveryTileOfAZoneFindsItsCentre()
+    {
+        var map = TileMap.FromTerrain(5, 5, new TileKind[25]);
+        for (var part = 0; part < ZoneLayout.Parts; part++)
+        {
+            var (dx, dy) = ZoneLayout.OffsetFromCenter(part);
+            map.SetState(2 + dx, 2 + dy, new TileState(TileKind.Grass, TileUse.Commercial, part == ZoneLayout.CenterPart ? 2 : 0, part));
+        }
+
+        for (var y = 1; y <= 3; y++)
+        {
+            for (var x = 1; x <= 3; x++)
+            {
+                Assert.Equal((2, 2), map.ZoneCenterOf(x, y));
+                Assert.Equal(2, map.ZoneStateAt(x, y).Development);
+            }
+        }
+
+        Assert.Equal((4, 4), map.ZoneCenterOf(4, 4));
     }
 }

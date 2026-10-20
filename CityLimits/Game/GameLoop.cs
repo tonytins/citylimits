@@ -108,6 +108,11 @@ public sealed class GameLoop : IDisposable
 
         var world = _camera.ScreenToWorld(mouse);
         var onMap = MapRenderer.TryGetTileAt(_simulation.Map, world, out var tileX, out var tileY, out var state);
+        if (onMap && state.IsZoned)
+        {
+            // A zone is described by its centre, which holds its development.
+            state = _simulation.Map.ZoneStateAt(tileX, tileY);
+        }
 
         _hud.DrawStatus(
             _simulation.Date,
@@ -250,10 +255,27 @@ public sealed class GameLoop : IDisposable
 
         if (_stroke is null)
         {
-            var action = ToolActions.ActionFor(_tools.Selected);
-            if (action is not null && onMap && Raylib.IsMouseButtonPressed(MouseButton.Left))
+            if (!Raylib.IsMouseButtonPressed(MouseButton.Left))
             {
-                _stroke = new BuildStroke(action.Value, tileX, tileY);
+                return;
+            }
+
+            // A press on the palette picks a tool; it never reaches the map underneath.
+            if (ToolPaletteView.Contains(_tools, mouse))
+            {
+                var picked = ToolPaletteView.ToolAt(_tools, mouse);
+                if (picked is not null)
+                {
+                    _tools.Select(picked.Value);
+                }
+
+                return;
+            }
+
+            var tool = ToolActions.ActionFor(_tools.Selected);
+            if (tool is not null && onMap)
+            {
+                _stroke = new BuildStroke(tool.Value, tileX, tileY);
                 _simulation.Builder.Plan(_stroke, _preview);
                 _notice = null;
             }
@@ -272,16 +294,19 @@ public sealed class GameLoop : IDisposable
         }
 
         var result = _simulation.Builder.Apply(_stroke);
+        var applied = _stroke.Action;
         _stroke = null;
         _noticeIsError = result.Status == BuildStatus.Refused;
-        _notice = Describe(result);
+        _notice = Describe(applied, result);
     }
 
-    private static string Describe(BuildResult result) => result.Status switch
+    private static string Describe(BuildAction action, BuildResult result) => result.Status switch
     {
-        BuildStatus.Built when result.Refund > 0 => $"Cleared {Tiles(result.TilesChanged)}, ${result.Refund} back",
-        BuildStatus.Built => $"Built {Tiles(result.TilesChanged)} for ${result.Cost}",
+        BuildStatus.Built when action == BuildAction.Bulldoze => $"Cleared {Count(result.TilesChanged, "tile")} for ${result.Cost}",
+        BuildStatus.Built when action == BuildAction.Road => $"Built {Count(result.TilesChanged, "tile")} of road for ${result.Cost}",
+        BuildStatus.Built => $"Zoned {Count(result.TilesChanged / ZoneLayout.Parts, "zone")} for ${result.Cost}",
         BuildStatus.Unchanged when result.Reason == BuildRefusal.AlreadyDone => "The land is already like that",
+        BuildStatus.Refused when result.Reason == BuildRefusal.PartOfAZone => "Bulldoze a zone's centre to clear it",
         BuildStatus.Unchanged => "There was nothing to clear",
         BuildStatus.Refused when result.Reason == BuildRefusal.NotEnoughFunds => $"Not enough money, it costs ${result.Cost}",
         BuildStatus.Refused when result.Reason == BuildRefusal.CannotBuildHere => "That ground cannot be built on",
@@ -289,7 +314,7 @@ public sealed class GameLoop : IDisposable
         _ => "The work was refused",
     };
 
-    private static string Tiles(int count) => count == 1 ? "1 tile" : $"{count} tiles";
+    private static string Count(int count, string thing) => count == 1 ? $"1 {thing}" : $"{count} {thing}s";
 
     private int CostOfSelectedTool()
     {

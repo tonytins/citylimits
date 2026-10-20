@@ -12,6 +12,9 @@ public sealed class CityBuilder
     // Apply works the stroke out again here, so a preview the player saw earlier can't go stale.
     private readonly BuildPlan _applying = new();
 
+    // The water a road stroke has still to bridge; kept so planning every frame doesn't allocate.
+    private readonly List<(int X, int Y)> _water = [];
+
     /// <summary>Creates a builder that works on the given map.</summary>
     /// <exception cref="ArgumentNullException">One of the parts of the city is null.</exception>
     public CityBuilder(TileMap map, Treasury treasury, RoadNetwork roads)
@@ -27,8 +30,8 @@ public sealed class CityBuilder
 
     /// <summary>
     /// Works out what a stroke would do if it were applied now, without changing anything.
-    /// A tile the stroke can't change is skipped with its reason; the stroke as a whole is
-    /// refused when it runs off the map or the city can't pay for all of it.
+    /// A tile or zone the stroke can't change is skipped with its reason; the stroke as a whole
+    /// is refused when it runs off the map or the city can't pay for all of it.
     /// </summary>
     /// <exception cref="ArgumentNullException">The stroke or the plan is null.</exception>
     public void Plan(BuildStroke stroke, BuildPlan plan)
@@ -45,20 +48,17 @@ public sealed class CityBuilder
             return;
         }
 
-        for (var y = bounds.Y; y < bounds.Y + bounds.Height; y++)
+        switch (stroke.Action)
         {
-            for (var x = bounds.X; x < bounds.X + bounds.Width; x++)
-            {
-                var work = WorkOn(stroke.Action, _map.StateAt(x, y));
-                if (work.Reason == BuildRefusal.None)
-                {
-                    plan.Change(x, y, work.State, work.Cost, work.Refund);
-                }
-                else
-                {
-                    plan.Skip(work.Reason);
-                }
-            }
+            case BuildAction.Road:
+                PlanRoad(bounds, plan);
+                break;
+            case BuildAction.Bulldoze:
+                PlanBulldozer(bounds, plan);
+                break;
+            default:
+                PlanZones(bounds, ZoneFor(stroke.Action), plan);
+                break;
         }
 
         if (plan.Cost > _treasury.Funds)
@@ -68,8 +68,8 @@ public sealed class CityBuilder
     }
 
     /// <summary>
-    /// Applies a stroke: every tile it can change, or none of them when it runs off the map or
-    /// the city can't pay for all of it. It is worked out again against the map as it is now.
+    /// Applies a stroke: everything it can change, or nothing when it runs off the map or the
+    /// city can't pay for all of it. It is worked out again against the map as it is now.
     /// </summary>
     /// <exception cref="ArgumentNullException">The stroke is null.</exception>
     public BuildResult Apply(BuildStroke stroke)
@@ -99,16 +99,15 @@ public sealed class CityBuilder
             _map.SetState(tile.X, tile.Y, tile.State);
         }
 
-        _treasury.Refund(plan.Refund);
         if (roadsChanged)
         {
             _roads.MarkDirty();
         }
 
-        return BuildResult.Built(plan.Cost, plan.Refund, plan.Tiles.Count);
+        return BuildResult.Built(plan.Cost, plan.Tiles.Count);
     }
 
-    /// <summary>Applies a tool to one tile: a stroke that starts and ends there.</summary>
+    /// <summary>Applies a tool where a stroke starts and ends on one tile; a zone is centred there.</summary>
     public BuildResult Apply(BuildAction action, int x, int y) => Apply(new BuildStroke(action, x, y));
 
     // When nothing would change, the result names the reason that matters most to the player.
@@ -119,19 +118,176 @@ public sealed class CityBuilder
             return BuildResult.Refused(BuildRefusal.CannotBuildHere);
         }
 
+        if (plan.SkippedBecause(BuildRefusal.PartOfAZone) > 0)
+        {
+            return BuildResult.Refused(BuildRefusal.PartOfAZone);
+        }
+
         return plan.SkippedBecause(BuildRefusal.AlreadyDone) > 0
             ? BuildResult.Unchanged(BuildRefusal.AlreadyDone)
             : BuildResult.Unchanged(BuildRefusal.NothingToClear);
     }
 
-    // The rules for one tile: what it would become, and what that costs and gives back.
-    // It decides only; Plan collects the answers and Apply makes them happen.
-    private static TileWork WorkOn(BuildAction action, TileState state) => action switch
+    // A road on land is laid where it can be. A road on water is a bridge, which needs a road
+    // beside it to start from, so the water is crossed in passes until no more of it can be:
+    // a stroke can start on either bank, as in Micropolis.
+    private void PlanRoad(TileRect bounds, BuildPlan plan)
     {
-        BuildAction.Road => LayRoad(state),
-        BuildAction.Bulldoze => Bulldoze(state),
-        _ => Zone(state, ZoneFor(action)),
-    };
+        _water.Clear();
+
+        for (var y = bounds.Y; y < bounds.Y + bounds.Height; y++)
+        {
+            for (var x = bounds.X; x < bounds.X + bounds.Width; x++)
+            {
+                var state = _map.StateAt(x, y);
+                if (state.IsRoad)
+                {
+                    plan.Skip(BuildRefusal.AlreadyDone);
+                }
+                else if (state.Kind == TileKind.Water && state.Use == TileUse.None)
+                {
+                    _water.Add((x, y));
+                }
+                else if (state.Use != TileUse.None || !TileRules.CanLayRoad(state.Kind))
+                {
+                    plan.Skip(BuildRefusal.CannotBuildHere);
+                }
+                else
+                {
+                    plan.Change(x, y, new TileState(TileKind.Grass, TileUse.Road), TileCosts.Road + ClearingCost(state));
+                }
+            }
+        }
+
+        var bridged = true;
+        while (bridged)
+        {
+            bridged = false;
+            for (var i = _water.Count - 1; i >= 0; i--)
+            {
+                var (x, y) = _water[i];
+                if (!plan.StateAt(x, y - 1).IsRoad && !plan.StateAt(x + 1, y).IsRoad &&
+                    !plan.StateAt(x, y + 1).IsRoad && !plan.StateAt(x - 1, y).IsRoad)
+                {
+                    continue;
+                }
+
+                plan.Change(x, y, new TileState(TileKind.Water, TileUse.Road), TileCosts.Bridge);
+                _water.RemoveAt(i);
+                bridged = true;
+            }
+        }
+
+        for (var i = 0; i < _water.Count; i++)
+        {
+            plan.Skip(BuildRefusal.CannotBuildHere);
+        }
+    }
+
+    // Zones are laid as a grid. A zone goes down whole or not at all: every one of its nine
+    // tiles has to be ground that can be built on, with nothing on it.
+    private void PlanZones(TileRect bounds, TileUse use, BuildPlan plan)
+    {
+        for (var top = bounds.Y; top < bounds.Y + bounds.Height; top += ZoneLayout.Size)
+        {
+            for (var left = bounds.X; left < bounds.X + bounds.Width; left += ZoneLayout.Size)
+            {
+                PlanZone(left, top, use, plan);
+            }
+        }
+    }
+
+    private void PlanZone(int left, int top, TileUse use, BuildPlan plan)
+    {
+        var center = _map.StateAt(left + 1, top + 1);
+        if (center.IsZoneCenter && center.Use == use && _map.ZoneCenterOf(left, top) == (left + 1, top + 1))
+        {
+            plan.Skip(BuildRefusal.AlreadyDone);
+            return;
+        }
+
+        var cost = TileCosts.Zone;
+        for (var row = 0; row < ZoneLayout.Size; row++)
+        {
+            for (var column = 0; column < ZoneLayout.Size; column++)
+            {
+                var state = _map.StateAt(left + column, top + row);
+                if (state.Use != TileUse.None || !TileRules.CanZone(state.Kind))
+                {
+                    plan.Skip(BuildRefusal.CannotBuildHere);
+                    return;
+                }
+
+                cost += ClearingCost(state);
+            }
+        }
+
+        for (var row = 0; row < ZoneLayout.Size; row++)
+        {
+            for (var column = 0; column < ZoneLayout.Size; column++)
+            {
+                var state = new TileState(TileKind.Grass, use, zonePart: ZoneLayout.PartAt(column, row));
+                plan.Change(left + column, top + row, state, 0);
+            }
+        }
+
+        plan.AddCost(cost);
+    }
+
+    // The bulldozer clears roads, bridges, trees, and rubble tile by tile, for $1 each. A zone
+    // comes down only when its centre is in the stroke: all nine tiles turn to rubble, for $1.
+    private void PlanBulldozer(TileRect bounds, BuildPlan plan)
+    {
+        for (var y = bounds.Y; y < bounds.Y + bounds.Height; y++)
+        {
+            for (var x = bounds.X; x < bounds.X + bounds.Width; x++)
+            {
+                var state = _map.StateAt(x, y);
+                if (state.IsZoned)
+                {
+                    var (centerX, centerY) = _map.ZoneCenterOf(x, y);
+                    var centerInStroke = centerX >= bounds.X && centerX < bounds.X + bounds.Width &&
+                        centerY >= bounds.Y && centerY < bounds.Y + bounds.Height;
+                    if (!centerInStroke)
+                    {
+                        plan.Skip(BuildRefusal.PartOfAZone);
+                    }
+
+                    continue;
+                }
+
+                if (!TileRules.HasSomethingToClear(state))
+                {
+                    plan.Skip(BuildRefusal.NothingToClear);
+                    continue;
+                }
+
+                var cleared = state.IsBridge ? new TileState(TileKind.Water) : new TileState(TileKind.Grass);
+                plan.Change(x, y, cleared, TileCosts.Bulldoze);
+            }
+        }
+
+        for (var y = bounds.Y; y < bounds.Y + bounds.Height; y++)
+        {
+            for (var x = bounds.X; x < bounds.X + bounds.Width; x++)
+            {
+                if (!_map.StateAt(x, y).IsZoneCenter)
+                {
+                    continue;
+                }
+
+                for (var dy = -1; dy <= 1; dy++)
+                {
+                    for (var dx = -1; dx <= 1; dx++)
+                    {
+                        plan.Change(x + dx, y + dy, new TileState(TileKind.Rubble), 0);
+                    }
+                }
+
+                plan.AddCost(TileCosts.Bulldoze);
+            }
+        }
+    }
 
     private static TileUse ZoneFor(BuildAction action) => action switch
     {
@@ -140,58 +296,6 @@ public sealed class CityBuilder
         _ => TileUse.Residential,
     };
 
-    private static TileWork LayRoad(TileState state)
-    {
-        if (state.IsRoad)
-        {
-            return TileWork.Skip(BuildRefusal.AlreadyDone);
-        }
-
-        if (state.IsZoned || !TileRules.CanLayRoad(state.Kind))
-        {
-            return TileWork.Skip(BuildRefusal.CannotBuildHere);
-        }
-
-        return new TileWork(new TileState(TileKind.Grass, TileUse.Road), TileCosts.Road + ClearingCost(state));
-    }
-
-    private static TileWork Zone(TileState state, TileUse use)
-    {
-        if (state.Use == use)
-        {
-            return TileWork.Skip(BuildRefusal.AlreadyDone);
-        }
-
-        if (state.IsRoad || !TileRules.CanZone(state.Kind))
-        {
-            return TileWork.Skip(BuildRefusal.CannotBuildHere);
-        }
-
-        return new TileWork(new TileState(TileKind.Grass, use), TileCosts.Zone + ClearingCost(state));
-    }
-
-    private static TileWork Bulldoze(TileState state)
-    {
-        if (!TileRules.HasSomethingToClear(state))
-        {
-            return TileWork.Skip(BuildRefusal.NothingToClear);
-        }
-
-        var refund = state.Use switch
-        {
-            TileUse.Road => TileCosts.RefundFor(TileCosts.Road),
-            TileUse.Residential or TileUse.Commercial or TileUse.Industrial => TileCosts.RefundFor(TileCosts.Zone),
-            _ => 0,
-        };
-
-        return new TileWork(new TileState(TileKind.Grass), 0, refund);
-    }
-
     private static int ClearingCost(TileState state) =>
-        TileRules.NeedsClearing(state.Kind) ? TileCosts.Clearing : 0;
-
-    private readonly record struct TileWork(TileState State, int Cost = 0, int Refund = 0, BuildRefusal Reason = BuildRefusal.None)
-    {
-        public static TileWork Skip(BuildRefusal reason) => new(default, Reason: reason);
-    }
+        TileRules.NeedsClearing(state.Kind) ? TileCosts.AutoClear : 0;
 }

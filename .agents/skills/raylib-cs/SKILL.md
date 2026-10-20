@@ -180,9 +180,12 @@ reach the builder.
 
 - The UI uses raylib's default font through `DrawText` and `MeasureText`.
   Lay text out from `MeasureText`, not from guessed widths. The tool
-  palette's prices currently run into its labels ("Residenti$5"), because
-  the label and the price share a fixed-width column. Fix overlaps by
-  measuring both.
+  palette once overlapped its prices with its labels ("Residenti$5")
+  because it used a fixed-width column; it now sizes itself from the
+  measured widths (`ToolPaletteView.Bounds`). Do the same for any panel.
+- A panel that takes clicks must keep them off the map under it.
+  `GameLoop.HandleStroke` asks `ToolPaletteView.Contains` before it starts
+  a stroke.
 - Colours and sizes for the UI live in `Rendering/Theme.cs`, not in the
   draw code.
 - `Text/` in the examples covers fonts (`FontLoading.cs`) and measuring
@@ -245,10 +248,13 @@ call, not yours.
   pick a tool with `xdotool key 2`, draw, then
   `import -window root <scratch>/shot.png` and `kill` the game. Killing it
   skips `SaveSettings`, so the run leaves `settings.json` alone.
-- **Hold the button across frames.** Raylib polls once a frame, so an
-  instant `xdotool click` falls between frames and nothing is built.
+- **Hold every press across frames.** Raylib compares input between
+  frames, so a press and a release within one frame are never seen: an
+  instant `xdotool click` builds nothing, and an instant `xdotool key`
+  doesn't pick a tool or pause. Hold them:
+  `xdotool keydown 2; sleep 0.08; xdotool keyup 2`, and for the mouse
   `mousedown 1`, move in small steps with `sleep 0.03` between them, then
-  `mouseup 1`.
+  `mouseup 1`. A step that seems to do nothing is usually this.
 - **Look closely.** Crop and enlarge the part that changed
   (`magick shot.png -crop WxH+X+Y -filter point -resize 300% zoom.png`),
   then read the image. A full screenshot at 1280 by 720 hides 16-pixel

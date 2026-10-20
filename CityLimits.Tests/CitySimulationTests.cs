@@ -62,44 +62,47 @@ public class CitySimulationTests
     public void AZoneWithARoadBesideItDevelops()
     {
         var simulation = new CitySimulation(FlatMap(), 1);
-        simulation.Builder.Apply(BuildAction.Road, 1, 1);
-        simulation.Builder.Apply(BuildAction.ZoneResidential, 2, 1);
+        simulation.Builder.Apply(BuildAction.Road, 3, 1);
+        simulation.Builder.Apply(BuildAction.ZoneResidential, 3, 3);
 
         for (var i = 0; i < 50; i++)
         {
             simulation.Tick();
         }
 
-        Assert.Equal(TileState.MaxDevelopment, simulation.Map.StateAt(2, 1).Development);
+        Assert.Equal(TileState.MaxDevelopment, simulation.Map.StateAt(3, 3).Development);
+        Assert.Equal(0, simulation.Map.StateAt(2, 2).Development);
     }
 
     [Fact]
     public void AZoneWithNoRoadNeverDevelops()
     {
         var simulation = new CitySimulation(FlatMap(), 1);
-        simulation.Builder.Apply(BuildAction.ZoneResidential, 2, 1);
+        simulation.Builder.Apply(BuildAction.ZoneResidential, 3, 3);
+        simulation.Builder.Apply(BuildAction.Road, 1, 1);
 
         for (var i = 0; i < 50; i++)
         {
             simulation.Tick();
         }
 
-        Assert.Equal(0, simulation.Map.StateAt(2, 1).Development);
+        // A road at the zone's corner doesn't serve it.
+        Assert.Equal(0, simulation.Map.StateAt(3, 3).Development);
     }
 
     [Fact]
     public void AZoneNeverDevelopsPastTheLastLevel()
     {
         var simulation = new CitySimulation(FlatMap(), 1);
-        simulation.Builder.Apply(BuildAction.Road, 1, 1);
-        simulation.Builder.Apply(BuildAction.ZoneResidential, 2, 1);
+        simulation.Builder.Apply(BuildAction.Road, 3, 1);
+        simulation.Builder.Apply(BuildAction.ZoneResidential, 3, 3);
 
         for (var i = 0; i < 200; i++)
         {
             simulation.Tick();
         }
 
-        Assert.Equal(TileState.MaxDevelopment, simulation.Map.StateAt(2, 1).Development);
+        Assert.Equal(TileState.MaxDevelopment, simulation.Map.StateAt(3, 3).Development);
     }
 
     [Fact]
@@ -110,9 +113,10 @@ public class CitySimulationTests
 
         foreach (var city in new[] { first, second })
         {
-            city.Builder.Apply(BuildAction.Road, 1, 1);
-            city.Builder.Apply(BuildAction.ZoneResidential, 2, 1);
-            city.Builder.Apply(BuildAction.ZoneCommercial, 2, 2);
+            city.Builder.Apply(BuildAction.Road, 3, 1);
+            city.Builder.Apply(BuildAction.Road, 6, 1);
+            city.Builder.Apply(BuildAction.ZoneResidential, 3, 3);
+            city.Builder.Apply(BuildAction.ZoneCommercial, 6, 3);
         }
 
         for (var i = 0; i < 40; i++)
@@ -121,8 +125,8 @@ public class CitySimulationTests
             second.Tick();
         }
 
-        Assert.Equal(first.Map.StateAt(2, 1), second.Map.StateAt(2, 1));
-        Assert.Equal(first.Map.StateAt(2, 2), second.Map.StateAt(2, 2));
+        Assert.Equal(first.Map.StateAt(3, 3), second.Map.StateAt(3, 3));
+        Assert.Equal(first.Map.StateAt(6, 3), second.Map.StateAt(6, 3));
         Assert.Equal(first.Treasury.Funds, second.Treasury.Funds);
     }
 
@@ -136,5 +140,5 @@ public class CitySimulationTests
 
     private static TileMap SmallMap() => TileMapGenerator.Generate(1, 8, 8);
 
-    private static TileMap FlatMap() => TileMap.FromTerrain(8, 8, new TileKind[64]);
+    private static TileMap FlatMap() => TileMap.FromTerrain(9, 9, new TileKind[81]);
 }

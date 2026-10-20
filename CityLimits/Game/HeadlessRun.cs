@@ -47,6 +47,11 @@ public sealed class HeadlessRun
         return 0;
     }
 
+    // The demo town is a road nine tiles long with a residential, a commercial, and an industrial
+    // zone along its north side, built with strokes as a player would build it.
+    private const int TownWidth = 9;
+    private const int TownHeight = ZoneLayout.Size + 1;
+
     private static void BuildDemoTown(CitySimulation simulation)
     {
         var map = simulation.Map;
@@ -58,17 +63,20 @@ public sealed class HeadlessRun
             return;
         }
 
-        var (x, y) = spot.Value;
-        simulation.Builder.Apply(BuildAction.Road, x, y);
-        simulation.Builder.Apply(BuildAction.Road, x + 1, y);
-        simulation.Builder.Apply(BuildAction.Road, x + 2, y);
-        simulation.Builder.Apply(BuildAction.ZoneResidential, x, y - 1);
-        simulation.Builder.Apply(BuildAction.ZoneResidential, x + 1, y - 1);
-        simulation.Builder.Apply(BuildAction.ZoneCommercial, x + 2, y - 1);
+        var (left, top) = spot.Value;
+        var roadY = top + ZoneLayout.Size;
 
-        Logger.Info("Built a road and three zones at {X}, {Y}", x, y);
+        var road = new BuildStroke(BuildAction.Road, left, roadY);
+        road.DragTo(left + TownWidth - 1, roadY);
+        simulation.Builder.Apply(road);
+        simulation.Builder.Apply(BuildAction.ZoneResidential, left + 1, top + 1);
+        simulation.Builder.Apply(BuildAction.ZoneCommercial, left + 4, top + 1);
+        simulation.Builder.Apply(BuildAction.ZoneIndustrial, left + 7, top + 1);
+
+        Logger.Info("Built a road and three zones at {X}, {Y}", left, top);
     }
 
+    // The buildable area closest to the middle that holds the whole town.
     private static (int X, int Y)? FindSpotNearTheMiddle(TileMap map)
     {
         (int X, int Y)? best = null;
@@ -76,22 +84,12 @@ public sealed class HeadlessRun
         var middleX = map.Width / 2;
         var middleY = map.Height / 2;
 
-        for (var y = 1; y < map.Height - 1; y++)
+        for (var y = 0; y + TownHeight <= map.Height; y++)
         {
-            for (var x = 1; x < map.Width - 4; x++)
+            for (var x = 0; x + TownWidth <= map.Width; x++)
             {
-                if (!CanBuildOn(map, x, y) || !CanBuildOn(map, x + 1, y) || !CanBuildOn(map, x + 2, y))
-                {
-                    continue;
-                }
-
-                if (!CanBuildOn(map, x, y - 1) || !CanBuildOn(map, x + 1, y - 1) || !CanBuildOn(map, x + 2, y - 1))
-                {
-                    continue;
-                }
-
                 var distance = ((x - middleX) * (x - middleX)) + ((y - middleY) * (y - middleY));
-                if (distance >= bestDistance)
+                if (distance >= bestDistance || !CanBuildAll(map, x, y))
                 {
                     continue;
                 }
@@ -104,8 +102,21 @@ public sealed class HeadlessRun
         return best;
     }
 
-    private static bool CanBuildOn(TileMap map, int x, int y) =>
-        map.Contains(x, y) && TileRules.CanBuildOn(map[x, y]);
+    private static bool CanBuildAll(TileMap map, int left, int top)
+    {
+        for (var y = top; y < top + TownHeight; y++)
+        {
+            for (var x = left; x < left + TownWidth; x++)
+            {
+                if (!TileRules.CanBuildOn(map[x, y]))
+                {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
 
     private static void LogSummary(CitySimulation simulation)
     {
@@ -123,7 +134,7 @@ public sealed class HeadlessRun
                 {
                     roads++;
                 }
-                else if (state.IsZoned)
+                else if (state.IsZoneCenter)
                 {
                     zones++;
 
@@ -136,7 +147,7 @@ public sealed class HeadlessRun
         }
 
         Logger.Info(
-            "Headless run finished: {Ticks} ticks, {Date}, {Roads} road tiles, {Zones} zoned tiles, {Developed} developed, ${Funds}",
+            "Headless run finished: {Ticks} ticks, {Date}, {Roads} road tiles, {Zones} zones, {Developed} developed, ${Funds}",
             simulation.TickCount,
             simulation.Date,
             roads,

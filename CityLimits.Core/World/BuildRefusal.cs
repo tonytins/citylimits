@@ -20,4 +20,7 @@ public enum BuildRefusal
 
     /// <summary>There was nothing on the tile to clear.</summary>
     NothingToClear,
+
+    /// <summary>The tile is part of a zone, which the bulldozer clears only through its centre.</summary>
+    PartOfAZone,
 }

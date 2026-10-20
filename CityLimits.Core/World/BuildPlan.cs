@@ -4,8 +4,8 @@ namespace CityLimits.Core.World;
 public readonly record struct PlannedTile(int X, int Y, TileState State);
 
 /// <summary>
-/// What a stroke would do if it were applied now: the tiles it would change, what it would cost
-/// and give back, the tiles it would leave alone and why, and whether it would be refused as a
+/// What a stroke would do if it were applied now: the tiles it would change, what it would cost,
+/// the tiles it would leave alone and why, and whether it would be refused as a
 /// whole. <see cref="CityBuilder.Plan"/> fills it in; it changes nothing on the map.
 /// </summary>
 /// <remarks>
@@ -29,9 +29,6 @@ public sealed class BuildPlan
 
     /// <summary>What the stroke would cost.</summary>
     public int Cost { get; private set; }
-
-    /// <summary>What the stroke would give back.</summary>
-    public int Refund { get; private set; }
 
     /// <summary>
     /// Why the stroke would be refused as a whole: <see cref="BuildRefusal.OffTheMap"/> when it
@@ -108,17 +105,17 @@ public sealed class BuildPlan
         Array.Clear(_skipped);
         Bounds = bounds;
         Cost = 0;
-        Refund = 0;
         Refusal = BuildRefusal.None;
     }
 
-    internal void Change(int x, int y, TileState state, int cost, int refund)
+    internal void Change(int x, int y, TileState state, int cost)
     {
         _indexByTile[(y * _map!.Width) + x] = _tiles.Count;
         _tiles.Add(new PlannedTile(x, y, state));
         Cost += cost;
-        Refund += refund;
     }
+
+    internal void AddCost(int cost) => Cost += cost;
 
     internal void Skip(BuildRefusal reason) => _skipped[(int)reason]++;
 

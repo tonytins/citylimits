@@ -9,15 +9,16 @@ public static class TileInfo
         TileKind.Water => "Water",
         TileKind.Trees => "Trees",
         TileKind.Rock => "Rock",
+        TileKind.Rubble => "Rubble",
         _ => "Grass",
     };
 
     /// <summary>What the player can do with a kind of ground.</summary>
     public static string BuildAdvice(TileKind kind) => kind switch
     {
-        TileKind.Water => "cannot be built on",
+        TileKind.Water => "only a bridge can cross it",
         TileKind.Rock => "cannot be built on",
-        TileKind.Trees => "clear it before building",
+        TileKind.Trees or TileKind.Rubble => "cleared for $1 a tile when built on",
         _ => "ready to build on",
     };
 
@@ -44,11 +45,15 @@ public static class TileInfo
         _ => "empty",
     };
 
-    /// <summary>What the player can do with a tile that carries a use.</summary>
+    /// <summary>
+    /// What the player can do with a tile that carries a use. For a zone, pass the state of its
+    /// centre (<see cref="TileMap.ZoneStateAt"/>), which holds the zone's development.
+    /// </summary>
     public static string BuildAdvice(TileState state) => state.Use switch
     {
+        TileUse.Road when state.IsBridge => "a bridge, carries traffic",
         TileUse.Road => "carries traffic",
-        TileUse.Residential or TileUse.Commercial or TileUse.Industrial when state.Development == 0 => "waiting for a road",
+        TileUse.Residential or TileUse.Commercial or TileUse.Industrial when state.Development == 0 => "not developed yet",
         TileUse.Residential or TileUse.Commercial or TileUse.Industrial => $"developed to level {state.Development}",
         _ => BuildAdvice(state.Kind),
     };

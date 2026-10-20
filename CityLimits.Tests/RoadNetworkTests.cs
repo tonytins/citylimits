@@ -29,46 +29,37 @@ public class RoadNetworkTests
         Assert.False(network.HasRoad(1, 1));
     }
 
-    [Fact]
-    public void ATileThatTouchesARoadIsServed()
+    [Theory]
+    [InlineData(4, 2)] // above the zone
+    [InlineData(6, 5)] // to its right
+    [InlineData(3, 6)] // below it
+    [InlineData(2, 4)] // to its left
+    public void AZoneWithARoadAlongItsEdgeIsServed(int roadX, int roadY)
     {
-        var map = TileMap.FromTerrain(4, 4, new TileKind[16]);
-        map.SetState(2, 1, new TileState(TileKind.Grass, TileUse.Road));
+        var network = NetworkWithRoadAt(roadX, roadY);
 
-        var network = new RoadNetwork();
-        network.Rebuild(map);
+        Assert.True(network.IsZoneServed(4, 4));
+    }
 
-        Assert.True(network.IsServed(2, 0));
-        Assert.True(network.IsServed(2, 2));
-        Assert.True(network.IsServed(1, 1));
-        Assert.True(network.IsServed(3, 1));
-        Assert.False(network.IsServed(0, 0));
+    [Theory]
+    [InlineData(2, 2)] // beyond the top-left corner
+    [InlineData(6, 6)] // beyond the bottom-right corner
+    [InlineData(4, 1)] // two tiles away
+    [InlineData(4, 4)] // under the zone itself
+    public void AZoneWithNoRoadAlongItsEdgeIsNotServed(int roadX, int roadY)
+    {
+        var network = NetworkWithRoadAt(roadX, roadY);
+
+        Assert.False(network.IsZoneServed(4, 4));
     }
 
     [Fact]
-    public void AZoneThatTouchesNoRoadIsNotServed()
+    public void AZoneAtTheMapEdgeIsServedFromInside()
     {
-        var map = TileMap.FromTerrain(6, 6, new TileKind[36]);
-        map.SetState(0, 0, new TileState(TileKind.Grass, TileUse.Residential));
-        map.SetState(5, 5, new TileState(TileKind.Grass, TileUse.Road));
+        var network = NetworkWithRoadAt(3, 2);
 
-        var network = new RoadNetwork();
-        network.Rebuild(map);
-
-        Assert.False(network.IsServed(0, 0));
-    }
-
-    [Fact]
-    public void AZoneDiagonallyNextToARoadIsNotServed()
-    {
-        var map = TileMap.FromTerrain(4, 4, new TileKind[16]);
-        map.SetState(1, 1, new TileState(TileKind.Grass, TileUse.Road));
-        map.SetState(0, 0, new TileState(TileKind.Grass, TileUse.Residential));
-
-        var network = new RoadNetwork();
-        network.Rebuild(map);
-
-        Assert.False(network.IsServed(0, 0));
+        Assert.True(network.IsZoneServed(1, 1));
+        Assert.False(network.IsZoneServed(0, 0));
     }
 
     [Fact]
@@ -88,5 +79,14 @@ public class RoadNetworkTests
         network.MarkDirty();
         network.EnsureCurrent(map);
         Assert.Equal(1, network.RoadCount);
+    }
+
+    private static RoadNetwork NetworkWithRoadAt(int x, int y)
+    {
+        var map = TileMap.FromTerrain(9, 9, new TileKind[81]);
+        map.SetState(x, y, new TileState(TileKind.Grass, TileUse.Road));
+        var network = new RoadNetwork();
+        network.Rebuild(map);
+        return network;
     }
 }

@@ -54,15 +54,12 @@ public static class Theme
     /// <summary>The color of an industrial zone.</summary>
     public static readonly Color Industrial = new() { R = 198, G = 156, B = 58, A = 255 };
 
-    /// <summary>The color of the outline around a building.</summary>
-    public static readonly Color BuildingOutline = new() { R = 32, G = 30, B = 28, A = 255 };
-
     /// <summary>Returns the color of a kind of ground.</summary>
     public static Color For(TileKind kind) => kind switch
     {
         TileKind.Water => Water,
         TileKind.Trees => Trees,
-        TileKind.Rock => Rock,
+        TileKind.Rock or TileKind.Rubble => Rock,
         _ => Grass,
     };
 

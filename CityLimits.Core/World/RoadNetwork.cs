@@ -103,13 +103,22 @@ public sealed class RoadNetwork
         (uint)x < (uint)_width && (uint)y < (uint)_height && _roads[(y * _width) + x];
 
     /// <summary>
-    /// Tells whether a tile reaches the road network. A tile is served when it
-    /// carries a road itself, or when it touches one.
+    /// Tells whether a zone reaches the road network, as in Micropolis: a road must lie on one
+    /// of the 12 tiles along the zone's edges, just outside it. A road at a corner doesn't count.
     /// </summary>
-    public bool IsServed(int x, int y) =>
-        HasRoad(x, y) ||
-        HasRoad(x, y - 1) ||
-        HasRoad(x, y + 1) ||
-        HasRoad(x - 1, y) ||
-        HasRoad(x + 1, y);
+    public bool IsZoneServed(int centerX, int centerY)
+    {
+        for (var d = -1; d <= 1; d++)
+        {
+            if (HasRoad(centerX + d, centerY - 2) ||
+                HasRoad(centerX + 2, centerY + d) ||
+                HasRoad(centerX + d, centerY + 2) ||
+                HasRoad(centerX - 2, centerY + d))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }

@@ -19,7 +19,7 @@ public class TileInfoTests
     {
         var state = new TileState(TileKind.Trees);
 
-        Assert.Equal("Trees - clear it before building", TileInfo.Describe(state));
+        Assert.Equal("Trees - cleared for $1 a tile when built on", TileInfo.Describe(state));
     }
 
     [Fact]
@@ -31,12 +31,16 @@ public class TileInfoTests
     }
 
     [Fact]
-    public void AZoneThatHasNotDevelopedIsWaitingForARoad()
+    public void AZoneThatHasNotDevelopedSaysSo()
     {
         var state = new TileState(TileKind.Grass, TileUse.Residential);
 
-        Assert.Equal("Residential zone - waiting for a road", TileInfo.Describe(state));
+        Assert.Equal("Residential zone - not developed yet", TileInfo.Describe(state));
     }
+
+    [Fact]
+    public void ABridgeIsDescribedAsOne() =>
+        Assert.Equal("Road - a bridge, carries traffic", TileInfo.Describe(new TileState(TileKind.Water, TileUse.Road)));
 
     [Fact]
     public void AZoneThatHasDevelopedSaysHowFar()

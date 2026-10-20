@@ -56,4 +56,27 @@ public class TileStateTests
         Assert.NotEqual(first, second);
         Assert.True(first != second);
     }
+
+    [Theory]
+    [InlineData(-1)]
+    [InlineData(9)]
+    public void AZonePartOutsideTheZoneIsRejected(int part) =>
+        Assert.Throws<ArgumentOutOfRangeException>(() => new TileState(TileKind.Grass, TileUse.Residential, zonePart: part));
+
+    [Fact]
+    public void OnlyAZoneHasParts()
+    {
+        var corner = new TileState(TileKind.Grass, TileUse.Residential, zonePart: 0);
+        var road = new TileState(TileKind.Grass, TileUse.Road, zonePart: 0);
+
+        Assert.Equal(0, corner.ZonePart);
+        Assert.False(corner.IsZoneCenter);
+        Assert.Equal(new TileState(TileKind.Grass, TileUse.Road), road);
+    }
+
+    [Fact]
+    public void TwoTilesOfAZoneDifferByTheirPart() =>
+        Assert.NotEqual(
+            new TileState(TileKind.Grass, TileUse.Industrial, zonePart: 1),
+            new TileState(TileKind.Grass, TileUse.Industrial, zonePart: 2));
 }

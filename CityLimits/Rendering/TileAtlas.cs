@@ -24,8 +24,31 @@ public static class TileAtlas
     /// <summary>The number of tree tiles the sheet holds.</summary>
     private const int TreeTiles = 8;
 
-    /// <summary>The tile of bare rubble.</summary>
-    private const int RockTile = 44;
+    /// <summary>The first of the tiles that hold rubble; rock borrows the first of them until the new terrain.</summary>
+    private const int FirstRubbleTile = 44;
+
+    /// <summary>The number of rubble tiles the sheet holds.</summary>
+    private const int RubbleTiles = 4;
+
+    /// <summary>A bridge running across, east to west.</summary>
+    private const int BridgeAcrossTile = 64;
+
+    /// <summary>A bridge running down, north to south.</summary>
+    private const int BridgeDownTile = 65;
+
+    /// <summary>
+    /// The first tile of each zone's 3 by 3 drawings, by development level: the empty zone, then
+    /// the buildings it grows into. A zone's nine tiles follow each other in the sheet, across and
+    /// then down, so a part's tile is the first tile plus its part number. Levels 1 to 3 show the
+    /// first, lowest-value buildings until population and land value choose among them.
+    /// </summary>
+    private static readonly int[] ResidentialTiles = [240, 261, 270, 279];
+
+    /// <inheritdoc cref="ResidentialTiles"/>
+    private static readonly int[] CommercialTiles = [423, 432, 441, 450];
+
+    /// <inheritdoc cref="ResidentialTiles"/>
+    private static readonly int[] IndustrialTiles = [612, 621, 630, 639];
 
     /// <summary>
     /// The road drawing for each set of joined sides, indexed by <see cref="RoadConnections"/>.
@@ -51,20 +74,45 @@ public static class TileAtlas
         76, // all four: a crossroads
     ];
 
-    /// <summary>The sheet index that draws a tile, given the sides of it that join a road.</summary>
-    public static int IndexFor(TileState state, RoadConnections roads, int tileX, int tileY)
+    /// <summary>
+    /// The sheet index that draws a tile, given the sides of it that join a road and, for a zone,
+    /// the development its centre holds.
+    /// </summary>
+    public static int IndexFor(TileState state, RoadConnections roads, int zoneDevelopment, int tileX, int tileY)
     {
+        if (state.IsBridge)
+        {
+            // A bridge runs down only when it joins nothing across, as in Micropolis.
+            var across = (roads & (RoadConnections.East | RoadConnections.West)) != 0;
+            var down = (roads & (RoadConnections.North | RoadConnections.South)) != 0;
+            return down && !across ? BridgeDownTile : BridgeAcrossTile;
+        }
+
         if (state.IsRoad)
         {
             return RoadTiles[(int)roads & 0b1111];
         }
 
+        if (state.IsZoned)
+        {
+            var tiles = state.Use switch
+            {
+                TileUse.Commercial => CommercialTiles,
+                TileUse.Industrial => IndustrialTiles,
+                _ => ResidentialTiles,
+            };
+
+            return tiles[Math.Clamp(zoneDevelopment, 0, TileState.MaxDevelopment)] + state.ZonePart;
+        }
+
+        // The same tile always picks the same drawing, so the ground doesn't flicker as the view moves.
+        var variant = (tileX * 7) + (tileY * 13);
         return state.Kind switch
         {
             TileKind.Water => WaterTile,
-            // The same tile always picks the same tree, so the woods don't flicker as the view moves.
-            TileKind.Trees => FirstTreeTile + (((tileX * 7) + (tileY * 13)) % TreeTiles),
-            TileKind.Rock => RockTile,
+            TileKind.Trees => FirstTreeTile + (variant % TreeTiles),
+            TileKind.Rubble => FirstRubbleTile + (variant % RubbleTiles),
+            TileKind.Rock => FirstRubbleTile,
             _ => LandTile,
         };
     }

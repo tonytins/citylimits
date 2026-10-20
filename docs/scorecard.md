@@ -14,14 +14,14 @@ change. Statuses are `done`, `partial`, and `missing`.
 |---|---:|---:|---:|---|
 | [Core](#core) | 8 | 0 | 0 | 0.25 s ticks, seed 2000, 128 by 128 map |
 | [Map](#map-and-terrain) | 4 | 0 | 0 | 4 kinds of ground, one 256 by 960 atlas |
-| [Zoning](#roads-and-zoning) | 5 | 0 | 0 | 5 tools that change the world, $10 a road, $5 a zone |
+| [Zoning](#roads-and-zoning) | 5 | 0 | 0 | 5 tools that change the world, $10 a road, $50 a bridge, $100 a 3 by 3 zone, $1 to bulldoze |
 | [Simulation](#simulation) | 2 | 1 | 4 | 1 month a tick, zones develop to level 3 |
 | [Economy](#economy-and-services) | 0 | 1 | 4 | $20 000 in the treasury, no taxes yet |
 | [Traffic](#traffic-and-commuting) | 0 | 1 | 3 | 1 road network, 0 trips |
 | [Environment](#land-value-pollution-and-disasters) | 0 | 0 | 5 | 0 disasters |
 | [Interface](#player-interface) | 1 | 1 | 4 | 6 tools with icons, 1 status bar |
 | [Platform](#platform) | 6 | 0 | 2 | Raylib-cs 8.1.0, NLog 6.2.2, .NET 10 |
-| [Reliability](#reliability) | 6 | 0 | 0 | 170 tests, all passing, CI green |
+| [Reliability](#reliability) | 6 | 0 | 0 | 201 tests, all passing, CI green |
 | [Documentation](#documentation) | 3 | 0 | 2 | 3 of 5 documents exist |
 | [Known issues](#known-issues) | | | | 1 open, 3 resolved |
 
@@ -39,7 +39,7 @@ How the state was verified on 2026-10-20:
 
 ```sh
 dotnet build CityLimits.slnx                              # 4 projects: 0 warnings, 0 errors
-dotnet test  CityLimits.Tests/CityLimits.Tests.csproj     # 170 passed, 0 failed
+dotnet test  CityLimits.Tests/CityLimits.Tests.csproj     # 201 passed, 0 failed
 dotnet run --project CityLimits -- --headless --ticks 12  # 12 ticks logged to the console
 dotnet run --project CityLimits                           # window opened; roads, zones, buildings, the palette icons, and the tile readout were drawn
 dotnet run --project CityLimits -- --seed 7               # window opened and the assets loaded (the screen was not inspected)
@@ -83,17 +83,17 @@ there is something to grow.
 
 | Id | Target | Status | Evidence |
 |---|---|---|---|
-| ZONE-1 | Roads can be drawn and bulldozed, with a cost the player must be able to pay | done | `CityLimits.Core/World/CityBuilder.cs`: `LayRoad` charges `TileCosts.Road`, and `Bulldoze` clears it again. Work is done in strokes: `CityBuilder.Plan` previews a `BuildStroke` into a `BuildPlan` with its total cost, and `CityBuilder.Apply` applies all of it or refuses it whole with `BuildRefusal.NotEnoughFunds` or `OffTheMap`. `GameLoop.HandleStroke` puts the result on screen. `CityBuilderTests` and `BuildStrokeTests` cover the charge, the refusals, the skipped tiles, and the refund. On a private display on 2026-10-20, a diagonal road drag previewed and built a straight road of 11 tiles for $115, the money matched, and Escape cancelled a bulldozer stroke with nothing changed |
-| ZONE-2 | Residential, commercial, and industrial tiles can be zoned, by dragging | done | `BuildAction.ZoneResidential`, `ZoneCommercial`, and `ZoneIndustrial` map to `TileUse.Residential`, `Commercial`, and `Industrial`. A zone stroke covers the rectangle dragged, with a preview and its total cost, and is applied on release. Zones are still 1 by 1 here, where Micropolis' are 3 by 3 |
-| ZONE-3 | A zoned tile counts as served only when it reaches the road network | done | `CityLimits.Core/World/RoadNetwork.cs`: `IsServed` is true for a road tile and for a tile orthogonally next to one, and false for a tile that only touches a road at a corner. `CitySimulation.Grow` develops a zone only when it is served, and `CityBuilderTests` and `RoadNetworkTests` prove both halves |
-| ZONE-4 | Buildings are drawn from the tile's own state, not a second list of buildings | done | The building lives in the tile: `TileState` holds the use and the development level, and `MapRenderer.DrawZone` draws the building from `map.StateAt(x, y)`. There is no list of buildings anywhere in the tree |
-| ZONE-5 | Bulldozing clears a tile and refunds part of its cost | done | `CityBuilder.Bulldoze` puts the tile back to clear ground and refunds `TileCosts.RefundFor`, half of what the tile cost. The refund is tested for a road, for a zone, and for a tile with nothing on it |
+| ZONE-1 | Roads can be drawn and bulldozed, with a cost the player must be able to pay | done | `CityLimits.Core/World/CityBuilder.cs`: `LayRoad` charges `TileCosts.Road`, and the bulldozer clears it again. Over water a road is a bridge at $50 a tile, started from a road beside it, as in Micropolis. Work is done in strokes: `CityBuilder.Plan` previews a `BuildStroke` into a `BuildPlan` with its total cost, and `CityBuilder.Apply` applies all of it or refuses it whole with `BuildRefusal.NotEnoughFunds` or `OffTheMap`. `GameLoop.HandleStroke` puts the result on screen. `CityBuilderTests` and `BuildStrokeTests` cover the charge, the refusals, the skipped tiles, and the refund. On a private display on 2026-10-20, a diagonal road drag previewed and built a straight road of 11 tiles for $115, the money matched, and Escape cancelled a bulldozer stroke with nothing changed |
+| ZONE-2 | Residential, commercial, and industrial zones can be laid, by dragging | done | As in Micropolis, a zone is 3 by 3 (`ZoneLayout`, `TileState.ZonePart`) and costs $100. A zone stroke lays a grid three tiles apart, the first zone centred where it started (`BuildStroke.Bounds`), and each zone goes down whole or is skipped (`CityBuilder.PlanZone`). Trees and rubble are cleared for $1 a tile. `CityBuilderTests` and `BuildStrokeTests` cover the size, the grid, the clearing, and the refusals. On a private display on 2026-10-20, a residential, a commercial, and an industrial zone were laid and previewed, and drawn from the sheet |
+| ZONE-3 | A zone counts as served only when it reaches the road network | done | `RoadNetwork.IsZoneServed`: a road must lie on one of the 12 tiles along the zone's edges, just outside it; a road at a corner doesn't count, as in Micropolis. `RoadNetworkTests` covers each edge, the corners, and the map edge, and `CitySimulationTests` shows a zone with a road only at its corner never develops |
+| ZONE-4 | Buildings are drawn from the tile's own state, not a second list of buildings | done | A zone's development lives on its centre tile, and each of its nine tiles is drawn from the sheet as its part of the zone's 3 by 3 drawing for that development (`TileAtlas.IndexFor`, `TileMap.ZoneStateAt`). There is no list of buildings anywhere in the tree. On a private display on 2026-10-20, three zones grew into buildings at 3x speed |
+| ZONE-5 | The bulldozer clears what it can, at Micropolis' price | done | `CityBuilder.PlanBulldozer`: $1 a tile for roads, bridges (back to water), trees, and rubble, and nothing refunded. A zone comes down only when its centre is in the stroke, turning all nine tiles to rubble for $1; its other tiles are refused with `BuildRefusal.PartOfAZone`. On a private display on 2026-10-20, an industrial zone was bulldozed through its centre into rubble for $1 |
 
 ## Simulation
 
 | Id | Target | Status | Evidence |
 |---|---|---|---|
-| SIM-1 | A tick advances the date and updates the world | done | `CitySimulation.Tick` moves the calendar on by a month, counts the tick, and grows the world: a served zone moves up one development level, to a maximum of three |
+| SIM-1 | A tick advances the date and updates the world | done | `CitySimulation.Tick` moves the calendar on by a month, counts the tick, and grows the world: a served zone's centre moves up one development level, to a maximum of three. Micropolis' calendar and 16-phase cycle replace the month-long tick in the baseline refactor |
 | SIM-2 | Population, jobs, and migration between zones | missing | No population model |
 | SIM-3 | Residential, commercial, and industrial demand exist and are readable | missing | No demand model |
 | SIM-4 | Zones develop and decay, and abandoned zones come back | partial | Zones develop: `CitySimulation.Grow` moves a served zone up a level. There is no decay, and an abandoned zone does not come back, because there is no demand to bring it back |
@@ -161,7 +161,7 @@ there is something to grow.
 | REL-1 | Nothing ends the player's session: the frame loop catches, reports, and keeps drawing | done | `WindowedGame` catches every exception around the update and the draw, and `GameLoop.ReportError` puts the message on screen; the game keeps running |
 | REL-2 | The world and the simulation never call the engine | done | `CityLimits.Core` references no package at all, and the game references the core library; no Raylib type appears in the core |
 | REL-3 | Input, tile indices, map sizes, and files are validated where they enter | done | Map sizes, tile counts, and the settings file are checked, and the tile indexer throws outside the map. The mouse position is turned into a tile by `MapRenderer.TryGetTileAt`, which reports when the pointer is off the map, and `CityBuilder.Apply` refuses a tile that is off the map, ground that cannot be built on, and work the city cannot pay for |
-| REL-4 | A test project covers the engine-free logic, and the tests pass | done | `CityLimits.Tests` references `CityLimits.Core` and `CityLimits.CommandLine` and holds 170 xUnit tests over the generator, the map, the tile state, the rules, the calendar, the clock, the simulation, the settings, the treasury, the road network and its connections, the map's change event, the builder and its strokes, the option reader, and the dispatcher. All 170 passed on 2026-10-20. Letting an unknown option and an out-of-range number through on purpose failed 3 of them, and letting `--headless` reach a command that needs a window failed 2 |
+| REL-4 | A test project covers the engine-free logic, and the tests pass | done | `CityLimits.Tests` references `CityLimits.Core` and `CityLimits.CommandLine` and holds 201 xUnit tests over the generator, the map, the tile state, the rules, the calendar, the clock, the simulation, the settings, the treasury, the road network and its connections, the map's change event, the builder and its strokes, the option reader, and the dispatcher. All 201 passed on 2026-10-20. Letting an unknown option and an out-of-range number through on purpose failed 3 of them, and letting `--headless` reach a command that needs a window failed 2 |
 | REL-5 | A determinism test proves the same seed gives the same city | done | `DeterministicRandomTests.TheSameSeedGivesTheSameSequence`, `CitySimulationTests.TheSameSeedAndTheSameTicksGiveTheSameCity`, and `CitySimulationTests.TheSameSeedAndTheSameWorkGiveTheSameCity`, which builds the same road and zones in two cities and compares the tiles and the money after 40 ticks |
 | REL-6 | CI builds and tests on every push | done | `.github/workflows/dotnet.yml` runs on a push to `main` and on a pull request: restore, build, and test. The first run, on the commit 273fd9f on 2026-10-20, finished with the conclusion `success` (run 39443031762) |
 

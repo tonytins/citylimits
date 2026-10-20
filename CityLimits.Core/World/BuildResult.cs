@@ -4,9 +4,8 @@ namespace CityLimits.Core.World;
 /// <param name="Status">Whether the world changed.</param>
 /// <param name="Reason">Why the work did not happen.</param>
 /// <param name="Cost">The money the work cost the city.</param>
-/// <param name="Refund">The money the work gave back to the city.</param>
 /// <param name="TilesChanged">How many tiles the work changed.</param>
-public readonly record struct BuildResult(BuildStatus Status, BuildRefusal Reason, int Cost = 0, int Refund = 0, int TilesChanged = 0)
+public readonly record struct BuildResult(BuildStatus Status, BuildRefusal Reason, int Cost = 0, int TilesChanged = 0)
 {
     /// <summary>Tells whether the world changed.</summary>
     public bool Changed => Status == BuildStatus.Built;
@@ -19,6 +18,6 @@ public readonly record struct BuildResult(BuildStatus Status, BuildRefusal Reaso
     public static BuildResult Unchanged(BuildRefusal reason) => new(BuildStatus.Unchanged, reason);
 
     /// <summary>The result of work that changed the world.</summary>
-    public static BuildResult Built(int cost = 0, int refund = 0, int tilesChanged = 1) =>
-        new(BuildStatus.Built, BuildRefusal.None, cost, refund, tilesChanged);
+    public static BuildResult Built(int cost = 0, int tilesChanged = 1) =>
+        new(BuildStatus.Built, BuildRefusal.None, cost, tilesChanged);
 }

@@ -76,7 +76,7 @@ public sealed class MapRenderer : IDisposable
     /// colours when the sheet is missing. The chunk cache and the tile-by-tile path share it.
     /// </summary>
     internal static void DrawTile(TileMap map, Texture2D? sheet, int x, int y, int left, int top) =>
-        DrawTileAs(sheet, map.StateAt(x, y), RoadNetwork.ConnectionsAt(map, x, y), x, y, left, top);
+        DrawTileAs(sheet, map.StateAt(x, y), RoadNetwork.ConnectionsAt(map, x, y), map.ZoneStateAt(x, y).Development, x, y, left, top);
 
     /// <summary>
     /// Draws a stroke's preview over the map, as Micropolis does: each tile it would change, as
@@ -107,8 +107,9 @@ public sealed class MapRenderer : IDisposable
             plan.Refusal == BuildRefusal.None ? Theme.Hover : Theme.Error);
     }
 
+    // A planned zone is new, so it shows undeveloped; a planned tile that isn't a zone has no development to show.
     private void DrawPlanned(BuildPlan plan, int x, int y) =>
-        DrawTileAs(_sheet, plan.StateAt(x, y), plan.RoadConnectionsAt(x, y), x, y, x * TileSize, y * TileSize);
+        DrawTileAs(_sheet, plan.StateAt(x, y), plan.RoadConnectionsAt(x, y), 0, x, y, x * TileSize, y * TileSize);
 
     // An existing road beside the stroke changes shape when a new road joins it.
     private void DrawJoiningRoad(BuildPlan plan, int x, int y)
@@ -119,28 +120,23 @@ public sealed class MapRenderer : IDisposable
         }
     }
 
-    private static void DrawTileAs(Texture2D? sheet, TileState state, RoadConnections roads, int x, int y, int left, int top)
+    private static void DrawTileAs(Texture2D? sheet, TileState state, RoadConnections roads, int zoneDevelopment, int x, int y, int left, int top)
     {
         var destination = new Rectangle { X = left, Y = top, Width = TileSize, Height = TileSize };
 
         if (sheet is null)
         {
-            Raylib.DrawRectangleRec(destination, state.IsRoad ? Theme.Road : Theme.For(state.Kind));
+            Raylib.DrawRectangleRec(destination, state.Use == TileUse.None ? Theme.For(state.Kind) : Theme.For(state.Use));
         }
         else
         {
             Raylib.DrawTexturePro(
                 sheet.Value,
-                TileAtlas.SourceFor(TileAtlas.IndexFor(state, roads, x, y)),
+                TileAtlas.SourceFor(TileAtlas.IndexFor(state, roads, zoneDevelopment, x, y)),
                 destination,
                 Vector2.Zero,
                 0f,
                 Color.White);
-        }
-
-        if (state.IsZoned)
-        {
-            DrawZone(left, top, state);
         }
     }
 
@@ -163,30 +159,6 @@ public sealed class MapRenderer : IDisposable
             },
             1f / camera.Zoom,
             Theme.Hover);
-    }
-
-    private static void DrawZone(int left, int top, TileState state)
-    {
-        var color = Theme.For(state.Use);
-
-        if (state.Development == 0)
-        {
-            Raylib.DrawRectangle(left + 5, top + 5, 6, 6, color);
-            return;
-        }
-
-        var size = 6 + (state.Development * 3);
-        var inset = (TileSize - size) / 2;
-        var building = new Rectangle
-        {
-            X = left + inset,
-            Y = top + inset,
-            Width = size,
-            Height = size,
-        };
-
-        Raylib.DrawRectangleRec(building, color);
-        Raylib.DrawRectangleLinesEx(building, 1f, Theme.BuildingOutline);
     }
 
     private static void DrawGrid(int minX, int minY, int maxX, int maxY)

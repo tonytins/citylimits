@@ -11,7 +11,7 @@ public sealed class CitySimulation
     /// <summary>The month the city starts in.</summary>
     public const int StartMonth = 1;
 
-    /// <summary>The chance a served zone develops in a tick.</summary>
+    /// <summary>The chance a served zone develops in a tick, until demand decides it.</summary>
     private const float DevelopmentChance = 0.2f;
 
     /// <summary>Creates a simulation over the given map.</summary>
@@ -61,6 +61,8 @@ public sealed class CitySimulation
         Grow();
     }
 
+    // Growth is decided per zone, at its centre, as in Micropolis; the centre holds the zone's
+    // development. The flat chance is a stand-in until demand and population replace it.
     private void Grow()
     {
         Roads.EnsureCurrent(Map);
@@ -70,12 +72,12 @@ public sealed class CitySimulation
             for (var x = 0; x < Map.Width; x++)
             {
                 var state = Map.StateAt(x, y);
-                if (!state.IsZoned || state.Development >= TileState.MaxDevelopment)
+                if (!state.IsZoneCenter || state.Development >= TileState.MaxDevelopment)
                 {
                     continue;
                 }
 
-                if (!Roads.IsServed(x, y))
+                if (!Roads.IsZoneServed(x, y))
                 {
                     continue;
                 }

@@ -87,9 +87,9 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   sheet in `Assets/tiles.png`. Each tile is one lookup and one draw:
   `Rendering/TileAtlas.cs` turns a tile's state into a sheet index, and a
   road's index comes from the sides that join another road, which
-  `RoadNetwork.ConnectionsAt` reads from the map. Zones are still drawn as
-  coloured shapes until they become 3 by 3 and take their buildings from
-  the sheet.
+  `RoadNetwork.ConnectionsAt` reads from the map. A road over water is
+  drawn as a bridge. A zone's nine tiles are drawn from the sheet as one
+  3 by 3 drawing, chosen by the development its centre holds.
 - **The chunk cache.** The map is drawn ahead of time into render
   textures of 32 by 32 tiles (`Rendering/MapChunkCache.cs`), and a frame
   draws only the chunks the camera can see. `TileMap.TileChanged` reports
@@ -103,10 +103,17 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   moves the city's calendar on by one month. Space pauses the game, and
   the comma and period keys change the speed between 1x and 3x. The speed
   changes how many ticks run in a frame, never the size of a tick.
+- **The zones.** A zone is 3 by 3 tiles, as in Micropolis. Each tile
+  knows its part of the zone (`TileState.ZonePart`, 0 to 8, with 4 the
+  centre), and the zone's development is kept on its centre only.
+  `TileMap.ZoneCenterOf` and `ZoneStateAt` find a zone's centre from any of
+  its tiles. A zone is served when a road lies on one of the 12 tiles along
+  its edges, just outside it, not at a corner (`RoadNetwork.IsZoneServed`).
 - **The tick.** `CitySimulation.Tick` advances the date and then grows the
-  city: a zoned tile that the road network serves develops a step, up to
-  level 3, and the chance is taken from the simulation's own seeded
-  generator, so the same seed and the same work give the same city.
+  city: a served zone's centre develops a step, up to level 3, on a flat
+  chance from the simulation's own seeded generator, so the same seed and
+  the same work give the same city. The flat chance stands in until
+  population and demand decide growth.
 - **The tools.** Six tools sit in the palette down the left, each with its
   icon, and the number keys pick one: inspect, road, residential,
   commercial, industrial, and bulldozer. A tool is used in a stroke, as
@@ -117,10 +124,22 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   stroke all at once: the tiles that can't be built on are skipped, and
   the whole stroke is refused when it runs off the map or the city can't
   pay for all of it. Escape cancels a stroke, or quits when there is none.
-- **The money.** The city starts with a treasury. Each tool has a price,
-  the HUD shows it, the treasury pays for the work, and a tool the city
-  cannot pay for is refused with a message and changes nothing. The
-  bulldozer gives half the price back.
+- **The money.** The city starts with a treasury, and the prices are
+  Micropolis' (`Economy/TileCosts.cs`): $10 a road tile, $50 a bridge
+  tile, $100 a zone, $1 more for each tile of trees or rubble a tool
+  clears first, and $1 for each tile the bulldozer clears or each zone it
+  knocks down. Nothing is refunded. The palette and the HUD show the
+  prices, the treasury pays for a stroke as a whole, and a stroke the city
+  cannot pay for is refused with a message and changes nothing.
+- **The building rules.** A road runs in a straight line and is laid on
+  land, clearing trees and rubble; over water it becomes a bridge, which
+  needs a road beside it to start from, so a stroke can start from either
+  bank. Zones are laid as a grid, the first centred where the stroke
+  started; a zone goes down whole or not at all, on ground with nothing on
+  it. The bulldozer clears roads, bridges, trees, and rubble tile by tile,
+  but a zone only through its centre, which turns all nine tiles to
+  rubble. Clicking the palette picks a tool, and never builds on the map
+  under it.
 - **The tile readout.** The tile under the mouse is outlined, and a panel
   names it and says what can be done with it.
 - **The settings.** The window size and the speed are written to
@@ -154,7 +173,7 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   and no project. It holds the parser, the dispatcher, the default
   command, the strict option reader, and the exit codes.
 - **The tests.** `CityLimits.Tests` uses xUnit 2 with the VSTest runner
-  and coverlet, and holds 170 tests over the generator, the map, the
+  and coverlet, and holds 201 tests over the generator, the map, the
   calendar, the clock, the simulation, the settings, the tile rules, the
   build actions, the road network, the treasury, the option reader, and
   the dispatcher.
@@ -166,10 +185,15 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
 - **The assets.** `CityLimits/Assets/` holds the tile sheet and the tool
   icons. The project file copies them to the output folder, and the game
   loads them once, after the window is open.
-- **Version.** `VersionInfo` reports the version from GitInfo: `GitInfo.txt`
-  holds the `major.minor.patch` the game reports, and it is bumped by hand
-  when a change is worth a version, with a changelog entry to match.
-  `BuildNumber` is derived from the commit hash. The changelog only records
+- **Version.** `VersionInfo` reports the version from GitInfo, which works
+  it out from git: `GitInfo.txt` holds the base `major.minor.patch`, and
+  GitInfo adds its own count of the commits since that file last changed
+  to the patch. Don't edit `GitInfo.txt`; changing it restarts the count
+  and can send the version backwards. Only the owner changes the base. A
+  changelog entry is titled with the version GitInfo gives the commit that
+  carries it: commit, rebuild, read `GitSemVerPatch` from
+  `CityLimits/obj/Debug/net10.0/GitInfo.cache`, and correct the title if
+  it differs. `BuildNumber` is derived from the commit hash. The changelog only records
   versions with user-facing and developer changes, so its latest entry is
   expected to lag behind the version the game reports. Developer changes
   include any public APIs, tools, debugging, and modding support.

@@ -45,6 +45,27 @@ looking at the drawings in this copy of the sheet:
 | north, south, and west         | 75         | a junction, with a crossing west    |
 | all four sides                 | 76         | a crossroads with a signal          |
 
+A road over water is a bridge: tile 64 runs across, and tile 65 runs down,
+used when the bridge joins a road only above or below it.
+
+Rubble, which a bulldozed zone leaves, is tiles 44 to 47, chosen by the
+tile's place. Rock borrows tile 44 until the new terrain removes it.
+
+A zone is 3 by 3. Its nine tiles are nine tiles in a row in the sheet,
+read across and then down, so a tile's drawing is the zone's first tile
+plus its part number (0 to 8, with 4 the centre):
+
+| Zone        | Empty zone | Development 1 | Development 2 | Development 3 |
+| ----------- | ---------- | ------------- | ------------- | ------------- |
+| Residential | 240        | 261           | 270           | 279           |
+| Commercial  | 423        | 432           | 441           | 450           |
+| Industrial  | 612        | 621           | 630           | 639           |
+
+The buildings are the first three of each zone's drawings, the lowest
+land value, until population and land value choose among them. The
+residential buildings start at 261, after the twelve single houses at 249
+to 260; 405 and 414 are a hospital and a church.
+
 ## Licensing
 
 The tile sheet and the tool icons come from Micropolis

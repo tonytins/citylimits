@@ -57,7 +57,6 @@ public sealed class Hud
             { Refusal: BuildRefusal.OffTheMap } => ("Runs off the map", Theme.Error),
             { Refusal: BuildRefusal.NotEnoughFunds } => ($"${plan.Cost} - not enough money", Theme.Error),
             { Tiles.Count: 0 } => ("Nothing to do here", Theme.TextDim),
-            { Refund: > 0 } => ($"${plan.Refund} back", Theme.Accent),
             _ => ($"${plan.Cost}", Theme.Accent),
         };
 
