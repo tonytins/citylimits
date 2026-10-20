@@ -58,6 +58,9 @@ public sealed class CitySimulation
     /// <summary>How much the city wants more of each kind of zone.</summary>
     public CityDemand Demand { get; } = new();
 
+    /// <summary>Sends zones' trips out along the roads, reusing one route buffer.</summary>
+    public TripPlanner Trips { get; } = new();
+
     /// <summary>The money the city has.</summary>
     public Treasury Treasury { get; }
 

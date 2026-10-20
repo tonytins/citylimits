@@ -12,6 +12,13 @@ and factories are counted. Zones don't follow demand yet; that comes next.
 
 The headless run writes the population and the three demands each month.
 
+Zones can take trips, as in Micropolis: from a road along a zone's edge, a
+drive of up to 30 road tiles looking for somewhere to go, residents for
+shops and factories, shops for anyone, and factories for residents. Zones
+don't depend on their trips yet; that comes with the next growth rules.
+Mods can change where a zone's trips go, with a `trips` list in
+`zones.json`.
+
 ## 0.1.114
 
 Zones grow as they do in Micropolis. A residential zone first grows single

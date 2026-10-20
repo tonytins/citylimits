@@ -1,8 +1,8 @@
 # Modding
 
 > **Status:** the first pieces of modding support. A mod can change a
-> zone's name, price, population per building level, and house limit
-> today. More of the game becomes data as it is built, and each piece
+> zone's name, price, population per building level, house limit, and
+> where its trips go today. More of the game becomes data as it is built, and each piece
 > that does is listed here.
 
 CityLimits is built to be modded. The game's rules live in definitions:
@@ -68,6 +68,7 @@ the value it had.
 | `price` | What one 3 by 3 zone costs to lay, from 0 to 1 000 000 |
 | `populations` | The population of the zone's building at each level, from level 1 up, each from 0 to 100 000. It must have as many levels as the base game's zone: 4 residential, 5 commercial, 4 industrial |
 | `houses` | How many single houses a residential zone grows before its first building, from 0 to 8, each counting one person; only a residential zone can have houses |
+| `trips` | The kinds of zone a trip from this zone looks for, from `residential`, `commercial`, and `industrial`, each at most once. A residential zone counts as a place to go only once it has houses or a building. The base game sends residential trips to commercial and industrial zones, commercial trips to all three, and industrial trips to residential zones |
 
 The number of building levels and the land-value classes (`valueClasses`)
 can't be changed by a mod, because each level and class needs its own

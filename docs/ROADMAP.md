@@ -1,6 +1,6 @@
 # CityLimits roadmap
 
-> **Last reviewed:** 2026-10-20 · **Last updated:** 2026-10-20 · **Change:** minor (the census and demand, and the demand panel) · **Stage:** pre-alpha
+> **Last reviewed:** 2026-10-20 · **Last updated:** 2026-10-20 · **Change:** minor (zones' trips, as in Micropolis) · **Stage:** pre-alpha
 
 Forward-looking: where CityLimits stands, what blocks the next milestone,
 and what comes next. Verified status and evidence are in the
@@ -25,12 +25,12 @@ it a later milestone.
 | Core workflow | Works end to end? | Evidence | Hours to pass (est.) |
 |---|---|---|---|
 | Start a game and look at a map | yes | A resizable "CityLimits" window opens on a 128 by 128 seeded map, drawn from a tile sheet, with a camera that pans, zooms, and clamps, and a readout of the tile under the mouse (CORE-1, MAP-1, MAP-2, MAP-3, MAP-4, CORE-6) | 0 |
-| Lay roads, zone land, and see the city grow | partial | The player can lay roads and bridges, zone 3 by 3 land, and bulldoze, as in Micropolis and at its prices, and a zone with a road along its edge grows buildings. But growth and time still follow other rules than the Micropolis baseline, and there is no population, no demand, and no decay yet (ZONE-1 to ZONE-5, SIM-1, SIM-4) | 9–15 |
+| Lay roads, zone land, and see the city grow | partial | The player can lay roads and bridges, zone 3 by 3 land, and bulldoze, as in Micropolis and at its prices, and a zone with a road along its edge grows buildings. But growth and time still follow other rules than the Micropolis baseline, and there is no population, no demand, and no decay yet (ZONE-1 to ZONE-5, SIM-1, SIM-4) | 6–10 |
 | Read the city's state: money, power, demand, and problems | no | The HUD shows the date, the tick, the speed, the funds, and what the held tool costs, and the tile readout names what is on the tile. There is no power, no demand, and no budget panel (UI-2, ECON-1, ECON-3) | 25–40 |
 | Keep the city running for a long session without a crash | partial | The frame loop catches and reports, the tick loop runs, and the settings survive a session (REL-1, CORE-8). The city itself cannot be saved yet (UI-5) | 10–20 |
 
 **Result: pre-alpha.** One row passes, two are partial, and one is open.
-Alpha is roughly 44–75 hours away, and the critical path runs through the
+Alpha is roughly 41–70 hours away, and the critical path runs through the
 baseline refactor in Kowloon.
 
 ## Current focus
@@ -64,22 +64,22 @@ Then Joffburg: power, taxes, and the budget.
 | New Dullsville: Foundation | 100% | 0 | The solution, the core library, the tests, the fixed timestep, the camera, the tools, and the settings are all in |
 | Neat Map: Terrain and the tile grid | 83% | 6–10 | Reopened for the baseline: the terrain needs rivers, lakes, and smoothed edges, and no rock |
 | Line City: Roads and zoning | 100% | 0 | Meets the baseline: strokes with a preview, straight roads and bridges, 3 by 3 zones laid as a grid and served from their edges, and the $1 bulldozer, at Micropolis' prices |
-| Kowloon: Simulation core | 75% | 9–15 | Time runs as in Micropolis: the 16-phase cycle, the 48ths-of-a-year calendar, and its pace. Scenarios run from files and from the command line. Per-zone growth with population and demand is still to come. The heart of the game |
+| Kowloon: Simulation core | 75% | 6–10 | Time runs as in Micropolis: the 16-phase cycle, the 48ths-of-a-year calendar, and its pace. Scenarios run from files and from the command line. Per-zone growth with population and demand is still to come. The heart of the game |
 | Joffburg: Services and economy | 0% | 15–25 | Nothing yet |
 | Radial: Traffic and commuting | 0% | 12–20 | Nothing yet |
 | Bad News: Land value, pollution, disasters | 0% | 12–20 | Nothing yet |
 | Happy Isle: Player-facing game | 0% | 15–25 | Nothing yet |
 | Yokohama: Polish and release | 0% | 10–20 | Nothing yet |
-| | **Total** | **≈ 79–135** | |
+| | **Total** | **≈ 76–130** | |
 
 ## Upcoming work, ranked
 
 | Rank | Work | Milestone | Estimate (h) |
 |---|---|---|---|
-| 1 | Growth per zone: trips, land value, and growth and decline driven by demand, watched through scenarios | Kowloon | 9–15 |
+| 1 | Growth per zone: land value, and growth and decline driven by demand and trips, watched through scenarios | Kowloon | 6–10 |
 | 2 | Terrain: rivers, lakes, islands, and smoothed edges, on a 120 by 100 map | Neat Map | 6–10 |
 
-Alpha needs rank 1 in substance, about 9–15 hours.
+Alpha needs rank 1 in substance, about 6–10 hours.
 
 ## Milestone checklists
 
@@ -268,6 +268,7 @@ right, cut scope inside Radial and Bad News first, not inside Kowloon.
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-20 | patch | Step 4d: zones' trips, as in Micropolis. A trip sets out from the first road along a zone's edge and drives up to 30 road tiles, picking its way with the seeded generator, looking for a zone of a kind the zone's spec lists, which a mod can change. Growth uses trips from 4e. 76–130 h left, 331 tests. |
 | 2026-10-20 | minor | Step 4c: the census and demand, as in Micropolis. The scan counts each zone's population, the census is recorded monthly with ten years of history, and residential, commercial, and industrial demand move every second count from employment, births, and the market. The HUD shows the population and an R, C, I demand panel; the headless run logs both monthly. Kowloon is at 75%, 79–135 h left, 319 tests. |
 | 2026-10-20 | minor | Step 4b: zones keep their state as Micropolis does. A residential zone grows up to 8 single houses on its outer tiles, then a building; buildings have 4 levels (5 for commercial) in land-value classes, drawn from the sheet, with each level's population in the zone's spec, which a mod can change. Growth still comes on a flat chance until 4e. Kowloon is at 63%, 82–140 h left, 312 tests. |
 | 2026-10-20 | minor | Step 4 begins with zones as data: a `ZoneSpec` holds each zone's name and price, the base game's definitions are JSON read by the same loader as a mod's, and data mods in `Mods/` change them, checked first and skipped whole when broken. Scenarios run on the base game. `docs/modding.md` is the guide. 295 tests; no milestone moves until growth lands. |

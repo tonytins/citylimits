@@ -30,10 +30,10 @@ public class DefinitionTests
     }
 
     [Theory]
-    [InlineData("""{ "format": 1, "zones": [ { "id": "residential", "name": "R", "price": 1, "populations": [1], "valueClasses": 1, "houses": 0 } ] }""", "zones: the base game must define commercial, industrial.")]
+    [InlineData("""{ "format": 1, "zones": [ { "id": "residential", "name": "R", "price": 1, "populations": [1], "valueClasses": 1, "houses": 0, "trips": ["commercial"] } ] }""", "zones: the base game must define commercial, industrial.")]
     [InlineData("""{ "format": 1, "zones": [ { "id": "residential", "name": "R" } ] }""", "zones[0].price: is required.")]
     [InlineData("""{ "format": 1, "zones": [ { "id": "residential", "name": "R", "price": 1, "valueClasses": 1, "houses": 0 } ] }""", "zones[0].populations: is required.")]
-    [InlineData("""{ "format": 1, "zones": [ { "id": "commercial", "name": "C", "price": 1, "populations": [1], "valueClasses": 1, "houses": 2 } ] }""", "zones[0].houses: only a residential zone grows single houses.")]
+    [InlineData("""{ "format": 1, "zones": [ { "id": "commercial", "name": "C", "price": 1, "populations": [1], "valueClasses": 1, "houses": 2, "trips": ["residential"] } ] }""", "zones[0].houses: only a residential zone grows single houses.")]
     [InlineData("""{ "format": 1, "zones": [ { "id": "residential", "name": "R", "price": 1, "populations": [1, 2, 3, 4, 5, 6], "valueClasses": 1, "houses": 0 } ] }""", "zones[0].populations: needs 1 to 5 levels, not 6.")]
     [InlineData("""{ "format": 1, "zones": [ { "id": "hotel", "name": "H", "price": 1 } ] }""", "zones[0].id: 'hotel' is not one of residential, commercial, industrial.")]
     [InlineData("""{ "format": 2, "zones": [] }""", "format: this version reads format 1, not 2.")]

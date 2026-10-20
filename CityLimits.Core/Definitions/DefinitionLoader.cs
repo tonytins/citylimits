@@ -65,7 +65,8 @@ public static class DefinitionLoader
                 var populations = Populations(entry.Populations ?? throw new InvalidDefinitions($"{at}.populations: is required."), null, $"{at}.populations");
                 var valueClasses = InRange(entry.ValueClasses ?? throw new InvalidDefinitions($"{at}.valueClasses: is required."), 1, TileState.MaxValueClass + 1, $"{at}.valueClasses");
                 var houses = Houses(entry.Houses ?? throw new InvalidDefinitions($"{at}.houses: is required."), use, $"{at}.houses");
-                zones[use] = new ZoneSpec(entry.Id!, use, name, price, populations, valueClasses, houses);
+                var trips = Trips(entry.Trips ?? throw new InvalidDefinitions($"{at}.trips: is required."), $"{at}.trips");
+                zones[use] = new ZoneSpec(entry.Id!, use, name, price, populations, valueClasses, houses, trips);
             }
 
             var missing = ZoneIds.Where(pair => !zones.ContainsKey(pair.Value)).Select(pair => pair.Key).ToList();
@@ -152,7 +153,8 @@ public static class DefinitionLoader
                         entry.Name is null ? null : Name(entry.Name, $"{at}.name"),
                         entry.Price is null ? null : Price(entry.Price.Value, $"{at}.price"),
                         entry.Populations is null ? null : Populations(entry.Populations, levels, $"{at}.populations"),
-                        entry.Houses is null ? null : Houses(entry.Houses.Value, use, $"{at}.houses"));
+                        entry.Houses is null ? null : Houses(entry.Houses.Value, use, $"{at}.houses"),
+                        entry.Trips is null ? null : Trips(entry.Trips, $"{at}.trips"));
                 }
             }
 
@@ -262,6 +264,34 @@ public static class DefinitionLoader
         return populations.ToArray();
     }
 
+    // A trip has to be looking for something: one to three different kinds of zone.
+    private static IReadOnlyList<TileUse> Trips(List<string?> trips, string at)
+    {
+        if (trips.Count == 0)
+        {
+            throw new InvalidDefinitions($"{at}: needs at least one kind of zone to go to.");
+        }
+
+        var uses = new List<TileUse>();
+        for (var i = 0; i < trips.Count; i++)
+        {
+            var id = trips[i];
+            if (id is null || !ZoneIds.TryGetValue(id, out var use))
+            {
+                throw new InvalidDefinitions($"{at}[{i}]: '{id}' is not one of {string.Join(", ", ZoneIds.Keys)}.");
+            }
+
+            if (uses.Contains(use))
+            {
+                throw new InvalidDefinitions($"{at}[{i}]: '{id}' is listed twice.");
+            }
+
+            uses.Add(use);
+        }
+
+        return uses;
+    }
+
     // Single houses stand on a zone's outer tiles, and only residential zones have house drawings.
     private static int Houses(int houses, TileUse use, string at)
     {
@@ -317,6 +347,8 @@ public static class DefinitionLoader
         public int? ValueClasses { get; set; }
 
         public int? Houses { get; set; }
+
+        public List<string?>? Trips { get; set; }
     }
 
     private sealed class ManifestDocument
@@ -334,7 +366,7 @@ public static class DefinitionLoader
 }
 
 /// <summary>What a mod changes in one zone's spec; a field left null keeps the value it had.</summary>
-public sealed record ZonePatch(string? Name, int? Price, IReadOnlyList<int>? Populations = null, int? Houses = null)
+public sealed record ZonePatch(string? Name, int? Price, IReadOnlyList<int>? Populations = null, int? Houses = null, IReadOnlyList<TileUse>? TripsTo = null)
 {
     /// <summary>The zone's spec with this mod's changes.</summary>
     public ZoneSpec ApplyTo(ZoneSpec zone) => zone with
@@ -343,6 +375,7 @@ public sealed record ZonePatch(string? Name, int? Price, IReadOnlyList<int>? Pop
         Price = Price ?? zone.Price,
         Populations = Populations ?? zone.Populations,
         Houses = Houses ?? zone.Houses,
+        TripsTo = TripsTo ?? zone.TripsTo,
     };
 }
 

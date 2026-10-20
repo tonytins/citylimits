@@ -12,9 +12,9 @@ public static class BaseGame
         {
           "format": 1,
           "zones": [
-            { "id": "residential", "name": "Residential zone", "price": 100, "populations": [16, 24, 32, 40], "valueClasses": 4, "houses": 8 },
-            { "id": "commercial", "name": "Commercial zone", "price": 100, "populations": [1, 2, 3, 4, 5], "valueClasses": 4, "houses": 0 },
-            { "id": "industrial", "name": "Industrial zone", "price": 100, "populations": [1, 2, 3, 4], "valueClasses": 2, "houses": 0 }
+            { "id": "residential", "name": "Residential zone", "price": 100, "populations": [16, 24, 32, 40], "valueClasses": 4, "houses": 8, "trips": ["commercial", "industrial"] },
+            { "id": "commercial", "name": "Commercial zone", "price": 100, "populations": [1, 2, 3, 4, 5], "valueClasses": 4, "houses": 0, "trips": ["residential", "commercial", "industrial"] },
+            { "id": "industrial", "name": "Industrial zone", "price": 100, "populations": [1, 2, 3, 4], "valueClasses": 2, "houses": 0, "trips": ["residential"] }
           ]
         }
         """;

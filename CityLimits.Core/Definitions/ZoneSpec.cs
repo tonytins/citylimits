@@ -17,6 +17,10 @@ namespace CityLimits.Core.Definitions;
 /// How many single houses the zone grows on its outer tiles before its first building, each
 /// counting one; 0 for a zone that builds straight away.
 /// </param>
+/// <param name="TripsTo">
+/// The kinds of zone a trip from this zone is looking for. A residential zone counts as a place
+/// to go only once it has houses or a building; the others count as soon as they are zoned.
+/// </param>
 public sealed record ZoneSpec(
     string Id,
     TileUse Use,
@@ -24,7 +28,8 @@ public sealed record ZoneSpec(
     int Price,
     IReadOnlyList<int> Populations,
     int ValueClasses,
-    int Houses)
+    int Houses,
+    IReadOnlyList<TileUse> TripsTo)
 {
     /// <summary>The most building levels the zone has.</summary>
     public int Levels => Populations.Count;

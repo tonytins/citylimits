@@ -133,6 +133,14 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   beside it, or a building level), so the same seed and the same work give
   the same city. The flat chance stands in until demand, trips, and land
   value decide growth and decline.
+- **Trips.** As in Micropolis, a zone's trip (`TripPlanner`) sets out
+  from the first road along its edge and drives up to 30 road tiles, each
+  step in a direction picked by the simulation's seeded generator, never
+  straight back, looking for a zone of a kind its spec lists
+  (`ZoneSpec.TripsTo`); a residential zone counts only once it has
+  people. The outcome is no road, nowhere to go, or arrived, and the
+  route is remembered every other step for traffic later. Growth uses
+  trips from step 4e.
 - **The census and demand.** As in Micropolis, the scan adds each zone's
   population to the census (`CityCensus`), which starts again every
   cycle and is recorded once a month, keeping ten years of history; the
@@ -213,10 +221,10 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   and no project. It holds the parser, the dispatcher, the default
   command, the strict option reader, and the exit codes.
 - **The tests.** `CityLimits.Tests` uses xUnit 2 with the VSTest runner
-  and coverlet, and holds 319 tests over the generator, the map, the
+  and coverlet, and holds 331 tests over the generator, the map, the
   calendar, the clock, the simulation, the settings, the tile rules, the
   build actions, the road network, the treasury, the scenario loader and
-  runner, every built-in scenario, the definitions and the mod loader, zone growth, the census and demand,
+  runner, every built-in scenario, the definitions and the mod loader, zone growth, the census and demand, trips,
   the option reader, and the dispatcher.
 - **The game project.** `CityLimits.csproj` targets `net10.0` with nullable
   and implicit usings enabled, and references `Raylib-cs` `8.1.0` and
@@ -234,7 +242,10 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   changelog entry is titled with the version GitInfo gives the commit that
   carries it: commit, rebuild, read `GitSemVerPatch` from
   `CityLimits/obj/Debug/net10.0/GitInfo.cache`, and correct the title if
-  it differs. `BuildNumber` is derived from the commit hash. The changelog only records
+  it differs. GitInfo counts only commits that touch the game project's
+  folder, `CityLimits/`: a commit that changes only the libraries, the
+  tests, or the docs keeps the version before it, so its notes join that
+  version's entry instead of starting a new one. `BuildNumber` is derived from the commit hash. The changelog only records
   versions with user-facing and developer changes, so its latest entry is
   expected to lag behind the version the game reports. Developer changes
   include any public APIs, tools, debugging, and modding support.
