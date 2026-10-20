@@ -3,6 +3,12 @@
 > **Status:** design, not implemented. The `scenario` command reads its
 > command line today and runs nothing. This document is the contract
 > for phase 1, which is on the [roadmap](./ROADMAP.md) under Kowloon.
+>
+> **To be revised before it is built.** It was written against the rules
+> the Micropolis baseline refactor on the [roadmap](./ROADMAP.md) replaces:
+> single-tile actions, a bulldozer refund, and a tick of a month. Its
+> actions become tool strokes, its prices and checks follow the new rules,
+> and its `ticks` follow the new calendar.
 
 A scenario is a city set up from a file: a seed, a script of work done to
 the map at set ticks, and what should be true at the end. It serves two

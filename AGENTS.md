@@ -363,6 +363,13 @@ from.
 - **Micropolis is the reference implementation.** It is the yardstick for
   what the game does, not a source to copy from.
 
+  **The baseline comes first.** CityLimits will take creative liberties
+  later, but the first goal is an engine that plays like Micropolis. Until
+  it does, match the Java port's behaviour when a rule is in question,
+  rather than inventing a better one, and leave deviations to the owner.
+  Parts of the engine were built to other rules; the roadmap's current
+  focus is the refactor that brings them to the baseline.
+
   **Which tree to read.** Read the ports that ship the whole game, because
   they show the behaviour and not only the engine behind it:
   [`micropolis-java`](https://github.com/SimHacker/micropolis/tree/master/micropolis-java)
