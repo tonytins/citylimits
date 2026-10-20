@@ -21,7 +21,7 @@ CityLimits/                  the game project (Raylib-cs, NLog, net10.0)
   CityLimits.csproj            package references, the library references, the target framework, and the asset copy
   Program.cs                    entry point: the log, the command dispatcher, shutdown
   GlobalUsings.cs               global usings shared by the project
-  Game/                         namespace CityLimits.Game: the windowed game, the loop, the tools, the state, the headless run, the log
+  Game/                         namespace CityLimits.Game: the game command, the window, the loop, the tools, the state, the headless run, the log
     Commands/                   namespace CityLimits.Game.Commands: the subcommands, one class each
   Rendering/                    namespace CityLimits.Rendering: the camera, the tile drawing, the tile sheet, the theme
   UI/                           namespace CityLimits.UI: the HUD, the tool palette
@@ -43,6 +43,7 @@ CityLimits.Tests/              xUnit 2 tests for CityLimits.Core and CityLimits.
 docs/
   ROADMAP.md                    milestones, current focus, estimates, revision history
   scorecard.md                  verified status per area, with evidence
+  scenarios.md                  the scenario file and report formats (designed, not implemented yet)
 ```
 
 The split is the point of the layout: `CityLimits.Core/` holds everything
@@ -64,14 +65,16 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
 
 - **The command line.** `Program.Main` sets up the log and hands the
   arguments to the `SubcommandDispatcher`. With no command named, the game
-  itself runs; `headless` and `scenario` are the only subcommands, and
-  there is no `play` command, because playing is the default. `--help`
-  prints the usage, and `<command> --help` describes one command. Every
-  option is read strictly: an unknown option, a missing or malformed value,
-  a value out of range, an option given twice, or a stray argument is
-  reported on stderr with exit code 2, and nothing runs. The old
-  `--headless` flag is refused with a pointer to the `headless` command.
-- **The game.** `WindowedGame.Run` reads `--seed`, opens a resizable window
+  itself runs; `scenario` is the only subcommand, and there is no `play`
+  command, because playing is the default. Two global flags work anywhere
+  on the line: `--help` prints the usage (or, after a command, that
+  command's usage), and `--headless` runs a command with no window. A
+  command that can't run headless refuses the flag, and `--help` wins over
+  it. Every option is read strictly: an unknown option, a missing or
+  malformed value, a value out of range, an option given twice, or a stray
+  argument is reported on stderr with exit code 2, and nothing runs.
+- **The game.** `GameCommand.Run` reads `--seed`, and with `--headless`
+  hands the city to `HeadlessRun`. Otherwise `WindowedGame.Play` opens a resizable window
   titled "CityLimits" at the saved size, runs the frame loop until the
   window is closed, saves the settings, and closes the window. Every frame is
   guarded: a failure is reported on the screen and the game keeps running.
@@ -103,14 +106,18 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
 - **The settings.** The window size and the speed are written to
   `settings.json` beside the executable when the game ends, and read back
   when it starts. A damaged file is reported and the defaults are used.
-- **The headless run.** `headless` runs the city with no window at all and
-  writes each tick to the console, so the simulation can be checked on a
-  machine with no screen. It takes `--seed` and `--ticks`, from 0 to
-  100 000, and builds a small demo town first so there is something to grow.
+- **The headless run.** `citylimits --headless` runs the city with no
+  window at all and writes each tick to the console, so the simulation can
+  be checked on a machine with no screen. It takes `--seed` and `--ticks`,
+  from 0 to 100 000, and builds a small demo town first so there is
+  something to grow. `--ticks` without `--headless` is refused, because
+  the window runs until it is closed.
 - **The scenario command.** `scenario` reads its command line (an id or
-  `--file`, `--ticks`, `--json`, and `scenario list`) but loads nothing yet:
-  `list` reports that there are no scenarios, and a run reports that
-  scenarios are not implemented and exits with code 1.
+  `--file`, `--ticks`, `--json`, and `scenario list`) but loads nothing yet.
+  A run needs `--headless`, because a scenario will open a window once
+  scenarios can be played; `list` doesn't. `list` reports that there are
+  no scenarios, and a run reports that scenarios are not implemented and
+  exits with code 1. The design is in `docs/scenarios.md`.
 - **The log.** NLog writes to the console and nowhere else. Failures go to
   the log as well as to the screen.
 - **The solution.** `CityLimits.slnx` holds four projects: the game, the
@@ -126,7 +133,7 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   and no project. It holds the parser, the dispatcher, the default
   command, the strict option reader, and the exit codes.
 - **The tests.** `CityLimits.Tests` uses xUnit 2 with the VSTest runner
-  and coverlet, and holds 133 tests over the generator, the map, the
+  and coverlet, and holds 140 tests over the generator, the map, the
   calendar, the clock, the simulation, the settings, the tile rules, the
   build actions, the road network, the treasury, the option reader, and
   the dispatcher.
@@ -255,9 +262,15 @@ A city builder lives or dies on its simulation, not its art. The rules:
   screen, so the log is the record of what went wrong after the window is
   gone.
 - **The headless run is the way to check the simulation on a machine with no
-  screen.** `dotnet run --project CityLimits -- headless --ticks 100`
+  screen.** `dotnet run --project CityLimits -- --headless --ticks 100`
   opens no window, runs the city for a hundred ticks, and writes each tick
   to the console. It must not touch Raylib, or it is not headless.
+- **`--headless` is a global flag, not a command.** It means the same
+  thing for every command: run with no window. A command declares
+  `SupportsHeadless`, and the dispatcher refuses the flag for a command
+  that doesn't. A command that does support it must never open a window
+  when it is set. Don't add a `headless` command or another per-command
+  way to skip the window.
 - **The options are parsed, not guessed.** Every command reads its
   arguments with `CommandOptions.TryParse` against an `OptionSpec`, and its
   numbers with `TryGetInt` and a range. A bad command line is written to
@@ -357,26 +370,26 @@ from.
 ## 5. Before you finish a task
 
 The build, the tests, and the game itself are the gate. A change to the
-simulation is proven by a test and a headless run; a change to the
+simulation is proven by a test and a `--headless` run; a change to the
 rendering is proven by running the game and looking at it.
 
 ```sh
 dotnet build CityLimits.slnx                                  # must build with no new warnings
 dotnet test  CityLimits.Tests/CityLimits.Tests.csproj         # all tests must pass
-dotnet run   --project CityLimits -- headless --ticks 100     # run the city with no window and read the log
+dotnet run   --project CityLimits -- --headless --ticks 100   # run the city with no window and read the log
 dotnet run   --project CityLimits                             # play the game: open the window and look at it
 ```
 
 - **The command line is the way in.** With no command, CityLimits opens
-  the window; `headless` runs the city with no window, and `scenario` is
-  scaffolding that runs nothing yet. `--help` lists them, and
-  `<command> --help` describes one. Use these to run the game; don't wrap
-  it in another launcher.
-- **Check the simulation with `headless`.** It needs no display, so it
+  the window, and `--headless` runs the same city with no window.
+  `scenario` is scaffolding that runs nothing yet. `--help` lists the
+  options and commands, and `<command> --help` describes one. Use these to
+  run the game; don't wrap it in another launcher.
+- **Check the simulation with `--headless`.** It needs no display, so it
   works on any machine. Pass `--seed` and `--ticks` to reproduce a city,
   and read the per-tick log for the change you made. A run that exits
   with anything other than 0 is a failure.
-- **A visual change needs a real window.** `headless` never draws, so it
+- **A visual change needs a real window.** `--headless` never draws, so it
   cannot confirm what the player sees. If the machine has no display,
   say that the game was not looked at, rather than reporting it as
   checked.
@@ -384,7 +397,8 @@ dotnet run   --project CityLimits                             # play the game: o
   bracketed by `BeginDrawing` and `EndDrawing` before looking anywhere else.
 - A new subcommand is a class in `CityLimits/Game/Commands/` that
   implements `ISubcommand`, registered with the dispatcher in
-  `Program.cs`. It reads its options with `CommandOptions`, and its tests
+  `Program.cs`. It says whether it supports `--headless`, it reads its
+  options with `CommandOptions`, and its tests
   go beside `CommandOptionsTests` and `SubcommandDispatcherTests` when it
   adds anything to the library.
 - If you changed the world or the simulation, add or update its tests in

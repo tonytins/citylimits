@@ -12,6 +12,9 @@ public interface ISubcommand
     /// <summary>The usage lines and options shown by <c>citylimits &lt;name&gt; --help</c>.</summary>
     string Usage { get; }
 
+    /// <summary>Whether the subcommand can run with no window; the dispatcher refuses <c>--headless</c> when it cannot.</summary>
+    bool SupportsHeadless { get; }
+
     /// <summary>Executes the subcommand with the provided context.</summary>
     /// <returns>The exit code to return from the process; see <see cref="ExitCodes"/>.</returns>
     int Execute(SubcommandContext context);

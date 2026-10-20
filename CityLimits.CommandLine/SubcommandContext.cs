@@ -12,6 +12,9 @@ public sealed record SubcommandContext
     /// <summary>Whether help was requested.</summary>
     public bool HelpRequested { get; init; }
 
+    /// <summary>Whether the command runs with no window, from the global <c>--headless</c> flag.</summary>
+    public bool Headless { get; init; }
+
     /// <summary>The subcommand that was invoked, or null when none was named.</summary>
     public string? Subcommand { get; init; }
 

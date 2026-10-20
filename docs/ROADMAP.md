@@ -1,6 +1,6 @@
 # CityLimits roadmap
 
-> **Last reviewed:** 2026-10-20 · **Last updated:** 2026-10-20 · **Change:** minor (the command line is strict, and the game is the default command) · **Stage:** pre-alpha
+> **Last reviewed:** 2026-10-20 · **Last updated:** 2026-10-20 · **Change:** minor (`--headless` is a global flag, and scenario phase 1 joins Kowloon) · **Stage:** pre-alpha
 
 Forward-looking: where CityLimits stands, what blocks the next milestone,
 and what comes next. Verified status and evidence are in the
@@ -49,25 +49,28 @@ In order:
 | New Dullsville: Foundation | 100% | 0 | The solution, the core library, the tests, the fixed timestep, the camera, the tools, and the settings are all in |
 | Neat Map: Terrain and the tile grid | 100% | 0 | The tile grid, the seeded generation, the terrain drawn from the tile sheet, the hover highlight, and the readout of the tile under the mouse are in |
 | Line City: Roads and zoning | 100% | 0 | The tools change the world: roads, zones, a bulldozer, a price for each, and buildings that grow on served land |
-| Kowloon: Simulation core | 30% | 15–25 | The tick advances the date and grows the served zones, and the determinism test is in. No people, no demand, no decay yet. The heart of the game |
+| Kowloon: Simulation core | 29% | 21–35 | The tick advances the date and grows the served zones, and the determinism test is in. No people, no demand, no decay yet, and no scenario runner to watch them with. The heart of the game |
 | Joffburg: Services and economy | 0% | 15–25 | Nothing yet |
 | Radial: Traffic and commuting | 0% | 12–20 | Nothing yet |
 | Bad News: Land value, pollution, disasters | 0% | 12–20 | Nothing yet |
 | Happy Isle: Player-facing game | 0% | 15–25 | Nothing yet |
 | Yokohama: Polish and release | 0% | 10–20 | Nothing yet |
-| | **Total** | **≈ 52–97** | |
+| | **Total** | **≈ 58–107** | |
 
 ## Upcoming work, ranked
 
 | Rank | Work | Milestone | Estimate (h) |
 |---|---|---|---|
-| 1 | The tick: population, migration, and development | Kowloon | 10–16 |
-| 2 | Demand: residential, commercial, industrial | Kowloon | 5–9 |
-| 3 | Panels for the budget and the demand bars | Happy Isle | 4–8 |
-| 4 | Taxes, a budget, and a deficit the player has to answer | Joffburg | 6–10 |
-| 5 | A road graph with traffic volumes on it | Radial | 6–10 |
+| 1 | Scenarios, phase 1: a seeded city, timed build actions, checks, and a JSON report ([spec](./scenarios.md)) | Kowloon | 6–10 |
+| 2 | The tick: population, migration, and development | Kowloon | 10–16 |
+| 3 | Demand: residential, commercial, industrial | Kowloon | 5–9 |
+| 4 | Panels for the budget and the demand bars | Happy Isle | 4–8 |
+| 5 | Taxes, a budget, and a deficit the player has to answer | Joffburg | 6–10 |
+| 6 | A road graph with traffic volumes on it | Radial | 6–10 |
 
-Alpha needs ranks 1–2 in substance, about 15–25 hours.
+Alpha needs ranks 2–3 in substance, about 15–25 hours. Rank 1 doesn't
+block alpha, but it comes first because it is how ranks 2 and 3 are
+watched and debugged as they are built.
 
 ## Milestone checklists
 
@@ -134,6 +137,14 @@ Alpha needs ranks 1–2 in substance, about 15–25 hours.
 - [x] A determinism test, in `CityLimits.Tests/`: the same seed and the
   same actions give the same city after a fixed number of ticks. It covers
   the tiles and the money today, and it grows with the population model.
+- [ ] Scenarios, phase 1, as [docs/scenarios.md](./scenarios.md)
+  specifies. A scenario file holds a seed, timed build actions, and
+  checks, and `CityLimits.Core/Scenarios/` loads and runs it.
+  `citylimits scenario` runs it with no window, logs it, and writes a
+  versioned JSON report with `--json`. The built-in scenarios live in
+  `CityLimits/Assets/Scenarios/`, and each one runs as a test.
+  `demo-town` is defined in code as the fallback, and falling back is
+  always reported.
 
 ### Joffburg: Services and economy
 
@@ -226,6 +237,8 @@ right, cut scope inside Radial and Bad News first, not inside Kowloon.
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-20 | minor | `--headless` is a global flag again, not a `headless` command: `citylimits --headless` runs the city with no window, any command can declare that it supports the flag, and the dispatcher refuses it for one that doesn't. Scenarios need the flag until they can open a window, so a script written now keeps its meaning later. 140 tests, no milestone moves. |
+| 2026-10-20 | minor | Scenarios join Kowloon: [docs/scenarios.md](./scenarios.md) specifies phase 1, a read-only, deterministic run from a file, with timed build actions, checks, and a versioned JSON report, for players' challenges later and for debugging now. It is ranked first because it is how population and demand will be watched as they are built. Kowloon is at 29% with 21–35 h left, and 58–107 h are left in total. |
 | 2026-10-20 | minor | The command line is strict: every option is checked, and a bad one is refused with exit code 2 instead of being ignored. The `play` command is gone, because the game is what runs with no command, and the old `--headless` flag points to the `headless` command. `scenario` refuses to report success for work it does not do. 133 tests, no milestone moves, and the focus stays on Kowloon. |
 | 2026-10-20 | major | Line City is complete: the tools change the world. Roads can be drawn and bulldozed, land can be zoned by dragging, the city charges for the work and refuses what it cannot pay for, the bulldozer gives half the money back, and a zoned tile that touches a road grows a building drawn from the tile's own state. 52–97 h of work left in total, and the focus moves to Kowloon. |
 | 2026-10-20 | major | Neat Map is complete: the terrain is drawn from a tile sheet loaded once at startup, the tile under the mouse is highlighted and read out, the tool palette shows the icon of each tool, and the game can be run with no display and logged to the console. 64–117 h of work left in total, and the focus moves to Line City. |

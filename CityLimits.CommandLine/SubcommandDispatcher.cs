@@ -57,6 +57,11 @@ public sealed class SubcommandDispatcher
                 return ExitCodes.Success;
             }
 
+            if (context.Headless && !_defaultCommand.SupportsHeadless)
+            {
+                return RefuseHeadless("citylimits");
+            }
+
             return _defaultCommand.Execute(context);
         }
 
@@ -75,7 +80,19 @@ public sealed class SubcommandDispatcher
             return ExitCodes.Success;
         }
 
+        if (context.Headless && !subcommand.SupportsHeadless)
+        {
+            return RefuseHeadless($"citylimits {subcommand.Name}");
+        }
+
         return subcommand.Execute(context);
+    }
+
+    // A command that cannot run without a window must never open one when asked not to.
+    private int RefuseHeadless(string command)
+    {
+        _error.WriteLine($"'{command}' cannot run with {SubcommandParser.HeadlessFlag}.");
+        return ExitCodes.Usage;
     }
 
     /// <summary>Writes the general usage text.</summary>
@@ -90,6 +107,10 @@ public sealed class SubcommandDispatcher
         builder.AppendLine();
         builder.AppendLine("Options:");
         builder.AppendLine(_defaultCommand.Usage.TrimEnd());
+        builder.AppendLine();
+        builder.AppendLine("Global options:");
+        builder.AppendLine($"  {SubcommandParser.HeadlessFlag.PadRight(NameColumn)}  run with no window, for the commands that support it");
+        builder.AppendLine($"  {"--help".PadRight(NameColumn)}  print the usage, of everything or of one command");
         builder.AppendLine();
         builder.AppendLine("Commands:");
         foreach (var subcommand in _subcommands)

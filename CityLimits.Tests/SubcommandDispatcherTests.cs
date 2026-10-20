@@ -4,7 +4,7 @@ namespace CityLimits.Tests;
 
 public class SubcommandDispatcherTests
 {
-    private sealed class RecordingSubcommand(string name) : ISubcommand
+    private sealed class RecordingSubcommand(string name, bool supportsHeadless = true) : ISubcommand
     {
         public SubcommandContext? Received { get; private set; }
 
@@ -14,6 +14,8 @@ public class SubcommandDispatcherTests
 
         public string Usage => $"Usage: citylimits {name}";
 
+        public bool SupportsHeadless => supportsHeadless;
+
         public int Execute(SubcommandContext context)
         {
             Received = context;
@@ -21,19 +23,24 @@ public class SubcommandDispatcherTests
         }
     }
 
-    private readonly RecordingSubcommand _headless = new("headless");
+    private readonly RecordingSubcommand _scenario = new("scenario");
+    private readonly RecordingSubcommand _windowOnly = new("editor", supportsHeadless: false);
     private readonly StringWriter _output = new();
     private readonly StringWriter _error = new();
     private SubcommandContext? _defaultReceived;
 
-    private SubcommandDispatcher CreateDispatcher() =>
+    private SubcommandDispatcher CreateDispatcher(bool defaultSupportsHeadless = true) =>
         new(
-            [_headless],
-            new DefaultCommand("Start the game", "  --seed <seed>", context =>
-            {
-                _defaultReceived = context;
-                return 5;
-            }),
+            [_scenario, _windowOnly],
+            new DefaultCommand(
+                "Start the game",
+                "  --seed <seed>",
+                context =>
+                {
+                    _defaultReceived = context;
+                    return 5;
+                },
+                defaultSupportsHeadless),
             _output,
             _error);
 
@@ -44,7 +51,7 @@ public class SubcommandDispatcherTests
 
         Assert.NotNull(_defaultReceived);
         Assert.Null(_defaultReceived.Subcommand);
-        Assert.Null(_headless.Received);
+        Assert.Null(_scenario.Received);
     }
 
     [Fact]
@@ -58,9 +65,9 @@ public class SubcommandDispatcherTests
     [Fact]
     public void ANamedSubcommandGetsTheArgumentsAfterItsName()
     {
-        Assert.Equal(7, CreateDispatcher().Dispatch(["Headless", "--ticks", "3"]));
+        Assert.Equal(7, CreateDispatcher().Dispatch(["Scenario", "--ticks", "3"]));
 
-        Assert.Equal(["--ticks", "3"], _headless.Received!.Args);
+        Assert.Equal(["--ticks", "3"], _scenario.Received!.Args);
         Assert.Null(_defaultReceived);
     }
 
@@ -84,7 +91,8 @@ public class SubcommandDispatcherTests
         var usage = _output.ToString();
         Assert.Contains("Start the game", usage);
         Assert.Contains("--seed <seed>", usage);
-        Assert.Contains("headless", usage);
+        Assert.Contains("scenario", usage);
+        Assert.Contains("--headless", usage);
         Assert.DoesNotContain("play", usage);
         Assert.Null(_defaultReceived);
     }
@@ -92,15 +100,15 @@ public class SubcommandDispatcherTests
     [Fact]
     public void HelpAfterACommandPrintsItsUsageAndRunsNothing()
     {
-        Assert.Equal(ExitCodes.Success, CreateDispatcher().Dispatch(["headless", "--help"]));
+        Assert.Equal(ExitCodes.Success, CreateDispatcher().Dispatch(["scenario", "--help"]));
 
-        Assert.Contains("Usage: citylimits headless", _output.ToString());
-        Assert.Null(_headless.Received);
+        Assert.Contains("Usage: citylimits scenario", _output.ToString());
+        Assert.Null(_scenario.Received);
     }
 
     [Fact]
     public void HelpIsNotPassedOnAsAnArgument() =>
-        Assert.Empty(SubcommandParser.Parse(["headless", "-h"]).Args);
+        Assert.Empty(SubcommandParser.Parse(["scenario", "-h"]).Args);
 
     [Theory]
     [InlineData("")]
@@ -113,6 +121,59 @@ public class SubcommandDispatcherTests
     public void TwoSubcommandsCannotShareAName() =>
         Assert.Throws<ArgumentException>(() =>
             new SubcommandDispatcher(
-                [new RecordingSubcommand("headless"), new RecordingSubcommand("HEADLESS")],
+                [new RecordingSubcommand("scenario"), new RecordingSubcommand("SCENARIO")],
                 new DefaultCommand("", "", _ => 0)));
+
+    [Theory]
+    [InlineData("--headless", "--seed", "1")]
+    [InlineData("--seed", "1", "--headless")]
+    public void HeadlessAnywhereRunsTheDefaultCommandWithNoWindow(params string[] args)
+    {
+        CreateDispatcher().Dispatch(args);
+
+        Assert.True(_defaultReceived!.Headless);
+        Assert.Equal(["--seed", "1"], _defaultReceived.Args);
+    }
+
+    [Fact]
+    public void WithoutTheFlagTheCommandIsNotHeadless()
+    {
+        CreateDispatcher().Dispatch(["scenario", "town"]);
+
+        Assert.False(_scenario.Received!.Headless);
+    }
+
+    [Fact]
+    public void HeadlessAfterACommandReachesIt()
+    {
+        CreateDispatcher().Dispatch(["scenario", "town", "--headless"]);
+
+        Assert.True(_scenario.Received!.Headless);
+        Assert.Equal(["town"], _scenario.Received.Args);
+    }
+
+    [Fact]
+    public void ACommandThatNeedsAWindowRefusesHeadless()
+    {
+        Assert.Equal(ExitCodes.Usage, CreateDispatcher().Dispatch(["editor", "--headless"]));
+
+        Assert.Equal("'citylimits editor' cannot run with --headless.", _error.ToString().Trim());
+        Assert.Null(_windowOnly.Received);
+    }
+
+    [Fact]
+    public void ADefaultThatNeedsAWindowRefusesHeadless()
+    {
+        Assert.Equal(ExitCodes.Usage, CreateDispatcher(defaultSupportsHeadless: false).Dispatch(["--headless"]));
+
+        Assert.Null(_defaultReceived);
+    }
+
+    [Fact]
+    public void HelpWinsOverHeadless()
+    {
+        Assert.Equal(ExitCodes.Success, CreateDispatcher().Dispatch(["--headless", "--help"]));
+
+        Assert.Null(_defaultReceived);
+    }
 }

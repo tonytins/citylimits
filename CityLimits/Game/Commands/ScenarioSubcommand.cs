@@ -14,20 +14,24 @@ public sealed class ScenarioSubcommand : ISubcommand
     public string Description => "Load and run a scenario for debugging (not implemented yet)";
 
     public string Usage => $"""
-        Usage: citylimits scenario <id> [options]
-               citylimits scenario --file <path> [options]
+        Usage: citylimits scenario <id> --headless [options]
+               citylimits scenario --file <path> --headless [options]
                citylimits scenario list
+
+        Scenarios run only with --headless for now; a window comes later.
 
         Options:
           --file <path>     load a scenario from a JSON file
-          --ticks <count>   advance this many ticks, then exit, 0 to {HeadlessSubcommand.MaxTicks} (default 0)
+          --ticks <count>   advance this many ticks, then exit, 0 to {HeadlessRun.MaxTicks} (default 0)
           --json            write machine-readable JSON to stdout
         """;
+
+    public bool SupportsHeadless => true;
 
     public int Execute(SubcommandContext context)
     {
         if (!CommandOptions.TryParse(context.Args, Options, out var options, out var error)
-            || !options.TryGetInt("--ticks", 0, 0, HeadlessSubcommand.MaxTicks, out var ticks, out error))
+            || !options.TryGetInt("--ticks", 0, 0, HeadlessRun.MaxTicks, out var ticks, out error))
         {
             return Refuse(context, error);
         }
@@ -45,6 +49,13 @@ public sealed class ScenarioSubcommand : ISubcommand
         if (scenarioId is null == scenarioFile is null)
         {
             return Refuse(context, "Name a scenario or give --file, but not both.");
+        }
+
+        // Without the flag, a scenario will open a window once it can; requiring the flag
+        // now means a script written today never starts opening windows later.
+        if (!context.Headless)
+        {
+            return Refuse(context, "Scenarios run only with --headless for now.");
         }
 
         Logger.Info(

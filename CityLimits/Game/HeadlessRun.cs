@@ -3,6 +3,12 @@ namespace CityLimits.Game;
 /// <summary>Runs the city with no window, so the simulation can be checked on a machine with no screen.</summary>
 public sealed class HeadlessRun
 {
+    /// <summary>The most ticks a headless run takes, so a mistyped count cannot run for hours.</summary>
+    public const int MaxTicks = 100_000;
+
+    /// <summary>How many ticks a headless run takes when it isn't told.</summary>
+    public const int DefaultTicks = 100;
+
     private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
 
     private readonly int _seed;

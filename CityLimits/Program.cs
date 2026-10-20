@@ -15,8 +15,8 @@ internal static class Program
         try
         {
             var dispatcher = new SubcommandDispatcher(
-                [new HeadlessSubcommand(), new ScenarioSubcommand()],
-                WindowedGame.Command);
+                [new ScenarioSubcommand()],
+                GameCommand.Command);
 
             return dispatcher.Dispatch(args);
         }
