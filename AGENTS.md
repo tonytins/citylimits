@@ -136,9 +136,9 @@ A city builder lives or dies on its simulation, not its art. The rules:
 
 ### Never crash the game
 
-There is no host process underneath and no supervisor to restart the
-process, so an unhandled exception ends the player's session with no
-explanation.
+Players trust CityLimits with their city, and a crash loses it. An unhandled
+exception closes the window and ends the session with no explanation; nothing
+restarts it. Fix a crash before building on top of it.
 
 - **Handle errors where they happen.** A bad save file, a mouse position
   off the map, or a tool applied to an invalid tile is reported to the
