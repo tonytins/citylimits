@@ -24,7 +24,7 @@ CityLimits/                  the game project (Raylib-cs, NLog, net10.0)
   Game/                         namespace CityLimits.Game: the game command, the window, the loop, the tools, the city's messages, the mods folder, the headless run, the log
     Commands/                   namespace CityLimits.Game.Commands: the subcommands, one class each
   Rendering/                    namespace CityLimits.Rendering: the camera, the tile drawing, the chunk cache, the tile sheet, the theme
-  UI/                           namespace CityLimits.UI: the HUD and its top bar, the tool palette, the budget and demand panels, the overview map
+  UI/                           namespace CityLimits.UI: the HUD and its top bar, the tool palette, the budget and demand panels and how windows are moved, the overview map
   Assets/                       the tile sheet, the tool icons, the logo, and the built-in scenarios (Scenarios/*.json), copied to the output folder
 CityLimits.Core/              engine-free library: the world and the simulation, no Raylib
   CityLimits.Core.csproj        the project file; it must never reference Raylib-cs
@@ -284,15 +284,24 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   paused at the speed play brings back), the city's name, a small R, C,
   I demand meter, the funds, and the population, with the step count and
   the frame rate on the right. A speed button sets that speed and plays a
-  paused game. The meter opens the demand panel (`UI/DemandPanel.cs`),
-  which shows each demand against its limit, what moved it at the last
-  update, the jobs and workers behind it, the tax's push, and the
-  population's parts; the game keeps running while it is open, and its x,
-  the meter, or Escape closes it. Micropolis has only the meter; the
+  paused game. The meter opens the demand panel (`UI/DemandPanel.cs`): a
+  chart of plain lines for R, C, and I over the history `CityDemand`
+  keeps (each update, two a month, ten years at most), oldest on the
+  left, each against its own limit; under it the demand now, what moved
+  it at the last update, the tax's push, the jobs and workers behind it,
+  and the population's parts. The game keeps running while it is open,
+  and its x, the meter, or Escape closes it. It draws over the rest of
+  the interface and takes presses before it. Micropolis has only the meter; the
   panel is a liberty the owner chose. A press anywhere on the bar never
   reaches the map. The city's name is `CitySimulation.Name`,
   "CityLimits" until `Rename` gives it another: 1 to 32 characters once
   trimmed, with no control characters.
+- **Moving windows.** The budget and demand panels are windows the
+  player moves by dragging their title strip (`UI/WindowPlacement.cs`).
+  Each opens where its panel puts it at first (the budget in the middle
+  of the screen, the demand panel under the palette), keeps where it was
+  left for the next time it opens, and is held on the screen below the
+  top bar, even when the window is resized.
 - **The overview map.** As in Micropolis, `UI/OverviewMap.cs` shows the
   whole city small in the top-right corner, two pixels a tile, scaled
   down for a bigger map, with the main view outlined; a click or a drag
@@ -398,7 +407,7 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   and no project. It holds the parser, the dispatcher, the default
   command, the strict option reader, and the exit codes.
 - **The tests.** `CityLimits.Tests` uses xUnit 2 with the VSTest runner
-  and coverlet, and holds 489 tests over the generator, the terrain edges, the power plants, lines, and grid, the budget, the stations and their coverage, parks, hospitals and churches, the map, the
+  and coverlet, and holds 491 tests over the generator, the terrain edges, the power plants, lines, and grid, the budget, the stations and their coverage, parks, hospitals and churches, the map, the
   calendar, the clock, the simulation, the settings, the tile rules, the
   build actions, the road network, the treasury, the scenario loader and
   runner, every built-in scenario, the definitions and the mod loader, zone growth, the census and demand, trips, growth and the city maps,

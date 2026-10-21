@@ -18,6 +18,8 @@ public sealed class GameLoop : IDisposable
     private readonly Hud _hud = new();
     private readonly ToolPaletteView _toolPaletteView;
     private readonly OverviewMap _overview;
+    private readonly BudgetPanel _budgetPanel = new();
+    private readonly DemandPanel _demandPanel = new();
     private readonly string _settingsPath;
     private GameSettings _settings;
 
@@ -147,14 +149,15 @@ public sealed class GameLoop : IDisposable
             _simulation.Treasury.Funds,
             Raylib.GetFPS());
         _hud.DrawTileReadout(_simulation.Map, onMap ? state : null, tileX, tileY, _simulation.Definitions);
-        if (_demandOpen)
-        {
-            DemandPanel.Draw(_simulation, DemandPanelTop());
-        }
-
         _overview.Draw(_camera);
         _hud.DrawHints();
         _hud.DrawMessage(_error ?? _notice, _error is not null || _noticeIsError);
+
+        // Windows go over the rest of the interface, wherever the player has moved them.
+        if (_demandOpen)
+        {
+            _demandPanel.Draw(_simulation, DemandPanelTop());
+        }
 
         if (_stroke is not null)
         {
@@ -163,7 +166,7 @@ public sealed class GameLoop : IDisposable
 
         if (_budgetOpen)
         {
-            BudgetPanel.Draw(_simulation, _budgetReason);
+            _budgetPanel.Draw(_simulation, _budgetReason);
         }
 
         Raylib.EndDrawing();
@@ -311,7 +314,18 @@ public sealed class GameLoop : IDisposable
             return;
         }
 
-        if (Raylib.IsMouseButtonPressed(MouseButton.Left) && BudgetPanel.HandleClick(mouse, _simulation.Budget) == BudgetPanel.Click.Close)
+        if (_budgetPanel.IsDragging)
+        {
+            _budgetPanel.Drag(mouse, Raylib.IsMouseButtonDown(MouseButton.Left));
+            return;
+        }
+
+        if (!Raylib.IsMouseButtonPressed(MouseButton.Left) || _budgetPanel.BeginDrag(mouse))
+        {
+            return;
+        }
+
+        if (_budgetPanel.HandleClick(mouse, _simulation.Budget) == BudgetPanel.Click.Close)
         {
             CloseBudget();
         }
@@ -360,6 +374,12 @@ public sealed class GameLoop : IDisposable
     {
         var onMap = MapRenderer.TryGetTileAt(_simulation.Map, _camera.ScreenToWorld(mouse), out var tileX, out var tileY, out _);
 
+        if (_demandPanel.IsDragging)
+        {
+            _demandPanel.Drag(mouse, Raylib.IsMouseButtonDown(MouseButton.Left));
+            return;
+        }
+
         if (_draggingOverview)
         {
             _draggingOverview = Raylib.IsMouseButtonDown(MouseButton.Left);
@@ -385,18 +405,27 @@ public sealed class GameLoop : IDisposable
                 return;
             }
 
+            // A press on the demand panel, which sits over everything else, never reaches what is
+            // under it: its x closes it, and its title moves it.
+            if (_demandOpen && Raylib.CheckCollisionPointRec(mouse, _demandPanel.Bounds(DemandPanelTop())))
+            {
+                if (_demandPanel.IsOnClose(mouse, DemandPanelTop()))
+                {
+                    _demandOpen = false;
+                }
+                else
+                {
+                    _demandPanel.BeginDrag(mouse, DemandPanelTop());
+                }
+
+                return;
+            }
+
             // A press on the overview picks a mode or moves the view, and never reaches the map.
             if (_overview.Contains(mouse))
             {
                 _draggingOverview = true;
                 _overview.HandlePointer(mouse, _camera, pressed: true);
-                return;
-            }
-
-            // A press on the demand panel never reaches the map underneath; its x closes it.
-            if (_demandOpen && Raylib.CheckCollisionPointRec(mouse, DemandPanel.Bounds(DemandPanelTop())))
-            {
-                _demandOpen = !DemandPanel.IsOnClose(mouse, DemandPanelTop());
                 return;
             }
 

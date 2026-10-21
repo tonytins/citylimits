@@ -1,5 +1,19 @@
 # CityLimits Changelog
 
+## 0.2.112
+
+The budget and demand windows can be moved: drag either by its title.
+Each opens where you last left it and stays on the screen.
+
+The demand window now leads with a chart: three plain lines for
+residential, commercial, and industrial demand, rising and falling over
+up to ten years, newest on the right. The figures from before sit under
+it.
+
+For developers: `CityDemand` keeps ten years of history
+(`ResidentialHistory`, `CommercialHistory`, `IndustrialHistory`, and
+`HistoryCount`), one entry per update.
+
 ## 0.2.111
 
 A new top bar, after a mock-up by the owner. From the left: a pause and

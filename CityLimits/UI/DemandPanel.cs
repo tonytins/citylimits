@@ -1,10 +1,12 @@
 namespace CityLimits.UI;
 
 /// <summary>
-/// The demand panel, opened from the meter in the top bar: each demand against its limit, what
-/// moved it at the last update (the economy and the tax), and the census behind it. Micropolis
-/// has only the meter; the panel is a liberty the owner chose, after later city builders. It
-/// shows what the simulation already works out, and the game keeps running while it is open.
+/// The demand panel, opened from the meter in the top bar. It charts residential, commercial, and
+/// industrial demand over the history the city keeps, each line rising and falling against its own
+/// limit. Under the chart are the demand now, what moved it at the last update, and the census
+/// behind it. Micropolis has only the meter; the panel is a liberty the owner chose, after later city
+/// builders. It shows what the simulation already works out, the game keeps running while it is
+/// open, and the player moves it by its title.
 /// </summary>
 public sealed class DemandPanel
 {
@@ -13,18 +15,30 @@ public sealed class DemandPanel
     private const int TitleSize = 20;
     private const int Padding = 12;
     private const int Width = 360;
-    private const int Height = 278;
-    private const int BarHeight = 8;
+    private const int Height = 312;
+    private const int ChartHeight = 120;
     private const int CloseSize = 20;
+    private const int TitleStrip = Padding + TitleSize + 6;
 
-    /// <summary>Where the panel is on the screen, with its top at the given height.</summary>
-    public static Rectangle Bounds(int top) => new() { X = 8, Y = top, Width = Width, Height = Height };
+    private readonly WindowPlacement _placement = new(TitleStrip);
+
+    /// <summary>Tells whether the player is dragging the panel by its title.</summary>
+    public bool IsDragging => _placement.IsDragging;
+
+    /// <summary>Where the panel is on the screen; until the player moves it, its top is at the given height.</summary>
+    public Rectangle Bounds(int top) => _placement.Bounds(new Vector2(Width, Height), new Vector2(8, top));
 
     /// <summary>Tells whether a point on the screen is on the panel's close button.</summary>
-    public static bool IsOnClose(Vector2 point, int top) => Raylib.CheckCollisionPointRec(point, CloseBounds(top));
+    public bool IsOnClose(Vector2 point, int top) => Raylib.CheckCollisionPointRec(point, CloseBounds(Bounds(top)));
 
-    /// <summary>Draws the panel with its top at the given height.</summary>
-    public static void Draw(CitySimulation city, int top)
+    /// <summary>Starts moving the panel when a press lands on its title. Tells whether it did.</summary>
+    public bool BeginDrag(Vector2 point, int top) => _placement.BeginDrag(point, Bounds(top));
+
+    /// <summary>Moves the panel with the pointer while the button is held.</summary>
+    public void Drag(Vector2 point, bool held) => _placement.Drag(point, held, new Vector2(Width, Height));
+
+    /// <summary>Draws the panel; until the player moves it, its top is at the given height.</summary>
+    public void Draw(CitySimulation city, int top)
     {
         ArgumentNullException.ThrowIfNull(city);
 
@@ -33,21 +47,35 @@ public sealed class DemandPanel
         Raylib.DrawRectangleLinesEx(bounds, 1f, Theme.PanelBorder);
 
         var x = (int)bounds.X + Padding;
-        var y = top + Padding;
+        var y = (int)bounds.Y + Padding;
         Raylib.DrawText("Demand", x, y, TitleSize, Theme.Text);
-        var close = CloseBounds(top);
+        var close = CloseBounds(bounds);
         Raylib.DrawText("x", (int)close.X + 6, (int)close.Y + 2, FontSize, Theme.TextDim);
-        y += TitleSize + 10;
+        y = (int)bounds.Y + TitleStrip + 4;
 
         var demand = city.Demand;
-        y = DrawDemand("Residential", demand.Residential, CityDemand.ResidentialLimit, demand.ResidentialPull, demand.TaxPushApplied, Theme.Residential, x, y);
-        y = DrawDemand("Commercial", demand.Commercial, CityDemand.BusinessLimit, demand.CommercialPull, demand.TaxPushApplied, Theme.Commercial, x, y);
-        y = DrawDemand("Industrial", demand.Industrial, CityDemand.BusinessLimit, demand.IndustrialPull, demand.TaxPushApplied, Theme.Industrial, x, y);
+        var chart = new Rectangle { X = x, Y = y, Width = Width - (Padding * 2), Height = ChartHeight };
+        DrawChart(demand, chart);
+        y += ChartHeight + 4;
+        Raylib.DrawText(Span(demand.HistoryCount), x, y, SmallSize, Theme.TextDim);
+        y += SmallSize + 10;
 
-        y += 4;
-        Raylib.DrawText($"Jobs per resident {demand.JobsPerResident:0.00}   Workers per job {demand.WorkersPerJob:0.00}", x, y, SmallSize, Theme.TextDim);
+        x = DrawLevel("R", demand.Residential, Theme.Residential, x, y);
+        x = DrawLevel("C", demand.Commercial, Theme.Commercial, x, y);
+        DrawLevel("I", demand.Industrial, Theme.Industrial, x, y);
+        x = (int)bounds.X + Padding;
+        y += FontSize + 8;
+
+        Raylib.DrawText(
+            $"Last move from the economy: R {Signed(demand.ResidentialPull)}, C {Signed(demand.CommercialPull)}, I {Signed(demand.IndustrialPull)}",
+            x,
+            y,
+            SmallSize,
+            Theme.TextDim);
         y += SmallSize + 6;
         Raylib.DrawText($"Taxes at {city.Budget.TaxRate}% push every demand by {Signed(demand.TaxPushApplied)}", x, y, SmallSize, Theme.TextDim);
+        y += SmallSize + 6;
+        Raylib.DrawText($"Jobs per resident {demand.JobsPerResident:0.00}   Workers per job {demand.WorkersPerJob:0.00}", x, y, SmallSize, Theme.TextDim);
         y += SmallSize + 10;
 
         var census = city.Census;
@@ -61,28 +89,76 @@ public sealed class DemandPanel
             Theme.TextDim);
     }
 
-    // One demand: its name and level, a bar from the middle out to its limit either way, and what
-    // moved it at the last update. Returns where the next one starts.
-    private static int DrawDemand(string name, int value, int limit, int pull, int taxPush, Color color, int x, int y)
+    // Three plain lines, oldest on the left and newest on the right, each against its own limit,
+    // so the middle line is no demand either way.
+    private static void DrawChart(CityDemand demand, Rectangle chart)
     {
-        var level = $"{Signed(value)} of {Hud.Count(limit)}";
-        Raylib.DrawText(name, x, y, FontSize, Theme.Text);
-        Raylib.DrawText(level, x + Width - (Padding * 2) - Raylib.MeasureText(level, FontSize), y, FontSize, value < 0 ? Theme.Error : Theme.Accent);
-        y += FontSize + 4;
+        Raylib.DrawRectangleRec(chart, Theme.Bar);
+        var middle = chart.Y + (chart.Height / 2);
+        Raylib.DrawLineV(new Vector2(chart.X, middle), new Vector2(chart.X + chart.Width, middle), Theme.PanelBorder);
 
-        var barWidth = Width - (Padding * 2);
-        var middle = x + (barWidth / 2);
-        Raylib.DrawRectangle(x, y, barWidth, BarHeight, Theme.Bar);
-        var length = (int)Math.Round((double)Math.Clamp(value, -limit, limit) / limit * (barWidth / 2));
-        Raylib.DrawRectangle(length >= 0 ? middle : middle + length, y, Math.Abs(length), BarHeight, color);
-        Raylib.DrawLine(middle, y - 2, middle, y + BarHeight + 2, Theme.TextDim);
-        y += BarHeight + 4;
+        var count = demand.HistoryCount;
+        if (count < 2)
+        {
+            const string Waiting = "The chart starts after the next update";
+            Raylib.DrawText(Waiting, (int)(chart.X + ((chart.Width - Raylib.MeasureText(Waiting, SmallSize)) / 2)), (int)middle - SmallSize - 4, SmallSize, Theme.TextDim);
+            return;
+        }
 
-        Raylib.DrawText($"Last move: economy {Signed(pull)}, taxes {Signed(taxPush)}", x, y, SmallSize, Theme.TextDim);
-        return y + SmallSize + 10;
+        DrawLine(chart, demand, TileUse.Residential, CityDemand.ResidentialLimit, Theme.Residential);
+        DrawLine(chart, demand, TileUse.Commercial, CityDemand.BusinessLimit, Theme.Commercial);
+        DrawLine(chart, demand, TileUse.Industrial, CityDemand.BusinessLimit, Theme.Industrial);
+    }
+
+    private static void DrawLine(Rectangle chart, CityDemand demand, TileUse kind, int limit, Color color)
+    {
+        var count = demand.HistoryCount;
+        var step = chart.Width / (count - 1);
+        var previous = Point(chart, 0, History(demand, kind, count - 1), limit);
+        for (var ago = count - 2; ago >= 0; ago--)
+        {
+            var next = Point(chart, (count - 1 - ago) * step, History(demand, kind, ago), limit);
+            Raylib.DrawLineEx(previous, next, 2f, color);
+            previous = next;
+        }
+    }
+
+    // Read straight from the demand rather than through a delegate, so drawing allocates nothing.
+    private static int History(CityDemand demand, TileUse kind, int ago) => kind switch
+    {
+        TileUse.Residential => demand.ResidentialHistory(ago),
+        TileUse.Commercial => demand.CommercialHistory(ago),
+        _ => demand.IndustrialHistory(ago),
+    };
+
+    private static Vector2 Point(Rectangle chart, float across, int value, int limit)
+    {
+        var share = (float)Math.Clamp(value, -limit, limit) / limit;
+        return new Vector2(chart.X + across, chart.Y + (chart.Height / 2) - (share * ((chart.Height / 2) - 2)));
+    }
+
+    // How far back the chart goes: two updates a month.
+    private static string Span(int updates)
+    {
+        var months = Math.Max(updates - 1, 0) / 2;
+        return months switch
+        {
+            < 1 => "Under a month of history",
+            1 => "The last month",
+            < 24 => $"The last {months} months",
+            _ => $"The last {months / 12} years",
+        };
+    }
+
+    // A demand's letter and level in its colour. Returns where the next one starts.
+    private static int DrawLevel(string letter, int value, Color color, int x, int y)
+    {
+        var text = $"{letter} {Signed(value)}";
+        Raylib.DrawText(text, x, y, FontSize, color);
+        return x + Raylib.MeasureText(text, FontSize) + 24;
     }
 
     private static string Signed(int value) => value > 0 ? $"+{Hud.Count(value)}" : Hud.Count(value);
 
-    private static Rectangle CloseBounds(int top) => new() { X = 8 + Width - CloseSize - 6, Y = top + 6, Width = CloseSize, Height = CloseSize };
+    private static Rectangle CloseBounds(Rectangle bounds) => new() { X = bounds.X + Width - CloseSize - 6, Y = bounds.Y + 6, Width = CloseSize, Height = CloseSize };
 }

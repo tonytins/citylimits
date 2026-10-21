@@ -1,6 +1,6 @@
 # CityLimits roadmap
 
-> **Last reviewed:** 2026-10-21 · **Last updated:** 2026-10-21 · **Change:** minor (Happy Isle: the top bar after the owner's mock-up, and the demand panel) · **Stage:** pre-alpha
+> **Last reviewed:** 2026-10-21 · **Last updated:** 2026-10-21 · **Change:** patch (movable windows, and a demand chart) · **Stage:** pre-alpha
 
 Forward-looking: where CityLimits stands, what blocks the next milestone,
 and what comes next. Verified status and evidence are in the
@@ -287,6 +287,7 @@ baseline's growth depends on.
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-21 | patch | At the owner's request, the budget and demand panels are windows the player drags by their titles, which remember where they were left and stay on the screen, and the demand panel leads with a chart of plain lines for R, C, and I over the ten years of demand history the city now keeps. No milestone moves; 491 tests. |
 | 2026-10-21 | minor | Happy Isle, ahead of saving, as the owner chose, since it is cosmetic: the top bar follows the owner's mock-up in `docs/design/`. It has a pause and play button, the month, speed buttons that fill up like a meter, the city's name (`CitySimulation.Name`, "CityLimits" until saves can name it), an R, C, I meter, the funds, and the population, with the steps and the frame rate on the right. The meter opens a demand panel, a liberty the owner chose since Micropolis has only the meter: each demand against its limit, what moved it, and the census behind it. The held tool's name and the mouse position leave the bar; the palette's header still names the tool. The panels item notes power as the overview's mode. 489 tests. |
 | 2026-10-21 | minor | Joffburg, phase J4, and with it Joffburg, is complete: the overview map, as in Micropolis, shows the whole city in the top-right corner with the main view outlined, moves the view where it is clicked or dragged, and switches between the city, power, fire and police coverage, land value, and population density. The owner chose the overview and its modes. The alpha gate's read-the-city row passes; 46–82 h left in total, 481 tests. |
 | 2026-10-21 | patch | The owner settled the power-demand item: demand follows the grid, every zone and line tile drawing power whether anyone lives there or not, as in Micropolis (a coal plant carries about 50 zones), not population. The item is reworded and checked off; Joffburg is at 80%, with the power overlay left. 48–86 h left in total. |

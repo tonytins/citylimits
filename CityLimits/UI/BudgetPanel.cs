@@ -31,6 +31,9 @@ public sealed class BudgetPanel
 
     private static readonly Setting[] Settings = [Setting.TaxRate, Setting.Roads, Setting.Fire, Setting.Police];
 
+    // Dragged by the strip that holds the title and the funds.
+    private readonly WindowPlacement _placement = new(Padding + TitleSize + 6);
+
     /// <summary>What a click on the panel did.</summary>
     public enum Click
     {
@@ -45,10 +48,19 @@ public sealed class BudgetPanel
     }
 
     /// <summary>Tells whether a point on the screen is on the panel.</summary>
-    public static bool Contains(Vector2 point) => Raylib.CheckCollisionPointRec(point, Bounds());
+    public bool Contains(Vector2 point) => Raylib.CheckCollisionPointRec(point, Bounds());
+
+    /// <summary>Tells whether the player is dragging the panel by its title.</summary>
+    public bool IsDragging => _placement.IsDragging;
+
+    /// <summary>Starts moving the panel when a press lands on its title. Tells whether it did.</summary>
+    public bool BeginDrag(Vector2 point) => _placement.BeginDrag(point, Bounds());
+
+    /// <summary>Moves the panel with the pointer while the button is held.</summary>
+    public void Drag(Vector2 point, bool held) => _placement.Drag(point, held, new Vector2(Width, Height));
 
     /// <summary>Acts on a click: lowers or raises a setting, or closes the panel.</summary>
-    public static Click HandleClick(Vector2 point, CityBudget budget)
+    public Click HandleClick(Vector2 point, CityBudget budget)
     {
         ArgumentNullException.ThrowIfNull(budget);
 
@@ -77,10 +89,10 @@ public sealed class BudgetPanel
     }
 
     /// <summary>
-    /// Draws the panel in the middle of the screen, over a dimmed map. The reason is why the
+    /// Draws the panel where the player left it, in the middle of the screen at first, over a dimmed map. The reason is why the
     /// panel opened by itself, or null when the player opened it.
     /// </summary>
-    public static void Draw(CitySimulation city, string? reason)
+    public void Draw(CitySimulation city, string? reason)
     {
         ArgumentNullException.ThrowIfNull(city);
 
@@ -128,7 +140,7 @@ public sealed class BudgetPanel
         Raylib.DrawText("Continue", (int)go.X + ((ContinueWidth - Raylib.MeasureText("Continue", FontSize)) / 2), (int)go.Y + 7, FontSize, Theme.Accent);
     }
 
-    private static void DrawSetting(int row, string label, string detail)
+    private void DrawSetting(int row, string label, string detail)
     {
         var bounds = Bounds();
         var top = RowTop(row);
@@ -167,18 +179,15 @@ public sealed class BudgetPanel
 
     private static int Step(int level, int direction) => Math.Clamp(level + (direction * FundingStep), 0, CityBudget.FullFunding);
 
-    private static Rectangle Bounds() => new()
-    {
-        X = (Raylib.GetScreenWidth() - Width) / 2,
-        Y = (Raylib.GetScreenHeight() - Height) / 2,
-        Width = Width,
-        Height = Height,
-    };
+    // The panel opens in the middle of the screen until the player moves it.
+    private Rectangle Bounds() => _placement.Bounds(
+        new Vector2(Width, Height),
+        new Vector2((Raylib.GetScreenWidth() - Width) / 2, (Raylib.GetScreenHeight() - Height) / 2));
 
     // The settings start below the title, the reason, and the heading for this year.
-    private static int RowTop(int row) => (int)Bounds().Y + Padding + TitleSize + 6 + LineHeight + 4 + LineHeight + (row * (ButtonSize + 8));
+    private int RowTop(int row) => (int)Bounds().Y + Padding + TitleSize + 6 + LineHeight + 4 + LineHeight + (row * (ButtonSize + 8));
 
-    private static Rectangle ButtonBounds(int row, bool raise) => new()
+    private Rectangle ButtonBounds(int row, bool raise) => new()
     {
         X = Bounds().X + Padding + (raise ? ButtonSize + 4 : 0),
         Y = RowTop(row),
@@ -186,7 +195,7 @@ public sealed class BudgetPanel
         Height = ButtonSize,
     };
 
-    private static Rectangle ContinueBounds() => new()
+    private Rectangle ContinueBounds() => new()
     {
         X = Bounds().X + Width - Padding - ContinueWidth,
         Y = Bounds().Y + Height - Padding - ContinueHeight,

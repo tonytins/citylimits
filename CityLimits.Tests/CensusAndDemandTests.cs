@@ -76,6 +76,42 @@ public class CensusAndDemandTests
     }
 
     [Fact]
+    public void EachUpdateGoesIntoTheHistoryNewestFirst()
+    {
+        var demand = new CityDemand();
+        Assert.Equal(0, demand.HistoryCount);
+
+        demand.Update(new CityCensus());
+        var first = (demand.Residential, demand.Commercial, demand.Industrial);
+        demand.Update(Census(160, 0, 0));
+
+        Assert.Equal(2, demand.HistoryCount);
+        Assert.Equal((demand.Residential, demand.Commercial, demand.Industrial), (demand.ResidentialHistory(0), demand.CommercialHistory(0), demand.IndustrialHistory(0)));
+        Assert.Equal(first, (demand.ResidentialHistory(1), demand.CommercialHistory(1), demand.IndustrialHistory(1)));
+        Assert.Throws<ArgumentOutOfRangeException>(() => demand.ResidentialHistory(2));
+        Assert.Throws<ArgumentOutOfRangeException>(() => demand.IndustrialHistory(-1));
+    }
+
+    [Fact]
+    public void TheHistoryKeepsTenYearsAndDropsTheOldest()
+    {
+        var demand = new CityDemand();
+        demand.Update(new CityCensus());
+        var dropped = demand.Residential;
+        demand.Update(Census(160, 0, 0));
+        var oldestKept = demand.Residential;
+
+        for (var i = 1; i < CityDemand.HistoryLength; i++)
+        {
+            demand.Update(Census(160, 0, 0));
+        }
+
+        Assert.Equal(CityDemand.HistoryLength, demand.HistoryCount);
+        Assert.Equal(oldestKept, demand.ResidentialHistory(CityDemand.HistoryLength - 1));
+        Assert.NotEqual(dropped, oldestKept);
+    }
+
+    [Fact]
     public void DemandStopsAtItsLimits()
     {
         var demand = new CityDemand();

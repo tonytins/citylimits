@@ -20,6 +20,9 @@ public sealed class CityDemand
     /// <summary>How far commercial and industrial demand can rise or fall.</summary>
     public const int BusinessLimit = 1500;
 
+    /// <summary>How many updates of history the demand keeps: ten years, at two updates a month.</summary>
+    public const int HistoryLength = 240;
+
     // A year's births, as a share of the residents.
     private const double BirthRate = 0.02;
 
@@ -44,6 +47,10 @@ public sealed class CityDemand
 
     // How hard each tax rate, from 0% to 20%, pushes every demand: Micropolis' table, taken with
     // the owner's approval. Easy difficulty adds nothing to the rate before it is looked up.
+    private readonly int[] _residentialHistory = new int[HistoryLength];
+    private readonly int[] _commercialHistory = new int[HistoryLength];
+    private readonly int[] _industrialHistory = new int[HistoryLength];
+
     private static readonly int[] TaxPush =
     [
         200, 150, 120, 100, 80, 50, 30, 0, -10, -40, -100,
@@ -79,6 +86,21 @@ public sealed class CityDemand
 
     /// <summary>How far the tax rate pushed every demand at the last update.</summary>
     public int TaxPushApplied { get; private set; }
+
+    /// <summary>How many updates the history holds, up to <see cref="HistoryLength"/>.</summary>
+    public int HistoryCount { get; private set; }
+
+    /// <summary>Residential demand as it stood a number of updates ago; 0 is the latest.</summary>
+    /// <exception cref="ArgumentOutOfRangeException">The update is outside the history held.</exception>
+    public int ResidentialHistory(int updatesAgo) => _residentialHistory[CheckedAgo(updatesAgo)];
+
+    /// <summary>Commercial demand as it stood a number of updates ago; 0 is the latest.</summary>
+    /// <exception cref="ArgumentOutOfRangeException">The update is outside the history held.</exception>
+    public int CommercialHistory(int updatesAgo) => _commercialHistory[CheckedAgo(updatesAgo)];
+
+    /// <summary>Industrial demand as it stood a number of updates ago; 0 is the latest.</summary>
+    /// <exception cref="ArgumentOutOfRangeException">The update is outside the history held.</exception>
+    public int IndustrialHistory(int updatesAgo) => _industrialHistory[CheckedAgo(updatesAgo)];
 
     /// <summary>Last month's jobs for each resident at the last update; above 1, people move in.</summary>
     public double JobsPerResident { get; private set; } = 1.0;
@@ -127,6 +149,26 @@ public sealed class CityDemand
         Residential = Move(Residential, residentialRatio, push, ResidentialLimit);
         Commercial = Move(Commercial, commercialRatio, push, BusinessLimit);
         Industrial = Move(Industrial, industrialRatio, push, BusinessLimit);
+        Record();
+    }
+
+    // The newest update goes at the front, and the oldest falls off the end once the history is full.
+    private void Record()
+    {
+        Array.Copy(_residentialHistory, 0, _residentialHistory, 1, HistoryLength - 1);
+        Array.Copy(_commercialHistory, 0, _commercialHistory, 1, HistoryLength - 1);
+        Array.Copy(_industrialHistory, 0, _industrialHistory, 1, HistoryLength - 1);
+        _residentialHistory[0] = Residential;
+        _commercialHistory[0] = Commercial;
+        _industrialHistory[0] = Industrial;
+        HistoryCount = Math.Min(HistoryCount + 1, HistoryLength);
+    }
+
+    private int CheckedAgo(int updatesAgo)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(updatesAgo);
+        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(updatesAgo, HistoryCount);
+        return updatesAgo;
     }
 
     // A ratio above 1 raises demand, below 1 lowers it, and the tax pushes it as well.
