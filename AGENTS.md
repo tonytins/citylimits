@@ -49,7 +49,9 @@ docs/
   ROADMAP.md                    milestones, current focus, estimates, revision history
   scorecard.md                  verified status per area, with evidence
   scenarios.md                  the scenario file and report formats
-  modding.md                    how a mod is laid out, what it can change, and how mods are applied
+  modding/
+    README.md                   what a mod is, installing one, writing one, how mods are applied, and the code behind them
+    tuning.md                   what a tuning mod can change in zones, plants, and stations, and the limits on each
 ```
 
 The split is the point of the layout: `CityLimits.Core/` holds everything
@@ -512,7 +514,7 @@ A city builder lives or dies on its simulation, not its art. The rules:
   statement, and a mod can change them. When a rule gains a number a
   player or a modder could want to change, it goes in a spec, with a field
   in the definitions format, a check in `DefinitionLoader`, a test, and a
-  line in `docs/modding.md`.
+  line in `docs/modding/tuning.md`, written for a player.
 - **The base game is a mod like any other.** `BaseGame.Json` is in the
   same format and goes through the same loader, so the mod path runs every
   time the game starts. It lives in code, so it can't go missing.
@@ -554,6 +556,20 @@ A city builder lives or dies on its simulation, not its art. The rules:
   default.
 - **Don't report success for work a command did not do.** A command that
   is not implemented yet says so and returns `ExitCodes.Failure`.
+
+### Writing docs
+
+- **Write for an outsider looking in.** The docs in `docs/` are for a
+  contributor who has never seen CityLimits: say what a thing is before
+  how it works, name the file or type that does it, and don't lean on
+  this conversation's history or on private notes.
+- **The modding docs are for players first.** `docs/modding/` is read by
+  new and existing players as well as developers: explain the terms a
+  player meets (what a tile, a zone, or a capacity is), give a working
+  example, and say what the game does when something is wrong. Its
+  developer sections follow the contributor rule above.
+- **Describe only what works today.** A doc may say a thing doesn't exist
+  yet; it doesn't promise what will.
 
 ### Code style
 
