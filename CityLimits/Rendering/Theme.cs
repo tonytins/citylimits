@@ -24,6 +24,9 @@ public static class Theme
     /// <summary>The color of the tile under the mouse.</summary>
     public static readonly Color Hover = new() { R = 255, G = 235, B = 120, A = 255 };
 
+    /// <summary>The veil drawn over the map while a panel such as the budget holds the game.</summary>
+    public static readonly Color Dim = new() { R = 0, G = 0, B = 0, A = 140 };
+
     /// <summary>The background of the panels.</summary>
     public static readonly Color Panel = new() { R = 22, G = 26, B = 32, A = 225 };
 

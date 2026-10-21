@@ -1,5 +1,15 @@
 # CityLimits Changelog
 
+## 0.2.106
+
+The budget panel. Press B, or click the money in the top bar, to see
+the year's taxes and upkeep as they stand and last year's, and to set
+the tax rate and how much of the roads', fire, and police upkeep the city
+pays. The budget runs itself, but when a year's upkeep comes to more than
+its taxes, or the money runs out and funding is cut, the panel opens on
+its own and says why. The game pauses while the panel is open. The money
+shows red below zero.
+
 ## 0.2.105
 
 Taxes and upkeep, as in Micropolis. Once a year the city collects its

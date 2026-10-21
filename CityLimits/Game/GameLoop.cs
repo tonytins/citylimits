@@ -24,6 +24,11 @@ public sealed class GameLoop : IDisposable
     private string? _notice;
     private bool _noticeIsError;
     private readonly CityMessageFilter _messages = new();
+
+    // The budget panel holds the game while it is open, and gives the speed back when it closes.
+    private bool _budgetOpen;
+    private string? _budgetReason;
+    private int _speedBeforeBudget;
     private readonly BuildPlan _preview = new();
     private BuildStroke? _stroke;
 
@@ -45,6 +50,7 @@ public sealed class GameLoop : IDisposable
         }
 
         _simulation.MessageSent += ShowMessage;
+        _simulation.YearSettled += OnYearSettled;
 
         _mapRenderer = new MapRenderer(map, assets);
         Logger.Info(_mapRenderer.IsCached ? "The map is drawn from cached chunks" : "The map is drawn tile by tile");
@@ -74,7 +80,8 @@ public sealed class GameLoop : IDisposable
         if (_settings.Speed > 0)
         {
             var due = _clock.Advance(elapsed * GameSpeed.Multiplier(_settings.Speed));
-            for (var i = 0; i < due; i++)
+            // A year that opens the budget stops the city at once, even partway through a frame's steps.
+            for (var i = 0; i < due && !_budgetOpen; i++)
             {
                 _simulation.Tick();
             }
@@ -140,6 +147,11 @@ public sealed class GameLoop : IDisposable
             _hud.DrawStrokeCost(mouse, _preview);
         }
 
+        if (_budgetOpen)
+        {
+            BudgetPanel.Draw(_simulation, _budgetReason);
+        }
+
         Raylib.EndDrawing();
     }
 
@@ -159,8 +171,9 @@ public sealed class GameLoop : IDisposable
         var width = Math.Clamp(Raylib.GetScreenWidth(), GameSettings.MinWindowWidth, GameSettings.MaxWindowWidth);
         var height = Math.Clamp(Raylib.GetScreenHeight(), GameSettings.MinWindowHeight, GameSettings.MaxWindowHeight);
         _settings = _settings with { WindowWidth = width, WindowHeight = height };
+        var saved = _budgetOpen ? _settings with { Speed = _speedBeforeBudget } : _settings;
 
-        if (!SettingsStore.TrySave(_settingsPath, _settings, out var error))
+        if (!SettingsStore.TrySave(_settingsPath, saved, out var error))
         {
             Logger.Error("{Error}", error);
             return false;
@@ -172,6 +185,24 @@ public sealed class GameLoop : IDisposable
     private void HandleInput(float elapsed)
     {
         var mouse = Raylib.GetMousePosition();
+        if (Raylib.IsWindowResized())
+        {
+            _settings = _settings with { WindowWidth = Raylib.GetScreenWidth(), WindowHeight = Raylib.GetScreenHeight() };
+        }
+
+        // While the budget is open, it takes every key and click, and the map takes none.
+        if (_budgetOpen)
+        {
+            HandleBudgetInput(mouse);
+            return;
+        }
+
+        if (Raylib.IsKeyPressed(KeyboardKey.B))
+        {
+            OpenBudget(null);
+            return;
+        }
+
         var wheel = Raylib.GetMouseWheelMove();
         if (wheel != 0f)
         {
@@ -248,11 +279,57 @@ public sealed class GameLoop : IDisposable
         }
 
         HandleStroke(mouse);
+    }
 
-        if (Raylib.IsWindowResized())
+    private void HandleBudgetInput(Vector2 mouse)
+    {
+        if (Raylib.IsKeyPressed(KeyboardKey.Escape) || Raylib.IsKeyPressed(KeyboardKey.Enter) || Raylib.IsKeyPressed(KeyboardKey.B))
         {
-            _settings = _settings with { WindowWidth = Raylib.GetScreenWidth(), WindowHeight = Raylib.GetScreenHeight() };
+            CloseBudget();
+            return;
         }
+
+        if (Raylib.IsMouseButtonPressed(MouseButton.Left) && BudgetPanel.HandleClick(mouse, _simulation.Budget) == BudgetPanel.Click.Close)
+        {
+            CloseBudget();
+        }
+    }
+
+    // A year that needs attention opens the budget by itself: upkeep came to more than the
+    // taxes, or the money ran out and funding was cut.
+    private void OnYearSettled(BudgetYear year)
+    {
+        if (!year.NeedsAttention)
+        {
+            return;
+        }
+
+        var reason = year.Cut
+            ? "The money ran out, so funding was cut"
+            : $"Upkeep came to ${year.Expenses}, more than the ${year.TaxIncome} in taxes";
+        Logger.Warn("The budget needs attention: {Reason}", reason);
+        OpenBudget(reason);
+    }
+
+    private void OpenBudget(string? reason)
+    {
+        if (_budgetOpen)
+        {
+            return;
+        }
+
+        _budgetOpen = true;
+        _budgetReason = reason;
+        _speedBeforeBudget = _settings.Speed;
+        _settings = _settings with { Speed = 0 };
+        _stroke = null;
+    }
+
+    private void CloseBudget()
+    {
+        _budgetOpen = false;
+        _budgetReason = null;
+        _settings = _settings with { Speed = _speedBeforeBudget };
     }
 
     // A stroke starts where the button goes down, stretches while it is held, and is applied
@@ -265,6 +342,13 @@ public sealed class GameLoop : IDisposable
         {
             if (!Raylib.IsMouseButtonPressed(MouseButton.Left))
             {
+                return;
+            }
+
+            // A press on the funds opens the budget.
+            if (Raylib.CheckCollisionPointRec(mouse, _hud.FundsBounds))
+            {
+                OpenBudget(null);
                 return;
             }
 

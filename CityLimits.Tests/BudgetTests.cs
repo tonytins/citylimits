@@ -200,6 +200,22 @@ public class BudgetTests
     }
 
     [Fact]
+    public void AFreshEstimateFollowsTheRatesSetSinceTheLastCount()
+    {
+        // 40 road tiles ask 28; the estimate is worked from the roads the last count saw.
+        var city = CityWithRoads(40, 3, 1);
+        RunCounts(city, 2);
+
+        city.Budget.SetTaxRate(15);
+        city.Budget.SetFunding(roads: 50, fire: 100, police: 100);
+        var estimate = city.EstimateBudget();
+
+        Assert.Equal(15, estimate.TaxRate);
+        Assert.Equal((28, 14), (estimate.RoadRequest, estimate.RoadFunded));
+        Assert.Equal(CityBudget.DefaultTaxRate, city.Budget.TaxEffect);
+    }
+
+    [Fact]
     public void ABridgeCountsAsFiveRoadTiles()
     {
         var map = TileMap.FromTerrain(5, 1, [TileKind.Grass, TileKind.Grass, TileKind.Water, TileKind.Grass, TileKind.Grass]);

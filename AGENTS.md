@@ -224,6 +224,18 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   Micropolis' numbers here, the tax table among them, were taken with
   the owner's approval. The budget is always automatic, a liberty the
   owner chose.
+- **The budget panel.** `UI/BudgetPanel.cs` shows the year as it stands
+  (`CitySimulation.EstimateBudget`, at the rates set now, from the roads
+  the last count saw), last year, and the tax rate and the road, fire,
+  and police funding, each with a lower and a raise button: a percent a
+  press for the tax, a tenth for funding. It opens by itself when a
+  settled year needs attention (`BudgetYear.NeedsAttention`: upkeep came
+  to more than the taxes, or the money ran out and funding was cut),
+  saying why; B or a click on the funds in the top bar opens it too. The
+  game pauses while it is open, stops ticking at once even partway through
+  a frame, takes no other input, and gets its speed back when the panel
+  closes, with Continue, Escape, Enter, or B. The funds show red below
+  zero.
 - **The tools.** Nine tools sit in the palette down the left, laid out as
   Micropolis' is (`UI/ToolPaletteView.cs`): the name and price of the tool
   under the pointer, or of the held one, then centred rows of icon
@@ -306,7 +318,7 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   and no project. It holds the parser, the dispatcher, the default
   command, the strict option reader, and the exit codes.
 - **The tests.** `CityLimits.Tests` uses xUnit 2 with the VSTest runner
-  and coverlet, and holds 443 tests over the generator, the terrain edges, the power plants, lines, and grid, the budget, the map, the
+  and coverlet, and holds 444 tests over the generator, the terrain edges, the power plants, lines, and grid, the budget, the map, the
   calendar, the clock, the simulation, the settings, the tile rules, the
   build actions, the road network, the treasury, the scenario loader and
   runner, every built-in scenario, the definitions and the mod loader, zone growth, the census and demand, trips, growth and the city maps,

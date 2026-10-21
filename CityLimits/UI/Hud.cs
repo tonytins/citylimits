@@ -9,7 +9,10 @@ public sealed class Hud
     private const int FontSize = 14;
     private const int Padding = 10;
     private const int ReadoutHeight = 46;
-    private const string Hints = "WASD pan   wheel zoom   space pause   , . speed   1-9 tools   drag to build   esc cancel or quit";
+    private const string Hints = "WASD pan   wheel zoom   space pause   , . speed   1-9 tools   drag to build   B budget   esc cancel or quit";
+
+    /// <summary>Where the funds are in the top bar, as last drawn, so a click on them can open the budget.</summary>
+    public Rectangle FundsBounds { get; private set; }
 
     /// <summary>Draws the top bar with the state of the city.</summary>
     public void DrawStatus(GameDate date, long tickCount, int speed, int population, Tool tool, int funds, int toolCost, Vector2 mouseWorld, int framesPerSecond)
@@ -25,8 +28,17 @@ public sealed class Hud
             _ => "paused",
         };
         var costText = toolCost > 0 ? $" ${toolCost}" : string.Empty;
-        var status = $"CityLimits   {date}   tick {tickCount}   {speedText}   pop {population}   ${funds}   {ToolName(tool)}{costText}   {mouseWorld.X:0}, {mouseWorld.Y:0}   {framesPerSecond} fps";
-        Raylib.DrawText(status, Padding, 8, FontSize, Theme.Text);
+        var before = $"CityLimits   {date}   tick {tickCount}   {speedText}   pop {population}   ";
+        var fundsText = $"${funds}";
+        var after = $"   {ToolName(tool)}{costText}   {mouseWorld.X:0}, {mouseWorld.Y:0}   {framesPerSecond} fps";
+
+        // The funds are drawn on their own, so they can show red below zero and be clicked.
+        var fundsX = Padding + Raylib.MeasureText(before, FontSize);
+        var fundsWidth = Raylib.MeasureText(fundsText, FontSize);
+        FundsBounds = new Rectangle { X = fundsX - 4, Y = 0, Width = fundsWidth + 8, Height = BarHeight };
+        Raylib.DrawText(before, Padding, 8, FontSize, Theme.Text);
+        Raylib.DrawText(fundsText, fundsX, 8, FontSize, funds < 0 ? Theme.Error : Theme.Accent);
+        Raylib.DrawText(after, fundsX + fundsWidth, 8, FontSize, Theme.Text);
     }
 
     /// <summary>Draws the readout of the tile under the mouse, naming zones as the city's definitions do.</summary>

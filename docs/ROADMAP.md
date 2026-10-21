@@ -1,6 +1,6 @@
 # CityLimits roadmap
 
-> **Last reviewed:** 2026-10-20 · **Last updated:** 2026-10-20 · **Change:** minor (Joffburg J2a: taxes and upkeep) · **Stage:** pre-alpha
+> **Last reviewed:** 2026-10-20 · **Last updated:** 2026-10-20 · **Change:** minor (Joffburg J2b: the budget panel, and J2 is complete) · **Stage:** pre-alpha
 
 Forward-looking: where CityLimits stands, what blocks the next milestone,
 and what comes next. Verified status and evidence are in the
@@ -26,12 +26,12 @@ it a later milestone.
 |---|---|---|---|
 | Start a game and look at a map | yes | A resizable "CityLimits" window opens on a 120 by 100 seeded map of rivers, lakes, and woods, drawn from a tile sheet, with a camera that pans, zooms, and clamps, and a readout of the tile under the mouse (CORE-1, MAP-1, MAP-2, MAP-3, MAP-4, CORE-6) | 0 |
 | Lay roads, zone land, and see the city grow | yes | The player lays roads and bridges, zones 3 by 3 land, and bulldozes, as in Micropolis and at its prices, and the city grows on its own: zones take trips, follow residential, commercial, and industrial demand, grow houses and then buildings where they cluster, and decline when demand turns (ZONE-1 to ZONE-5, SIM-1 to SIM-7) | 0 |
-| Read the city's state: money, power, demand, and problems | partial | The HUD shows the date, the tick, the speed, the funds, and what the held tool costs, and the tile readout names what is on the tile. The status bar shows the population and a panel shows demand; unpowered zones blink a lightning bolt, the readout says when a zone has no power, and brownouts and blackouts show as messages. There is no budget panel and no power overlay (UI-2, ECON-1, ECON-3) | 15–30 |
+| Read the city's state: money, power, demand, and problems | partial | The HUD shows the date, the tick, the speed, the funds, and what the held tool costs, and the tile readout names what is on the tile. The status bar shows the population and a panel shows demand; unpowered zones blink a lightning bolt, the readout says when a zone has no power, and brownouts and blackouts show as messages. The budget panel shows the year's taxes and upkeep and opens by itself on a deficit. There is no power overlay (UI-2, ECON-1, ECON-3, ECON-5) | 5–10 |
 | Keep the city running for a long session without a crash | partial | The frame loop catches and reports, the tick loop runs, and the settings survive a session (REL-1, CORE-8). The city itself cannot be saved yet (UI-5) | 10–20 |
 
 **Result: pre-alpha.** Two rows pass and two are partial.
-Alpha is roughly 25–50 hours away, and the critical path runs through
-Joffburg's budget.
+Alpha is roughly 15–30 hours away, and the critical path runs through
+saving a city (UI-5).
 
 ## Current focus
 
@@ -58,9 +58,10 @@ and J4 the budget panel and the power overlay. The budget is a liberty the
 owner chose: it is always automatic, and its panel opens on its own only
 when spending outpaces income. J1, power, is complete: plants and lines carry
 power, unpowered zones don't grow, the city warns of brownouts and
-blackouts, and the palette is laid out as Micropolis'. J2 is under way:
-the city collects taxes and pays its upkeep each year, and the tax rate
-moves demand; the budget panel comes next.
+blackouts, and the palette is laid out as Micropolis'. J2, taxes and the
+budget, is complete: the city collects taxes and pays its upkeep each
+year, the tax rate moves demand, and the budget panel opens by itself
+when spending outpaces income. J3, services, comes next.
 
 ## Milestones
 
@@ -73,22 +74,21 @@ moves demand; the budget panel comes next.
 | Neat Map: Terrain and the tile grid | 100% | 0 | Meets the baseline: Micropolis' terrain on its 120 by 100 map, with rivers, lakes, an island one map in ten, and woods, and shores and wood edges drawn from the sheet |
 | Line City: Roads and zoning | 100% | 0 | Meets the baseline: strokes with a preview, straight roads and bridges, 3 by 3 zones laid as a grid and served from their edges, and the $1 bulldozer, at Micropolis' prices |
 | Kowloon: Simulation core | 100% | 0 | Time runs as in Micropolis: the 16-phase cycle, the 48ths-of-a-year calendar, and its pace. Scenarios run from files and from the command line. Zones grow and decline one by one, with population, demand, and trips. The heart of the game |
-| Joffburg: Services and economy | 20% | 12–20 | Under way: power works as in Micropolis, from plants through lines and zones, with brownouts and blackouts, and the palette is Micropolis'. Taxes, the budget, services, and the panels are left |
+| Joffburg: Services and economy | 40% | 8–14 | Under way: power works as in Micropolis, from plants through lines and zones, with brownouts and blackouts, and the palette is Micropolis'. Taxes, the budget, services, and the panels are left |
 | Radial: Traffic and commuting | 0% | 12–20 | Nothing yet |
 | Deadwood: Land value, pollution, disasters | 0% | 12–20 | Nothing yet |
 | Happy Isle: Player-facing game | 0% | 15–25 | Nothing yet |
 | Yokohama: Polish and release | 0% | 10–20 | Nothing yet |
-| | **Total** | **≈ 61–105** | |
+| | **Total** | **≈ 57–99** | |
 
 ## Upcoming work, ranked
 
 | Rank | Work | Milestone | Estimate (h) |
 |---|---|---|---|
-| 1 | Taxes, a budget, and a deficit the player has to answer | Joffburg | 6–10 |
-| 2 | Police and fire stations and parks, with their coverage maps | Joffburg | 4–8 |
+| 1 | Police and fire stations and parks, with their coverage maps | Joffburg | 4–8 |
+| 2 | A power overlay that shows what the power scan decided | Joffburg | 2–4 |
 
-Alpha needs rank 1 in substance, about 6–10 hours, and a city that can
-be saved (UI-5).
+Alpha needs a city that can be saved (UI-5); Joffburg's budget is in.
 
 ## Milestone checklists
 
@@ -199,9 +199,9 @@ be saved (UI-5).
   population, and CityLimits does the same; the brownout is a message,
   and the overlay comes with the panels. The owner may want this item
   reworded to the baseline.
-- [ ] Taxes, a budget, and a deficit the player has to answer. Taxes,
-  upkeep, the shortfall order, and crumbling roads are in
-  (`CityBudget`); the panel the player answers a deficit in is not.
+- [x] Taxes, a budget, and a deficit the player has to answer.
+  `CityBudget` and `UI/BudgetPanel.cs`; the budget is always automatic,
+  and its panel opens by itself on a deficit or a cut.
 - [ ] Services: police, fire, and parks, with a coverage effect.
 - [ ] A budget panel and a power overlay that show what the simulation
   actually thinks.
@@ -286,6 +286,7 @@ right, cut scope inside Radial and Deadwood first, not inside Kowloon.
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-21 | minor | Joffburg, phase J2b, and with it J2, taxes and the budget, is complete: the budget panel shows the year as it stands, last year, and the tax rate and funding with buttons to change them. It opens by itself when a year's upkeep outran its taxes or funding was cut, saying why, and with B or a click on the funds; the game pauses while it is open. The funds show red below zero. Joffburg is at 40%; 444 tests. |
 | 2026-10-21 | minor | Joffburg, phase J2a: taxes and upkeep, as in Micropolis, with its numbers taken by the owner's leave. Each count estimates the year and sets a 48th aside; the year is settled into the treasury, which can go below zero. Taxes come from population and average land value at the tax rate; roads cost 0.7 a tile, a bridge five tiles, and stations $100, at their funding levels, roads paid first. The tax rate pushes demand, underfunded roads crumble, and the city warns of high taxes and underfunded roads. The owner chose a panel that pauses the game, opens itself on a deficit or a cut, and opens with B or the funds. 443 tests. |
 | 2026-10-20 | minor | Joffburg, phase J1d, and with it J1, power, is complete: the tool palette is laid out as Micropolis', a header with the name and price of the tool under the pointer or the held one, over centred rows of icon buttons in Micropolis' order, with the held tool's highlighted icon. The number keys still pick tools. A missing icon now falls back to a labelled box, as it was meant to: `GameAssets.IconFor` never returned null. 417 tests. |
 | 2026-10-20 | minor | Joffburg, phase J1c: the power grid, as in Micropolis. The scan counts plants and gives each zone its power, kept on its centre; phase 11 traces power from the plants through lines, zones, and plants until their pooled capacity (700 tiles coal, 2 000 nuclear, every plant counted) runs out. An unpowered zone scores -500 and never grows. The city sends brownout, blackout, and need-power messages; the game blinks a lightning bolt over unpowered zones and the readout says "no power". Plant prices and capacities move into a `PlantSpec` a mod can change in `plants.json`, and scenario tile checks gain `powered`. Every built-in scenario and the headless demo town gain a coal plant. Joffburg is at 20%; 61–105 h left, 417 tests. |

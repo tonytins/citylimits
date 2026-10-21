@@ -111,6 +111,9 @@ public sealed class CitySimulation
     /// <summary>The road tiles the scan counted this cycle, a bridge counting five, as the roads' upkeep counts them.</summary>
     public int RoadTiles { get; private set; }
 
+    // The road tiles as of the last count's budget, which a fresh estimate works from.
+    private int _budgetedRoadTiles;
+
     /// <summary>The roads on the map, and the tiles they serve.</summary>
     public RoadNetwork Roads { get; }
 
@@ -184,12 +187,20 @@ public sealed class CitySimulation
     // settled when the count comes round to a whole year, the first time at the very start.
     private void CollectTaxes()
     {
-        Budget.Accrue(Budget.Estimate(Demand.TaxablePopulation, Maps.LandValueAverage, RoadTiles, 0, 0, Treasury.Funds));
+        _budgetedRoadTiles = RoadTiles;
+        Budget.Accrue(EstimateBudget());
         if (CityTime % CityBudget.CountsPerYear == 0)
         {
             YearSettled?.Invoke(Budget.Settle(Treasury));
         }
     }
+
+    /// <summary>
+    /// The year's budget as it would be estimated now, at the tax rate and funding set now, from
+    /// the city as the last count saw it. The budget panel shows it as the player changes them.
+    /// </summary>
+    public BudgetYear EstimateBudget() =>
+        Budget.Estimate(Demand.TaxablePopulation, Maps.LandValueAverage, _budgetedRoadTiles, 0, 0, Treasury.Funds);
 
     private void SendMessages()
     {
