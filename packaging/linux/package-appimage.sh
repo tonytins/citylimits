@@ -1,37 +1,63 @@
-#!/bin/bash
-set -e
+#!/usr/bin/env bash
+# Builds CityLimits into an AppImage for x86_64 Linux, named for the version the game reports,
+# such as CityLimits-0.2.109-x86_64.AppImage. It can be run from any folder.
+#
+# The AppImage is framework-dependent: it needs the .NET 10 runtime on the machine that runs it.
+set -euo pipefail
 
 APP=CityLimits
-VERSION=$(git -C . describe --tags --always 2>/dev/null || echo "0.1.0")
 ARCH=x86_64
-APPDIR=AppDir
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT="$(cd "$HERE/../.." && pwd)"
+PROJECT="$ROOT/$APP/$APP.csproj"
+APPDIR="$HERE/AppDir"
+TOOL="$HERE/appimagetool-$ARCH.AppImage"
+TOOL_URL="https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-$ARCH.AppImage"
 
-rm -rf $APPDIR $APP-$VERSION-$ARCH.AppImage
+fail() {
+    echo "package-appimage: $*" >&2
+    exit 1
+}
 
-# Build the app
-dotnet publish ../../$APP/$APP.csproj -c Release -r linux-x64 --self-contained false -p:PublishSingleFile=false -o $APPDIR/usr/bin
+command -v dotnet >/dev/null || fail "dotnet isn't installed; the .NET 10 SDK is needed to build."
 
-# Create AppDir structure
-mkdir -p $APPDIR/usr/bin
-mkdir -p $APPDIR/usr/share/applications
-mkdir -p $APPDIR/usr/share/icons/hicolor/256x256/apps
+# The version is GitInfo's major.minor.patch, the one the game shows and the changelog uses, not
+# the commit hash. Asked for one property at a time, msbuild prints the bare value.
+version_part() {
+    dotnet msbuild "$PROJECT" -nologo -t:GitVersion -getProperty:"$1"
+}
+VERSION="$(version_part GitSemVerMajor).$(version_part GitSemVerMinor).$(version_part GitSemVerPatch)"
+[[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || fail "couldn't read the version from GitInfo; got '$VERSION'."
+OUTPUT="$HERE/$APP-$VERSION-$ARCH.AppImage"
+echo "Packaging $APP $VERSION"
 
-# Move published files
-cp -r $APPDIR/usr/bin/* $APPDIR/usr/bin/ 2>/dev/null || true
-# Actually publish goes to usr/bin already
+rm -rf "$APPDIR" "$OUTPUT"
+mkdir -p "$APPDIR/usr/bin" "$APPDIR/usr/share/applications"
 
-# Copy desktop and icon
-cp $APP.desktop $APPDIR/usr/share/applications/
-cp $APP.desktop $APPDIR/
-cp ../../Screenshot.png $APPDIR/CityLimits.png 2>/dev/null || cp Screenshot.png $APPDIR/usr/share/icons/hicolor/256x256/apps/CityLimits.png
-ln -sf usr/share/applications/$APP.desktop $APPDIR/$APP.desktop
-cp AppRun $APPDIR/AppRun
-chmod +x $APPDIR/AppRun
+dotnet publish "$PROJECT" -c Release -r linux-x64 --self-contained false -p:PublishSingleFile=false -o "$APPDIR/usr/bin"
 
-# Download appimagetool if not present
-if [ ! -f appimagetool-$ARCH.AppImage ]; then
-    wget -O appimagetool-$ARCH.AppImage https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-$ARCH.AppImage
-    chmod +x appimagetool-$ARCH.AppImage
+# The desktop entry and the icon go at the AppImage's root, where appimagetool looks for them;
+# the icon is the game's logo, the same art as icon.ico.
+cp "$HERE/$APP.desktop" "$APPDIR/usr/share/applications/$APP.desktop"
+ln -sf "usr/share/applications/$APP.desktop" "$APPDIR/$APP.desktop"
+cp "$ROOT/$APP/Assets/logo.png" "$APPDIR/$APP.png"
+ln -sf "$APP.png" "$APPDIR/.DirIcon"
+cp "$HERE/AppRun" "$APPDIR/AppRun"
+chmod +x "$APPDIR/AppRun"
+
+if [ ! -x "$TOOL" ]; then
+    echo "Downloading appimagetool"
+    if command -v curl >/dev/null; then
+        curl -fL -o "$TOOL" "$TOOL_URL"
+    elif command -v wget >/dev/null; then
+        wget -O "$TOOL" "$TOOL_URL"
+    else
+        fail "neither curl nor wget is installed to download appimagetool."
+    fi
+    chmod +x "$TOOL"
 fi
 
-ARCH=$ARCH ./appimagetool-$ARCH.AppImage $APPDIR $APP-$VERSION-$ARCH.AppImage
+# Extracting appimagetool instead of mounting it means it runs without FUSE, as on many
+# immutable distributions and in containers.
+ARCH=$ARCH APPIMAGE_EXTRACT_AND_RUN=1 "$TOOL" "$APPDIR" "$OUTPUT"
+echo "Built $OUTPUT"

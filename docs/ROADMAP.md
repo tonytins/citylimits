@@ -1,6 +1,6 @@
 # CityLimits roadmap
 
-> **Last reviewed:** 2026-10-20 · **Last updated:** 2026-10-20 · **Change:** minor (Joffburg J3c: hospitals and churches, and J3 is complete) · **Stage:** pre-alpha
+> **Last reviewed:** 2026-10-21 · **Last updated:** 2026-10-21 · **Change:** patch (housekeeping: the focus put in order, done items checked off) · **Stage:** pre-alpha
 
 Forward-looking: where CityLimits stands, what blocks the next milestone,
 and what comes next. Verified status and evidence are in the
@@ -35,35 +35,28 @@ saving a city (UI-5).
 
 ## Current focus
 
-The engine had to play like Micropolis before anything else, and parts of
-it had been built to other rules: tools applied tile by tile with no
-preview, roads were freehand, zones were 1 by 1, the bulldozer refunded
-money, every zoned tile grew on a flat chance, a year passed in 3 seconds,
-and the terrain had no rivers. The refactor that brought them to the
-baseline is complete:
+The engine plays like Micropolis: the baseline refactor (tool strokes,
+roads and zones, time, growth, and terrain) is done, and Joffburg's
+power, taxes and budget, and services were built to the baseline from
+the start. The owner's liberties so far are the always-automatic budget,
+parks' look chosen by their place, and Micropolis' hospital-then-church
+quirk fixed.
 
-1. ~~**Tool strokes**: a preview with its total cost, applied all or
-   nothing (Line City).~~ Done.
-2. ~~**Roads, 3 by 3 zones, and the bulldozer** on strokes, with the
-   baseline's rules and prices (Line City).~~ Done.
-3. ~~**Time and the 16-phase simulation cycle**, at the baseline's pace
-   (Kowloon).~~ Done.
-4. ~~**Growth per zone**: population, demand, growth and decline (Kowloon).~~ Done.
-5. ~~**Terrain**: rivers, lakes, and smoothed edges, on Micropolis' 120 by
-   100 map (Neat Map).~~ Done.
+Next, in order:
 
-The focus moves to Joffburg: power, taxes, and the budget, built to the
-baseline in four phases: J1 power, J2 taxes and the budget, J3 services,
-and J4 the budget panel and the power overlay. The budget is a liberty the
-owner chose: it is always automatic, and its panel opens on its own only
-when spending outpaces income. J1, power, is complete: plants and lines carry
-power, unpowered zones don't grow, the city warns of brownouts and
-blackouts, and the palette is laid out as Micropolis'. J2, taxes and the
-budget, is complete: the city collects taxes and pays its upkeep each
-year, the tax rate moves demand, and the budget panel opens by itself
-when spending outpaces income. J3, services, is complete: police and
-fire stations and their coverage, parks, and hospitals and churches are
-in. J4, the panels, comes next.
+1. **Joffburg J4: the power overlay**, showing what the power scan
+   decided, tile by tile. With it, Joffburg's panels item is done.
+2. **Saving and loading a city** (Happy Isle), the last thing between
+   CityLimits and alpha. Its format is the owner's call and under
+   discussion.
+3. **Radial: traffic**, built to the baseline: trips already remember
+   their routes for it.
+4. **Deadwood: crime, pollution, fire, and disasters**, which give the
+   coverage maps and land value their effects.
+
+Joffburg's "power demand that follows population" item waits on the
+owner's wording: Micropolis counts powered tiles, not people, and
+CityLimits does the same.
 
 ## Milestones
 
@@ -76,21 +69,23 @@ in. J4, the panels, comes next.
 | Neat Map: Terrain and the tile grid | 100% | 0 | Meets the baseline: Micropolis' terrain on its 120 by 100 map, with rivers, lakes, an island one map in ten, and woods, and shores and wood edges drawn from the sheet |
 | Line City: Roads and zoning | 100% | 0 | Meets the baseline: strokes with a preview, straight roads and bridges, 3 by 3 zones laid as a grid and served from their edges, and the $1 bulldozer, at Micropolis' prices |
 | Kowloon: Simulation core | 100% | 0 | Time runs as in Micropolis: the 16-phase cycle, the 48ths-of-a-year calendar, and its pace. Scenarios run from files and from the command line. Zones grow and decline one by one, with population, demand, and trips. The heart of the game |
-| Joffburg: Services and economy | 60% | 5–10 | Under way: power works as in Micropolis, from plants through lines and zones, with brownouts and blackouts, and the palette is Micropolis'. Taxes, the budget, services, and the panels are left |
+| Joffburg: Services and economy | 60% | 3–6 | Power, taxes and the budget, and services (stations, coverage, parks, hospitals, and churches) are in, as in Micropolis. The power overlay is left, and the power-demand item waits on the owner's wording |
 | Radial: Traffic and commuting | 0% | 12–20 | Nothing yet |
 | Deadwood: Land value, pollution, disasters | 0% | 12–20 | Nothing yet |
-| Happy Isle: Player-facing game | 0% | 15–25 | Nothing yet |
+| Happy Isle: Player-facing game | 33% | 12–22 | The palette, laid out as Micropolis', and the HUD are in; the budget panel is too. Saving, the city score, the power panel, and a start screen are left |
 | Yokohama: Polish and release | 0% | 10–20 | Nothing yet |
-| | **Total** | **≈ 54–95** | |
+| | **Total** | **≈ 49–88** | |
 
 ## Upcoming work, ranked
 
 | Rank | Work | Milestone | Estimate (h) |
 |---|---|---|---|
 | 1 | A power overlay that shows what the power scan decided | Joffburg | 2–4 |
-| 2 | Saving and loading a city | Happy Isle | 6–12 |
+| 2 | Saving and loading a city, once the owner settles the format | Happy Isle | 6–12 |
+| 3 | Traffic: congestion on the roads trips already use | Radial | 12–20 |
 
-Alpha needs a city that can be saved (UI-5); Joffburg's budget is in.
+Alpha needs a city that can be saved (UI-5); everything else on the alpha
+gate is in or partial.
 
 ## Milestone checklists
 
@@ -175,7 +170,7 @@ Alpha needs a city that can be saved (UI-5); Joffburg's budget is in.
 - [x] Development per zone, as in the baseline: a zone needs a traffic
   trip, and its score (demand plus its own worth) decides whether it
   grows, declines, or stays (`ZoneGrowth`), with land value and density
-  from `CityMaps`. Every zone counts as powered until Joffburg's grid.
+  from `CityMaps`. A zone without power never grows, since Joffburg's grid.
 - [x] Housing capacity by development level, so population follows
   density: single houses, then building levels, with each level's
   population in the zone's spec.
@@ -231,12 +226,16 @@ Alpha needs a city that can be saved (UI-5); Joffburg's budget is in.
 
 ### Happy Isle: Player-facing game
 
-- [ ] A tool palette with a hotkey for every tool.
-- [ ] A HUD: population, funds, date, speed, and the demand bars.
-- [ ] Panels for the budget, power, and the city score.
-- [ ] A city score, rating the city the way the classic games do.
+- [x] A tool palette with a hotkey for every tool. Laid out as
+  Micropolis' (`UI/ToolPaletteView.cs`); keys 1 to 9 pick the first nine
+  tools, and the park and the stations are picked from the palette.
+- [x] A HUD: population, funds, date, speed, and the demand bars
+  (`UI/Hud.cs`).
+- [ ] Panels for the budget, power, and the city score. The budget panel
+  is in (`UI/BudgetPanel.cs`); power and the score are not.
 - [ ] Save and load: a city serializes to disk and reloads exactly, and a
-  corrupt file is reported, not fatal.
+  corrupt file is reported, not fatal. The format is under discussion.
+- [ ] A city score, rating the city the way the classic games do.
 - [ ] A start screen and a new-city flow: name, seed, and map size.
 
 ### Yokohama: Polish and release
@@ -250,31 +249,29 @@ Alpha needs a city that can be saved (UI-5); Joffburg's budget is in.
 
 ## Critical path
 
-New Dullsville is first and everything else waits on it: the loop, the
-camera, and the input model decide how the map, the tools, and the panels
-are written. Its last act is the seam between the game and
-`CityLimits.Core`: once the core library holds the world and the
-simulation, and the test project references it, the simulation can be
-developed and proven on ordinary .NET while the game only draws it.
+New Dullsville, Neat Map, Line City, and Kowloon are done: the loop, the
+map, the tools, and a simulation that grows a city as Micropolis does,
+proven on ordinary .NET through `CityLimits.Core` and its tests. Joffburg
+is nearly done; its power overlay is the last piece.
 
-Neat Map gives the game a world to put a city in, and Line City gave it the
-tools that change that world: roads, zones, a bulldozer, and a price for
-each. Kowloon is the real work and the real risk now, because a tick that
-grows a city needs people, demand, and a shape for all three. Joffburg and
-Radial hang off Kowloon's data model, and Deadwood hangs off Joffburg and
-Radial. Happy Isle can be built in parallel with the simulation once the
-shapes of the panels are agreed.
+Alpha now waits on Happy Isle's saving, and saving waits on the owner's
+choice of format. Radial and Deadwood hang off the simulation's data
+model, which is settled: trips already record their routes for traffic,
+and the coverage maps and land value are ready for crime, pollution, and
+fire. Happy Isle's remaining panels can be built alongside them.
 
-The long poles are Kowloon and Joffburg. If the simulation is slow to get
-right, cut scope inside Radial and Deadwood first, not inside Kowloon.
+The long poles are now Radial and Deadwood. If they run long, cut scope
+inside Deadwood's disasters first, not inside traffic or crime, which the
+baseline's growth depends on.
 
 ## Risks most likely to push estimates up
 
 - The tick is the design center of the game. A demand model, a growth
   model, and an economy that all read one set of numbers is a shape
   decision, and shape decisions cost more than code.
-- A city builder grows faster than it can be drawn. Rendering a large map
-  at 60 FPS may force a camera-and-atlas design earlier than planned.
+- A city builder grows faster than it can be drawn. The chunk cache draws
+  a 120 by 100 map at 60 FPS today; overlays and animated tiles are drawn
+  over it, and each has to stay off the per-frame allocation path.
 - The rule that the simulation never touches Raylib is easy to state and
   easy to break. A single `Raylib.GetFrameTime()` in the tick code makes
   every test flaky.
@@ -291,6 +288,7 @@ right, cut scope inside Radial and Deadwood first, not inside Kowloon.
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-21 | patch | Housekeeping, at the owner's request: the current focus is put in order (the power overlay, saving, traffic, then crime, pollution, and disasters), Happy Isle's palette and HUD are checked off (33%), Joffburg's and Kowloon's notes and the critical path are brought up to date, and the ranked list gains traffic. 49–88 h left in total. |
 | 2026-10-21 | minor | Joffburg, phase J3c, and with it J3, services, is complete: hospitals and churches, as in Micropolis, one of each needed for every 256 residents; an empty residential zone becomes one a time in four when it would grow, and one too many turns back now and then. The owner chose to fix Micropolis' quirk that loses a hospital when both are needed. The modding doc is now `docs/modding/`, a player's guide and `tuning.md`, and AGENTS.md says how docs are written. 481 tests. |
 | 2026-10-21 | minor | Joffburg, phase J3b: parks, as in Micropolis: $10 a tile, laid as a rectangle on clear ground or rubble, never trees; woods or, one time in five, a fountain, chosen from the tile's place as the owner chose. A wooded park adds to land value as trees do; a fountain counts as built. The services checklist item is done; Joffburg is at 60%. 470 tests. |
 | 2026-10-21 | minor | Joffburg, phase J3a: police and fire stations, as in Micropolis: 3 by 3, $500 and $100 a year, a `ServiceSpec` a mod can change in `services.json`. Each adds its funding effect to its 8 by 8 block, halved without power or a road, and the maps are smoothed at phases 13 and 15; coverage acts on crime and fires in Deadwood. The budget pays their upkeep, and the city asks for stations past 60 people and for their funding below 70%. A plant now has power from the moment it is placed, and an unpowered station blinks the bolt. The owner chose parks' look by position and fixing Micropolis' hospital-then-church quirk. 462 tests. |

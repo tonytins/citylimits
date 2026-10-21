@@ -15,6 +15,10 @@ tuning mod can change.
 
 Scenarios can count hospitals and churches.
 
+The Linux AppImage is named for the game's version, as in
+`CityLimits-0.2.109-x86_64.AppImage`, rather than a commit hash, uses the
+game's logo as its icon, and builds from any folder without FUSE.
+
 ## 0.2.108
 
 Parks, as in Micropolis: $10 a tile, laid as a rectangle from the
