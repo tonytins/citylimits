@@ -9,7 +9,7 @@ APPDIR=AppDir
 rm -rf $APPDIR $APP-$VERSION-$ARCH.AppImage
 
 # Build the app
-dotnet publish $APP/$APP.csproj -c Release -r linux-x64 --self-contained false -p:PublishSingleFile=false -o $APPDIR/usr/bin
+dotnet publish ../../$APP/$APP.csproj -c Release -r linux-x64 --self-contained false -p:PublishSingleFile=false -o $APPDIR/usr/bin
 
 # Create AppDir structure
 mkdir -p $APPDIR/usr/bin
@@ -23,7 +23,7 @@ cp -r $APPDIR/usr/bin/* $APPDIR/usr/bin/ 2>/dev/null || true
 # Copy desktop and icon
 cp $APP.desktop $APPDIR/usr/share/applications/
 cp $APP.desktop $APPDIR/
-cp Screenshot.png $APPDIR/CityLimits.png 2>/dev/null || cp Screenshot.png $APPDIR/usr/share/icons/hicolor/256x256/apps/CityLimits.png
+cp ../../Screenshot.png $APPDIR/CityLimits.png 2>/dev/null || cp Screenshot.png $APPDIR/usr/share/icons/hicolor/256x256/apps/CityLimits.png
 ln -sf usr/share/applications/$APP.desktop $APPDIR/$APP.desktop
 cp AppRun $APPDIR/AppRun
 chmod +x $APPDIR/AppRun
