@@ -1,5 +1,19 @@
 # CityLimits Changelog
 
+## 0.2.105
+
+Taxes and upkeep, as in Micropolis. Once a year the city collects its
+taxes, from its population and what its land is worth, at a 7% tax, and
+pays to keep its roads up: 70 cents a road tile, a bridge counting as
+five. When the money runs short, roads are paid first. Underfunded roads
+crumble now and then, and the city says so; it also complains when
+taxes go above 12%. The tax rate now pushes demand: lower taxes draw
+people and businesses in, higher ones drive them away. The money can
+go below zero at the year's end.
+
+The headless log shows each year's budget. The budget panel, where the
+tax rate and funding are set, comes next.
+
 ## 0.2.104
 
 The tool palette is laid out as Micropolis' is: the tool's name and price

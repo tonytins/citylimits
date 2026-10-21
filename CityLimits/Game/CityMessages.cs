@@ -8,6 +8,8 @@ public static class CityMessages
     {
         CityMessage.NeedPower => "The city needs a power plant",
         CityMessage.Blackouts => "Blackouts: many zones have no power",
+        CityMessage.HighTaxes => "Taxes are too high: people and businesses are leaving",
+        CityMessage.RoadsNeedFunding => "The roads need funding, or they will crumble",
         _ => "Brownouts: the power plants can't keep up, so build another",
     };
 }

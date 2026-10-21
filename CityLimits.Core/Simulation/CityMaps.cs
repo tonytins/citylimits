@@ -60,6 +60,9 @@ public sealed class CityMaps
     /// <summary>The row of the city's centre of mass.</summary>
     public int CenterY { get; private set; }
 
+    /// <summary>The average land value of the blocks with something built on them, as of the last time it was worked out; 0 when nothing is built.</summary>
+    public int LandValueAverage { get; private set; }
+
     /// <summary>The land value under a tile, from 0 for a block with nothing built on it up to <see cref="MaxLandValue"/>.</summary>
     public int LandValueAt(int x, int y) => _map.Contains(x, y) ? _landValue[((y / 2) * _halfWidth) + (x / 2)] : 0;
 
@@ -78,6 +81,8 @@ public sealed class CityMaps
     public void UpdateLandValue()
     {
         Array.Clear(_terrainScratch);
+        long total = 0;
+        var count = 0;
         for (var blockY = 0; blockY < _halfHeight; blockY++)
         {
             for (var blockX = 0; blockX < _halfWidth; blockX++)
@@ -104,12 +109,15 @@ public sealed class CityMaps
                 {
                     value = ((LandValueReach - DistanceToCenter(blockX, blockY)) * 4) + _terrain[((blockY / 2) * _quarterWidth) + (blockX / 2)];
                     value = Math.Clamp(value, 1, MaxLandValue);
+                    total += value;
+                    count++;
                 }
 
                 _landValue[(blockY * _halfWidth) + blockX] = value;
             }
         }
 
+        LandValueAverage = count > 0 ? (int)(total / count) : 0;
         SmoothTerrain();
     }
 

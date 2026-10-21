@@ -181,6 +181,12 @@ nothing; within a stroke, a tile or zone that can't be built on is
 skipped and the rest is built. Actions on the same tick run in file
 order.
 
+The money also changes once a year, as in Micropolis: the city collects
+its taxes and pays its upkeep at phase 9 of each count that comes round
+to a whole year, the first time at tick 9 and then every 768 ticks, at
+the default 7% tax and full funding. A `fundsEquals` check after a
+year's turn includes it.
+
 A refusal is not an error, because a scenario may set out to show one. It
 is recorded in the report, and it fails the run only if `expect` says
 otherwise. `expect` describes the stroke's result as a whole, the same

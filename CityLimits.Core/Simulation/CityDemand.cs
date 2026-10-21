@@ -7,9 +7,10 @@ namespace CityLimits.Core.Simulation;
 /// demand helps that kind of zone grow; a negative one helps it decline.
 /// </summary>
 /// <remarks>
-/// Until the systems they come from exist, three of Micropolis' inputs are fixed: the difficulty
-/// is Easy, the tax has no effect (Micropolis' effect at its default 7% is none), and the caps
-/// that stop demand without a stadium, an airport, or a seaport are off.
+/// The tax rate pushes all three up or down, by Micropolis' own steps: a push of 200 at no tax,
+/// none at the default 7%, and -600 at 20%. Until the systems they come from exist, two of
+/// Micropolis' inputs are fixed: the difficulty is Easy, and the caps that stop demand without
+/// a stadium, an airport, or a seaport are off.
 /// </remarks>
 public sealed class CityDemand
 {
@@ -41,6 +42,14 @@ public sealed class CityDemand
     // With no residents yet, how much the city wants them.
     private const double EmptyCityResidentialRatio = 1.3;
 
+    // How hard each tax rate, from 0% to 20%, pushes every demand: Micropolis' table, taken with
+    // the owner's approval. Easy difficulty adds nothing to the rate before it is looked up.
+    private static readonly int[] TaxPush =
+    [
+        200, 150, 120, 100, 80, 50, 30, 0, -10, -40, -100,
+        -150, -200, -250, -300, -350, -400, -450, -500, -550, -600,
+    ];
+
     /// <summary>Residential demand, from -<see cref="ResidentialLimit"/> to <see cref="ResidentialLimit"/>.</summary>
     public int Residential { get; private set; }
 
@@ -50,10 +59,22 @@ public sealed class CityDemand
     /// <summary>Industrial demand, from -<see cref="BusinessLimit"/> to <see cref="BusinessLimit"/>.</summary>
     public int Industrial { get; private set; }
 
-    /// <summary>Moves each demand by how far its population is from what the city's economy calls for.</summary>
-    public void Update(CityCensus census)
+    /// <summary>
+    /// The population taxes are worked out from, as of the last update: residents in eighths, plus
+    /// commerce and industry, as Micropolis counts them.
+    /// </summary>
+    public int TaxablePopulation { get; private set; }
+
+    /// <summary>
+    /// Moves each demand by how far its population is from what the city's economy calls for, and
+    /// by the push of the tax rate.
+    /// </summary>
+    /// <exception cref="ArgumentOutOfRangeException">The tax rate is outside 0 to 20.</exception>
+    public void Update(CityCensus census, int taxRate = CityBudget.DefaultTaxRate)
     {
         ArgumentNullException.ThrowIfNull(census);
+        ArgumentOutOfRangeException.ThrowIfNegative(taxRate);
+        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(taxRate, TaxPush.Length);
 
         // Residents are counted in eighths, as Micropolis counts them against jobs.
         var residents = census.Residential / 8.0;
@@ -74,15 +95,17 @@ public sealed class CityDemand
         var commercialRatio = commerce > 0 ? projectedCommerce / commerce : projectedCommerce;
         var industrialRatio = industry > 0 ? projectedIndustry / industry : projectedIndustry;
 
-        Residential = Move(Residential, residentialRatio, ResidentialLimit);
-        Commercial = Move(Commercial, commercialRatio, BusinessLimit);
-        Industrial = Move(Industrial, industrialRatio, BusinessLimit);
+        TaxablePopulation = (int)(residents + commerce + industry);
+        var push = TaxPush[taxRate];
+        Residential = Move(Residential, residentialRatio, push, ResidentialLimit);
+        Commercial = Move(Commercial, commercialRatio, push, BusinessLimit);
+        Industrial = Move(Industrial, industrialRatio, push, BusinessLimit);
     }
 
-    // A ratio above 1 raises demand, below 1 lowers it; the tax would add its own push here.
-    private static int Move(int demand, double ratio, int limit)
+    // A ratio above 1 raises demand, below 1 lowers it, and the tax pushes it as well.
+    private static int Move(int demand, double ratio, int push, int limit)
     {
-        var change = (int)((Math.Min(ratio, MostRatio) - 1) * Pull);
+        var change = (int)(((Math.Min(ratio, MostRatio) - 1) * Pull) + push);
         return Math.Clamp(demand + change, -limit, limit);
     }
 }

@@ -111,7 +111,8 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   simulation, and each step is one phase of a 16-phase cycle
   (`CitySimulation.Tick`): phase 0 moves the calendar on by a 48th of a
   year, and phases 1 to 8 scan the map in 8 vertical bands; phase 9
-  records the census, 10 checks the city's messages, 11 traces power, 12
+  records the census and sets a 48th of the year's taxes and upkeep
+  aside, settling the year when it comes round, 10 checks the city's messages, 11 traces power, 12
   works out land value, and 14 population density; 13 and 15 are kept for
   crime, and fire and disasters.
   `CityCalendar` turns the count into a month: 4 counts a month, 48 a
@@ -204,8 +205,25 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   (`CityDemand`) moves by how far its population is from what jobs,
   births, and the market call for. The HUD shows the population and an
   R, C, I demand panel under the palette, and the headless run logs both
-  each month. Until their systems exist, the difficulty is Easy, the tax
-  has no effect, and the demand caps are off.
+  each month. The tax rate pushes all three demands by Micropolis' own
+  steps, from +200 at 0% to -600 at 20%, none at 7%. Until their systems
+  exist, the difficulty is Easy and the demand caps are off.
+- **Taxes and the budget.** As in Micropolis (`Economy/CityBudget.cs`),
+  every count phase 9 estimates the year from the city as it stands and
+  sets a 48th aside; when the count comes round to a year, the city
+  collects and pays (`CitySimulation.YearSettled`), and the money can go
+  below zero (`Treasury.Settle`). Taxes are population (residents in
+  eighths, plus commerce and industry) times average land value over
+  120, as whole numbers, times the tax rate (0 to 20%, 7% to start) and
+  Easy's 1.4. Upkeep is the road tiles the scan counted (a bridge counts
+  five) times Easy's 0.7, and $100 a police or fire station, each paid at
+  its funding level; when the money runs out, roads are paid first, then
+  fire, then police, and the rest is cut. Roads funded below 30 of 32
+  crumble now and then, to rubble or back to water, never at a crossing.
+  The city says when taxes are above 12% and when roads need funding.
+  Micropolis' numbers here, the tax table among them, were taken with
+  the owner's approval. The budget is always automatic, a liberty the
+  owner chose.
 - **The tools.** Nine tools sit in the palette down the left, laid out as
   Micropolis' is (`UI/ToolPaletteView.cs`): the name and price of the tool
   under the pointer, or of the held one, then centred rows of icon
@@ -288,7 +306,7 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   and no project. It holds the parser, the dispatcher, the default
   command, the strict option reader, and the exit codes.
 - **The tests.** `CityLimits.Tests` uses xUnit 2 with the VSTest runner
-  and coverlet, and holds 417 tests over the generator, the terrain edges, the power plants, lines, and grid, the map, the
+  and coverlet, and holds 443 tests over the generator, the terrain edges, the power plants, lines, and grid, the budget, the map, the
   calendar, the clock, the simulation, the settings, the tile rules, the
   build actions, the road network, the treasury, the scenario loader and
   runner, every built-in scenario, the definitions and the mod loader, zone growth, the census and demand, trips, growth and the city maps,

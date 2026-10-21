@@ -35,6 +35,12 @@ public sealed class Treasury
         return true;
     }
 
+    /// <summary>
+    /// Settles the year's taxes and upkeep: adds what came in and takes what went out. Unlike
+    /// spending on building, this can take the city below zero, as in Micropolis.
+    /// </summary>
+    public void Settle(int cashFlow) => Funds += cashFlow;
+
     /// <summary>Takes money back into the treasury.</summary>
     /// <exception cref="ArgumentOutOfRangeException">The amount is negative.</exception>
     public void Refund(int amount)

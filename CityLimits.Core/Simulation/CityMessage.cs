@@ -11,4 +11,10 @@ public enum CityMessage
 
     /// <summary>The plants ran out of capacity before power reached everything connected to them.</summary>
     Brownouts,
+
+    /// <summary>The tax rate is above 12%.</summary>
+    HighTaxes,
+
+    /// <summary>The roads are funded too little to keep them up, and there are more than 30 of them.</summary>
+    RoadsNeedFunding,
 }
