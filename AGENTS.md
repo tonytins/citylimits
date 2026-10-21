@@ -21,18 +21,18 @@ CityLimits/                  the game project (Raylib-cs, NLog, net10.0)
   CityLimits.csproj            package references, the library references, the target framework, and the asset copy
   Program.cs                    entry point: the log, the command dispatcher, shutdown
   GlobalUsings.cs               global usings shared by the project
-  Game/                         namespace CityLimits.Game: the game command, the window, the loop, the tools, the state, the headless run, the log
+  Game/                         namespace CityLimits.Game: the game command, the window, the loop, the tools, the city's messages, the mods folder, the headless run, the log
     Commands/                   namespace CityLimits.Game.Commands: the subcommands, one class each
   Rendering/                    namespace CityLimits.Rendering: the camera, the tile drawing, the chunk cache, the tile sheet, the theme
-  UI/                           namespace CityLimits.UI: the HUD, the tool palette
-  Assets/                       images, fonts, sounds, and the built-in scenarios (Scenarios/*.json), copied to the output folder
+  UI/                           namespace CityLimits.UI: the HUD, the tool palette, the budget panel
+  Assets/                       the tile sheet, the tool icons, the logo, and the built-in scenarios (Scenarios/*.json), copied to the output folder
 CityLimits.Core/              engine-free library: the world and the simulation, no Raylib
   CityLimits.Core.csproj        the project file; it must never reference Raylib-cs
   GlobalUsings.cs               global usings shared by the project
   Randomness/                   namespace CityLimits.Core.Randomness: the seeded generator the simulation owns
-  World/                        namespace CityLimits.Core.World: the map and its default size, the tiles, the terrain, the tile rules, the build actions
-  Simulation/                   namespace CityLimits.Core.Simulation: the clock, the date, the tick
-  Economy/                      namespace CityLimits.Core.Economy: the money, the costs, the treasury
+  World/                        namespace CityLimits.Core.World: the map and its default size, the tiles and their footprints, the terrain and its edges, the tile rules, the build actions, roads, power lines
+  Simulation/                   namespace CityLimits.Core.Simulation: the clock, the calendar, the tick and its cycle, the census, demand, growth, trips, the city maps, the power grid, the city's messages
+  Economy/                      namespace CityLimits.Core.Economy: the treasury, the costs, the budget
   Settings/                     namespace CityLimits.Core.Settings: the settings that survive a session
   Scenarios/                    namespace CityLimits.Core.Scenarios: the scenario loader, the runner, the report, the demo town
   Definitions/                  namespace CityLimits.Core.Definitions: the definitions as data, the base game's, and the mod loader
@@ -85,7 +85,7 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   window is closed, saves the settings, and closes the window. Every frame is
   guarded: a failure is reported on the screen and the game keeps running.
 - **The map.** `GameLoop` builds a 120 by 100 map, Micropolis' size, at
-  startup from the seed 2000. `TileMapGenerator` lays it out as Micropolis
+  startup from the seed `--seed` gives, 2000 by default. `TileMapGenerator` lays it out as Micropolis
   does: one map in ten is an island, and the rest have two wide rivers, a
   narrow one, and a few lakes; then woods are scattered and thinned. The
   ground is grass, water, trees, or rubble. The renderer
@@ -273,7 +273,9 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   to rubble. Clicking the palette picks a tool, and never builds on the map
   under it.
 - **The tile readout.** The tile under the mouse is outlined, and a panel
-  names it and says what can be done with it.
+  names it and says what can be done with it. A zone is described as a
+  whole, from its centre: its houses or its level, its population, and
+  "no power" when the scan last found it without (`TileInfo.Describe`).
 - **The settings.** The window size and the speed are written to
   `settings.json` beside the executable when the game ends, and read back
   when it starts. A damaged file is reported and the defaults are used.
@@ -283,8 +285,8 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   and `--ticks`, the number of steps, from 0 to 100 000 (768 by default, a
   year), and builds a small demo town first so there is something to
   grow: a coal plant, a road, and three zones. Each month's line includes
-  the tiles powered and the capacity, and the city's messages are logged
-  as warnings. `--ticks` without `--headless` is refused, because
+  the tiles powered and the capacity, each settled year's budget gets a
+  line, and the city's messages are logged as warnings. `--ticks` without `--headless` is refused, because
   the window runs until it is closed.
 - **Scenarios.** A scenario is a city set up from a file: a seed, tool
   strokes made at set ticks, and checks on tiles, zones, funds, and
@@ -299,9 +301,16 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   town, logged and recorded in the report. Exit codes: 0 passed, 1 could
   not run, 2 a bad command line, 3 a check or expectation failed. A run
   needs `--headless`, because a scenario will open a window once
-  scenarios can be played; `list` doesn't. Scenarios are how agents test
-  the simulation: every built-in scenario runs as a test, so a rule that
-  changes is caught by the scenarios that depend on it.
+  scenarios can be played; `list` doesn't. Every built-in scenario runs as
+  a test, so a rule that changes is caught by the scenarios that depend on
+  it.
+- **Scenarios are how agents test the game.** A scenario file, the
+  command line, and the JSON report are the whole interface: an agent
+  writes the strokes and checks it wants, runs them, and reads the report
+  and the exit code, with no MCP server, no window, and no way to change a
+  running game. It is read-only and deterministic, so a failing scenario
+  is a reproducible bug report. Players get the same files later, as
+  challenges.
 - **The log.** NLog writes to the console and nowhere else. Failures go to
   the log as well as to the screen.
 - **The solution.** `CityLimits.slnx` holds four projects: the game, the
@@ -309,10 +318,11 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   in its own folder and is listed in the solution.
 - **The core library.** `CityLimits.Core` targets `net10.0` with nullable
   and implicit usings enabled, and references no package at all. It holds
-  the map and its generator, the clock, the date, the simulation, the
-  seeded generator, the tile rules, the build actions, the road network,
-  the treasury, the settings, the scenarios, and the definitions and
-  mods.
+  the map and its generator, the clock, the calendar, the simulation and
+  everything it runs (growth, trips, the census, demand, the city maps,
+  the power grid, the budget), the seeded generator, the tile rules, the
+  build actions, the road network and power lines, the treasury, the
+  settings, the scenarios, and the definitions and mods.
 - **The command line library.** `CityLimits.CommandLine` targets `net10.0`
   with nullable and implicit usings enabled, and references no package
   and no project. It holds the parser, the dispatcher, the default
@@ -328,9 +338,10 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   `NLog` `6.2.2`. The native `raylib` library ships inside the NuGet
   package for `linux-x64`, `win-x64`, and `win-x86`, so no system install
   is needed on Linux or Windows.
-- **The assets.** `CityLimits/Assets/` holds the tile sheet and the tool
-  icons. The project file copies them to the output folder, and the game
-  loads them once, after the window is open.
+- **The assets.** `CityLimits/Assets/` holds the tile sheet, the tool
+  icons and their highlighted versions, the splash-screen logo, and the
+  built-in scenarios. The project file copies them to the output folder,
+  and the game loads the images once, after the window is open.
 - **Version.** `VersionInfo` reports the version from GitInfo, which works
   it out from git: `GitInfo.txt` holds the base `major.minor.patch`, and
   GitInfo adds its own count of the commits since that file last changed
@@ -354,7 +365,7 @@ grows. Do not describe planned behavior as if it exists.
 
 ## 3. Golden rules
 
-### Never crash the game (outranks feature work )
+### Never crash the game (outranks feature work)
 
 Players trust CityLimits with their city, and a crash loses it. An unhandled
 exception closes the window and ends the session with no explanation; nothing
@@ -381,7 +392,7 @@ restarts it. Fix a crash before building on top of it.
   allocates a new list per tile is a frame that will stutter when the city
   grows.
 
-  ### The simulation is the product
+### The simulation is the product
 
 A city builder lives or dies on its simulation, not its art. The rules:
 
@@ -566,8 +577,10 @@ from.
   later, but the first goal is an engine that plays like Micropolis. Until
   it does, match the Java port's behaviour when a rule is in question,
   rather than inventing a better one, and leave deviations to the owner.
-  Parts of the engine were built to other rules; the roadmap's current
-  focus is the refactor that brings them to the baseline.
+  The refactor that brought the early engine to the baseline is done; new
+  systems are built to the baseline from the start, and the liberties the
+  owner has chosen so far (the always-automatic budget) are recorded where
+  they apply.
 
   **Which tree to read.** Read the ports that ship the whole game, because
   they show the behaviour and not only the engine behind it:
@@ -604,9 +617,13 @@ from.
   mechanic is unclear, ask the owner.
 
   **What is borrowed, and it is only this.** The tile sheet and the tool
-  icons, from the Micropolis core's images, credited in
-  `Assets/README.md`. Anything else taken from Micropolis needs the
-  owner's approval, and it has to be recorded there too.
+  icons, with their highlighted versions, from the Micropolis core's
+  images, credited in `Assets/README.md`; and, with the owner's approval,
+  some of Micropolis' numbers for its rules, such as the tax table and the
+  Easy difficulty factors in `CityDemand` and `CityBudget`, each marked
+  where it is used. Anything else taken from Micropolis needs the owner's
+  approval, and it has to be recorded: art in `Assets/README.md`, numbers
+  in a comment where they are used.
 
 ## 5. Before you finish a task
 
@@ -624,13 +641,22 @@ dotnet run   --project CityLimits                             # open the window 
 
 - **The command line is the way in.** With no command, CityLimits opens
   the window, and `--headless` runs the same city with no window.
-  `scenario` is scaffolding that runs nothing yet. `--help` lists the
+  `scenario` runs a scenario (`docs/scenarios.md`). `--help` lists the
   options and commands, and `<command> --help` describes one. Use these to
-  run the game; don't wrap it in another launcher.
+  run the game; don't wrap it in another launcher, and don't reach for an
+  MCP server or another way into a running game.
 - **Check the simulation with `--headless`.** It needs no display, so it
   works on any machine. Pass `--seed` and `--ticks` to reproduce a city,
-  and read the per-tick log for the change you made. A run that exits
-  with anything other than 0 is a failure.
+  and read the monthly and yearly lines in the log for the change you
+  made. A run that exits with anything other than 0 is a failure.
+- **Check a rule with a scenario.** To see a rule work, write a scenario
+  that builds what it needs and checks what should follow, and run it:
+  `dotnet run --project CityLimits -- scenario --file <path> --headless --json`.
+  Exit code 0 means every check passed, and 3 that one failed; the JSON
+  report says what was expected and what was found. Run the built-in ones
+  too (`scenario list`); a rule change that moves their figures is a
+  change to call out. When a scenario shows something worth keeping,
+  make it a built-in one in `Assets/Scenarios/`, where it runs as a test.
 - **A visual change needs a real window.** `--headless` never draws, so it
   cannot confirm what the player sees. If the machine has no display,
   say that the game was not looked at, rather than reporting it as
