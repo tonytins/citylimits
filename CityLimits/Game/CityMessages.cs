@@ -10,6 +10,10 @@ public static class CityMessages
         CityMessage.Blackouts => "Blackouts: many zones have no power",
         CityMessage.HighTaxes => "Taxes are too high: people and businesses are leaving",
         CityMessage.RoadsNeedFunding => "The roads need funding, or they will crumble",
+        CityMessage.NeedFireStation => "The city needs a fire station",
+        CityMessage.NeedPoliceStation => "The city needs a police station",
+        CityMessage.FireNeedsFunding => "The fire department needs funding",
+        CityMessage.PoliceNeedsFunding => "The police department needs funding",
         _ => "Brownouts: the power plants can't keep up, so build another",
     };
 }

@@ -2,7 +2,8 @@
 
 > **Status:** the first pieces of modding support. A mod can change a
 > zone's name, price, population per building level, house limit, and
-> where its trips go, and a power plant's name, price, and capacity, today. More of the game becomes data as it is built, and each piece
+> where its trips go, a power plant's name, price, and capacity, and a
+> station's name, price, and upkeep, today. More of the game becomes data as it is built, and each piece
 > that does is listed here.
 
 CityLimits is built to be modded. The game's rules live in definitions:
@@ -22,6 +23,7 @@ Mods/
     mod.json       who the mod is (required)
     zones.json     what it changes in the zones (optional)
     plants.json    what it changes in the power plants (optional)
+    services.json  what it changes in the police and fire stations (optional)
 ```
 
 An id is lowercase letters, digits, and single hyphens, such as
@@ -96,6 +98,27 @@ plant's in `zones.json`.
 | `name` | The plant's name, as the tile readout shows it, 1 to 80 characters |
 | `price` | What one plant costs to build, from 0 to 1 000 000 |
 | `capacity` | How many tiles the plant powers, from 1 to 1 000 000. The base game's are Micropolis': 700 for coal, 2 000 for nuclear. As in Micropolis, every plant on the map adds its capacity, connected to the grid or not |
+
+### `services.json`
+
+```json
+{
+  "format": 1,
+  "services": [
+    { "id": "police", "name": "Sheriff", "price": 300, "upkeep": 40 }
+  ]
+}
+```
+
+Each entry names a station by its id, `fire` or `police`, and changes only
+the fields it sets.
+
+| Field | Meaning |
+|---|---|
+| `id` | The station to change: `fire` or `police` |
+| `name` | The station's name, as the tile readout shows it, 1 to 80 characters |
+| `price` | What one station costs to build, from 0 to 1 000 000 |
+| `upkeep` | What one station costs to keep up each year at full funding, from 0 to 1 000 000. The base game's is Micropolis' $100 |
 
 ## How mods are applied
 

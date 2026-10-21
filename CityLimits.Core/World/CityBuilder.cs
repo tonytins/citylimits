@@ -67,6 +67,10 @@ public sealed class CityBuilder
             case BuildAction.NuclearPowerPlant:
                 PlanFootprint(bounds.X, bounds.Y, stroke.Use, _definitions.Plant(stroke.Use).Price, plan);
                 break;
+            case BuildAction.FireStation:
+            case BuildAction.PoliceStation:
+                PlanFootprint(bounds.X, bounds.Y, stroke.Use, _definitions.Service(stroke.Use).Price, plan);
+                break;
             default:
                 PlanZones(bounds, stroke.Use, plan);
                 break;
@@ -324,7 +328,8 @@ public sealed class CityBuilder
         {
             for (var column = 0; column < size; column++)
             {
-                var state = new TileState(TileKind.Grass, use, zonePart: Footprint.PartAt(column, row, size));
+                // A plant has power from the moment it is placed, as in Micropolis; the rest wait for the scan.
+                var state = new TileState(TileKind.Grass, use, zonePart: Footprint.PartAt(column, row, size), powered: TileRules.IsPowerPlant(use));
                 plan.Change(left + column, top + row, state, 0);
             }
         }

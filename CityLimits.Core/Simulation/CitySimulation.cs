@@ -11,14 +11,26 @@ public sealed class CitySimulation
     private const int MessagePhase = 10;
     private const int PowerPhase = 11;
     private const int LandValuePhase = 12;
+    private const int PolicePhase = 13;
     private const int DensityPhase = 14;
+    private const int FirePhase = 15;
 
     // The messages are checked at set counts in a 64-count round, as in Micropolis.
     private const int MessageRound = 64;
     private const int NeedPowerCount = 22;
     private const int BlackoutsCount = 32;
+    private const int NeedFireStationCount = 45;
+    private const int NeedPoliceStationCount = 48;
     private const int HighTaxesCount = 51;
     private const int RoadsNeedFundingCount = 54;
+    private const int FireNeedsFundingCount = 57;
+    private const int PoliceNeedsFundingCount = 60;
+
+    // A city of more than this many people needs a fire and a police station, and minds when they
+    // are funded below this effect.
+    private const int PeopleBeforeStationsAreNeeded = 60;
+    private const int PeopleBeforeStationFundingMatters = 20;
+    private const int ServiceEffectNeedingFunding = 700;
 
     // Taxes above this are too high; roads funded below this, with more of them than this, need funding.
     private const int HighestFairTax = 12;
@@ -57,6 +69,8 @@ public sealed class CitySimulation
         Definitions = definitions ?? CityDefinitions.Base;
         Builder = new CityBuilder(map, Treasury, Roads, Definitions);
         Maps = new CityMaps(map);
+        Services = new ServiceCoverage(map);
+        Budget = new CityBudget(Definitions.Service(TileUse.FireStation).Upkeep, Definitions.Service(TileUse.PoliceStation).Upkeep);
         _growth = new ZoneGrowth(map, Random, Trips, Definitions, Demand, Maps);
     }
 
@@ -106,13 +120,18 @@ public sealed class CitySimulation
     public Treasury Treasury { get; }
 
     /// <summary>The city's tax rate and funding, and the year's taxes and upkeep.</summary>
-    public CityBudget Budget { get; } = new();
+    public CityBudget Budget { get; }
+
+    /// <summary>How well fire and police stations cover the city, and how many there are.</summary>
+    public ServiceCoverage Services { get; }
 
     /// <summary>The road tiles the scan counted this cycle, a bridge counting five, as the roads' upkeep counts them.</summary>
     public int RoadTiles { get; private set; }
 
-    // The road tiles as of the last count's budget, which a fresh estimate works from.
+    // The road tiles and stations as of the last count's budget, which a fresh estimate works from.
     private int _budgetedRoadTiles;
+    private int _budgetedFireStations;
+    private int _budgetedPoliceStations;
 
     /// <summary>The roads on the map, and the tiles they serve.</summary>
     public RoadNetwork Roads { get; }
@@ -128,8 +147,8 @@ public sealed class CitySimulation
     /// declines, and counting each road tile. Phase 9 records the census once a month and sets a
     /// 48th of the year's taxes and upkeep aside, settling the year when it comes round; phase 10 checks the city's messages,
     /// phase 11 traces power from the plants, phase 12 works out land value, and phase 14
-    /// population density and the city's centre. Phases 13 and 15 are where crime, and fire and
-    /// disasters, will run.
+    /// population density and the city's centre. Phases 13 and 15 spread the police and the
+    /// fire stations' coverage, and are where crime, and fire and disasters, will run.
     /// </summary>
     public void Tick()
     {
@@ -146,6 +165,7 @@ public sealed class CitySimulation
 
             Census.Clear();
             Power.StartCount();
+            Services.StartCount();
             RoadTiles = 0;
         }
         else if (phase <= CityCalendar.ScanBands)
@@ -177,6 +197,14 @@ public sealed class CitySimulation
         {
             Maps.UpdateLandValue();
         }
+        else if (phase == PolicePhase)
+        {
+            Services.SpreadPolice();
+        }
+        else if (phase == FirePhase)
+        {
+            Services.SpreadFire();
+        }
         else if (phase == DensityPhase)
         {
             Maps.UpdateDensity(Definitions);
@@ -187,7 +215,7 @@ public sealed class CitySimulation
     // settled when the count comes round to a whole year, the first time at the very start.
     private void CollectTaxes()
     {
-        _budgetedRoadTiles = RoadTiles;
+        (_budgetedRoadTiles, _budgetedFireStations, _budgetedPoliceStations) = (RoadTiles, Services.FireStations, Services.PoliceStations);
         Budget.Accrue(EstimateBudget());
         if (CityTime % CityBudget.CountsPerYear == 0)
         {
@@ -200,7 +228,7 @@ public sealed class CitySimulation
     /// the city as the last count saw it. The budget panel shows it as the player changes them.
     /// </summary>
     public BudgetYear EstimateBudget() =>
-        Budget.Estimate(Demand.TaxablePopulation, Maps.LandValueAverage, _budgetedRoadTiles, 0, 0, Treasury.Funds);
+        Budget.Estimate(Demand.TaxablePopulation, Maps.LandValueAverage, _budgetedRoadTiles, _budgetedFireStations, _budgetedPoliceStations, Treasury.Funds);
 
     private void SendMessages()
     {
@@ -224,6 +252,27 @@ public sealed class CitySimulation
         if (count == RoadsNeedFundingCount && Budget.RoadEffect < RoadEffectNeedingFunding && RoadTiles > RoadsBeforeFundingMatters)
         {
             MessageSent?.Invoke(CityMessage.RoadsNeedFunding);
+        }
+
+        var people = Demand.TaxablePopulation;
+        if (count == NeedFireStationCount && people > PeopleBeforeStationsAreNeeded && Services.FireStations == 0)
+        {
+            MessageSent?.Invoke(CityMessage.NeedFireStation);
+        }
+
+        if (count == NeedPoliceStationCount && people > PeopleBeforeStationsAreNeeded && Services.PoliceStations == 0)
+        {
+            MessageSent?.Invoke(CityMessage.NeedPoliceStation);
+        }
+
+        if (count == FireNeedsFundingCount && Budget.FireEffect < ServiceEffectNeedingFunding && people > PeopleBeforeStationFundingMatters)
+        {
+            MessageSent?.Invoke(CityMessage.FireNeedsFunding);
+        }
+
+        if (count == PoliceNeedsFundingCount && Budget.PoliceEffect < ServiceEffectNeedingFunding && people > PeopleBeforeStationFundingMatters)
+        {
+            MessageSent?.Invoke(CityMessage.PoliceNeedsFunding);
         }
     }
 
@@ -250,7 +299,14 @@ public sealed class CitySimulation
                     continue;
                 }
 
-                Power.Visit(Map, x, y);
+                var powered = Power.Visit(Map, x, y);
+                if (TileRules.IsService(state.Use))
+                {
+                    var effect = state.Use == TileUse.FireStation ? Budget.FireEffect : Budget.PoliceEffect;
+                    Services.AddStation(x, y, state.Use, effect, powered, Roads.IsZoneServed(x, y));
+                    continue;
+                }
+
                 if (!state.IsZoneCenter)
                 {
                     continue;

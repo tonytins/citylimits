@@ -21,6 +21,9 @@ public static class TileRules
     /// <summary>Tells whether a use is a power plant.</summary>
     public static bool IsPowerPlant(TileUse use) => use is TileUse.CoalPowerPlant or TileUse.NuclearPowerPlant;
 
+    /// <summary>Tells whether a use is a service building: a fire or a police station.</summary>
+    public static bool IsService(TileUse use) => use is TileUse.FireStation or TileUse.PoliceStation;
+
     /// <summary>Tells whether a road can be laid on the given ground. Water takes a bridge, which has rules of its own.</summary>
     public static bool CanLayRoad(TileKind kind) => CanBuildOn(kind);
 

@@ -14,6 +14,8 @@ public sealed class ToolPalette
         Tool.CoalPowerPlant,
         Tool.NuclearPowerPlant,
         Tool.PowerLine,
+        Tool.FireStation,
+        Tool.PoliceStation,
     ];
 
     /// <summary>The tool that is held when the game starts.</summary>

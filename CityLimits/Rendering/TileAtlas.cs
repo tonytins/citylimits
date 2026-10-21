@@ -67,6 +67,15 @@ public static class TileAtlas
     private const int NuclearPowerPlantTile = 811;
 
     /// <summary>
+    /// The first tile of the fire station's 3 by 3 drawing. Its nine tiles follow each other in
+    /// the sheet across and then down, so a part's tile is the first tile plus its part number.
+    /// </summary>
+    private const int FireStationTile = 761;
+
+    /// <inheritdoc cref="FireStationTile"/>
+    private const int PoliceStationTile = 770;
+
+    /// <summary>
     /// Where each zone's drawings are. A drawing is 3 by 3, its nine tiles following each other in
     /// the sheet across and then down, so a part's tile is the drawing's first tile plus its part
     /// number. The empty zone comes first; then the buildings, one per development level within
@@ -222,6 +231,16 @@ public static class TileAtlas
         if (state.Use == TileUse.NuclearPowerPlant)
         {
             return NuclearPowerPlantTile + state.ZonePart;
+        }
+
+        if (state.Use == TileUse.FireStation)
+        {
+            return FireStationTile + state.ZonePart;
+        }
+
+        if (state.Use == TileUse.PoliceStation)
+        {
+            return PoliceStationTile + state.ZonePart;
         }
 
         if (state.IsZoned)

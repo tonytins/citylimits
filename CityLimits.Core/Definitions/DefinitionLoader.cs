@@ -38,6 +38,13 @@ public static class DefinitionLoader
         ["industrial"] = TileUse.Industrial,
     };
 
+    // The service ids a definitions file can name, and the use each one is.
+    private static readonly Dictionary<string, TileUse> ServiceIds = new(StringComparer.Ordinal)
+    {
+        ["fire"] = TileUse.FireStation,
+        ["police"] = TileUse.PoliceStation,
+    };
+
     // The plant ids a definitions file can name, and the use each one is.
     private static readonly Dictionary<string, TileUse> PlantIds = new(StringComparer.Ordinal)
     {
@@ -51,7 +58,7 @@ public static class DefinitionLoader
         UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
     };
 
-    /// <summary>Reads the base game's definitions, which must define every zone and plant, and every field.</summary>
+    /// <summary>Reads the base game's definitions, which must define every zone, plant, and service, and every field.</summary>
     public static bool TryParseBase(string json, [NotNullWhen(true)] out CityDefinitions? definitions, out string error)
     {
         definitions = null;
@@ -104,7 +111,26 @@ public static class DefinitionLoader
                 throw new InvalidDefinitions($"plants: the base game must define {string.Join(", ", missingPlants)}.");
             }
 
-            definitions = new CityDefinitions(zones.Values, plants.Values, []);
+            var services = new Dictionary<TileUse, ServiceSpec>();
+            var serviceEntries = document.Services ?? throw new InvalidDefinitions("services: is required.");
+            for (var i = 0; i < serviceEntries.Count; i++)
+            {
+                var at = $"services[{i}]";
+                var entry = serviceEntries[i] ?? throw new InvalidDefinitions($"{at}: needs a service, not null.");
+                var use = Id(ServiceIds, entry.Id, at, services.Keys);
+                var name = Name(entry.Name ?? throw new InvalidDefinitions($"{at}.name: is required."), $"{at}.name");
+                var price = Price(entry.Price ?? throw new InvalidDefinitions($"{at}.price: is required."), $"{at}.price");
+                var upkeep = Price(entry.Upkeep ?? throw new InvalidDefinitions($"{at}.upkeep: is required."), $"{at}.upkeep");
+                services[use] = new ServiceSpec(entry.Id!, use, name, price, upkeep);
+            }
+
+            var missingServices = ServiceIds.Where(pair => !services.ContainsKey(pair.Value)).Select(pair => pair.Key).ToList();
+            if (missingServices.Count > 0)
+            {
+                throw new InvalidDefinitions($"services: the base game must define {string.Join(", ", missingServices)}.");
+            }
+
+            definitions = new CityDefinitions(zones.Values, plants.Values, services.Values, []);
             return true;
         }
         catch (InvalidDefinitions ex)
@@ -124,7 +150,8 @@ public static class DefinitionLoader
     /// <param name="mod">The mod, when it is valid.</param>
     /// <param name="error">What is wrong, and in which file, when it isn't.</param>
     /// <param name="plantsJson">The text of the mod's <c>plants.json</c>, or null when it has none.</param>
-    public static bool TryParseMod(string folderName, string manifestJson, string? zonesJson, [NotNullWhen(true)] out ModDefinitions? mod, out string error, string? plantsJson = null)
+    /// <param name="servicesJson">The text of the mod's <c>services.json</c>, or null when it has none.</param>
+    public static bool TryParseMod(string folderName, string manifestJson, string? zonesJson, [NotNullWhen(true)] out ModDefinitions? mod, out string error, string? plantsJson = null, string? servicesJson = null)
     {
         ArgumentNullException.ThrowIfNull(folderName);
         mod = null;
@@ -137,6 +164,7 @@ public static class DefinitionLoader
 
         var zones = new Dictionary<TileUse, ZonePatch>();
         var plants = new Dictionary<TileUse, PlantPatch>();
+        var services = new Dictionary<TileUse, ServicePatch>();
         try
         {
             CheckFormat(manifest.Format, "mod.json: format");
@@ -211,7 +239,29 @@ public static class DefinitionLoader
                 }
             }
 
-            mod = new ModDefinitions(id, name, version, description, zones, plants);
+            if (servicesJson is not null)
+            {
+                if (!TryRead<ServicesDocument>(servicesJson, out var document, out error))
+                {
+                    error = $"services.json: {error}";
+                    return false;
+                }
+
+                CheckFormat(document.Format, "services.json: format");
+                var entries = document.Services ?? [];
+                for (var i = 0; i < entries.Count; i++)
+                {
+                    var at = $"services.json: services[{i}]";
+                    var entry = entries[i] ?? throw new InvalidDefinitions($"{at}: needs a service, not null.");
+                    var use = Id(ServiceIds, entry.Id, at, services.Keys);
+                    services[use] = new ServicePatch(
+                        entry.Name is null ? null : Name(entry.Name, $"{at}.name"),
+                        entry.Price is null ? null : Price(entry.Price.Value, $"{at}.price"),
+                        entry.Upkeep is null ? null : Price(entry.Upkeep.Value, $"{at}.upkeep"));
+                }
+            }
+
+            mod = new ModDefinitions(id, name, version, description, zones, plants, services);
             return true;
         }
         catch (InvalidDefinitions ex)
@@ -390,6 +440,26 @@ public static class DefinitionLoader
         public List<ZoneDocument?>? Zones { get; set; }
 
         public List<PlantDocument?>? Plants { get; set; }
+
+        public List<ServiceDocument?>? Services { get; set; }
+    }
+
+    private sealed class ServicesDocument
+    {
+        public int? Format { get; set; }
+
+        public List<ServiceDocument?>? Services { get; set; }
+    }
+
+    private sealed class ServiceDocument
+    {
+        public string? Id { get; set; }
+
+        public string? Name { get; set; }
+
+        public int? Price { get; set; }
+
+        public int? Upkeep { get; set; }
     }
 
     private sealed class ZonesDocument
@@ -474,6 +544,18 @@ public sealed record PlantPatch(string? Name, int? Price, int? Capacity)
     };
 }
 
+/// <summary>What a mod changes in one service's spec; a field left null keeps the value it had.</summary>
+public sealed record ServicePatch(string? Name, int? Price, int? Upkeep)
+{
+    /// <summary>The service's spec with this mod's changes.</summary>
+    public ServiceSpec ApplyTo(ServiceSpec service) => service with
+    {
+        Name = Name ?? service.Name,
+        Price = Price ?? service.Price,
+        Upkeep = Upkeep ?? service.Upkeep,
+    };
+}
+
 /// <summary>A mod, read and checked: who it is, and what it changes.</summary>
 /// <param name="Id">The mod's id, which is its folder's name.</param>
 /// <param name="Name">The mod's name, as the player sees it.</param>
@@ -481,4 +563,5 @@ public sealed record PlantPatch(string? Name, int? Price, int? Capacity)
 /// <param name="Description">What the mod does, or null.</param>
 /// <param name="Zones">The changes it makes to each zone it names.</param>
 /// <param name="Plants">The changes it makes to each power plant it names.</param>
-public sealed record ModDefinitions(string Id, string Name, string? Version, string? Description, IReadOnlyDictionary<TileUse, ZonePatch> Zones, IReadOnlyDictionary<TileUse, PlantPatch> Plants);
+/// <param name="Services">The changes it makes to each service it names.</param>
+public sealed record ModDefinitions(string Id, string Name, string? Version, string? Description, IReadOnlyDictionary<TileUse, ZonePatch> Zones, IReadOnlyDictionary<TileUse, PlantPatch> Plants, IReadOnlyDictionary<TileUse, ServicePatch> Services);

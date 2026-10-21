@@ -405,6 +405,8 @@ public sealed class GameLoop : IDisposable
         BuildStatus.Built when action == BuildAction.PowerLine => $"Strung {Count(result.TilesChanged, "tile")} of power line for ${result.Cost}",
         BuildStatus.Built when action == BuildAction.CoalPowerPlant => $"Built a coal power plant for ${result.Cost}",
         BuildStatus.Built when action == BuildAction.NuclearPowerPlant => $"Built a nuclear power plant for ${result.Cost}",
+        BuildStatus.Built when action == BuildAction.FireStation => $"Built a fire station for ${result.Cost}",
+        BuildStatus.Built when action == BuildAction.PoliceStation => $"Built a police station for ${result.Cost}",
         BuildStatus.Built => $"Zoned {Count(result.TilesChanged / ZoneLayout.Parts, "zone")} for ${result.Cost}",
         BuildStatus.Unchanged when result.Reason == BuildRefusal.AlreadyDone => "The land is already like that",
         BuildStatus.Refused when result.Reason == BuildRefusal.PartOfAZone => "Bulldoze its centre to clear it",

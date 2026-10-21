@@ -35,8 +35,8 @@ public sealed class BuildStroke
     /// <summary>Tells whether the stroke lays zones, which are 3 by 3 and laid as a grid.</summary>
     public bool LaysZones => Action is BuildAction.ZoneResidential or BuildAction.ZoneCommercial or BuildAction.ZoneIndustrial;
 
-    /// <summary>Tells whether the stroke places one building, such as a power plant, which follows the pointer.</summary>
-    public bool PlacesBuilding => Action is BuildAction.CoalPowerPlant or BuildAction.NuclearPowerPlant;
+    /// <summary>Tells whether the stroke places one building, such as a power plant or a station, which follows the pointer.</summary>
+    public bool PlacesBuilding => Action is BuildAction.CoalPowerPlant or BuildAction.NuclearPowerPlant or BuildAction.FireStation or BuildAction.PoliceStation;
 
     /// <summary>What the stroke's zones or building are used for, or <see cref="TileUse.None"/> for any other stroke.</summary>
     public TileUse Use => Action switch
@@ -46,6 +46,8 @@ public sealed class BuildStroke
         BuildAction.ZoneIndustrial => TileUse.Industrial,
         BuildAction.CoalPowerPlant => TileUse.CoalPowerPlant,
         BuildAction.NuclearPowerPlant => TileUse.NuclearPowerPlant,
+        BuildAction.FireStation => TileUse.FireStation,
+        BuildAction.PoliceStation => TileUse.PoliceStation,
         _ => TileUse.None,
     };
 

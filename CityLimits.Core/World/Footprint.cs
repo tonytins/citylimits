@@ -1,7 +1,7 @@
 namespace CityLimits.Core.World;
 
 /// <summary>
-/// How much of the map a use takes up. As in Micropolis, a zone is 3 by 3 and a power plant 4 by 4,
+/// How much of the map a use takes up. As in Micropolis, a zone or a station is 3 by 3 and a power plant 4 by 4,
 /// and either is worked on at its centre, one tile in from its top-left corner. Each of its tiles
 /// knows its part, numbered across and then down. Anything else takes one tile.
 /// </summary>
@@ -13,7 +13,7 @@ public static class Footprint
     /// <summary>The width and height of a use's footprint, in tiles.</summary>
     public static int SizeOf(TileUse use) => use switch
     {
-        TileUse.Residential or TileUse.Commercial or TileUse.Industrial => ZoneLayout.Size,
+        TileUse.Residential or TileUse.Commercial or TileUse.Industrial or TileUse.FireStation or TileUse.PoliceStation => ZoneLayout.Size,
         TileUse.CoalPowerPlant or TileUse.NuclearPowerPlant => 4,
         _ => 1,
     };

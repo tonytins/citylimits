@@ -30,8 +30,6 @@ public sealed class CityBudget
     /// <summary>What funding gives fire and police coverage at full, and what it scales down from.</summary>
     public const int FullServiceEffect = 1000;
 
-    /// <summary>What a police or fire station costs to keep up each year.</summary>
-    public const int StationUpkeep = 100;
 
     // Tax income is population times average land value over this, times the tax rate, times
     // Easy's factor; road upkeep is the road count times Easy's factor. They are Micropolis'.
@@ -39,12 +37,25 @@ public sealed class CityBudget
     private const double EasyTaxFactor = 1.4;
     private const double EasyRoadFactor = 0.7;
 
+    // What one fire station and one police station cost to keep up each year, from the services spec.
+    private readonly int _fireStationUpkeep;
+    private readonly int _policeStationUpkeep;
+
     // The year so far, in full-year estimates added up once a count.
     private long _taxFund;
     private long _roadFund;
     private long _fireFund;
     private long _policeFund;
     private bool _cut;
+
+    /// <summary>Creates a budget whose stations cost the given upkeep a year: the base game's, $100 each, when none is given.</summary>
+    /// <exception cref="ArgumentOutOfRangeException">An upkeep is negative.</exception>
+    public CityBudget(int fireStationUpkeep = 100, int policeStationUpkeep = 100)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(fireStationUpkeep);
+        ArgumentOutOfRangeException.ThrowIfNegative(policeStationUpkeep);
+        (_fireStationUpkeep, _policeStationUpkeep) = (fireStationUpkeep, policeStationUpkeep);
+    }
 
     /// <summary>The tax rate, in percent, from 0 to <see cref="MaxTaxRate"/>.</summary>
     public int TaxRate { get; private set; } = DefaultTaxRate;
@@ -113,8 +124,8 @@ public sealed class CityBudget
         // As in Micropolis, the population and land value are divided as whole numbers first.
         var taxIncome = Round((long)population * landValueAverage / LandValueDivisor * TaxRate * EasyTaxFactor);
         var roadRequest = Round(roadTiles * EasyRoadFactor);
-        var fireRequest = StationUpkeep * fireStations;
-        var policeRequest = StationUpkeep * policeStations;
+        var fireRequest = _fireStationUpkeep * fireStations;
+        var policeRequest = _policeStationUpkeep * policeStations;
 
         var roadFunded = Round(roadRequest * RoadFunding / 100.0);
         var fireFunded = Round(fireRequest * FireFunding / 100.0);

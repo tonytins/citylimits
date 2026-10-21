@@ -26,4 +26,10 @@ public enum BuildAction
 
     /// <summary>String a power line.</summary>
     PowerLine,
+
+    /// <summary>Build a fire station, centred on the tile.</summary>
+    FireStation,
+
+    /// <summary>Build a police station, centred on the tile.</summary>
+    PoliceStation,
 }

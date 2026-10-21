@@ -17,4 +17,16 @@ public enum CityMessage
 
     /// <summary>The roads are funded too little to keep them up, and there are more than 30 of them.</summary>
     RoadsNeedFunding,
+
+    /// <summary>The city has more than 60 people and no fire station.</summary>
+    NeedFireStation,
+
+    /// <summary>The city has more than 60 people and no police station.</summary>
+    NeedPoliceStation,
+
+    /// <summary>The fire stations are funded below 70%, in a city of more than 20 people.</summary>
+    FireNeedsFunding,
+
+    /// <summary>The police stations are funded below 70%, in a city of more than 20 people.</summary>
+    PoliceNeedsFunding,
 }

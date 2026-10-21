@@ -168,6 +168,8 @@ public sealed class Hud
         Tool.CoalPowerPlant => "coal plant",
         Tool.NuclearPowerPlant => "nuclear plant",
         Tool.PowerLine => "power line",
+        Tool.FireStation => "fire station",
+        Tool.PoliceStation => "police station",
         _ => "inspect",
     };
 }

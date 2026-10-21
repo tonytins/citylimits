@@ -34,6 +34,8 @@ public static class TileInfo
         TileUse.NuclearPowerPlant => "Nuclear power plant",
         TileUse.PowerLine => "Power line",
         TileUse.RoadAcrossPowerLine or TileUse.RoadDownPowerLine => "Road and power line",
+        TileUse.FireStation => "Fire station",
+        TileUse.PoliceStation => "Police station",
         _ => "Empty",
     };
 
@@ -48,6 +50,8 @@ public static class TileInfo
         TileUse.NuclearPowerPlant => "nuclear plant",
         TileUse.PowerLine => "power line",
         TileUse.RoadAcrossPowerLine or TileUse.RoadDownPowerLine => "road and line",
+        TileUse.FireStation => "fire station",
+        TileUse.PoliceStation => "police station",
         _ => "empty",
     };
 
@@ -61,7 +65,7 @@ public static class TileInfo
         TileUse.Road => "carries traffic",
         TileUse.Residential or TileUse.Commercial or TileUse.Industrial when state.Development == 0 => "not developed yet",
         TileUse.Residential or TileUse.Commercial or TileUse.Industrial => $"developed to level {state.Development}",
-        TileUse.CoalPowerPlant or TileUse.NuclearPowerPlant => "bulldoze its centre to clear it",
+        TileUse.CoalPowerPlant or TileUse.NuclearPowerPlant or TileUse.FireStation or TileUse.PoliceStation => "bulldoze its centre to clear it",
         TileUse.PowerLine when state.Kind == TileKind.Water => "laid under water",
         TileUse.PowerLine => "strung on poles",
         TileUse.RoadAcrossPowerLine or TileUse.RoadDownPowerLine => "carries traffic across the line",
@@ -80,6 +84,7 @@ public static class TileInfo
         {
             not null when state.IsZoned => definitions.Zone(state.Use).Name,
             not null when TileRules.IsPowerPlant(state.Use) => definitions.Plant(state.Use).Name,
+            not null when TileRules.IsService(state.Use) => definitions.Service(state.Use).Name,
             _ => Name(state.Use),
         };
         return $"{name} - {BuildAdvice(state)}";

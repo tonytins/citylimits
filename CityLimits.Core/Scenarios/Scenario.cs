@@ -84,6 +84,12 @@ public enum CountSubject
 
     /// <summary>Tiles with a power line, under water or under a road included.</summary>
     PowerLine,
+
+    /// <summary>Fire stations, by their centres.</summary>
+    FireStation,
+
+    /// <summary>Police stations, by their centres.</summary>
+    PoliceStation,
 }
 
 /// <summary>

@@ -31,7 +31,7 @@ CityLimits.Core/              engine-free library: the world and the simulation,
   GlobalUsings.cs               global usings shared by the project
   Randomness/                   namespace CityLimits.Core.Randomness: the seeded generator the simulation owns
   World/                        namespace CityLimits.Core.World: the map and its default size, the tiles and their footprints, the terrain and its edges, the tile rules, the build actions, roads, power lines
-  Simulation/                   namespace CityLimits.Core.Simulation: the clock, the calendar, the tick and its cycle, the census, demand, growth, trips, the city maps, the power grid, the city's messages
+  Simulation/                   namespace CityLimits.Core.Simulation: the clock, the calendar, the tick and its cycle, the census, demand, growth, trips, the city maps, the power grid, service coverage, the city's messages
   Economy/                      namespace CityLimits.Core.Economy: the treasury, the costs, the budget
   Settings/                     namespace CityLimits.Core.Settings: the settings that survive a session
   Scenarios/                    namespace CityLimits.Core.Scenarios: the scenario loader, the runner, the report, the demo town
@@ -113,8 +113,9 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   year, and phases 1 to 8 scan the map in 8 vertical bands; phase 9
   records the census and sets a 48th of the year's taxes and upkeep
   aside, settling the year when it comes round, 10 checks the city's messages, 11 traces power, 12
-  works out land value, and 14 population density; 13 and 15 are kept for
-  crime, and fire and disasters.
+  works out land value, 13 spreads police coverage, 14 population
+  density, and 15 fire coverage; 13 and 15 are also where crime, and fire
+  and disasters, will run.
   `CityCalendar` turns the count into a month: 4 counts a month, 48 a
   year, from January 1900. At Normal speed a step runs every quarter of a
   second, so a month takes 16 seconds and a year about 3 minutes; Fast is
@@ -141,7 +142,23 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   `TileState.HasFootprint` and `IsBuildingCenter` cover zones and plants
   alike; `IsZoned` and `IsZoneCenter` stay the three zones only. A plant's
   name, price, and capacity are a `PlantSpec` in the definitions, which a
-  mod can change in its `plants.json`.
+  mod can change in its `plants.json`. A plant has power from the moment
+  it is placed, as in Micropolis.
+- **Police and fire stations.** A station is 3 by 3, placed like a plant,
+  one at a time and centred on the pointer, and knocked down through its
+  centre. Its name, price ($500), and yearly upkeep ($100) are a
+  `ServiceSpec`, which a mod can change in its `services.json`, and the
+  budget pays the upkeep for the stations the scan counted. As in
+  Micropolis (`ServiceCoverage`), the scan adds each station's strength
+  to the 8 by 8 tile block it stands in: its funding's effect (up to
+  1 000), halved without power and halved again without a road along its
+  edge. Phase 13 spreads the police map and phase 15 the fire map, each
+  smoothed three times: a block keeps half of itself plus an eighth of
+  each neighbour. Coverage acts on crime and fires, which come with
+  Deadwood; until then nothing answers to it. The city says when more
+  than 60 people have no fire station or no police station, and when
+  either is funded below 70%. An unpowered station blinks the bolt, as a
+  zone does.
 - **The power grid.** As in Micropolis (`PowerGrid`), the scan counts the
   plants it passes and gives each zone the power the last trace left it,
   kept on its centre (`TileState.Powered`); a plant always has power.
@@ -236,16 +253,17 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   a frame, takes no other input, and gets its speed back when the panel
   closes, with Continue, Escape, Enter, or B. The funds show red below
   zero.
-- **The tools.** Nine tools sit in the palette down the left, laid out as
+- **The tools.** Eleven tools sit in the palette down the left, laid out as
   Micropolis' is (`UI/ToolPaletteView.cs`): the name and price of the tool
   under the pointer, or of the held one, then centred rows of icon
   buttons in Micropolis' order, leaving out the tools CityLimits doesn't
   have yet. The held tool shows its highlighted icon, and a missing icon
   falls back to a box with a short label. The number keys pick tools too:
   inspect, road, residential, commercial, industrial, bulldozer, coal
-  plant, nuclear plant, and power line, 1 to 9. A tool is used in a stroke, as
+  plant, nuclear plant, and power line, 1 to 9; the fire and police
+  stations, either side of inspect, are picked from the palette. A tool is used in a stroke, as
   in Micropolis: pressing on the map starts a `BuildStroke`, dragging
-  stretches it (a road or a power line runs in one straight line, a plant is one building
+  stretches it (a road or a power line runs in one straight line, a plant or a station is one building
   that follows the pointer, and the other tools cover a rectangle), and the map shows a preview of the tiles it would change
   and its total cost while the button is held. Releasing applies the
   stroke all at once: the tiles that can't be built on are skipped, and
@@ -253,8 +271,8 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   pay for all of it. Escape cancels a stroke, or quits when there is none.
 - **The money.** The city starts with a treasury, and the prices are
   Micropolis' (`Economy/TileCosts.cs`, and the zones' in their
-  `ZoneSpec` and `PlantSpec`): $10 a road tile, $50 a bridge tile, $5 a power line tile,
-  $25 under water, $100 a zone, $3,000 a
+  `ZoneSpec`, `PlantSpec`, and `ServiceSpec`): $10 a road tile, $50 a bridge tile, $5 a power line tile,
+  $25 under water, $100 a zone, $500 a fire or police station, $3,000 a
   coal power plant, $5,000 a nuclear power plant, $1 more for each tile of trees or rubble a tool
   clears first, and $1 for each tile the bulldozer clears or each zone or
   plant it knocks down. Nothing is refunded. The palette and the HUD show the
@@ -267,9 +285,9 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   that carries power, and crosses a straight road, or is crossed by one,
   to make a road-and-line tile. Zones are laid as a grid, the first centred where the stroke
   started; a zone goes down whole or not at all, on ground with nothing on
-  it. A plant is placed the same way, one at a time, centred on the
+  it. A plant or a station is placed the same way, one at a time, centred on the
   pointer. The bulldozer clears roads, bridges, power lines, trees, and rubble tile by tile,
-  but a zone or a plant only through its centre, which turns all its tiles
+  but a zone, a plant, or a station only through its centre, which turns all its tiles
   to rubble. Clicking the palette picks a tool, and never builds on the map
   under it.
 - **The tile readout.** The tile under the mouse is outlined, and a panel
@@ -328,7 +346,7 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   and no project. It holds the parser, the dispatcher, the default
   command, the strict option reader, and the exit codes.
 - **The tests.** `CityLimits.Tests` uses xUnit 2 with the VSTest runner
-  and coverlet, and holds 444 tests over the generator, the terrain edges, the power plants, lines, and grid, the budget, the map, the
+  and coverlet, and holds 462 tests over the generator, the terrain edges, the power plants, lines, and grid, the budget, the stations and their coverage, the map, the
   calendar, the clock, the simulation, the settings, the tile rules, the
   build actions, the road network, the treasury, the scenario loader and
   runner, every built-in scenario, the definitions and the mod loader, zone growth, the census and demand, trips, growth and the city maps,

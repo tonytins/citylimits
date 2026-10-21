@@ -187,6 +187,49 @@ public class DefinitionTests
         Assert.Equal("plants: the base game must define nuclear.", error);
     }
 
+    [Fact]
+    public void AModChangesAServicesPriceAndUpkeepInItsOwnFile()
+    {
+        var folder = Directory.CreateTempSubdirectory().FullName;
+        try
+        {
+            var modFolder = Directory.CreateDirectory(Path.Combine(folder, "cheap-police")).FullName;
+            File.WriteAllText(Path.Combine(modFolder, "mod.json"), """{ "format": 1, "id": "cheap-police", "name": "Cheap police" }""");
+            File.WriteAllText(Path.Combine(modFolder, "services.json"), """{ "format": 1, "services": [ { "id": "police", "name": "Sheriff", "price": 300, "upkeep": 40 } ] }""");
+
+            var definitions = ModLoader.Load(folder, out var problems);
+
+            Assert.Empty(problems);
+            Assert.Equal(new ServiceSpec("police", TileUse.PoliceStation, "Sheriff", 300, 40), definitions.Service(TileUse.PoliceStation));
+            Assert.Equal(CityDefinitions.Base.Service(TileUse.FireStation), definitions.Service(TileUse.FireStation));
+
+            var map = TileMap.FromTerrain(9, 9, new TileKind[81]);
+            var city = new CitySimulation(map, 1, funds: 1000, definitions: definitions);
+            city.Builder.Apply(BuildAction.PoliceStation, 4, 4);
+            Assert.Equal(700, city.Treasury.Funds);
+            for (var i = 0; i < CityCalendar.StepsPerCount - 1; i++)
+            {
+                city.Tick();
+            }
+
+            Assert.Equal(40, city.EstimateBudget().PoliceRequest);
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+    }
+
+    [Theory]
+    [InlineData("""{ "format": 1, "services": [ { "id": "hospital" } ] }""", "services.json: services[0].id: 'hospital' is not one of fire, police.")]
+    [InlineData("""{ "format": 1, "services": [ { "id": "fire", "upkeep": -1 } ] }""", "services.json: services[0].upkeep: needs a number from 0 to 1000000, not -1.")]
+    public void AServiceModIsCheckedBeforeItIsUsed(string services, string expected)
+    {
+        Assert.False(DefinitionLoader.TryParseMod("cheap-zones", Manifest, null, out var mod, out var error, servicesJson: services));
+        Assert.Null(mod);
+        Assert.Equal(expected, error);
+    }
+
     // Applies one mod to the base game the way the loader does, through a folder.
     private static CityDefinitions ModLoaderWith(ModDefinitions mod)
     {

@@ -1,5 +1,20 @@
 # CityLimits Changelog
 
+## 0.2.107
+
+Police and fire stations, as in Micropolis: $500 each to build and $100 a
+year to keep up, placed from the palette, either side of the inspect
+tool. Each covers the blocks around it, more strongly when it has power,
+a road along its edge, and full funding; the fire and police coverage
+will matter once fires and crime arrive. The city asks for a fire
+station and a police station once it passes 60 people, and complains
+when either is funded below 70%. An unpowered station blinks the
+lightning bolt, as a zone does, and a power plant has power the moment
+it is built.
+
+Mods can change a station's name, price, and upkeep in a
+`services.json`, and scenarios can build and count stations.
+
 ## 0.2.106
 
 The budget panel. Press B, or click the money in the top bar, to see

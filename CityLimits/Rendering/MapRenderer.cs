@@ -69,8 +69,8 @@ public sealed class MapRenderer : IDisposable
     }
 
     /// <summary>
-    /// Blinks a lightning bolt over the centre of each zone the scan found without power, as
-    /// Micropolis does: on for half a second, off for half a second. It changes every frame, so
+    /// Blinks a lightning bolt over the centre of each zone or station the scan found without
+    /// power, as Micropolis does: on for half a second, off for half a second. It changes every frame, so
     /// it is drawn over the cached map, not into it. Call it inside <c>BeginMode2D</c>.
     /// </summary>
     public void DrawUnpowered(Camera camera, double seconds)
@@ -86,7 +86,7 @@ public sealed class MapRenderer : IDisposable
             for (var x = minX; x <= maxX; x++)
             {
                 var state = _map.StateAt(x, y);
-                if (!state.IsZoneCenter || state.Powered)
+                if (!state.IsBuildingCenter || state.Powered)
                 {
                     continue;
                 }

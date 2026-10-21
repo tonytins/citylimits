@@ -16,6 +16,8 @@ tools/icbulldozer.png bulldozer
 tools/iccoal.png     coal power plant
 tools/icnuc.png      nuclear power plant
 tools/icwire.png     power line
+tools/icfire.png     fire station
+tools/icpol.png      police station
 Scenarios/           the built-in scenarios, one JSON file each, named for its id
 ```
 
@@ -128,8 +130,12 @@ across, and 209 running across. A road crossing a line is tile 77 for a
 road running across over a line running down, and 78 for a road running
 down over a line running across.
 
-A zone with no power blinks tile 827, a lightning bolt, over its centre.
+A zone or a station with no power blinks tile 827, a lightning bolt, over its centre.
 It is drawn over the map each frame, not into it.
+
+A fire station is tiles 761 to 769 and a police station 770 to 778, each
+3 by 3, its nine tiles read across and then down, so a tile's drawing is
+the station's first tile plus its part number (0 to 8, with 4 the centre).
 
 A power plant is 4 by 4, its sixteen tiles in a row in the sheet, read
 across and then down, so a tile's drawing is the plant's first tile plus

@@ -13,11 +13,13 @@ public sealed class CityDefinitions
 
     private readonly Dictionary<TileUse, ZoneSpec> _zones;
     private readonly Dictionary<TileUse, PlantSpec> _plants;
+    private readonly Dictionary<TileUse, ServiceSpec> _services;
 
-    internal CityDefinitions(IEnumerable<ZoneSpec> zones, IEnumerable<PlantSpec> plants, IReadOnlyList<string> mods)
+    internal CityDefinitions(IEnumerable<ZoneSpec> zones, IEnumerable<PlantSpec> plants, IEnumerable<ServiceSpec> services, IReadOnlyList<string> mods)
     {
         _zones = zones.ToDictionary(zone => zone.Use);
         _plants = plants.ToDictionary(plant => plant.Use);
+        _services = services.ToDictionary(service => service.Use);
         Mods = mods;
     }
 
@@ -40,6 +42,11 @@ public sealed class CityDefinitions
     public PlantSpec Plant(TileUse use) =>
         _plants.TryGetValue(use, out var plant) ? plant : throw new ArgumentOutOfRangeException(nameof(use), $"{use} is not a power plant.");
 
+    /// <summary>The spec of the service building a use belongs to.</summary>
+    /// <exception cref="ArgumentOutOfRangeException">The use isn't a service building.</exception>
+    public ServiceSpec Service(TileUse use) =>
+        _services.TryGetValue(use, out var service) ? service : throw new ArgumentOutOfRangeException(nameof(use), $"{use} is not a service building.");
+
     /// <summary>What a tool costs before the ground under it is cleared, as the palette shows it.</summary>
     public int CostOf(BuildAction action) => action switch
     {
@@ -51,14 +58,17 @@ public sealed class CityDefinitions
         BuildAction.CoalPowerPlant => Plant(TileUse.CoalPowerPlant).Price,
         BuildAction.NuclearPowerPlant => Plant(TileUse.NuclearPowerPlant).Price,
         BuildAction.PowerLine => TileCosts.PowerLine,
+        BuildAction.FireStation => Service(TileUse.FireStation).Price,
+        BuildAction.PoliceStation => Service(TileUse.PoliceStation).Price,
         _ => 0,
     };
 
-    // A mod's zone or plant entry changes only the fields it sets.
+    // A mod's zone, plant, or service entry changes only the fields it sets.
     internal CityDefinitions With(ModDefinitions mod)
     {
         var zones = _zones.Values.Select(zone => mod.Zones.TryGetValue(zone.Use, out var patch) ? patch.ApplyTo(zone) : zone);
         var plants = _plants.Values.Select(plant => mod.Plants.TryGetValue(plant.Use, out var patch) ? patch.ApplyTo(plant) : plant);
-        return new CityDefinitions(zones, plants, [.. Mods, mod.Id]);
+        var services = _services.Values.Select(service => mod.Services.TryGetValue(service.Use, out var patch) ? patch.ApplyTo(service) : service);
+        return new CityDefinitions(zones, plants, services, [.. Mods, mod.Id]);
     }
 }

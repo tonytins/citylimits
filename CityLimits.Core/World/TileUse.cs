@@ -32,4 +32,10 @@ public enum TileUse
 
     /// <summary>The tile carries a road running down, north to south, over a power line running across.</summary>
     RoadDownPowerLine,
+
+    /// <summary>The tile is part of a fire station, 3 by 3.</summary>
+    FireStation,
+
+    /// <summary>The tile is part of a police station, 3 by 3.</summary>
+    PoliceStation,
 }

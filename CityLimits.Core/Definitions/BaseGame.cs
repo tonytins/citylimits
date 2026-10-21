@@ -19,6 +19,10 @@ public static class BaseGame
           "plants": [
             { "id": "coal", "name": "Coal power plant", "price": 3000, "capacity": 700 },
             { "id": "nuclear", "name": "Nuclear power plant", "price": 5000, "capacity": 2000 }
+          ],
+          "services": [
+            { "id": "fire", "name": "Fire station", "price": 500, "upkeep": 100 },
+            { "id": "police", "name": "Police station", "price": 500, "upkeep": 100 }
           ]
         }
         """;

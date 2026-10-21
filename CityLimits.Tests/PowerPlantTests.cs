@@ -61,6 +61,18 @@ public class PowerPlantTests
     }
 
     [Fact]
+    public void APlantHasPowerFromTheMomentItIsPlacedButAStationWaitsForTheScan()
+    {
+        var city = NewCity();
+        city.Builder.Apply(BuildAction.CoalPowerPlant, 3, 3);
+        city.Builder.Apply(BuildAction.FireStation, 7, 7);
+
+        Assert.True(city.Map.StateAt(3, 3).Powered);
+        Assert.False(city.Map.StateAt(2, 2).Powered);
+        Assert.False(city.Map.StateAt(7, 7).Powered);
+    }
+
+    [Fact]
     public void DraggingAPlantMovesItRatherThanAddingMore()
     {
         var stroke = Drag(BuildAction.CoalPowerPlant, 1, 1, 6, 5);

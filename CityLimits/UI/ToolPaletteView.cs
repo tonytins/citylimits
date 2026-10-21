@@ -21,14 +21,14 @@ public sealed class ToolPaletteView
         KeyboardKey.Nine,
     ];
 
-    // Micropolis' rows, with its park, rail, police, fire, stadium, seaport, and airport left out
-    // until CityLimits has them.
+    // Micropolis' rows, with its park, rail, stadium, seaport, and airport left out until
+    // CityLimits has them.
     private static readonly Tool[][] Rows =
     [
         [Tool.Bulldozer, Tool.PowerLine],
         [Tool.Road],
         [Tool.Residential, Tool.Commercial, Tool.Industrial],
-        [Tool.Inspect],
+        [Tool.FireStation, Tool.Inspect, Tool.PoliceStation],
         [Tool.CoalPowerPlant, Tool.NuclearPowerPlant],
     ];
 
@@ -191,6 +191,8 @@ public sealed class ToolPaletteView
         Tool.CoalPowerPlant => "Coal plant",
         Tool.NuclearPowerPlant => "Nuclear plant",
         Tool.PowerLine => "Power line",
+        Tool.FireStation => "Fire station",
+        Tool.PoliceStation => "Police station",
         _ => "Inspect",
     };
 
@@ -204,6 +206,8 @@ public sealed class ToolPaletteView
         Tool.CoalPowerPlant => "Coal",
         Tool.NuclearPowerPlant => "Nuc",
         Tool.PowerLine => "Line",
+        Tool.FireStation => "Fire",
+        Tool.PoliceStation => "Pol",
         _ => "?",
     };
 }
