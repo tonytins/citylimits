@@ -24,6 +24,24 @@ public static class Theme
     /// <summary>The color of the tile under the mouse.</summary>
     public static readonly Color Hover = new() { R = 255, G = 235, B = 120, A = 255 };
 
+    /// <summary>A zone or building with power, on the overview's power map.</summary>
+    public static readonly Color OverviewPowered = new() { R = 240, G = 70, B = 50, A = 255 };
+
+    /// <summary>A zone or building without power, on the overview's power map.</summary>
+    public static readonly Color OverviewUnpowered = new() { R = 110, G = 120, B = 230, A = 255 };
+
+    /// <summary>A power line, on the overview's power map.</summary>
+    public static readonly Color OverviewLine = new() { R = 190, G = 190, B = 190, A = 255 };
+
+    /// <summary>The overview's four bands for a map's values, from low to high.</summary>
+    public static readonly Color[] OverlayBands =
+    [
+        new() { R = 80, G = 140, B = 200, A = 255 },
+        new() { R = 90, G = 200, B = 110, A = 255 },
+        new() { R = 240, G = 210, B = 60, A = 255 },
+        new() { R = 235, G = 80, B = 50, A = 255 },
+    ];
+
     /// <summary>The veil drawn over the map while a panel such as the budget holds the game.</summary>
     public static readonly Color Dim = new() { R = 0, G = 0, B = 0, A = 140 };
 

@@ -17,8 +17,12 @@ public sealed class GameLoop : IDisposable
     private readonly MapRenderer _mapRenderer;
     private readonly Hud _hud = new();
     private readonly ToolPaletteView _toolPaletteView;
+    private readonly OverviewMap _overview;
     private readonly string _settingsPath;
     private GameSettings _settings;
+
+    // Whether the press that is held began on the overview, so dragging there moves the view.
+    private bool _draggingOverview;
     private int _lastSpeed = 1;
     private string? _error;
     private string? _notice;
@@ -55,6 +59,7 @@ public sealed class GameLoop : IDisposable
         _mapRenderer = new MapRenderer(map, assets);
         Logger.Info(_mapRenderer.IsCached ? "The map is drawn from cached chunks" : "The map is drawn tile by tile");
         _toolPaletteView = new ToolPaletteView(assets, definitions);
+        _overview = new OverviewMap(_simulation);
 
         _camera.SetScreenSize(settings.WindowWidth, settings.WindowHeight);
         _camera.CenterOn(new Vector2(map.Width * MapRenderer.TileSize / 2f, map.Height * MapRenderer.TileSize / 2f));
@@ -100,8 +105,9 @@ public sealed class GameLoop : IDisposable
     /// <summary>Draws the game.</summary>
     public void Draw()
     {
-        // Chunks are redrawn into their own textures, which can't happen inside the frame's camera.
+        // Chunks and the overview are redrawn into their own textures, which can't happen inside the frame's camera.
         _mapRenderer.Refresh();
+        _overview.Refresh();
 
         Raylib.BeginDrawing();
         Raylib.ClearBackground(new Color { R = 12, G = 14, B = 18, A = 255 });
@@ -139,6 +145,7 @@ public sealed class GameLoop : IDisposable
             Raylib.GetFPS());
         _hud.DrawTileReadout(_simulation.Map, onMap ? state : null, tileX, tileY, _simulation.Definitions);
         _hud.DrawDemand(_simulation.Demand, _toolPaletteView.Bottom() + 8);
+        _overview.Draw(_camera);
         _hud.DrawHints();
         _hud.DrawMessage(_error ?? _notice, _error is not null || _noticeIsError);
 
@@ -156,7 +163,11 @@ public sealed class GameLoop : IDisposable
     }
 
     /// <summary>Releases what the game holds on the graphics card. Call it before the window closes.</summary>
-    public void Dispose() => _mapRenderer.Dispose();
+    public void Dispose()
+    {
+        _overview.Dispose();
+        _mapRenderer.Dispose();
+    }
 
     /// <summary>Records a failure so the player can see it, and keeps the game running.</summary>
     public void ReportError(Exception exception)
@@ -338,6 +349,17 @@ public sealed class GameLoop : IDisposable
     {
         var onMap = MapRenderer.TryGetTileAt(_simulation.Map, _camera.ScreenToWorld(mouse), out var tileX, out var tileY, out _);
 
+        if (_draggingOverview)
+        {
+            _draggingOverview = Raylib.IsMouseButtonDown(MouseButton.Left);
+            if (_draggingOverview)
+            {
+                _overview.HandlePointer(mouse, _camera, pressed: false);
+            }
+
+            return;
+        }
+
         if (_stroke is null)
         {
             if (!Raylib.IsMouseButtonPressed(MouseButton.Left))
@@ -349,6 +371,14 @@ public sealed class GameLoop : IDisposable
             if (Raylib.CheckCollisionPointRec(mouse, _hud.FundsBounds))
             {
                 OpenBudget(null);
+                return;
+            }
+
+            // A press on the overview picks a mode or moves the view, and never reaches the map.
+            if (_overview.Contains(mouse))
+            {
+                _draggingOverview = true;
+                _overview.HandlePointer(mouse, _camera, pressed: true);
                 return;
             }
 

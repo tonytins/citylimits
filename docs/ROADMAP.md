@@ -1,6 +1,6 @@
 # CityLimits roadmap
 
-> **Last reviewed:** 2026-10-21 · **Last updated:** 2026-10-21 · **Change:** patch (power demand follows the grid, as the owner chose) · **Stage:** pre-alpha
+> **Last reviewed:** 2026-10-21 · **Last updated:** 2026-10-21 · **Change:** minor (Joffburg J4: the overview map, and Joffburg is complete) · **Stage:** pre-alpha
 
 Forward-looking: where CityLimits stands, what blocks the next milestone,
 and what comes next. Verified status and evidence are in the
@@ -26,32 +26,30 @@ it a later milestone.
 |---|---|---|---|
 | Start a game and look at a map | yes | A resizable "CityLimits" window opens on a 120 by 100 seeded map of rivers, lakes, and woods, drawn from a tile sheet, with a camera that pans, zooms, and clamps, and a readout of the tile under the mouse (CORE-1, MAP-1, MAP-2, MAP-3, MAP-4, CORE-6) | 0 |
 | Lay roads, zone land, and see the city grow | yes | The player lays roads and bridges, zones 3 by 3 land, and bulldozes, as in Micropolis and at its prices, and the city grows on its own: zones take trips, follow residential, commercial, and industrial demand, grow houses and then buildings where they cluster, and decline when demand turns (ZONE-1 to ZONE-5, SIM-1 to SIM-7) | 0 |
-| Read the city's state: money, power, demand, and problems | partial | The HUD shows the date, the tick, the speed, the funds, and what the held tool costs, and the tile readout names what is on the tile. The status bar shows the population and a panel shows demand; unpowered zones blink a lightning bolt, the readout says when a zone has no power, and brownouts and blackouts show as messages. The budget panel shows the year's taxes and upkeep and opens by itself on a deficit. There is no power overlay (UI-2, ECON-1, ECON-3, ECON-5) | 5–10 |
+| Read the city's state: money, power, demand, and problems | yes | The HUD shows the date, the tick, the speed, the funds, and what the held tool costs, and the tile readout names what is on the tile. The status bar shows the population and a panel shows demand; unpowered zones blink a lightning bolt, the readout says when a zone has no power, and brownouts and blackouts show as messages. The budget panel shows the year's taxes and upkeep and opens by itself on a deficit. The overview map shows the whole city, and power, coverage, land value, and population density over it (UI-2, ECON-1, ECON-3, ECON-5) | 0 |
 | Keep the city running for a long session without a crash | partial | The frame loop catches and reports, the tick loop runs, and the settings survive a session (REL-1, CORE-8). The city itself cannot be saved yet (UI-5) | 10–20 |
 
-**Result: pre-alpha.** Two rows pass and two are partial.
-Alpha is roughly 15–30 hours away, and the critical path runs through
+**Result: pre-alpha.** Three rows pass and one is partial.
+Alpha is roughly 10–20 hours away, and the critical path runs through
 saving a city (UI-5).
 
 ## Current focus
 
 The engine plays like Micropolis: the baseline refactor (tool strokes,
-roads and zones, time, growth, and terrain) is done, and Joffburg's
-power, taxes and budget, and services were built to the baseline from
-the start. The owner's liberties so far are the always-automatic budget,
+roads and zones, time, growth, and terrain) is done, and Joffburg (power,
+taxes and the budget, services, and the overview map) was built to the
+baseline from the start and is complete. The owner's liberties so far are the always-automatic budget,
 parks' look chosen by their place, and Micropolis' hospital-then-church
 quirk fixed.
 
 Next, in order:
 
-1. **Joffburg J4: the power overlay**, showing what the power scan
-   decided, tile by tile. With it, Joffburg's panels item is done.
-2. **Saving and loading a city** (Happy Isle), the last thing between
+1. **Saving and loading a city** (Happy Isle), the last thing between
    CityLimits and alpha. Its format is the owner's call and under
    discussion.
-3. **Radial: traffic**, built to the baseline: trips already remember
+2. **Radial: traffic**, built to the baseline: trips already remember
    their routes for it.
-4. **Deadwood: crime, pollution, fire, and disasters**, which give the
+3. **Deadwood: crime, pollution, fire, and disasters**, which give the
    coverage maps and land value their effects.
 
 ## Milestones
@@ -65,20 +63,19 @@ Next, in order:
 | Neat Map: Terrain and the tile grid | 100% | 0 | Meets the baseline: Micropolis' terrain on its 120 by 100 map, with rivers, lakes, an island one map in ten, and woods, and shores and wood edges drawn from the sheet |
 | Line City: Roads and zoning | 100% | 0 | Meets the baseline: strokes with a preview, straight roads and bridges, 3 by 3 zones laid as a grid and served from their edges, and the $1 bulldozer, at Micropolis' prices |
 | Kowloon: Simulation core | 100% | 0 | Time runs as in Micropolis: the 16-phase cycle, the 48ths-of-a-year calendar, and its pace. Scenarios run from files and from the command line. Zones grow and decline one by one, with population, demand, and trips. The heart of the game |
-| Joffburg: Services and economy | 80% | 2–4 | Power, taxes and the budget, and services (stations, coverage, parks, hospitals, and churches) are in, as in Micropolis. The power overlay is left |
+| Joffburg: Services and economy | 100% | 0 | Meets the baseline: power, taxes and the budget, services (stations, coverage, parks, hospitals, and churches), and the overview map with its power, coverage, land value, and density modes, as in Micropolis |
 | Radial: Traffic and commuting | 0% | 12–20 | Nothing yet |
 | Deadwood: Land value, pollution, disasters | 0% | 12–20 | Nothing yet |
 | Happy Isle: Player-facing game | 33% | 12–22 | The palette, laid out as Micropolis', and the HUD are in; the budget panel is too. Saving, the city score, the power panel, and a start screen are left |
 | Yokohama: Polish and release | 0% | 10–20 | Nothing yet |
-| | **Total** | **≈ 48–86** | |
+| | **Total** | **≈ 46–82** | |
 
 ## Upcoming work, ranked
 
 | Rank | Work | Milestone | Estimate (h) |
 |---|---|---|---|
-| 1 | A power overlay that shows what the power scan decided | Joffburg | 2–4 |
-| 2 | Saving and loading a city, once the owner settles the format | Happy Isle | 6–12 |
-| 3 | Traffic: congestion on the roads trips already use | Radial | 12–20 |
+| 1 | Saving and loading a city, once the owner settles the format | Happy Isle | 6–12 |
+| 2 | Traffic: congestion on the roads trips already use | Radial | 12–20 |
 
 Alpha needs a city that can be saved (UI-5); everything else on the alpha
 gate is in or partial.
@@ -200,8 +197,10 @@ gate is in or partial.
   and their coverage maps (`ServiceCoverage`) and parks (`Parks`) are in;
   as in Micropolis, coverage acts on crime and fires, which come with
   Deadwood, and parks raise land value.
-- [ ] A budget panel and a power overlay that show what the simulation
-  actually thinks.
+- [x] A budget panel and a power overlay that show what the simulation
+  actually thinks. `UI/BudgetPanel.cs`, and `UI/OverviewMap.cs`, the
+  overview map as in Micropolis, with modes for power, fire and police
+  coverage, land value, and population density.
 
 ### Radial: Traffic and commuting
 
@@ -285,6 +284,7 @@ baseline's growth depends on.
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-21 | minor | Joffburg, phase J4, and with it Joffburg, is complete: the overview map, as in Micropolis, shows the whole city in the top-right corner with the main view outlined, moves the view where it is clicked or dragged, and switches between the city, power, fire and police coverage, land value, and population density. The owner chose the overview and its modes. The alpha gate's read-the-city row passes; 46–82 h left in total, 481 tests. |
 | 2026-10-21 | patch | The owner settled the power-demand item: demand follows the grid, every zone and line tile drawing power whether anyone lives there or not, as in Micropolis (a coal plant carries about 50 zones), not population. The item is reworded and checked off; Joffburg is at 80%, with the power overlay left. 48–86 h left in total. |
 | 2026-10-21 | patch | Housekeeping, at the owner's request: the current focus is put in order (the power overlay, saving, traffic, then crime, pollution, and disasters), Happy Isle's palette and HUD are checked off (33%), Joffburg's and Kowloon's notes and the critical path are brought up to date, and the ranked list gains traffic. 49–88 h left in total. |
 | 2026-10-21 | minor | Joffburg, phase J3c, and with it J3, services, is complete: hospitals and churches, as in Micropolis, one of each needed for every 256 residents; an empty residential zone becomes one a time in four when it would grow, and one too many turns back now and then. The owner chose to fix Micropolis' quirk that loses a hospital when both are needed. The modding doc is now `docs/modding/`, a player's guide and `tuning.md`, and AGENTS.md says how docs are written. 481 tests. |

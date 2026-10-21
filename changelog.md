@@ -1,5 +1,14 @@
 # CityLimits Changelog
 
+## 0.2.110
+
+An overview map, as in Micropolis. The whole city sits small in the
+top-right corner with the part you're looking at outlined; click or drag
+on it to move there. The buttons under it switch it to show power (lit
+buildings red, dark ones blue, and the lines grey), fire and police
+coverage, land value, or population density, each in four colours over
+the city dimmed.
+
 ## 0.2.109
 
 Hospitals and churches, as in Micropolis. You don't build them: once the

@@ -24,7 +24,7 @@ CityLimits/                  the game project (Raylib-cs, NLog, net10.0)
   Game/                         namespace CityLimits.Game: the game command, the window, the loop, the tools, the city's messages, the mods folder, the headless run, the log
     Commands/                   namespace CityLimits.Game.Commands: the subcommands, one class each
   Rendering/                    namespace CityLimits.Rendering: the camera, the tile drawing, the chunk cache, the tile sheet, the theme
-  UI/                           namespace CityLimits.UI: the HUD, the tool palette, the budget panel
+  UI/                           namespace CityLimits.UI: the HUD, the tool palette, the budget panel, the overview map
   Assets/                       the tile sheet, the tool icons, the logo, and the built-in scenarios (Scenarios/*.json), copied to the output folder
 CityLimits.Core/              engine-free library: the world and the simulation, no Raylib
   CityLimits.Core.csproj        the project file; it must never reference Raylib-cs
@@ -272,6 +272,17 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   a frame, takes no other input, and gets its speed back when the panel
   closes, with Continue, Escape, Enter, or B. The funds show red below
   zero.
+- **The overview map.** As in Micropolis, `UI/OverviewMap.cs` shows the
+  whole city small in the top-right corner, two pixels a tile, scaled
+  down for a bigger map, with the main view outlined; a click or a drag
+  on it moves the view there. A row of buttons under it switches it
+  between the city, power (a building lit or dark by what its centre
+  last had, and the lines grey), fire and police coverage, land value,
+  and population density, each map in four bands of its own colours over
+  the city dimmed. It reads the simulation and never writes it, and it is
+  drawn into its own texture, redrawn when a tile changes, the mode
+  changes, or a count begins; without the texture it is drawn straight to
+  the screen. Clicks on it never reach the map.
 - **The tools.** Twelve tools sit in the palette down the left, laid out as
   Micropolis' is (`UI/ToolPaletteView.cs`): the name and price of the tool
   under the pointer, or of the held one, then centred rows of icon
