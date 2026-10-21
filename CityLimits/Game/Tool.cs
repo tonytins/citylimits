@@ -35,6 +35,9 @@ public enum Tool
 
     /// <summary>Build a police station.</summary>
     PoliceStation,
+
+    /// <summary>Lay parks.</summary>
+    Park,
 }
 
 /// <summary>The work each tool asks the city to do.</summary>
@@ -53,6 +56,7 @@ public static class ToolActions
         Tool.PowerLine => BuildAction.PowerLine,
         Tool.FireStation => BuildAction.FireStation,
         Tool.PoliceStation => BuildAction.PoliceStation,
+        Tool.Park => BuildAction.Park,
         _ => null,
     };
 }

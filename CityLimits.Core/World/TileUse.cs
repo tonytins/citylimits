@@ -38,4 +38,7 @@ public enum TileUse
 
     /// <summary>The tile is part of a police station, 3 by 3.</summary>
     PoliceStation,
+
+    /// <summary>The tile is a park: woods, or a fountain.</summary>
+    Park,
 }

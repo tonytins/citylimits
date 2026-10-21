@@ -159,6 +159,15 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   than 60 people have no fire station or no police station, and when
   either is funded below 70%. An unpowered station blinks the bolt, as a
   zone does.
+- **Parks.** A park is $10 a tile, laid as a rectangle on clear ground or
+  rubble (which it clears for $1 more), never on trees, water, or
+  anything built, as in Micropolis; the bulldozer clears it for $1. Each
+  tile is one of four wooded drawings or, one time in five, a fountain,
+  chosen from the tile's place (`Parks.LookAt`), a liberty the owner
+  chose so the preview shows what is built and building never spends the
+  simulation's randomness. For land value, a wooded park counts as trees
+  (+15 to the blocks around it, and not something built); a fountain
+  counts as built, as in Micropolis.
 - **The power grid.** As in Micropolis (`PowerGrid`), the scan counts the
   plants it passes and gives each zone the power the last trace left it,
   kept on its centre (`TileState.Powered`); a plant always has power.
@@ -203,7 +212,7 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
 - **The city maps.** `CityMaps` holds land value and population density
   on 2 by 2 tile blocks, as Micropolis does. Land value (phase 12) is, for
   a block with something built on it, 34 less the distance to the city's
-  centre of mass, times four, plus 15 for each tree or water tile in the
+  centre of mass, times four, plus 15 for each tree, wooded park, or water tile in the
   4 by 4 area around it, smoothed, from 1 to 250. Population density
   (phase 14) spreads each zone's population, smoothed three times, and
   sets the centre of mass and the commercial rate.
@@ -253,15 +262,16 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   a frame, takes no other input, and gets its speed back when the panel
   closes, with Continue, Escape, Enter, or B. The funds show red below
   zero.
-- **The tools.** Eleven tools sit in the palette down the left, laid out as
+- **The tools.** Twelve tools sit in the palette down the left, laid out as
   Micropolis' is (`UI/ToolPaletteView.cs`): the name and price of the tool
   under the pointer, or of the held one, then centred rows of icon
   buttons in Micropolis' order, leaving out the tools CityLimits doesn't
   have yet. The held tool shows its highlighted icon, and a missing icon
   falls back to a box with a short label. The number keys pick tools too:
   inspect, road, residential, commercial, industrial, bulldozer, coal
-  plant, nuclear plant, and power line, 1 to 9; the fire and police
-  stations, either side of inspect, are picked from the palette. A tool is used in a stroke, as
+  plant, nuclear plant, and power line, 1 to 9; the park, beside the
+  bulldozer and the power line, and the fire and police stations, either
+  side of inspect, are picked from the palette. A tool is used in a stroke, as
   in Micropolis: pressing on the map starts a `BuildStroke`, dragging
   stretches it (a road or a power line runs in one straight line, a plant or a station is one building
   that follows the pointer, and the other tools cover a rectangle), and the map shows a preview of the tiles it would change
@@ -272,7 +282,7 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
 - **The money.** The city starts with a treasury, and the prices are
   Micropolis' (`Economy/TileCosts.cs`, and the zones' in their
   `ZoneSpec`, `PlantSpec`, and `ServiceSpec`): $10 a road tile, $50 a bridge tile, $5 a power line tile,
-  $25 under water, $100 a zone, $500 a fire or police station, $3,000 a
+  $25 under water, $10 a park tile, $100 a zone, $500 a fire or police station, $3,000 a
   coal power plant, $5,000 a nuclear power plant, $1 more for each tile of trees or rubble a tool
   clears first, and $1 for each tile the bulldozer clears or each zone or
   plant it knocks down. Nothing is refunded. The palette and the HUD show the
@@ -286,7 +296,7 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   to make a road-and-line tile. Zones are laid as a grid, the first centred where the stroke
   started; a zone goes down whole or not at all, on ground with nothing on
   it. A plant or a station is placed the same way, one at a time, centred on the
-  pointer. The bulldozer clears roads, bridges, power lines, trees, and rubble tile by tile,
+  pointer. Parks are laid as a rectangle. The bulldozer clears roads, bridges, power lines, parks, trees, and rubble tile by tile,
   but a zone, a plant, or a station only through its centre, which turns all its tiles
   to rubble. Clicking the palette picks a tool, and never builds on the map
   under it.
@@ -346,7 +356,7 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   and no project. It holds the parser, the dispatcher, the default
   command, the strict option reader, and the exit codes.
 - **The tests.** `CityLimits.Tests` uses xUnit 2 with the VSTest runner
-  and coverlet, and holds 462 tests over the generator, the terrain edges, the power plants, lines, and grid, the budget, the stations and their coverage, the map, the
+  and coverlet, and holds 470 tests over the generator, the terrain edges, the power plants, lines, and grid, the budget, the stations and their coverage, parks, the map, the
   calendar, the clock, the simulation, the settings, the tile rules, the
   build actions, the road network, the treasury, the scenario loader and
   runner, every built-in scenario, the definitions and the mod loader, zone growth, the census and demand, trips, growth and the city maps,

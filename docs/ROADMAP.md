@@ -1,6 +1,6 @@
 # CityLimits roadmap
 
-> **Last reviewed:** 2026-10-20 · **Last updated:** 2026-10-20 · **Change:** minor (Joffburg J3a: police and fire stations) · **Stage:** pre-alpha
+> **Last reviewed:** 2026-10-20 · **Last updated:** 2026-10-20 · **Change:** minor (Joffburg J3b: parks) · **Stage:** pre-alpha
 
 Forward-looking: where CityLimits stands, what blocks the next milestone,
 and what comes next. Verified status and evidence are in the
@@ -62,8 +62,8 @@ blackouts, and the palette is laid out as Micropolis'. J2, taxes and the
 budget, is complete: the city collects taxes and pays its upkeep each
 year, the tax rate moves demand, and the budget panel opens by itself
 when spending outpaces income. J3, services, is under way: police and
-fire stations and their coverage are in; parks, and hospitals and
-churches, come next.
+fire stations, their coverage, and parks are in; hospitals and churches
+come next.
 
 ## Milestones
 
@@ -76,18 +76,18 @@ churches, come next.
 | Neat Map: Terrain and the tile grid | 100% | 0 | Meets the baseline: Micropolis' terrain on its 120 by 100 map, with rivers, lakes, an island one map in ten, and woods, and shores and wood edges drawn from the sheet |
 | Line City: Roads and zoning | 100% | 0 | Meets the baseline: strokes with a preview, straight roads and bridges, 3 by 3 zones laid as a grid and served from their edges, and the $1 bulldozer, at Micropolis' prices |
 | Kowloon: Simulation core | 100% | 0 | Time runs as in Micropolis: the 16-phase cycle, the 48ths-of-a-year calendar, and its pace. Scenarios run from files and from the command line. Zones grow and decline one by one, with population, demand, and trips. The heart of the game |
-| Joffburg: Services and economy | 40% | 8–14 | Under way: power works as in Micropolis, from plants through lines and zones, with brownouts and blackouts, and the palette is Micropolis'. Taxes, the budget, services, and the panels are left |
+| Joffburg: Services and economy | 60% | 5–10 | Under way: power works as in Micropolis, from plants through lines and zones, with brownouts and blackouts, and the palette is Micropolis'. Taxes, the budget, services, and the panels are left |
 | Radial: Traffic and commuting | 0% | 12–20 | Nothing yet |
 | Deadwood: Land value, pollution, disasters | 0% | 12–20 | Nothing yet |
 | Happy Isle: Player-facing game | 0% | 15–25 | Nothing yet |
 | Yokohama: Polish and release | 0% | 10–20 | Nothing yet |
-| | **Total** | **≈ 57–99** | |
+| | **Total** | **≈ 54–95** | |
 
 ## Upcoming work, ranked
 
 | Rank | Work | Milestone | Estimate (h) |
 |---|---|---|---|
-| 1 | Police and fire stations and parks, with their coverage maps | Joffburg | 4–8 |
+| 1 | Hospitals and churches in residential zones | Joffburg | 1–3 |
 | 2 | A power overlay that shows what the power scan decided | Joffburg | 2–4 |
 
 Alpha needs a city that can be saved (UI-5); Joffburg's budget is in.
@@ -204,9 +204,10 @@ Alpha needs a city that can be saved (UI-5); Joffburg's budget is in.
 - [x] Taxes, a budget, and a deficit the player has to answer.
   `CityBudget` and `UI/BudgetPanel.cs`; the budget is always automatic,
   and its panel opens by itself on a deficit or a cut.
-- [ ] Services: police, fire, and parks, with a coverage effect. Stations
-  and their coverage maps are in (`ServiceCoverage`); parks are not, and
-  coverage acts on crime and fires, which come with Deadwood.
+- [x] Services: police, fire, and parks, with a coverage effect. Stations
+  and their coverage maps (`ServiceCoverage`) and parks (`Parks`) are in;
+  as in Micropolis, coverage acts on crime and fires, which come with
+  Deadwood, and parks raise land value.
 - [ ] A budget panel and a power overlay that show what the simulation
   actually thinks.
 
@@ -290,6 +291,7 @@ right, cut scope inside Radial and Deadwood first, not inside Kowloon.
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-21 | minor | Joffburg, phase J3b: parks, as in Micropolis: $10 a tile, laid as a rectangle on clear ground or rubble, never trees; woods or, one time in five, a fountain, chosen from the tile's place as the owner chose. A wooded park adds to land value as trees do; a fountain counts as built. The services checklist item is done; Joffburg is at 60%. 470 tests. |
 | 2026-10-21 | minor | Joffburg, phase J3a: police and fire stations, as in Micropolis: 3 by 3, $500 and $100 a year, a `ServiceSpec` a mod can change in `services.json`. Each adds its funding effect to its 8 by 8 block, halved without power or a road, and the maps are smoothed at phases 13 and 15; coverage acts on crime and fires in Deadwood. The budget pays their upkeep, and the city asks for stations past 60 people and for their funding below 70%. A plant now has power from the moment it is placed, and an unpowered station blinks the bolt. The owner chose parks' look by position and fixing Micropolis' hospital-then-church quirk. 462 tests. |
 | 2026-10-21 | minor | Joffburg, phase J2b, and with it J2, taxes and the budget, is complete: the budget panel shows the year as it stands, last year, and the tax rate and funding with buttons to change them. It opens by itself when a year's upkeep outran its taxes or funding was cut, saying why, and with B or a click on the funds; the game pauses while it is open. The funds show red below zero. Joffburg is at 40%; 444 tests. |
 | 2026-10-21 | minor | Joffburg, phase J2a: taxes and upkeep, as in Micropolis, with its numbers taken by the owner's leave. Each count estimates the year and sets a 48th aside; the year is settled into the treasury, which can go below zero. Taxes come from population and average land value at the tax rate; roads cost 0.7 a tile, a bridge five tiles, and stations $100, at their funding levels, roads paid first. The tax rate pushes demand, underfunded roads crumble, and the city warns of high taxes and underfunded roads. The owner chose a panel that pauses the game, opens itself on a deficit or a cut, and opens with B or the funds. 443 tests. |

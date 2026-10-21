@@ -18,6 +18,7 @@ tools/icnuc.png      nuclear power plant
 tools/icwire.png     power line
 tools/icfire.png     fire station
 tools/icpol.png      police station
+tools/icpark.png     park
 Scenarios/           the built-in scenarios, one JSON file each, named for its id
 ```
 
@@ -132,6 +133,10 @@ down over a line running across.
 
 A zone or a station with no power blinks tile 827, a lightning bolt, over its centre.
 It is drawn over the map each frame, not into it.
+
+A park is one of tiles 40 to 43, four wooded drawings, or 840, a fountain
+(841 to 843 are its animation, not used yet), chosen from the tile's
+place by `Parks.LookAt`.
 
 A fire station is tiles 761 to 769 and a police station 770 to 778, each
 3 by 3, its nine tiles read across and then down, so a tile's drawing is

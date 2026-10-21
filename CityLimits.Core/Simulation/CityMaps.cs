@@ -75,8 +75,9 @@ public sealed class CityMaps
     /// <summary>
     /// Works land value out again: for each 2 by 2 block with something built on it, closeness to
     /// the city's centre plus the worth of the terrain around it, from 1 to <see cref="MaxLandValue"/>;
-    /// a block with nothing built on it has none. The terrain's worth is the trees and water nearby,
-    /// as of the last time land value was worked out, as Micropolis has it.
+    /// a block with nothing built on it has none. The terrain's worth is the trees, wooded parks, and
+    /// water nearby, as of the last time land value was worked out, as Micropolis has it; a
+    /// wooded park counts as trees, not as something built, and a fountain counts as built.
     /// </summary>
     public void UpdateLandValue()
     {
@@ -93,11 +94,14 @@ public sealed class CityMaps
                     for (var x = blockX * 2; x <= (blockX * 2) + 1; x++)
                     {
                         var state = _map.StateAtOrDefault(x, y, new TileState(TileKind.Grass));
-                        if (state.Use != TileUse.None)
+                        var natural = state.Use == TileUse.None
+                            ? state.Kind is TileKind.Trees or TileKind.Water
+                            : state.Use == TileUse.Park && Parks.IsWoodedAt(x, y);
+                        if (state.Use != TileUse.None && !natural)
                         {
                             built = true;
                         }
-                        else if (state.Kind is TileKind.Trees or TileKind.Water)
+                        else if (natural)
                         {
                             _terrainScratch[((blockY / 2) * _quarterWidth) + (blockX / 2)] += TerrainPerTile;
                         }

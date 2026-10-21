@@ -101,14 +101,14 @@ public sealed class ScenarioRunner
     /// <summary>
     /// What stands on a map: road tiles, bridges among them, zones of each kind, developed zones,
     /// which are those with any population, houses included, power plants of each kind, power
-    /// line tiles, those under water or under a road included, and stations of each kind.
+    /// line tiles, those under water or under a road included, stations of each kind, and park tiles.
     /// </summary>
     public static CityCounts Count(TileMap map, CityDefinitions definitions)
     {
         ArgumentNullException.ThrowIfNull(map);
         ArgumentNullException.ThrowIfNull(definitions);
 
-        int road = 0, bridge = 0, residential = 0, commercial = 0, industrial = 0, developed = 0, coal = 0, nuclear = 0, lines = 0, fire = 0, police = 0;
+        int road = 0, bridge = 0, residential = 0, commercial = 0, industrial = 0, developed = 0, coal = 0, nuclear = 0, lines = 0, fire = 0, police = 0, parks = 0;
         for (var y = 0; y < map.Height; y++)
         {
             for (var x = 0; x < map.Width; x++)
@@ -121,6 +121,7 @@ public sealed class ScenarioRunner
                 }
 
                 lines += state.HasPowerLine ? 1 : 0;
+                parks += state.Use == TileUse.Park ? 1 : 0;
                 if (state.IsBuildingCenter)
                 {
                     coal += state.Use == TileUse.CoalPowerPlant ? 1 : 0;
@@ -141,7 +142,7 @@ public sealed class ScenarioRunner
             }
         }
 
-        return new CityCounts(road, bridge, residential, commercial, industrial, developed, coal, nuclear, lines, fire, police);
+        return new CityCounts(road, bridge, residential, commercial, industrial, developed, coal, nuclear, lines, fire, police, parks);
     }
 
     // The stroke is planned first, for what it would skip and why, then applied as the tool

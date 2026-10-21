@@ -32,4 +32,7 @@ public enum BuildAction
 
     /// <summary>Build a police station, centred on the tile.</summary>
     PoliceStation,
+
+    /// <summary>Lay a park on each tile.</summary>
+    Park,
 }

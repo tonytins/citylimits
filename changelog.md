@@ -1,5 +1,15 @@
 # CityLimits Changelog
 
+## 0.2.108
+
+Parks, as in Micropolis: $10 a tile, laid as a rectangle from the
+palette's first row, on clear ground or rubble but not on trees. Most
+park tiles are woods, which make the land around them worth more as
+trees do; about one in five is a fountain. What you see in the preview is
+what gets built.
+
+Scenarios can lay and count parks.
+
 ## 0.2.107
 
 Police and fire stations, as in Micropolis: $500 each to build and $100 a

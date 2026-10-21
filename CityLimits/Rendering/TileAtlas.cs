@@ -45,6 +45,12 @@ public static class TileAtlas
     /// <summary>A road running down over a power line running across.</summary>
     private const int RoadDownPowerLineTile = 78;
 
+    /// <summary>The first of the four wooded park drawings; the look a tile's place picks is added to it.</summary>
+    private const int FirstWoodedParkTile = 40;
+
+    /// <summary>A park with a fountain.</summary>
+    private const int FountainTile = 840;
+
     /// <summary>The lightning bolt that blinks over a zone with no power.</summary>
     public const int LightningBoltTile = 827;
 
@@ -208,6 +214,9 @@ public static class TileAtlas
                 return down && !across ? UnderwaterLineDownTile : UnderwaterLineAcrossTile;
             case TileUse.PowerLine:
                 return PowerLineTiles[(int)lines & 0b1111];
+            case TileUse.Park:
+                var look = Parks.LookAt(tileX, tileY);
+                return look == Parks.FountainLook ? FountainTile : FirstWoodedParkTile + look;
         }
 
         if (state.IsBridge)

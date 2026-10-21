@@ -67,6 +67,9 @@ public sealed class CityBuilder
             case BuildAction.NuclearPowerPlant:
                 PlanFootprint(bounds.X, bounds.Y, stroke.Use, _definitions.Plant(stroke.Use).Price, plan);
                 break;
+            case BuildAction.Park:
+                PlanParks(bounds, plan);
+                break;
             case BuildAction.FireStation:
             case BuildAction.PoliceStation:
                 PlanFootprint(bounds.X, bounds.Y, stroke.Use, _definitions.Service(stroke.Use).Price, plan);
@@ -283,6 +286,31 @@ public sealed class CityBuilder
         _ when (road & (RoadConnections.East | RoadConnections.West)) == 0 => TileUse.RoadDownPowerLine,
         _ => null,
     };
+
+    // As in Micropolis, a park goes only on clear ground or rubble, which it clears for $1 more;
+    // trees, water, and anything built refuse it.
+    private void PlanParks(TileRect bounds, BuildPlan plan)
+    {
+        for (var y = bounds.Y; y < bounds.Y + bounds.Height; y++)
+        {
+            for (var x = bounds.X; x < bounds.X + bounds.Width; x++)
+            {
+                var state = _map.StateAt(x, y);
+                if (state.Use == TileUse.Park)
+                {
+                    plan.Skip(BuildRefusal.AlreadyDone);
+                }
+                else if (state.Use != TileUse.None || state.Kind is not (TileKind.Grass or TileKind.Rubble))
+                {
+                    plan.Skip(BuildRefusal.CannotBuildHere);
+                }
+                else
+                {
+                    plan.Change(x, y, new TileState(TileKind.Grass, TileUse.Park), TileCosts.Park + ClearingCost(state));
+                }
+            }
+        }
+    }
 
     // Zones are laid as a grid, each one going down whole or not at all.
     private void PlanZones(TileRect bounds, TileUse use, BuildPlan plan)

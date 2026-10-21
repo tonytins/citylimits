@@ -170,6 +170,7 @@ public sealed class Hud
         Tool.PowerLine => "power line",
         Tool.FireStation => "fire station",
         Tool.PoliceStation => "police station",
+        Tool.Park => "park",
         _ => "inspect",
     };
 }

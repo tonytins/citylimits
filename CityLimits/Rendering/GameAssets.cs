@@ -27,6 +27,7 @@ public sealed class GameAssets : IDisposable
         (Tool.PowerLine, "icwire.png"),
         (Tool.FireStation, "icfire.png"),
         (Tool.PoliceStation, "icpol.png"),
+        (Tool.Park, "icpark.png"),
     ];
 
     // Each icon's highlighted version, drawn while its tool is held, is beside it with "hi" on its name.

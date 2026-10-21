@@ -36,6 +36,7 @@ public static class TileInfo
         TileUse.RoadAcrossPowerLine or TileUse.RoadDownPowerLine => "Road and power line",
         TileUse.FireStation => "Fire station",
         TileUse.PoliceStation => "Police station",
+        TileUse.Park => "Park",
         _ => "Empty",
     };
 
@@ -52,6 +53,7 @@ public static class TileInfo
         TileUse.RoadAcrossPowerLine or TileUse.RoadDownPowerLine => "road and line",
         TileUse.FireStation => "fire station",
         TileUse.PoliceStation => "police station",
+        TileUse.Park => "park",
         _ => "empty",
     };
 
@@ -66,6 +68,7 @@ public static class TileInfo
         TileUse.Residential or TileUse.Commercial or TileUse.Industrial when state.Development == 0 => "not developed yet",
         TileUse.Residential or TileUse.Commercial or TileUse.Industrial => $"developed to level {state.Development}",
         TileUse.CoalPowerPlant or TileUse.NuclearPowerPlant or TileUse.FireStation or TileUse.PoliceStation => "bulldoze its centre to clear it",
+        TileUse.Park => "the bulldozer clears it for $1",
         TileUse.PowerLine when state.Kind == TileKind.Water => "laid under water",
         TileUse.PowerLine => "strung on poles",
         TileUse.RoadAcrossPowerLine or TileUse.RoadDownPowerLine => "carries traffic across the line",
@@ -101,6 +104,11 @@ public static class TileInfo
         ArgumentNullException.ThrowIfNull(definitions);
 
         var state = map.StateAt(x, y);
+        if (state.Use == TileUse.Park)
+        {
+            return Parks.IsWoodedAt(x, y) ? "Park - woods that make the land around them worth more" : "Park - a fountain";
+        }
+
         if (!state.IsZoned)
         {
             return Describe(state, definitions);

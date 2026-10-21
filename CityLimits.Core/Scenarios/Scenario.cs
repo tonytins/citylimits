@@ -90,6 +90,9 @@ public enum CountSubject
 
     /// <summary>Police stations, by their centres.</summary>
     PoliceStation,
+
+    /// <summary>Park tiles.</summary>
+    Park,
 }
 
 /// <summary>
