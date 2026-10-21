@@ -2,7 +2,7 @@ namespace CityLimits.Core.World;
 
 /// <summary>
 /// Everything a tile knows about itself: its ground, its use, which part of a zone or plant it
-/// is, and how its zone has grown. As in Micropolis, a zone's building is kept on its centre tile: its
+/// is, how its zone has grown, and whether it has power. As in Micropolis, a zone's building is kept on its centre tile: its
 /// development level and its land-value class. A residential zone with no building yet grows
 /// single houses instead, and each house is kept on the outer tile it stands on.
 /// </summary>
@@ -32,7 +32,8 @@ public readonly struct TileState : IEquatable<TileState>
         int development = 0,
         int? zonePart = null,
         int valueClass = 0,
-        int house = 0)
+        int house = 0,
+        bool powered = false)
     {
         var size = Footprint.SizeOf(use);
         var part = zonePart ?? Footprint.CenterPart(size);
@@ -55,6 +56,9 @@ public readonly struct TileState : IEquatable<TileState>
         Development = zoned ? development : 0;
         ValueClass = zoned ? valueClass : 0;
         House = zoned && part != ZoneLayout.CenterPart ? house : 0;
+
+        // As in Micropolis, a zone or plant keeps its power on its centre.
+        Powered = powered && size > 1 && part == Footprint.CenterPart(size);
     }
 
     /// <summary>The ground the tile stands on.</summary>
@@ -80,6 +84,12 @@ public readonly struct TileState : IEquatable<TileState>
     /// 4 the centre, and 0 to 15 for a plant, with 5 the centre. Any other tile is part 0.
     /// </summary>
     public int ZonePart { get; }
+
+    /// <summary>
+    /// Whether the zone or plant this tile is the centre of had power when the scan last
+    /// reached it. Only a centre keeps it; any other tile is never powered.
+    /// </summary>
+    public bool Powered { get; }
 
     /// <summary>Tells whether the tile carries a zone.</summary>
     public bool IsZoned => TileRules.IsZone(Use);
@@ -114,16 +124,16 @@ public readonly struct TileState : IEquatable<TileState>
     /// <inheritdoc />
     public bool Equals(TileState other) =>
         Kind == other.Kind && Use == other.Use && Development == other.Development &&
-        ZonePart == other.ZonePart && ValueClass == other.ValueClass && House == other.House;
+        ZonePart == other.ZonePart && ValueClass == other.ValueClass && House == other.House && Powered == other.Powered;
 
     /// <inheritdoc />
     public override bool Equals(object? obj) => obj is TileState other && Equals(other);
 
     /// <inheritdoc />
-    public override int GetHashCode() => HashCode.Combine(Kind, Use, Development, ZonePart, ValueClass, House);
+    public override int GetHashCode() => HashCode.Combine(Kind, Use, Development, ZonePart, ValueClass, House, Powered);
 
     /// <inheritdoc />
     public override string ToString() => IsZoned
-        ? $"{Kind} {Use} {Development} part {ZonePart} class {ValueClass} house {House}"
-        : HasFootprint ? $"{Kind} {Use} part {ZonePart}" : $"{Kind} {Use}";
+        ? $"{Kind} {Use} {Development} part {ZonePart} class {ValueClass} house {House}{(Powered ? " powered" : "")}"
+        : HasFootprint ? $"{Kind} {Use} part {ZonePart}{(Powered ? " powered" : "")}" : $"{Kind} {Use}";
 }

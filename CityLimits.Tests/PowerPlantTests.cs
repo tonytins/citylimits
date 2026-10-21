@@ -1,3 +1,4 @@
+using CityLimits.Core.Definitions;
 using CityLimits.Core.Economy;
 using CityLimits.Core.Scenarios;
 using CityLimits.Core.World;
@@ -6,6 +7,8 @@ namespace CityLimits.Tests;
 
 public class PowerPlantTests
 {
+    private static readonly int CoalPrice = CityDefinitions.Base.Plant(TileUse.CoalPowerPlant).Price;
+
     private static (TileMap Map, Treasury Treasury, CityBuilder Builder) NewCity(int funds = 10_000)
     {
         var map = TileMap.FromTerrain(9, 9, new TileKind[81]);
@@ -21,8 +24,8 @@ public class PowerPlantTests
     }
 
     [Theory]
-    [InlineData(BuildAction.CoalPowerPlant, TileUse.CoalPowerPlant, TileCosts.CoalPowerPlant)]
-    [InlineData(BuildAction.NuclearPowerPlant, TileUse.NuclearPowerPlant, TileCosts.NuclearPowerPlant)]
+    [InlineData(BuildAction.CoalPowerPlant, TileUse.CoalPowerPlant, 3000)]
+    [InlineData(BuildAction.NuclearPowerPlant, TileUse.NuclearPowerPlant, 5000)]
     public void APlantIsFourByFourAroundACentreOneTileInFromItsCorner(BuildAction action, TileUse use, int price)
     {
         var city = NewCity();
@@ -50,10 +53,11 @@ public class PowerPlantTests
     }
 
     [Fact]
-    public void ThePricesAreMicropolis()
+    public void ThePricesAndCapacitiesAreMicropolis()
     {
-        Assert.Equal(3000, TileCosts.CoalPowerPlant);
-        Assert.Equal(5000, TileCosts.NuclearPowerPlant);
+        Assert.Equal(new PlantSpec("coal", TileUse.CoalPowerPlant, "Coal power plant", 3000, 700), CityDefinitions.Base.Plant(TileUse.CoalPowerPlant));
+        Assert.Equal(new PlantSpec("nuclear", TileUse.NuclearPowerPlant, "Nuclear power plant", 5000, 2000), CityDefinitions.Base.Plant(TileUse.NuclearPowerPlant));
+        Assert.Throws<ArgumentOutOfRangeException>(() => CityDefinitions.Base.Plant(TileUse.Residential));
     }
 
     [Fact]
@@ -86,7 +90,7 @@ public class PowerPlantTests
 
         city.Builder.Apply(BuildAction.CoalPowerPlant, 3, 3);
 
-        Assert.Equal(10_000 - TileCosts.CoalPowerPlant - (2 * TileCosts.AutoClear), city.Treasury.Funds);
+        Assert.Equal(10_000 - CoalPrice - (2 * TileCosts.AutoClear), city.Treasury.Funds);
         Assert.Equal(TileKind.Grass, city.Map.StateAt(2, 2).Kind);
     }
 
@@ -115,7 +119,7 @@ public class PowerPlantTests
 
         Assert.Equal(BuildStatus.Unchanged, result.Status);
         Assert.Equal(BuildRefusal.AlreadyDone, result.Reason);
-        Assert.Equal(10_000 - TileCosts.CoalPowerPlant, city.Treasury.Funds);
+        Assert.Equal(10_000 - CoalPrice, city.Treasury.Funds);
     }
 
     [Fact]
@@ -151,7 +155,7 @@ public class PowerPlantTests
 
         Assert.Equal(BuildStatus.Built, result.Status);
         Assert.Equal(16, result.TilesChanged);
-        Assert.Equal(10_000 - TileCosts.CoalPowerPlant - TileCosts.Bulldoze, city.Treasury.Funds);
+        Assert.Equal(10_000 - CoalPrice - TileCosts.Bulldoze, city.Treasury.Funds);
         for (var y = 2; y <= 5; y++)
         {
             for (var x = 2; x <= 5; x++)
@@ -177,7 +181,7 @@ public class PowerPlantTests
         var city = NewCity();
         city.Builder.Apply(BuildAction.CoalPowerPlant, 3, 3);
 
-        var counts = ScenarioRunner.Count(city.Map, Core.Definitions.CityDefinitions.Base);
+        var counts = ScenarioRunner.Count(city.Map, CityDefinitions.Base);
 
         Assert.Equal(new CityCounts(0, 0, 0, 0, 0, 0, CoalPowerPlant: 1, NuclearPowerPlant: 0), counts);
     }
@@ -190,6 +194,6 @@ public class PowerPlantTests
 
         Assert.Equal(
             "Nuclear power plant - bulldoze its centre to clear it",
-            TileInfo.Describe(city.Map, 5, 2, Core.Definitions.CityDefinitions.Base));
+            TileInfo.Describe(city.Map, 5, 2, CityDefinitions.Base));
     }
 }

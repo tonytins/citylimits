@@ -62,10 +62,10 @@ public sealed class CityBuilder
                 PlanBulldozer(bounds, plan);
                 break;
             case BuildAction.CoalPowerPlant:
-                PlanFootprint(bounds.X, bounds.Y, stroke.Use, TileCosts.CoalPowerPlant, plan);
+                PlanFootprint(bounds.X, bounds.Y, stroke.Use, _definitions.Plant(stroke.Use).Price, plan);
                 break;
             case BuildAction.NuclearPowerPlant:
-                PlanFootprint(bounds.X, bounds.Y, stroke.Use, TileCosts.NuclearPowerPlant, plan);
+                PlanFootprint(bounds.X, bounds.Y, stroke.Use, _definitions.Plant(stroke.Use).Price, plan);
                 break;
             default:
                 PlanZones(bounds, stroke.Use, plan);

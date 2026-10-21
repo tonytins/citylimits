@@ -54,6 +54,9 @@ public static class Theme
     /// <summary>The color of an industrial zone.</summary>
     public static readonly Color Industrial = new() { R = 198, G = 156, B = 58, A = 255 };
 
+    /// <summary>The color that marks a zone with no power, when the tile sheet could not be loaded.</summary>
+    public static readonly Color Unpowered = new() { R = 250, G = 220, B = 40, A = 255 };
+
     /// <summary>The color of a power line, when the tile sheet could not be loaded.</summary>
     public static readonly Color PowerLine = new() { R = 210, G = 190, B = 80, A = 255 };
 

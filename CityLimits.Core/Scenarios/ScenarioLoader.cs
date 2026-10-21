@@ -199,7 +199,7 @@ public static class ScenarioLoader
 
         var tick = InRange(Required(check.Tick, $"{at}.tick"), 0, ticks, $"{at}.tick");
         var tileConditions = check.Kind is not null || check.Use is not null || check.Development is not null ||
-            check.DevelopmentAtLeast is not null || check.DevelopmentAtMost is not null || check.Served is not null;
+            check.DevelopmentAtLeast is not null || check.DevelopmentAtMost is not null || check.Served is not null || check.Powered is not null;
         var fundsConditions = check.FundsAtLeast is not null || check.FundsAtMost is not null || check.FundsEquals is not null;
         var countConditions = check.EqualTo is not null || check.AtLeast is not null || check.AtMost is not null;
 
@@ -210,7 +210,7 @@ public static class ScenarioLoader
 
         if (check.Tile is not null)
         {
-            Only(tileConditions, fundsConditions || countConditions, at, "a tile check", "kind, use, development, developmentAtLeast, developmentAtMost, or served");
+            Only(tileConditions, fundsConditions || countConditions, at, "a tile check", "kind, use, development, developmentAtLeast, developmentAtMost, served, or powered");
             var (x, y) = Coordinates(check.Tile, $"{at}.tile");
             if (x < 0 || y < 0 || x >= width || y >= height)
             {
@@ -230,6 +230,7 @@ public static class ScenarioLoader
                 DevelopmentAtLeast = Development(check.DevelopmentAtLeast, $"{at}.developmentAtLeast"),
                 DevelopmentAtMost = Development(check.DevelopmentAtMost, $"{at}.developmentAtMost"),
                 Served = check.Served,
+                Powered = check.Powered,
             };
         }
 

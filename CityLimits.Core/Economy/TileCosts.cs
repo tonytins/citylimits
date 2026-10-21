@@ -1,8 +1,9 @@
 namespace CityLimits.Core.Economy;
 
 /// <summary>
-/// What the player pays for roads, bridges, power lines and plants, clearing, and the bulldozer; the prices are Micropolis'.
-/// A zone's price is in its <see cref="Definitions.ZoneSpec"/>, where a mod can change it.
+/// What the player pays for roads, bridges, power lines, clearing, and the bulldozer; the prices are Micropolis'.
+/// A zone's price is in its <see cref="Definitions.ZoneSpec"/> and a plant's in its
+/// <see cref="Definitions.PlantSpec"/>, where a mod can change them.
 /// </summary>
 public static class TileCosts
 {
@@ -23,10 +24,4 @@ public static class TileCosts
 
     /// <summary>What one tile of power line under water costs.</summary>
     public const int UnderwaterPowerLine = 25;
-
-    /// <summary>What a coal power plant costs.</summary>
-    public const int CoalPowerPlant = 3000;
-
-    /// <summary>What a nuclear power plant costs.</summary>
-    public const int NuclearPowerPlant = 5000;
 }

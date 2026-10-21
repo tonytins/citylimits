@@ -101,7 +101,7 @@ simulation is deterministic in. Phase 2 adds goals by date, such as
 {
   "format": 1,
   "name": "Demo town",
-  "description": "A road with a residential, a commercial, and an industrial zone; the industry is knocked down after a year.",
+  "description": "A road with a residential, a commercial, and an industrial zone, powered by a coal plant; the industry is knocked down after a year.",
   "seed": 2000,
   "funds": 20000,
   "ticks": 1536,
@@ -110,15 +110,16 @@ simulation is deterministic in. Phase 2 adds goals by date, such as
     { "tick": 0, "tool": "ZoneResidential", "from": { "x": 35, "y": 51 } },
     { "tick": 0, "tool": "ZoneCommercial", "from": { "x": 38, "y": 51 } },
     { "tick": 0, "tool": "ZoneIndustrial", "from": { "x": 41, "y": 51 } },
+    { "tick": 0, "tool": "CoalPowerPlant", "from": { "x": 35, "y": 47 }, "expect": "Built" },
     { "tick": 768, "tool": "Bulldoze", "from": { "x": 41, "y": 51 }, "expect": "Built" }
   ],
   "checks": [
     { "tick": 1536, "tile": { "x": 35, "y": 51 }, "use": "Residential", "development": 0 },
     { "tick": 1536, "tile": { "x": 38, "y": 51 }, "use": "Commercial", "development": 0 },
     { "tick": 1536, "count": "Developed", "equals": 1 },
-    { "tick": 1536, "tile": { "x": 38, "y": 50 }, "served": true },
+    { "tick": 1536, "tile": { "x": 38, "y": 50 }, "served": true, "powered": true },
     { "tick": 1536, "tile": { "x": 42, "y": 52 }, "kind": "Rubble", "use": "None" },
-    { "tick": 1536, "fundsEquals": 19609 },
+    { "tick": 1536, "fundsEquals": 16609 },
     { "tick": 1536, "count": "Road", "equals": 9 },
     { "tick": 1536, "count": "Industrial", "equals": 0 }
   ]
@@ -193,7 +194,7 @@ past `ticks` is refused when the file is loaded.
 
 | Subject | Conditions |
 |---|---|
-| `tile`: `{ "x", "y" }` | `kind` (a `TileKind`), `use` (a `TileUse`), `development`, `developmentAtLeast`, `developmentAtMost`, `served` (true or false) |
+| `tile`: `{ "x", "y" }` | `kind` (a `TileKind`), `use` (a `TileUse`), `development`, `developmentAtLeast`, `developmentAtMost`, `served` (true or false), `powered` (true or false) |
 | `funds`, no value | `fundsAtLeast`, `fundsAtMost`, `fundsEquals` |
 | `count`: a subject below | `equals`, `atLeast`, `atMost` |
 
@@ -204,6 +205,11 @@ up to its spec's levels, 4 for residential, 5 for commercial, and 4 for
 industrial (`TileMap.ZoneStateAt`); a file may give it from 0 to 5.
 `served` is whether a road lies along the zone's edge (`RoadNetwork.IsZoneServed`). `served` on a tile that isn't
 part of a zone fails, with the reason that the tile has no zone.
+`powered` is whether the tile's zone or plant had power when the scan
+last reached its centre (`TileState.Powered`); a zone is first given
+power on the scan after the first trace, in phase 11, so a check on it
+belongs at tick 32 or later. On a tile that isn't part of a zone or a
+plant it fails, with the reason that the tile has no zone or plant.
 
 | Count | What it counts |
 |---|---|
@@ -250,13 +256,14 @@ or changing the meaning of a field means bumping `format`.
     "tick": 1536,
     "cityTime": 96,
     "date": "1902-01",
-    "funds": 19609,
-    "counts": { "road": 9, "bridge": 0, "residential": 1, "commercial": 1, "industrial": 0, "developed": 1, "coalPowerPlant": 0, "nuclearPowerPlant": 0, "powerLine": 0 }
+    "funds": 16609,
+    "counts": { "road": 9, "bridge": 0, "residential": 1, "commercial": 1, "industrial": 0, "developed": 1, "coalPowerPlant": 1, "nuclearPowerPlant": 0, "powerLine": 0 }
   },
   "actions": [
     { "index": 0, "tick": 0, "tool": "Road", "status": "Built", "tiles": 9, "skipped": {}, "cost": 90, "met": true },
     { "index": 1, "tick": 0, "tool": "ZoneResidential", "status": "Built", "tiles": 9, "skipped": {}, "cost": 100 },
-    { "index": 4, "tick": 768, "tool": "Bulldoze", "status": "Built", "tiles": 9, "skipped": {}, "cost": 1, "met": true }
+    { "index": 4, "tick": 0, "tool": "CoalPowerPlant", "status": "Built", "tiles": 16, "skipped": {}, "cost": 3000, "met": true },
+    { "index": 5, "tick": 768, "tool": "Bulldoze", "status": "Built", "tiles": 9, "skipped": {}, "cost": 1, "met": true }
   ],
   "checks": [
     { "index": 0, "tick": 1536, "passed": true },

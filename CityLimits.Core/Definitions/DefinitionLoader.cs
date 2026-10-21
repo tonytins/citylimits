@@ -23,6 +23,9 @@ public static class DefinitionLoader
     /// <summary>The most population one building level may hold.</summary>
     public const int MaxPopulation = 100_000;
 
+    /// <summary>The most tiles one power plant may power.</summary>
+    public const int MaxCapacity = 1_000_000;
+
     private const int MaxNameLength = 80;
     private const int MaxVersionLength = 32;
     private const int MaxDescriptionLength = 500;
@@ -35,13 +38,20 @@ public static class DefinitionLoader
         ["industrial"] = TileUse.Industrial,
     };
 
+    // The plant ids a definitions file can name, and the use each one is.
+    private static readonly Dictionary<string, TileUse> PlantIds = new(StringComparer.Ordinal)
+    {
+        ["coal"] = TileUse.CoalPowerPlant,
+        ["nuclear"] = TileUse.NuclearPowerPlant,
+    };
+
     private static readonly JsonSerializerOptions Options = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
     };
 
-    /// <summary>Reads the base game's definitions, which must define every zone and every field.</summary>
+    /// <summary>Reads the base game's definitions, which must define every zone and plant, and every field.</summary>
     public static bool TryParseBase(string json, [NotNullWhen(true)] out CityDefinitions? definitions, out string error)
     {
         definitions = null;
@@ -75,7 +85,26 @@ public static class DefinitionLoader
                 throw new InvalidDefinitions($"zones: the base game must define {string.Join(", ", missing)}.");
             }
 
-            definitions = new CityDefinitions(zones.Values, []);
+            var plants = new Dictionary<TileUse, PlantSpec>();
+            var plantEntries = document.Plants ?? throw new InvalidDefinitions("plants: is required.");
+            for (var i = 0; i < plantEntries.Count; i++)
+            {
+                var at = $"plants[{i}]";
+                var entry = plantEntries[i] ?? throw new InvalidDefinitions($"{at}: needs a plant, not null.");
+                var use = Id(PlantIds, entry.Id, at, plants.Keys);
+                var name = Name(entry.Name ?? throw new InvalidDefinitions($"{at}.name: is required."), $"{at}.name");
+                var price = Price(entry.Price ?? throw new InvalidDefinitions($"{at}.price: is required."), $"{at}.price");
+                var capacity = InRange(entry.Capacity ?? throw new InvalidDefinitions($"{at}.capacity: is required."), 1, MaxCapacity, $"{at}.capacity");
+                plants[use] = new PlantSpec(entry.Id!, use, name, price, capacity);
+            }
+
+            var missingPlants = PlantIds.Where(pair => !plants.ContainsKey(pair.Value)).Select(pair => pair.Key).ToList();
+            if (missingPlants.Count > 0)
+            {
+                throw new InvalidDefinitions($"plants: the base game must define {string.Join(", ", missingPlants)}.");
+            }
+
+            definitions = new CityDefinitions(zones.Values, plants.Values, []);
             return true;
         }
         catch (InvalidDefinitions ex)
@@ -94,7 +123,8 @@ public static class DefinitionLoader
     /// <param name="zonesJson">The text of the mod's <c>zones.json</c>, or null when it has none.</param>
     /// <param name="mod">The mod, when it is valid.</param>
     /// <param name="error">What is wrong, and in which file, when it isn't.</param>
-    public static bool TryParseMod(string folderName, string manifestJson, string? zonesJson, [NotNullWhen(true)] out ModDefinitions? mod, out string error)
+    /// <param name="plantsJson">The text of the mod's <c>plants.json</c>, or null when it has none.</param>
+    public static bool TryParseMod(string folderName, string manifestJson, string? zonesJson, [NotNullWhen(true)] out ModDefinitions? mod, out string error, string? plantsJson = null)
     {
         ArgumentNullException.ThrowIfNull(folderName);
         mod = null;
@@ -106,6 +136,7 @@ public static class DefinitionLoader
         }
 
         var zones = new Dictionary<TileUse, ZonePatch>();
+        var plants = new Dictionary<TileUse, PlantPatch>();
         try
         {
             CheckFormat(manifest.Format, "mod.json: format");
@@ -130,7 +161,7 @@ public static class DefinitionLoader
 
             if (zonesJson is not null)
             {
-                if (!TryRead<DefinitionsDocument>(zonesJson, out var document, out error))
+                if (!TryRead<ZonesDocument>(zonesJson, out var document, out error))
                 {
                     error = $"zones.json: {error}";
                     return false;
@@ -158,7 +189,29 @@ public static class DefinitionLoader
                 }
             }
 
-            mod = new ModDefinitions(id, name, version, description, zones);
+            if (plantsJson is not null)
+            {
+                if (!TryRead<PlantsDocument>(plantsJson, out var document, out error))
+                {
+                    error = $"plants.json: {error}";
+                    return false;
+                }
+
+                CheckFormat(document.Format, "plants.json: format");
+                var entries = document.Plants ?? [];
+                for (var i = 0; i < entries.Count; i++)
+                {
+                    var at = $"plants.json: plants[{i}]";
+                    var entry = entries[i] ?? throw new InvalidDefinitions($"{at}: needs a plant, not null.");
+                    var use = Id(PlantIds, entry.Id, at, plants.Keys);
+                    plants[use] = new PlantPatch(
+                        entry.Name is null ? null : Name(entry.Name, $"{at}.name"),
+                        entry.Price is null ? null : Price(entry.Price.Value, $"{at}.price"),
+                        entry.Capacity is null ? null : InRange(entry.Capacity.Value, 1, MaxCapacity, $"{at}.capacity"));
+                }
+            }
+
+            mod = new ModDefinitions(id, name, version, description, zones, plants);
             return true;
         }
         catch (InvalidDefinitions ex)
@@ -212,16 +265,18 @@ public static class DefinitionLoader
         }
     }
 
-    private static TileUse ZoneUse(string? id, string at, IEnumerable<TileUse> seen)
+    private static TileUse ZoneUse(string? id, string at, IEnumerable<TileUse> seen) => Id(ZoneIds, id, at, seen);
+
+    private static TileUse Id(Dictionary<string, TileUse> ids, string? id, string at, IEnumerable<TileUse> seen)
     {
         if (id is null)
         {
             throw new InvalidDefinitions($"{at}.id: is required.");
         }
 
-        if (!ZoneIds.TryGetValue(id, out var use))
+        if (!ids.TryGetValue(id, out var use))
         {
-            throw new InvalidDefinitions($"{at}.id: '{id}' is not one of {string.Join(", ", ZoneIds.Keys)}.");
+            throw new InvalidDefinitions($"{at}.id: '{id}' is not one of {string.Join(", ", ids.Keys)}.");
         }
 
         if (seen.Contains(use))
@@ -327,11 +382,39 @@ public static class DefinitionLoader
     // Reading stops at the first problem. The exception never leaves this class.
     private sealed class InvalidDefinitions(string message) : Exception(message);
 
+    // The base game's definitions hold both lists; a mod keeps each in its own file.
     private sealed class DefinitionsDocument
     {
         public int? Format { get; set; }
 
         public List<ZoneDocument?>? Zones { get; set; }
+
+        public List<PlantDocument?>? Plants { get; set; }
+    }
+
+    private sealed class ZonesDocument
+    {
+        public int? Format { get; set; }
+
+        public List<ZoneDocument?>? Zones { get; set; }
+    }
+
+    private sealed class PlantsDocument
+    {
+        public int? Format { get; set; }
+
+        public List<PlantDocument?>? Plants { get; set; }
+    }
+
+    private sealed class PlantDocument
+    {
+        public string? Id { get; set; }
+
+        public string? Name { get; set; }
+
+        public int? Price { get; set; }
+
+        public int? Capacity { get; set; }
     }
 
     private sealed class ZoneDocument
@@ -379,10 +462,23 @@ public sealed record ZonePatch(string? Name, int? Price, IReadOnlyList<int>? Pop
     };
 }
 
+/// <summary>What a mod changes in one power plant's spec; a field left null keeps the value it had.</summary>
+public sealed record PlantPatch(string? Name, int? Price, int? Capacity)
+{
+    /// <summary>The plant's spec with this mod's changes.</summary>
+    public PlantSpec ApplyTo(PlantSpec plant) => plant with
+    {
+        Name = Name ?? plant.Name,
+        Price = Price ?? plant.Price,
+        Capacity = Capacity ?? plant.Capacity,
+    };
+}
+
 /// <summary>A mod, read and checked: who it is, and what it changes.</summary>
 /// <param name="Id">The mod's id, which is its folder's name.</param>
 /// <param name="Name">The mod's name, as the player sees it.</param>
 /// <param name="Version">The mod's own version, as its author writes it, or null.</param>
 /// <param name="Description">What the mod does, or null.</param>
 /// <param name="Zones">The changes it makes to each zone it names.</param>
-public sealed record ModDefinitions(string Id, string Name, string? Version, string? Description, IReadOnlyDictionary<TileUse, ZonePatch> Zones);
+/// <param name="Plants">The changes it makes to each power plant it names.</param>
+public sealed record ModDefinitions(string Id, string Name, string? Version, string? Description, IReadOnlyDictionary<TileUse, ZonePatch> Zones, IReadOnlyDictionary<TileUse, PlantPatch> Plants);

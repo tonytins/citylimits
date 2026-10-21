@@ -237,6 +237,20 @@ public sealed class ScenarioRunner
             }
         }
 
+        if (check.Powered is { } powered)
+        {
+            if (!state.HasFootprint)
+            {
+                return ($"{tile} powered is {Lower(powered)}", "the tile has no zone or plant");
+            }
+
+            var isPowered = map.ZoneStateAt(check.X, check.Y).Powered;
+            if (isPowered != powered)
+            {
+                return ($"{tile} powered is {Lower(powered)}", Lower(isPowered));
+            }
+        }
+
         return null;
     }
 

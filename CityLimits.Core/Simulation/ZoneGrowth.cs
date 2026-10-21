@@ -6,14 +6,15 @@ namespace CityLimits.Core.Simulation;
 /// What happens to a zone when the scan reaches it, as in Micropolis. A zone with people sometimes
 /// sends a trip out; a zone with no road along its edge declines. Otherwise, now and then, the
 /// city's demand for the zone's kind and the zone's own worth make a score, and a roll against
-/// it decides whether the zone grows a step, declines a step, or stays as it is.
+/// it decides whether the zone grows a step, declines a step, or stays as it is. A zone with no
+/// power scores low enough that it never grows.
 /// </summary>
 /// <remarks>
 /// A residential zone grows single houses until its spec's number, then a building once the
 /// population density around it is high enough; buildings grow and decline a level at a time, in
-/// the land-value class of the moment. Until the systems they come from exist, every zone counts
-/// as powered, pollution is none, and an empty residential zone never becomes a hospital or a
-/// church; in Micropolis that roll does nothing when the city needs neither.
+/// the land-value class of the moment. Until the systems they come from exist, pollution is none,
+/// and an empty residential zone never becomes a hospital or a church; in Micropolis that roll
+/// does nothing when the city needs neither.
 /// </remarks>
 internal sealed class ZoneGrowth
 {
@@ -23,6 +24,9 @@ internal sealed class ZoneGrowth
 
     // The roll a score is measured against runs from -32768 to 32767; this offset makes growth rare.
     private const int RollOffset = 26380;
+
+    // A zone with no power scores this, so it never grows and now and then declines.
+    private const int UnpoweredScore = -500;
 
     // A zone with no road along its edge scores this; industry minds less.
     private const int NoRoadScore = -3000;
@@ -103,7 +107,7 @@ internal sealed class ZoneGrowth
             return;
         }
 
-        var score = _demand.Residential + ResidentialWorth(x, y);
+        var score = center.Powered ? _demand.Residential + ResidentialWorth(x, y) : UnpoweredScore;
         if (Grows(score))
         {
             // Where Micropolis might put a hospital or a church, nothing happens yet.
@@ -137,7 +141,7 @@ internal sealed class ZoneGrowth
             return;
         }
 
-        var score = _demand.Commercial + _maps.CommercialRateAt(x, y);
+        var score = center.Powered ? _demand.Commercial + _maps.CommercialRateAt(x, y) : UnpoweredScore;
         if (trip != TripOutcome.NoDestination && Grows(score))
         {
             // Commerce grows only as far as land value can carry it.
@@ -171,7 +175,7 @@ internal sealed class ZoneGrowth
         }
 
         // Industry cares only for demand; its land-value class is a toss of a coin.
-        var score = _demand.Industrial;
+        var score = center.Powered ? _demand.Industrial : UnpoweredScore;
         if (Grows(score))
         {
             var valueClass = _random.NextInt(0, 2);
@@ -331,7 +335,7 @@ internal sealed class ZoneGrowth
     }
 
     private void SetLevel(int x, int y, TileState center, int level, int valueClass) =>
-        _map.SetState(x, y, new TileState(center.Kind, center.Use, level, valueClass: level > 0 ? valueClass : 0));
+        _map.SetState(x, y, new TileState(center.Kind, center.Use, level, valueClass: level > 0 ? valueClass : 0, powered: center.Powered));
 
     private int RoadsBeside(int x, int y) =>
         (_map.StateAtOrDefault(x, y - 1).IsRoad ? 1 : 0) +

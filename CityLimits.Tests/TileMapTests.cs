@@ -131,10 +131,11 @@ public class TileMapTests
     [Fact]
     public void GrowthReportsTheTilesItDevelops()
     {
-        var map = TileMap.FromTerrain(6, 6, new TileKind[36]);
+        var map = TileMap.FromTerrain(10, 6, new TileKind[60]);
         var simulation = new CityLimits.Core.Simulation.CitySimulation(map, 2000);
         simulation.Builder.Apply(BuildAction.Road, 2, 4);
         simulation.Builder.Apply(BuildAction.ZoneResidential, 2, 2);
+        simulation.Builder.Apply(BuildAction.CoalPowerPlant, 5, 2);
         var changes = new List<(int X, int Y)>();
         map.TileChanged += (x, y) => changes.Add((x, y));
 
@@ -143,9 +144,10 @@ public class TileMapTests
             simulation.Tick();
         }
 
-        // The zone's houses go up on its outer tiles; nothing outside the zone changes.
+        // The zone's houses go up on its outer tiles; outside the zone, only the plant's centre
+        // changes, when the scan first finds it powered.
         Assert.NotEmpty(changes);
-        Assert.All(changes, change => Assert.True(Math.Abs(change.X - 2) <= 1 && Math.Abs(change.Y - 2) <= 1, $"{change} is outside the zone"));
+        Assert.All(changes.Where(change => change != (5, 2)), change => Assert.True(Math.Abs(change.X - 2) <= 1 && Math.Abs(change.Y - 2) <= 1, $"{change} is outside the zone"));
     }
 
     [Fact]

@@ -9,11 +9,13 @@ public class ZoneGrowthTests
 {
     private static readonly ZoneSpec Residential = CityDefinitions.Base.Zone(TileUse.Residential);
 
-    // A zone centred at (4, 4), with a road along its bottom edge on row 6 unless asked not to.
+    // A zone centred at (4, 4), with a road along its bottom edge on row 6 unless asked not to,
+    // and a coal plant against its east side, which powers it.
     private static CitySimulation LoneZone(BuildAction zone, bool road = true, CityDefinitions? definitions = null)
     {
-        var map = TileMap.FromTerrain(9, 9, new TileKind[81]);
+        var map = TileMap.FromTerrain(10, 9, new TileKind[90]);
         var city = new CitySimulation(map, 1, definitions: definitions);
+        city.Builder.Apply(BuildAction.CoalPowerPlant, 7, 3);
         if (road)
         {
             var stroke = new BuildStroke(BuildAction.Road, 2, 6);
@@ -175,9 +177,11 @@ public class ZoneGrowthTests
         var levels = new List<int>();
         city.Map.TileChanged += (x, y) =>
         {
-            if ((x, y) == (4, 4))
+            // The centre also changes when its power does; only its level is recorded.
+            var level = city.Map.StateAt(4, 4).Development;
+            if ((x, y) == (4, 4) && (levels.Count == 0 || levels[^1] != level))
             {
-                levels.Add(city.Map.StateAt(4, 4).Development);
+                levels.Add(level);
             }
         };
 
@@ -196,6 +200,15 @@ public class ZoneGrowthTests
         var road = new BuildStroke(BuildAction.Road, 1, 6);
         road.DragTo(30, 6);
         city.Builder.Apply(road);
+
+        // A nuclear plant, with a line along the zones' tops and another down to the district.
+        city.Builder.Apply(BuildAction.NuclearPowerPlant, 33, 3);
+        foreach (var (fromX, fromY, toX, toY) in new[] { (1, 2, 31, 2), (36, 2, 112, 2), (112, 3, 112, 98) })
+        {
+            var line = new BuildStroke(BuildAction.PowerLine, fromX, fromY);
+            line.DragTo(toX, toY);
+            Assert.Equal(BuildStatus.Built, city.Builder.Apply(line).Status);
+        }
         for (var x = 2; x <= 14; x += 3)
         {
             city.Builder.Apply(BuildAction.ZoneResidential, x, 4);
@@ -244,13 +257,14 @@ public class ZoneGrowthTests
         var city = new CitySimulation(map, 1);
         city.Builder.Apply(BuildAction.ZoneResidential, 4, 4);
 
-        Assert.Equal("Residential zone - not developed yet", TileInfo.Describe(map, 3, 3, city.Definitions));
+        Assert.Equal("Residential zone - not developed yet, no power", TileInfo.Describe(map, 3, 3, city.Definitions));
 
+        map.SetState(4, 4, new TileState(TileKind.Grass, TileUse.Residential, powered: true));
         map.SetState(3, 3, new TileState(TileKind.Grass, TileUse.Residential, zonePart: 0, house: 2));
         map.SetState(5, 5, new TileState(TileKind.Grass, TileUse.Residential, zonePart: 8, house: 5));
         Assert.Equal("Residential zone - 2 houses", TileInfo.Describe(map, 4, 4, city.Definitions));
 
-        map.SetState(4, 4, new TileState(TileKind.Grass, TileUse.Residential, development: 3, valueClass: 2));
+        map.SetState(4, 4, new TileState(TileKind.Grass, TileUse.Residential, development: 3, valueClass: 2, powered: true));
         Assert.Equal("Residential zone - level 3 of 4, population 32", TileInfo.Describe(map, 5, 3, city.Definitions));
     }
 

@@ -44,7 +44,7 @@ public class ScenarioLoaderTests
     {
         Assert.True(ScenarioLoader.TryParse(DemoTown.Json, out var scenario, out var error), error);
         Assert.Equal("Demo town", scenario.Name);
-        Assert.Equal(5, scenario.Actions.Count);
+        Assert.Equal(6, scenario.Actions.Count);
         Assert.Same(DemoTown.Scenario, DemoTown.Scenario);
     }
 
@@ -113,8 +113,8 @@ public class ScenarioLoaderTests
     [Theory]
     [InlineData("""{ "tick": 0, "tile": { "x": 120, "y": 0 }, "use": "Road" }""", "checks[0].tile: (120, 0) is outside the 120 by 100 map.")]
     [InlineData("""{ "tick": 0, "tile": { "x": 1, "y": 1 }, "count": "Road", "equals": 1 }""", "checks[0]: checks one subject, so it can't have both tile and count.")]
-    [InlineData("""{ "tick": 0, "tile": { "x": 1, "y": 1 }, "equals": 1 }""", "checks[0]: a tile check takes only kind, use, development, developmentAtLeast, developmentAtMost, or served.")]
-    [InlineData("""{ "tick": 0, "tile": { "x": 1, "y": 1 } }""", "checks[0]: a tile check needs at least one of kind, use, development, developmentAtLeast, developmentAtMost, or served.")]
+    [InlineData("""{ "tick": 0, "tile": { "x": 1, "y": 1 }, "equals": 1 }""", "checks[0]: a tile check takes only kind, use, development, developmentAtLeast, developmentAtMost, served, or powered.")]
+    [InlineData("""{ "tick": 0, "tile": { "x": 1, "y": 1 } }""", "checks[0]: a tile check needs at least one of kind, use, development, developmentAtLeast, developmentAtMost, served, or powered.")]
     [InlineData("""{ "tick": 0, "count": "Zones", "equals": 1 }""", "checks[0].count: 'Zones' is not one of Road, Bridge, Residential, Commercial, Industrial, Developed, CoalPowerPlant, NuclearPowerPlant, PowerLine.")]
     [InlineData("""{ "tick": 0 }""", "checks[0]: a funds check needs at least one of fundsAtLeast, fundsAtMost, or fundsEquals; or give it a tile or a count.")]
     [InlineData("""{ "tick": 0, "tile": { "x": 1, "y": 1 }, "development": 6 }""", "checks[0].development: needs a number from 0 to 5, not 6.")]

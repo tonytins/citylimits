@@ -1,5 +1,23 @@
 # CityLimits Changelog
 
+## 0.2.103
+
+Power works. Plants send power through lines into zones, and zones pass
+it on to the zones and plants they touch, as in Micropolis. A coal plant
+powers 700 tiles and a nuclear plant 2,000, and every plant on the map
+adds to the total, connected or not. A zone with no power doesn't grow,
+and now and then declines; a lightning bolt blinks over it, and the
+readout says "no power". When the plants can't keep up, the city warns
+of brownouts, and of blackouts when fewer than 7 in 10 zones have power;
+a city of more than 10 zones with no plant is told it needs one.
+
+Every built-in scenario and the headless demo town now build a coal plant
+first. The headless log shows the tiles powered each month, and the
+city's messages.
+
+Mods can change a power plant's name, price, and capacity in a
+`plants.json`. Scenario tile checks can ask whether a zone is `powered`.
+
 ## 0.2.102
 
 Power lines. Pick the line from the palette (key 9) and drag it like a

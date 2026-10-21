@@ -23,6 +23,7 @@ public sealed class GameLoop : IDisposable
     private string? _error;
     private string? _notice;
     private bool _noticeIsError;
+    private readonly CityMessageFilter _messages = new();
     private readonly BuildPlan _preview = new();
     private BuildStroke? _stroke;
 
@@ -42,6 +43,8 @@ public sealed class GameLoop : IDisposable
             _notice = modProblems.Count == 1 ? modProblems[0] : $"{modProblems.Count} mods were skipped; the log says why";
             _noticeIsError = true;
         }
+
+        _simulation.MessageSent += ShowMessage;
 
         _mapRenderer = new MapRenderer(map, assets);
         Logger.Info(_mapRenderer.IsCached ? "The map is drawn from cached chunks" : "The map is drawn tile by tile");
@@ -100,6 +103,7 @@ public sealed class GameLoop : IDisposable
 
         Raylib.BeginMode2D(_camera.ToRaylib());
         _mapRenderer.Draw(_camera);
+        _mapRenderer.DrawUnpowered(_camera, Raylib.GetTime());
         if (_stroke is not null)
         {
             _mapRenderer.DrawPreview(_preview, _camera);
@@ -326,6 +330,19 @@ public sealed class GameLoop : IDisposable
         BuildStatus.Refused when result.Reason == BuildRefusal.OffTheMap => "That runs off the map",
         _ => "The work was refused",
     };
+
+    // A message from the city takes the notice line, as Micropolis shows it, and goes to the log.
+    private void ShowMessage(CityMessage message)
+    {
+        if (!_messages.ShouldPass(message, _simulation.CityTime))
+        {
+            return;
+        }
+
+        _notice = CityMessages.Describe(message);
+        _noticeIsError = true;
+        Logger.Warn(_notice);
+    }
 
     private static string Count(int count, string thing) => count == 1 ? $"1 {thing}" : $"{count} {thing}s";
 

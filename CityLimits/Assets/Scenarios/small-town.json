@@ -1,11 +1,13 @@
 {
   "format": 1,
   "name": "Small town",
-  "description": "Twelve zones along two roads grow for ten years: houses first, then buildings where the houses cluster, with commerce and industry alongside.",
+  "description": "Twelve zones along two roads, powered by a coal plant across the north road, grow for ten years: houses first, then buildings where the houses cluster, with commerce and industry alongside.",
   "seed": 2000,
   "ticks": 7680,
   "actions": [
     { "tick": 0, "tool": "Road", "from": { "x": 33, "y": 47 }, "to": { "x": 52, "y": 47 }, "expect": "Built" },
+    { "tick": 0, "tool": "CoalPowerPlant", "from": { "x": 35, "y": 44 }, "expect": "Built" },
+    { "tick": 0, "tool": "PowerLine", "from": { "x": 38, "y": 46 }, "to": { "x": 38, "y": 47 }, "expect": "Built" },
     { "tick": 0, "tool": "Road", "from": { "x": 33, "y": 54 }, "to": { "x": 52, "y": 54 }, "expect": "Built" },
     { "tick": 0, "tool": "ZoneResidential", "from": { "x": 35, "y": 49 }, "to": { "x": 50, "y": 49 }, "expect": "Built" },
     { "tick": 0, "tool": "ZoneResidential", "from": { "x": 35, "y": 52 }, "to": { "x": 38, "y": 52 }, "expect": "Built" },
@@ -13,7 +15,9 @@
     { "tick": 0, "tool": "ZoneIndustrial", "from": { "x": 47, "y": 52 }, "to": { "x": 50, "y": 52 }, "expect": "Built" }
   ],
   "checks": [
-    { "tick": 0, "fundsEquals": 18400 },
+    { "tick": 0, "fundsEquals": 15390 },
+    { "tick": 0, "tile": { "x": 38, "y": 47 }, "use": "RoadAcrossPowerLine" },
+    { "tick": 32, "tile": { "x": 50, "y": 52 }, "powered": true },
     { "tick": 768, "tile": { "x": 47, "y": 52 }, "use": "Industrial", "developmentAtLeast": 1 },
     { "tick": 7680, "count": "Developed", "equals": 12 },
     { "tick": 7680, "tile": { "x": 47, "y": 49 }, "use": "Residential", "developmentAtLeast": 1 },

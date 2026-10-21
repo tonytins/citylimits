@@ -128,6 +128,9 @@ public sealed record ScenarioCheck
     /// <summary>Whether the tile's zone must be served by a road, or must not be.</summary>
     public bool? Served { get; init; }
 
+    /// <summary>Whether the tile's zone or plant must have had power when the scan last reached it, or must not.</summary>
+    public bool? Powered { get; init; }
+
     /// <summary>The least money the city may have.</summary>
     public int? FundsAtLeast { get; init; }
 

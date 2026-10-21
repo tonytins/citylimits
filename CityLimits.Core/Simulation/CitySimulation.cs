@@ -8,8 +8,19 @@ public sealed class CitySimulation
 
     // The phases of the cycle that do more than scan the map.
     private const int CensusPhase = 9;
+    private const int MessagePhase = 10;
+    private const int PowerPhase = 11;
     private const int LandValuePhase = 12;
     private const int DensityPhase = 14;
+
+    // The messages are checked at set counts in a 64-count round, as in Micropolis.
+    private const int MessageRound = 64;
+    private const int NeedPowerCount = 22;
+    private const int BlackoutsCount = 32;
+
+    // A city needs power once it has more zones than this, and has blackouts below this share powered.
+    private const int ZonesBeforePowerIsNeeded = 10;
+    private const double PoweredShareBeforeBlackouts = 0.7;
 
     private readonly ZoneGrowth _growth;
 
@@ -33,6 +44,9 @@ public sealed class CitySimulation
         Maps = new CityMaps(map);
         _growth = new ZoneGrowth(map, Random, Trips, Definitions, Demand, Maps);
     }
+
+    /// <summary>Raised when the city has something to tell the player, as often as Micropolis would say it.</summary>
+    public event Action<CityMessage>? MessageSent;
 
     /// <summary>The definitions the city runs on: the base game's, with any mods applied.</summary>
     public CityDefinitions Definitions { get; }
@@ -67,6 +81,9 @@ public sealed class CitySimulation
     /// <summary>The city's land value, population density, and commercial rate, and its centre of mass.</summary>
     public CityMaps Maps { get; }
 
+    /// <summary>Which tiles have power, and the plants and zones the scan counted.</summary>
+    public PowerGrid Power { get; } = new();
+
     /// <summary>The money the city has.</summary>
     public Treasury Treasury { get; }
 
@@ -81,9 +98,10 @@ public sealed class CitySimulation
     /// advances the calendar by a 48th of a year, updates demand every second count from the
     /// census the last cycle took, and starts the census again. Phases 1 to 8 scan the map in
     /// vertical bands, one band each, counting each zone and deciding whether it grows or
-    /// declines. Phase 9 records the census once a month, phase 12 works out land value, and
-    /// phase 14 population density and the city's centre. Phases 10, 11, 13, and 15 are where
-    /// decay, power, crime, and fire and disasters will run.
+    /// declines. Phase 9 records the census once a month, phase 10 checks the city's messages,
+    /// phase 11 traces power from the plants, phase 12 works out land value, and phase 14
+    /// population density and the city's centre. Phases 13 and 15 are where crime, and fire and
+    /// disasters, will run.
     /// </summary>
     public void Tick()
     {
@@ -99,6 +117,7 @@ public sealed class CitySimulation
             }
 
             Census.Clear();
+            Power.StartCount();
         }
         else if (phase <= CityCalendar.ScanBands)
         {
@@ -107,6 +126,18 @@ public sealed class CitySimulation
         else if (phase == CensusPhase && CityTime % CityCalendar.CountsPerMonth == 0)
         {
             Census.RecordMonth();
+        }
+        else if (phase == MessagePhase)
+        {
+            SendMessages();
+        }
+        else if (phase == PowerPhase)
+        {
+            Power.Trace(Map, Definitions);
+            if (Power.IsBrownedOut)
+            {
+                MessageSent?.Invoke(CityMessage.Brownouts);
+            }
         }
         else if (phase == LandValuePhase)
         {
@@ -118,9 +149,23 @@ public sealed class CitySimulation
         }
     }
 
-    // Growth is decided per zone, at its centre, as in Micropolis, when the scan reaches the
-    // centre's column; the centre holds the zone's development. The flat chance is a stand-in
-    // until demand and population replace it.
+    private void SendMessages()
+    {
+        var count = CityTime % MessageRound;
+        if (count == NeedPowerCount && Power.Zones > ZonesBeforePowerIsNeeded && Power.CoalPlants + Power.NuclearPlants == 0)
+        {
+            MessageSent?.Invoke(CityMessage.NeedPower);
+        }
+
+        var buildings = Power.PoweredBuildings + Power.UnpoweredBuildings;
+        if (count == BlackoutsCount && buildings > 0 && (double)Power.PoweredBuildings / buildings < PoweredShareBeforeBlackouts)
+        {
+            MessageSent?.Invoke(CityMessage.Blackouts);
+        }
+    }
+
+    // The scan reaches each zone and plant at its centre, as in Micropolis: it counts plants for
+    // the power trace, and gives each zone its power, then its census and its chance to grow.
     private void ScanBand(int band)
     {
         Roads.EnsureCurrent(Map);
@@ -131,6 +176,12 @@ public sealed class CitySimulation
             for (var x = first; x < end; x++)
             {
                 var state = Map.StateAt(x, y);
+                if (!state.IsBuildingCenter)
+                {
+                    continue;
+                }
+
+                Power.Visit(Map, x, y);
                 if (!state.IsZoneCenter)
                 {
                     continue;

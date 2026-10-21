@@ -2,8 +2,8 @@ namespace CityLimits.Core.Definitions;
 
 /// <summary>
 /// Finds the mods in a folder and applies them to the base game's definitions. A mod is a folder
-/// named for its id, holding a <c>mod.json</c> manifest and the definitions it changes, such as a
-/// <c>zones.json</c>. Mods apply in id order. A mod that can't be read is skipped whole and
+/// named for its id, holding a <c>mod.json</c> manifest and the definitions it changes, a
+/// <c>zones.json</c> and a <c>plants.json</c>. Mods apply in id order. A mod that can't be read is skipped whole and
 /// reported, so a broken mod never stops the game or half-applies.
 /// </summary>
 public static class ModLoader
@@ -16,6 +16,9 @@ public static class ModLoader
 
     /// <summary>The name of a mod's zone definitions.</summary>
     public const string ZonesFile = "zones.json";
+
+    /// <summary>The name of a mod's power plant definitions.</summary>
+    public const string PlantsFile = "plants.json";
 
     /// <summary>
     /// The base game's definitions with every valid mod in the folder applied. A missing folder
@@ -79,7 +82,8 @@ public static class ModLoader
             }
 
             var zones = ReadBounded(Path.Combine(modFolder, ZonesFile));
-            return DefinitionLoader.TryParseMod(name, manifest, zones, out mod, out error);
+            var plants = ReadBounded(Path.Combine(modFolder, PlantsFile));
+            return DefinitionLoader.TryParseMod(name, manifest, zones, out mod, out error, plants);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or FileTooLarge)
         {

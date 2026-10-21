@@ -45,12 +45,18 @@ public class CitySimulationTests
     public void EachZoneIsScannedOnceACountInItsColumnsBand()
     {
         // 16 columns make 8 bands of 2: a zone centred in column 1 is in band 0, column 13 in band 6.
-        var map = TileMap.FromTerrain(16, 9, new TileKind[16 * 9]);
+        // A plant centred in column 13 powers them, through a line under one and along their tops.
+        var map = TileMap.FromTerrain(16, 11, new TileKind[16 * 11]);
         var simulation = new CitySimulation(map, 1);
         simulation.Builder.Apply(BuildAction.Road, 1, 6);
         simulation.Builder.Apply(BuildAction.Road, 13, 6);
         simulation.Builder.Apply(BuildAction.ZoneResidential, 1, 4);
         simulation.Builder.Apply(BuildAction.ZoneIndustrial, 13, 4);
+        simulation.Builder.Apply(BuildAction.CoalPowerPlant, 13, 8);
+        simulation.Builder.Apply(BuildAction.PowerLine, 12, 6);
+        var line = new BuildStroke(BuildAction.PowerLine, 0, 2);
+        line.DragTo(14, 2);
+        simulation.Builder.Apply(line);
         var phases = new List<(int X, int Phase)>();
         map.TileChanged += (x, _) => phases.Add((x, (int)(simulation.TickCount % CityCalendar.StepsPerCount)));
 
@@ -101,6 +107,7 @@ public class CitySimulationTests
         var simulation = new CitySimulation(FlatMap(), 1);
         simulation.Builder.Apply(BuildAction.Road, 3, 1);
         simulation.Builder.Apply(BuildAction.ZoneResidential, 3, 3);
+        simulation.Builder.Apply(BuildAction.CoalPowerPlant, 6, 3);
 
         for (var i = 0; i < 200 * CityCalendar.StepsPerCount; i++)
         {

@@ -45,6 +45,9 @@ public static class TileAtlas
     /// <summary>A road running down over a power line running across.</summary>
     private const int RoadDownPowerLineTile = 78;
 
+    /// <summary>The lightning bolt that blinks over a zone with no power.</summary>
+    public const int LightningBoltTile = 827;
+
     /// <summary>A power line under water, running down.</summary>
     private const int UnderwaterLineDownTile = 208;
 

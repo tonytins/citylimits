@@ -2,7 +2,7 @@ namespace CityLimits.Core.Scenarios;
 
 /// <summary>
 /// The demo town: a road nine tiles long with a residential, a commercial, and an industrial
-/// zone along its north side, the industry knocked down after a year. It is the fallback when a
+/// zone along its north side, a coal plant above them, and the industry knocked down after a year. It is the fallback when a
 /// scenario can't be loaded, so it lives in code, where it can't go missing, and it is written as
 /// a scenario file and read by <see cref="ScenarioLoader"/>, so it passes the same validation.
 /// </summary>
@@ -16,7 +16,7 @@ public static class DemoTown
         {
           "format": 1,
           "name": "Demo town",
-          "description": "A road with a residential, a commercial, and an industrial zone; the industry is knocked down after a year.",
+          "description": "A road with a residential, a commercial, and an industrial zone, powered by a coal plant; the industry is knocked down after a year.",
           "seed": 2000,
           "funds": 20000,
           "ticks": 1536,
@@ -25,6 +25,7 @@ public static class DemoTown
             { "tick": 0, "tool": "ZoneResidential", "from": { "x": 35, "y": 51 }, "expect": "Built" },
             { "tick": 0, "tool": "ZoneCommercial", "from": { "x": 38, "y": 51 }, "expect": "Built" },
             { "tick": 0, "tool": "ZoneIndustrial", "from": { "x": 41, "y": 51 }, "expect": "Built" },
+            { "tick": 0, "tool": "CoalPowerPlant", "from": { "x": 35, "y": 47 }, "expect": "Built" },
             { "tick": 768, "tool": "Bulldoze", "from": { "x": 41, "y": 51 }, "expect": "Built" }
           ],
           "checks": [
@@ -32,9 +33,9 @@ public static class DemoTown
             { "tick": 1536, "tile": { "x": 35, "y": 51 }, "use": "Residential", "development": 0 },
             { "tick": 1536, "tile": { "x": 38, "y": 51 }, "use": "Commercial", "development": 0 },
             { "tick": 1536, "count": "Developed", "equals": 1 },
-            { "tick": 1536, "tile": { "x": 38, "y": 50 }, "served": true },
+            { "tick": 1536, "tile": { "x": 38, "y": 50 }, "served": true, "powered": true },
             { "tick": 1536, "tile": { "x": 42, "y": 52 }, "kind": "Rubble", "use": "None" },
-            { "tick": 1536, "fundsEquals": 19609 },
+            { "tick": 1536, "fundsEquals": 16609 },
             { "tick": 1536, "count": "Industrial", "equals": 0 }
           ]
         }

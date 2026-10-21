@@ -2,7 +2,7 @@
 
 > **Status:** the first pieces of modding support. A mod can change a
 > zone's name, price, population per building level, house limit, and
-> where its trips go today. More of the game becomes data as it is built, and each piece
+> where its trips go, and a power plant's name, price, and capacity, today. More of the game becomes data as it is built, and each piece
 > that does is listed here.
 
 CityLimits is built to be modded. The game's rules live in definitions:
@@ -21,6 +21,7 @@ Mods/
   cheap-commerce/
     mod.json       who the mod is (required)
     zones.json     what it changes in the zones (optional)
+    plants.json    what it changes in the power plants (optional)
 ```
 
 An id is lowercase letters, digits, and single hyphens, such as
@@ -73,6 +74,28 @@ the value it had.
 The number of building levels and the land-value classes (`valueClasses`)
 can't be changed by a mod, because each level and class needs its own
 drawings in the tile sheet.
+
+### `plants.json`
+
+```json
+{
+  "format": 1,
+  "plants": [
+    { "id": "coal", "name": "Coal works", "price": 2000, "capacity": 900 }
+  ]
+}
+```
+
+Each entry names a plant by its id, `coal` or `nuclear`, and changes only
+the fields it sets. A zone's fields can't go in `plants.json`, nor a
+plant's in `zones.json`.
+
+| Field | Meaning |
+|---|---|
+| `id` | The plant to change: `coal` or `nuclear` |
+| `name` | The plant's name, as the tile readout shows it, 1 to 80 characters |
+| `price` | What one plant costs to build, from 0 to 1 000 000 |
+| `capacity` | How many tiles the plant powers, from 1 to 1 000 000. The base game's are Micropolis': 700 for coal, 2 000 for nuclear. As in Micropolis, every plant on the map adds its capacity, connected to the grid or not |
 
 ## How mods are applied
 

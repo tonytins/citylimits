@@ -76,13 +76,19 @@ public static class TileInfo
             return Describe(state.Kind);
         }
 
-        var name = state.IsZoned && definitions is not null ? definitions.Zone(state.Use).Name : Name(state.Use);
+        var name = definitions switch
+        {
+            not null when state.IsZoned => definitions.Zone(state.Use).Name,
+            not null when TileRules.IsPowerPlant(state.Use) => definitions.Plant(state.Use).Name,
+            _ => Name(state.Use),
+        };
         return $"{name} - {BuildAdvice(state)}";
     }
 
     /// <summary>
     /// The line the readout shows for a tile on a map. A zone is described as a whole, from its
-    /// centre and its houses: its name, how far it has grown, and its population.
+    /// centre and its houses: its name, how far it has grown, its population, and whether the
+    /// scan last found it without power.
     /// </summary>
     public static string Describe(TileMap map, int x, int y, CityDefinitions definitions)
     {
@@ -107,6 +113,6 @@ public static class TileInfo
             _ => "not developed yet",
         };
 
-        return $"{spec.Name} - {growth}";
+        return center.Powered ? $"{spec.Name} - {growth}" : $"{spec.Name} - {growth}, no power";
     }
 }

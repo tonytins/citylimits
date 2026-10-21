@@ -110,9 +110,10 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
 - **The clock.** Time runs as in Micropolis. A tick is one step of the
   simulation, and each step is one phase of a 16-phase cycle
   (`CitySimulation.Tick`): phase 0 moves the calendar on by a 48th of a
-  year, and phases 1 to 8 scan the map in 8 vertical bands; phases 9 to
-  15 are kept for the census and taxes, decay, power, pollution and land
-  value, crime, population density, and fire and disasters.
+  year, and phases 1 to 8 scan the map in 8 vertical bands; phase 9
+  records the census, 10 checks the city's messages, 11 traces power, 12
+  works out land value, and 14 population density; 13 and 15 are kept for
+  crime, and fire and disasters.
   `CityCalendar` turns the count into a month: 4 counts a month, 48 a
   year, from January 1900. At Normal speed a step runs every quarter of a
   second, so a month takes 16 seconds and a year about 3 minutes; Fast is
@@ -137,8 +138,23 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   for a plant, one tile for anything else) and numbers its parts across
   and then down, so a plant's tiles are parts 0 to 15 with 5 the centre.
   `TileState.HasFootprint` and `IsBuildingCenter` cover zones and plants
-  alike; `IsZoned` and `IsZoneCenter` stay the three zones only. Plants
-  don't make power yet: the power scan comes next, in Joffburg.
+  alike; `IsZoned` and `IsZoneCenter` stay the three zones only. A plant's
+  name, price, and capacity are a `PlantSpec` in the definitions, which a
+  mod can change in its `plants.json`.
+- **The power grid.** As in Micropolis (`PowerGrid`), the scan counts the
+  plants it passes and gives each zone the power the last trace left it,
+  kept on its centre (`TileState.Powered`); a plant always has power.
+  Phase 11 traces power from the plants through every tile that carries
+  it toward the next, one tile at a time, until the plants' pooled
+  capacity runs out: 700 tiles a coal plant and 2 000 a nuclear one,
+  counted over every plant on the map, connected or not. A zone with no
+  power scores -500, so it never grows and now and then declines. The
+  city raises `CitySimulation.MessageSent` for brownouts when the trace
+  runs out, and, at Micropolis' counts, for a city of more than 10 zones
+  with no plant and for blackouts below 7 in 10 powered. The game blinks
+  the sheet's lightning bolt over each unpowered zone, the readout says
+  "no power", and the game and the headless log pass a repeated message
+  on at most once a year (`CityMessageFilter`).
 - **Power lines.** A line (`TileUse.PowerLine`) is strung like a road, in
   one straight line, and under water when something beside it carries
   power. Over a straight road it makes one tile that is both
@@ -162,9 +178,9 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   population density around it passes 64, so a lone zone stays at houses
   and buildings come where zones cluster. Buildings take their land-value
   class from land value, except industry's, which is a coin toss.
-  Commerce grows only as far as land value divided by 32. The same seed
-  and the same work give the same city. Until their systems exist, every
-  zone counts as powered, pollution and crime are none, and an empty
+  Commerce grows only as far as land value divided by 32. A zone with no
+  power never grows. The same seed and the same work give the same city.
+  Until their systems exist, pollution and crime are none, and an empty
   residential zone never becomes a hospital or a church.
 - **The city maps.** `CityMaps` holds land value and population density
   on 2 by 2 tile blocks, as Micropolis does. Land value (phase 12) is, for
@@ -202,7 +218,7 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   pay for all of it. Escape cancels a stroke, or quits when there is none.
 - **The money.** The city starts with a treasury, and the prices are
   Micropolis' (`Economy/TileCosts.cs`, and the zones' in their
-  `ZoneSpec`): $10 a road tile, $50 a bridge tile, $5 a power line tile,
+  `ZoneSpec` and `PlantSpec`): $10 a road tile, $50 a bridge tile, $5 a power line tile,
   $25 under water, $100 a zone, $3,000 a
   coal power plant, $5,000 a nuclear power plant, $1 more for each tile of trees or rubble a tool
   clears first, and $1 for each tile the bulldozer clears or each zone or
@@ -231,7 +247,9 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   simulation can be checked on a machine with no screen. It takes `--seed`
   and `--ticks`, the number of steps, from 0 to 100 000 (768 by default, a
   year), and builds a small demo town first so there is something to
-  grow. `--ticks` without `--headless` is refused, because
+  grow: a coal plant, a road, and three zones. Each month's line includes
+  the tiles powered and the capacity, and the city's messages are logged
+  as warnings. `--ticks` without `--headless` is refused, because
   the window runs until it is closed.
 - **Scenarios.** A scenario is a city set up from a file: a seed, tool
   strokes made at set ticks, and checks on tiles, zones, funds, and
@@ -265,7 +283,7 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   and no project. It holds the parser, the dispatcher, the default
   command, the strict option reader, and the exit codes.
 - **The tests.** `CityLimits.Tests` uses xUnit 2 with the VSTest runner
-  and coverlet, and holds 397 tests over the generator, the terrain edges, the power plants and lines, the map, the
+  and coverlet, and holds 417 tests over the generator, the terrain edges, the power plants, lines, and grid, the map, the
   calendar, the clock, the simulation, the settings, the tile rules, the
   build actions, the road network, the treasury, the scenario loader and
   runner, every built-in scenario, the definitions and the mod loader, zone growth, the census and demand, trips, growth and the city maps,

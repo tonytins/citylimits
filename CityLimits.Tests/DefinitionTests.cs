@@ -127,6 +127,66 @@ public class DefinitionTests
         Assert.Equal("Factory district - not developed yet", line);
     }
 
+    [Fact]
+    public void AModChangesAPlantsPriceAndCapacityInItsOwnFile()
+    {
+        var folder = Directory.CreateTempSubdirectory().FullName;
+        try
+        {
+            var modFolder = Directory.CreateDirectory(Path.Combine(folder, "cheap-coal")).FullName;
+            File.WriteAllText(Path.Combine(modFolder, "mod.json"), """{ "format": 1, "id": "cheap-coal", "name": "Cheap coal" }""");
+            File.WriteAllText(Path.Combine(modFolder, "plants.json"), """{ "format": 1, "plants": [ { "id": "coal", "name": "Coal works", "price": 1000, "capacity": 900 } ] }""");
+
+            var definitions = ModLoader.Load(folder, out var problems);
+
+            Assert.Empty(problems);
+            Assert.Equal(new PlantSpec("coal", TileUse.CoalPowerPlant, "Coal works", 1000, 900), definitions.Plant(TileUse.CoalPowerPlant));
+            Assert.Equal(CityDefinitions.Base.Plant(TileUse.NuclearPowerPlant), definitions.Plant(TileUse.NuclearPowerPlant));
+            Assert.Equal(1000, definitions.CostOf(BuildAction.CoalPowerPlant));
+
+            var map = TileMap.FromTerrain(9, 9, new TileKind[81]);
+            var city = new CitySimulation(map, 1, funds: 5000, definitions: definitions);
+            city.Builder.Apply(BuildAction.CoalPowerPlant, 3, 3);
+            Assert.Equal(4000, city.Treasury.Funds);
+            Assert.Equal("Coal works - bulldoze its centre to clear it", TileInfo.Describe(map.StateAt(3, 3), definitions));
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+    }
+
+    [Theory]
+    [InlineData("""{ "format": 1, "plants": [ { "id": "coal", "capacity": 0 } ] }""", "plants.json: plants[0].capacity: needs a number from 1 to 1000000, not 0.")]
+    [InlineData("""{ "format": 1, "plants": [ { "id": "wind" } ] }""", "plants.json: plants[0].id: 'wind' is not one of coal, nuclear.")]
+    [InlineData("""{ "format": 1, "plants": [ { "id": "coal", "price": -1 } ] }""", "plants.json: plants[0].price: needs a number from 0 to 1000000, not -1.")]
+    [InlineData("""{ "format": 1, "zones": [] }""", "plants.json: zones: is not a field definitions have.")]
+    public void APlantModIsCheckedBeforeItIsUsed(string plants, string expected)
+    {
+        Assert.False(DefinitionLoader.TryParseMod("cheap-zones", Manifest, null, out var mod, out var error, plants));
+        Assert.Null(mod);
+        Assert.Equal(expected, error);
+    }
+
+    [Fact]
+    public void ZonesFilesHoldOnlyZones()
+    {
+        Assert.False(DefinitionLoader.TryParseMod("cheap-zones", Manifest, """{ "format": 1, "plants": [] }""", out _, out var error));
+        Assert.Equal("zones.json: plants: is not a field definitions have.", error);
+    }
+
+    [Fact]
+    public void TheBaseGameMustDefineEveryPlant()
+    {
+        var withoutNuclear = BaseGame.Json
+            .Replace("""{ "id": "nuclear", "name": "Nuclear power plant", "price": 5000, "capacity": 2000 }""", string.Empty, StringComparison.Ordinal)
+            .Replace("\"capacity\": 700 },", "\"capacity\": 700 }", StringComparison.Ordinal);
+
+        Assert.NotEqual(BaseGame.Json, withoutNuclear);
+        Assert.False(DefinitionLoader.TryParseBase(withoutNuclear, out _, out var error));
+        Assert.Equal("plants: the base game must define nuclear.", error);
+    }
+
     // Applies one mod to the base game the way the loader does, through a folder.
     private static CityDefinitions ModLoaderWith(ModDefinitions mod)
     {

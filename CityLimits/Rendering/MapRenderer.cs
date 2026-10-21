@@ -68,6 +68,42 @@ public sealed class MapRenderer : IDisposable
         }
     }
 
+    /// <summary>
+    /// Blinks a lightning bolt over the centre of each zone the scan found without power, as
+    /// Micropolis does: on for half a second, off for half a second. It changes every frame, so
+    /// it is drawn over the cached map, not into it. Call it inside <c>BeginMode2D</c>.
+    /// </summary>
+    public void DrawUnpowered(Camera camera, double seconds)
+    {
+        if ((long)(seconds * 2) % 2 == 1)
+        {
+            return;
+        }
+
+        var (minX, minY, maxX, maxY) = VisibleRange(_map, camera);
+        for (var y = minY; y <= maxY; y++)
+        {
+            for (var x = minX; x <= maxX; x++)
+            {
+                var state = _map.StateAt(x, y);
+                if (!state.IsZoneCenter || state.Powered)
+                {
+                    continue;
+                }
+
+                var destination = new Rectangle { X = x * TileSize, Y = y * TileSize, Width = TileSize, Height = TileSize };
+                if (_sheet is null)
+                {
+                    Raylib.DrawRectangleRec(destination, Theme.Unpowered);
+                }
+                else
+                {
+                    Raylib.DrawTexturePro(_sheet.Value, TileAtlas.SourceFor(TileAtlas.LightningBoltTile), destination, Vector2.Zero, 0f, Color.White);
+                }
+            }
+        }
+    }
+
     /// <summary>Releases the chunk cache. Call it before the window closes.</summary>
     public void Dispose() => _chunks?.Dispose();
 

@@ -74,6 +74,8 @@ internal sealed class CheckDocument
 
     public bool? Served { get; set; }
 
+    public bool? Powered { get; set; }
+
     public int? FundsAtLeast { get; set; }
 
     public int? FundsAtMost { get; set; }

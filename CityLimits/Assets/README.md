@@ -127,6 +127,9 @@ across, and 209 running across. A road crossing a line is tile 77 for a
 road running across over a line running down, and 78 for a road running
 down over a line running across.
 
+A zone with no power blinks tile 827, a lightning bolt, over its centre.
+It is drawn over the map each frame, not into it.
+
 A power plant is 4 by 4, its sixteen tiles in a row in the sheet, read
 across and then down, so a tile's drawing is the plant's first tile plus
 its part number (0 to 15, with 5 the centre):
