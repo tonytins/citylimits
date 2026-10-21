@@ -115,7 +115,7 @@ public class ScenarioLoaderTests
     [InlineData("""{ "tick": 0, "tile": { "x": 1, "y": 1 }, "count": "Road", "equals": 1 }""", "checks[0]: checks one subject, so it can't have both tile and count.")]
     [InlineData("""{ "tick": 0, "tile": { "x": 1, "y": 1 }, "equals": 1 }""", "checks[0]: a tile check takes only kind, use, development, developmentAtLeast, developmentAtMost, served, or powered.")]
     [InlineData("""{ "tick": 0, "tile": { "x": 1, "y": 1 } }""", "checks[0]: a tile check needs at least one of kind, use, development, developmentAtLeast, developmentAtMost, served, or powered.")]
-    [InlineData("""{ "tick": 0, "count": "Zones", "equals": 1 }""", "checks[0].count: 'Zones' is not one of Road, Bridge, Residential, Commercial, Industrial, Developed, CoalPowerPlant, NuclearPowerPlant, PowerLine, FireStation, PoliceStation, Park.")]
+    [InlineData("""{ "tick": 0, "count": "Zones", "equals": 1 }""", "checks[0].count: 'Zones' is not one of Road, Bridge, Residential, Commercial, Industrial, Developed, CoalPowerPlant, NuclearPowerPlant, PowerLine, FireStation, PoliceStation, Park, Hospital, Church.")]
     [InlineData("""{ "tick": 0 }""", "checks[0]: a funds check needs at least one of fundsAtLeast, fundsAtMost, or fundsEquals; or give it a tile or a count.")]
     [InlineData("""{ "tick": 0, "tile": { "x": 1, "y": 1 }, "development": 6 }""", "checks[0].development: needs a number from 0 to 5, not 6.")]
     public void EachCheckIsChecked(string check, string error) =>

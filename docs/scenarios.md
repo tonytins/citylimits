@@ -231,6 +231,7 @@ plant it fails, with the reason that the tile has no zone or plant.
 | `PowerLine` | Tiles with a power line, under water or under a road included |
 | `FireStation`, `PoliceStation` | Stations of that kind, by their centres, not tiles |
 | `Park` | Park tiles |
+| `Hospital`, `Church` | Hospitals and churches, by their centres; a residential zone becomes one when the city needs it |
 
 Phase 2 adds `population` and the demand values as subjects.
 
@@ -269,7 +270,7 @@ or changing the meaning of a field means bumping `format`.
     "cityTime": 96,
     "date": "1902-01",
     "funds": 16609,
-    "counts": { "road": 9, "bridge": 0, "residential": 1, "commercial": 1, "industrial": 0, "developed": 1, "coalPowerPlant": 1, "nuclearPowerPlant": 0, "powerLine": 0, "fireStation": 0, "policeStation": 0, "park": 0 }
+    "counts": { "road": 9, "bridge": 0, "residential": 1, "commercial": 1, "industrial": 0, "developed": 1, "coalPowerPlant": 1, "nuclearPowerPlant": 0, "powerLine": 0, "fireStation": 0, "policeStation": 0, "park": 0, "hospital": 0, "church": 0 }
   },
   "actions": [
     { "index": 0, "tick": 0, "tool": "Road", "status": "Built", "tiles": 9, "skipped": {}, "cost": 90, "met": true },

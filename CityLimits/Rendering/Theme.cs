@@ -63,6 +63,9 @@ public static class Theme
     /// <summary>The color of a power line, when the tile sheet could not be loaded.</summary>
     public static readonly Color PowerLine = new() { R = 210, G = 190, B = 80, A = 255 };
 
+    /// <summary>The color of a hospital or a church, when the tile sheet could not be loaded.</summary>
+    public static readonly Color CommunityBuilding = new() { R = 220, G = 220, B = 220, A = 255 };
+
     /// <summary>The color of a park, when the tile sheet could not be loaded.</summary>
     public static readonly Color Park = new() { R = 70, G = 160, B = 70, A = 255 };
 
@@ -90,6 +93,7 @@ public static class Theme
         TileUse.Road or TileUse.RoadAcrossPowerLine or TileUse.RoadDownPowerLine => Road,
         TileUse.PowerLine => PowerLine,
         TileUse.Park => Park,
+        TileUse.Hospital or TileUse.Church => CommunityBuilding,
         TileUse.FireStation => FireStation,
         TileUse.PoliceStation => PoliceStation,
         TileUse.Residential => Residential,

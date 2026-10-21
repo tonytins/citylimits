@@ -1,5 +1,20 @@
 # CityLimits Changelog
 
+## 0.2.109
+
+Hospitals and churches, as in Micropolis. You don't build them: once the
+city has 256 residents it needs a hospital and a church, and another of
+each for every 256 more, and an empty residential zone that would grow
+becomes one now and then. If the city shrinks and has too many, one
+turns back into an empty zone. Unlike Micropolis, a zone never becomes a
+hospital and then a church at once, losing the hospital.
+
+The modding guide has moved to `docs/modding/`: a guide for players
+writing their first mod, and `tuning.md`, which lists everything a
+tuning mod can change.
+
+Scenarios can count hospitals and churches.
+
 ## 0.2.108
 
 Parks, as in Micropolis: $10 a tile, laid as a rectangle from the

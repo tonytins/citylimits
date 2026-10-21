@@ -93,6 +93,12 @@ public enum CountSubject
 
     /// <summary>Park tiles.</summary>
     Park,
+
+    /// <summary>Hospitals, by their centres.</summary>
+    Hospital,
+
+    /// <summary>Churches, by their centres.</summary>
+    Church,
 }
 
 /// <summary>

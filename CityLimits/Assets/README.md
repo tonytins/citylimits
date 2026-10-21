@@ -105,7 +105,9 @@ A building's first tile is the zone's first building plus 9 times
 (class times levels plus level minus 1). A residential zone with no
 building shows its single houses on its outer tiles: tiles 249 to 260,
 three for each land-value class. 405 and 414, after the residential
-buildings, are a hospital and a church.
+buildings, are a hospital and a church, which a residential zone becomes
+when the city needs one; each is drawn as a zone is, its first tile plus
+its part number.
 
 A power line is drawn from the sides of it that join something carrying
 power (another line, a crossing's line, a zone, or a plant), which

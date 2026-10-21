@@ -13,7 +13,8 @@ public static class Footprint
     /// <summary>The width and height of a use's footprint, in tiles.</summary>
     public static int SizeOf(TileUse use) => use switch
     {
-        TileUse.Residential or TileUse.Commercial or TileUse.Industrial or TileUse.FireStation or TileUse.PoliceStation => ZoneLayout.Size,
+        TileUse.Residential or TileUse.Commercial or TileUse.Industrial or TileUse.FireStation or TileUse.PoliceStation
+            or TileUse.Hospital or TileUse.Church => ZoneLayout.Size,
         TileUse.CoalPowerPlant or TileUse.NuclearPowerPlant => 4,
         _ => 1,
     };

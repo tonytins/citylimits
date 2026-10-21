@@ -21,6 +21,9 @@ public static class TileRules
     /// <summary>Tells whether a use is a power plant.</summary>
     public static bool IsPowerPlant(TileUse use) => use is TileUse.CoalPowerPlant or TileUse.NuclearPowerPlant;
 
+    /// <summary>Tells whether a use is a hospital or a church, which a residential zone can become.</summary>
+    public static bool IsCommunityBuilding(TileUse use) => use is TileUse.Hospital or TileUse.Church;
+
     /// <summary>Tells whether a use is a service building: a fire or a police station.</summary>
     public static bool IsService(TileUse use) => use is TileUse.FireStation or TileUse.PoliceStation;
 

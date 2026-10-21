@@ -41,4 +41,10 @@ public enum TileUse
 
     /// <summary>The tile is a park: woods, or a fountain.</summary>
     Park,
+
+    /// <summary>The tile is part of a hospital, 3 by 3, which a residential zone became.</summary>
+    Hospital,
+
+    /// <summary>The tile is part of a church, 3 by 3, which a residential zone became.</summary>
+    Church,
 }

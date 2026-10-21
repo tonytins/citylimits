@@ -12,9 +12,9 @@ namespace CityLimits.Core.Simulation;
 /// <remarks>
 /// A residential zone grows single houses until its spec's number, then a building once the
 /// population density around it is high enough; buildings grow and decline a level at a time, in
-/// the land-value class of the moment. Until the systems they come from exist, pollution is none,
-/// and an empty residential zone never becomes a hospital or a church; in Micropolis that roll
-/// does nothing when the city needs neither.
+/// the land-value class of the moment. One time in four, an empty zone that would grow becomes a
+/// hospital or a church instead, when the city needs one. Until its system exists, pollution is
+/// none.
 /// </remarks>
 internal sealed class ZoneGrowth
 {
@@ -60,9 +60,11 @@ internal sealed class ZoneGrowth
     private readonly CityDefinitions _definitions;
     private readonly CityDemand _demand;
     private readonly CityMaps _maps;
+    private readonly CommunityBuildings _community;
 
-    public ZoneGrowth(TileMap map, DeterministicRandom random, TripPlanner trips, CityDefinitions definitions, CityDemand demand, CityMaps maps)
+    public ZoneGrowth(TileMap map, DeterministicRandom random, TripPlanner trips, CityDefinitions definitions, CityDemand demand, CityMaps maps, CommunityBuildings community)
     {
+        _community = community;
         _map = map;
         _random = random;
         _trips = trips;
@@ -110,9 +112,10 @@ internal sealed class ZoneGrowth
         var score = center.Powered ? _demand.Residential + ResidentialWorth(x, y) : UnpoweredScore;
         if (Grows(score))
         {
-            // Where Micropolis might put a hospital or a church, nothing happens yet.
+            // One time in four an empty zone becomes a hospital or a church, if the city needs one.
             if (population == 0 && _random.NextInt(0, 4) == 0)
             {
+                _community.TryBuildIn(_map, x, y);
                 return;
             }
 

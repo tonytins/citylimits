@@ -71,7 +71,7 @@ public sealed class CitySimulation
         Maps = new CityMaps(map);
         Services = new ServiceCoverage(map);
         Budget = new CityBudget(Definitions.Service(TileUse.FireStation).Upkeep, Definitions.Service(TileUse.PoliceStation).Upkeep);
-        _growth = new ZoneGrowth(map, Random, Trips, Definitions, Demand, Maps);
+        _growth = new ZoneGrowth(map, Random, Trips, Definitions, Demand, Maps, Community);
     }
 
     /// <summary>Raised when the city has something to tell the player, as often as Micropolis would say it.</summary>
@@ -122,6 +122,9 @@ public sealed class CitySimulation
     /// <summary>The city's tax rate and funding, and the year's taxes and upkeep.</summary>
     public CityBudget Budget { get; }
 
+    /// <summary>The city's hospitals and churches, and how many it needs.</summary>
+    public CommunityBuildings Community { get; } = new();
+
     /// <summary>How well fire and police stations cover the city, and how many there are.</summary>
     public ServiceCoverage Services { get; }
 
@@ -166,6 +169,7 @@ public sealed class CitySimulation
             Census.Clear();
             Power.StartCount();
             Services.StartCount();
+            Community.StartCount();
             RoadTiles = 0;
         }
         else if (phase <= CityCalendar.ScanBands)
@@ -177,6 +181,7 @@ public sealed class CitySimulation
             if (CityTime % CityCalendar.CountsPerMonth == 0)
             {
                 Census.RecordMonth();
+                Community.UpdateNeeds(Census.Residential);
             }
 
             CollectTaxes();
@@ -300,6 +305,12 @@ public sealed class CitySimulation
                 }
 
                 var powered = Power.Visit(Map, x, y);
+                if (TileRules.IsCommunityBuilding(state.Use))
+                {
+                    Community.Visit(Map, Random, x, y);
+                    continue;
+                }
+
                 if (TileRules.IsService(state.Use))
                 {
                     var effect = state.Use == TileUse.FireStation ? Budget.FireEffect : Budget.PoliceEffect;

@@ -51,8 +51,8 @@ public sealed record ScenarioFallback(string Requested, string Reason);
 /// <param name="Counts">What stood on the map.</param>
 public sealed record ScenarioFinal(long Tick, long CityTime, string Date, int Funds, CityCounts Counts);
 
-/// <summary>What stood on the map: road tiles, bridges among them, zones of each kind, developed zones, power plants of each kind, power line tiles, stations of each kind, and park tiles.</summary>
-public sealed record CityCounts(int Road, int Bridge, int Residential, int Commercial, int Industrial, int Developed, int CoalPowerPlant = 0, int NuclearPowerPlant = 0, int PowerLine = 0, int FireStation = 0, int PoliceStation = 0, int Park = 0)
+/// <summary>What stood on the map: road tiles, bridges among them, zones of each kind, developed zones, power plants of each kind, power line tiles, stations of each kind, park tiles, hospitals, and churches.</summary>
+public sealed record CityCounts(int Road, int Bridge, int Residential, int Commercial, int Industrial, int Developed, int CoalPowerPlant = 0, int NuclearPowerPlant = 0, int PowerLine = 0, int FireStation = 0, int PoliceStation = 0, int Park = 0, int Hospital = 0, int Church = 0)
 {
     /// <summary>One of the counts, as a count check names it.</summary>
     public int Of(CountSubject subject) => subject switch
@@ -68,6 +68,8 @@ public sealed record CityCounts(int Road, int Bridge, int Residential, int Comme
         CountSubject.FireStation => FireStation,
         CountSubject.PoliceStation => PoliceStation,
         CountSubject.Park => Park,
+        CountSubject.Hospital => Hospital,
+        CountSubject.Church => Church,
         _ => Developed,
     };
 }

@@ -209,8 +209,16 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   class from land value, except industry's, which is a coin toss.
   Commerce grows only as far as land value divided by 32. A zone with no
   power never grows. The same seed and the same work give the same city.
-  Until their systems exist, pollution and crime are none, and an empty
-  residential zone never becomes a hospital or a church.
+  Until their systems exist, pollution and crime are none.
+- **Hospitals and churches.** As in Micropolis (`CommunityBuildings`),
+  nobody builds them: each month the city needs one of each for every 256
+  residents, and one time in four, when an empty residential zone would
+  grow, it becomes a hospital if one is needed, otherwise a church if one
+  is needed. Micropolis can make both on one roll, losing the hospital;
+  the owner chose to fix that, so a roll makes one. When the city has too
+  many, each has a 1 in 21 chance a scan of becoming an empty residential
+  zone again. They are 3 by 3, drawn from the sheet, need power like a
+  zone, and the bulldozer knocks them down through their centre.
 - **The city maps.** `CityMaps` holds land value and population density
   on 2 by 2 tile blocks, as Micropolis does. Land value (phase 12) is, for
   a block with something built on it, 34 less the distance to the city's
@@ -358,7 +366,7 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   and no project. It holds the parser, the dispatcher, the default
   command, the strict option reader, and the exit codes.
 - **The tests.** `CityLimits.Tests` uses xUnit 2 with the VSTest runner
-  and coverlet, and holds 470 tests over the generator, the terrain edges, the power plants, lines, and grid, the budget, the stations and their coverage, parks, the map, the
+  and coverlet, and holds 481 tests over the generator, the terrain edges, the power plants, lines, and grid, the budget, the stations and their coverage, parks, hospitals and churches, the map, the
   calendar, the clock, the simulation, the settings, the tile rules, the
   build actions, the road network, the treasury, the scenario loader and
   runner, every built-in scenario, the definitions and the mod loader, zone growth, the census and demand, trips, growth and the city maps,

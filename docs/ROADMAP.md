@@ -1,6 +1,6 @@
 # CityLimits roadmap
 
-> **Last reviewed:** 2026-10-20 · **Last updated:** 2026-10-20 · **Change:** minor (Joffburg J3b: parks) · **Stage:** pre-alpha
+> **Last reviewed:** 2026-10-20 · **Last updated:** 2026-10-20 · **Change:** minor (Joffburg J3c: hospitals and churches, and J3 is complete) · **Stage:** pre-alpha
 
 Forward-looking: where CityLimits stands, what blocks the next milestone,
 and what comes next. Verified status and evidence are in the
@@ -61,9 +61,9 @@ power, unpowered zones don't grow, the city warns of brownouts and
 blackouts, and the palette is laid out as Micropolis'. J2, taxes and the
 budget, is complete: the city collects taxes and pays its upkeep each
 year, the tax rate moves demand, and the budget panel opens by itself
-when spending outpaces income. J3, services, is under way: police and
-fire stations, their coverage, and parks are in; hospitals and churches
-come next.
+when spending outpaces income. J3, services, is complete: police and
+fire stations and their coverage, parks, and hospitals and churches are
+in. J4, the panels, comes next.
 
 ## Milestones
 
@@ -87,8 +87,8 @@ come next.
 
 | Rank | Work | Milestone | Estimate (h) |
 |---|---|---|---|
-| 1 | Hospitals and churches in residential zones | Joffburg | 1–3 |
-| 2 | A power overlay that shows what the power scan decided | Joffburg | 2–4 |
+| 1 | A power overlay that shows what the power scan decided | Joffburg | 2–4 |
+| 2 | Saving and loading a city | Happy Isle | 6–12 |
 
 Alpha needs a city that can be saved (UI-5); Joffburg's budget is in.
 
@@ -291,6 +291,7 @@ right, cut scope inside Radial and Deadwood first, not inside Kowloon.
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-21 | minor | Joffburg, phase J3c, and with it J3, services, is complete: hospitals and churches, as in Micropolis, one of each needed for every 256 residents; an empty residential zone becomes one a time in four when it would grow, and one too many turns back now and then. The owner chose to fix Micropolis' quirk that loses a hospital when both are needed. The modding doc is now `docs/modding/`, a player's guide and `tuning.md`, and AGENTS.md says how docs are written. 481 tests. |
 | 2026-10-21 | minor | Joffburg, phase J3b: parks, as in Micropolis: $10 a tile, laid as a rectangle on clear ground or rubble, never trees; woods or, one time in five, a fountain, chosen from the tile's place as the owner chose. A wooded park adds to land value as trees do; a fountain counts as built. The services checklist item is done; Joffburg is at 60%. 470 tests. |
 | 2026-10-21 | minor | Joffburg, phase J3a: police and fire stations, as in Micropolis: 3 by 3, $500 and $100 a year, a `ServiceSpec` a mod can change in `services.json`. Each adds its funding effect to its 8 by 8 block, halved without power or a road, and the maps are smoothed at phases 13 and 15; coverage acts on crime and fires in Deadwood. The budget pays their upkeep, and the city asks for stations past 60 people and for their funding below 70%. A plant now has power from the moment it is placed, and an unpowered station blinks the bolt. The owner chose parks' look by position and fixing Micropolis' hospital-then-church quirk. 462 tests. |
 | 2026-10-21 | minor | Joffburg, phase J2b, and with it J2, taxes and the budget, is complete: the budget panel shows the year as it stands, last year, and the tax rate and funding with buttons to change them. It opens by itself when a year's upkeep outran its taxes or funding was cut, saying why, and with B or a click on the funds; the game pauses while it is open. The funds show red below zero. Joffburg is at 40%; 444 tests. |

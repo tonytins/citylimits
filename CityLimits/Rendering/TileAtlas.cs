@@ -81,6 +81,12 @@ public static class TileAtlas
     /// <inheritdoc cref="FireStationTile"/>
     private const int PoliceStationTile = 770;
 
+    /// <inheritdoc cref="FireStationTile"/>
+    private const int HospitalTile = 405;
+
+    /// <inheritdoc cref="FireStationTile"/>
+    private const int ChurchTile = 414;
+
     /// <summary>
     /// Where each zone's drawings are. A drawing is 3 by 3, its nine tiles following each other in
     /// the sheet across and then down, so a part's tile is the drawing's first tile plus its part
@@ -250,6 +256,16 @@ public static class TileAtlas
         if (state.Use == TileUse.PoliceStation)
         {
             return PoliceStationTile + state.ZonePart;
+        }
+
+        if (state.Use == TileUse.Hospital)
+        {
+            return HospitalTile + state.ZonePart;
+        }
+
+        if (state.Use == TileUse.Church)
+        {
+            return ChurchTile + state.ZonePart;
         }
 
         if (state.IsZoned)

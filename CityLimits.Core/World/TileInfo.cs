@@ -37,6 +37,8 @@ public static class TileInfo
         TileUse.FireStation => "Fire station",
         TileUse.PoliceStation => "Police station",
         TileUse.Park => "Park",
+        TileUse.Hospital => "Hospital",
+        TileUse.Church => "Church",
         _ => "Empty",
     };
 
@@ -54,6 +56,8 @@ public static class TileInfo
         TileUse.FireStation => "fire station",
         TileUse.PoliceStation => "police station",
         TileUse.Park => "park",
+        TileUse.Hospital => "hospital",
+        TileUse.Church => "church",
         _ => "empty",
     };
 
@@ -68,6 +72,7 @@ public static class TileInfo
         TileUse.Residential or TileUse.Commercial or TileUse.Industrial when state.Development == 0 => "not developed yet",
         TileUse.Residential or TileUse.Commercial or TileUse.Industrial => $"developed to level {state.Development}",
         TileUse.CoalPowerPlant or TileUse.NuclearPowerPlant or TileUse.FireStation or TileUse.PoliceStation => "bulldoze its centre to clear it",
+        TileUse.Hospital or TileUse.Church => "the city built it on a residential zone",
         TileUse.Park => "the bulldozer clears it for $1",
         TileUse.PowerLine when state.Kind == TileKind.Water => "laid under water",
         TileUse.PowerLine => "strung on poles",
