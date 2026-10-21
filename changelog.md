@@ -1,5 +1,19 @@
 # CityLimits Changelog
 
+## 0.2.101
+
+Power plants, the start of Joffburg. A coal plant costs $3,000 and a
+nuclear plant $5,000, as in Micropolis, and each is 4 by 4, drawn from the
+tile sheet. Pick one from the palette (keys 7 and 8), and it follows the
+pointer while the button is held, with its price beside it; letting go
+builds it, whole or not at all. The bulldozer knocks a plant down through
+its centre, as it does a zone. Plants don't make power yet: power lines
+and the power grid come next.
+
+Scenarios can build plants with the `CoalPowerPlant` and
+`NuclearPowerPlant` tools and count them, and the JSON report's counts
+include them.
+
 ## 0.2.100
 
 CityLimits now plays like Micropolis at its core. Its features aren't yet at

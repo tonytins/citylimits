@@ -17,4 +17,10 @@ public enum BuildAction
 
     /// <summary>Clear whatever is on the tile.</summary>
     Bulldoze,
+
+    /// <summary>Build a coal power plant, centred on the tile.</summary>
+    CoalPowerPlant,
+
+    /// <summary>Build a nuclear power plant, centred on the tile.</summary>
+    NuclearPowerPlant,
 }

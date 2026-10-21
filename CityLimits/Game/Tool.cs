@@ -18,8 +18,14 @@ public enum Tool
     /// <summary>Zone land as industrial.</summary>
     Industrial,
 
-    /// <summary>Clear a tile and take part of the money back.</summary>
+    /// <summary>Clear a tile, or a zone or plant through its centre.</summary>
     Bulldozer,
+
+    /// <summary>Build a coal power plant.</summary>
+    CoalPowerPlant,
+
+    /// <summary>Build a nuclear power plant.</summary>
+    NuclearPowerPlant,
 }
 
 /// <summary>The work each tool asks the city to do.</summary>
@@ -33,6 +39,8 @@ public static class ToolActions
         Tool.Commercial => BuildAction.ZoneCommercial,
         Tool.Industrial => BuildAction.ZoneIndustrial,
         Tool.Bulldozer => BuildAction.Bulldoze,
+        Tool.CoalPowerPlant => BuildAction.CoalPowerPlant,
+        Tool.NuclearPowerPlant => BuildAction.NuclearPowerPlant,
         _ => null,
     };
 }

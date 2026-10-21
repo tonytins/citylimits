@@ -41,6 +41,8 @@ public sealed class CityDefinitions
         BuildAction.ZoneCommercial => Zone(TileUse.Commercial).Price,
         BuildAction.ZoneIndustrial => Zone(TileUse.Industrial).Price,
         BuildAction.Bulldoze => TileCosts.Bulldoze,
+        BuildAction.CoalPowerPlant => TileCosts.CoalPowerPlant,
+        BuildAction.NuclearPowerPlant => TileCosts.NuclearPowerPlant,
         _ => 0,
     };
 

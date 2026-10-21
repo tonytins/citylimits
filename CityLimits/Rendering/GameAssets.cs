@@ -22,6 +22,8 @@ public sealed class GameAssets : IDisposable
         (Tool.Commercial, "iccom.png"),
         (Tool.Industrial, "icind.png"),
         (Tool.Bulldozer, "icbulldozer.png"),
+        (Tool.CoalPowerPlant, "iccoal.png"),
+        (Tool.NuclearPowerPlant, "icnuc.png"),
     ];
 
     private readonly Dictionary<Tool, Texture2D> _icons = new();

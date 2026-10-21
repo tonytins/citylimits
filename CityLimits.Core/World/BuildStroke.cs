@@ -35,16 +35,38 @@ public sealed class BuildStroke
     /// <summary>Tells whether the stroke lays zones, which are 3 by 3 and laid as a grid.</summary>
     public bool LaysZones => Action is BuildAction.ZoneResidential or BuildAction.ZoneCommercial or BuildAction.ZoneIndustrial;
 
+    /// <summary>Tells whether the stroke places one building, such as a power plant, which follows the pointer.</summary>
+    public bool PlacesBuilding => Action is BuildAction.CoalPowerPlant or BuildAction.NuclearPowerPlant;
+
+    /// <summary>What the stroke's zones or building are used for, or <see cref="TileUse.None"/> for any other stroke.</summary>
+    public TileUse Use => Action switch
+    {
+        BuildAction.ZoneResidential => TileUse.Residential,
+        BuildAction.ZoneCommercial => TileUse.Commercial,
+        BuildAction.ZoneIndustrial => TileUse.Industrial,
+        BuildAction.CoalPowerPlant => TileUse.CoalPowerPlant,
+        BuildAction.NuclearPowerPlant => TileUse.NuclearPowerPlant,
+        _ => TileUse.None,
+    };
+
     /// <summary>
     /// The tiles the stroke covers. A road runs in one straight line from where it started,
     /// across or down, whichever way the drag has gone further; across wins a tie. Zones are
     /// laid as a grid of 3 by 3 zones, the first centred where the stroke started, growing a
-    /// whole zone at a time toward the pointer. The bulldozer covers the rectangle dragged.
+    /// whole zone at a time toward the pointer. A building, such as a power plant, is one
+    /// footprint centred where the pointer is now, as in Micropolis, so dragging moves it. The
+    /// bulldozer covers the rectangle dragged.
     /// </summary>
     public TileRect Bounds
     {
         get
         {
+            if (PlacesBuilding)
+            {
+                var size = Footprint.SizeOf(Use);
+                return new TileRect(EndX - 1, EndY - 1, size, size);
+            }
+
             if (LaysZones)
             {
                 var (x, width) = ZoneSpan(StartX, EndX);

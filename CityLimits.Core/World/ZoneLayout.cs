@@ -16,8 +16,8 @@ public static class ZoneLayout
     public const int CenterPart = Parts / 2;
 
     /// <summary>The part of a zone a tile is, from its offset to the zone's top-left tile.</summary>
-    public static int PartAt(int column, int row) => (row * Size) + column;
+    public static int PartAt(int column, int row) => Footprint.PartAt(column, row, Size);
 
     /// <summary>How far a part of a zone is from the centre, across and down.</summary>
-    public static (int Dx, int Dy) OffsetFromCenter(int part) => ((part % Size) - 1, (part / Size) - 1);
+    public static (int Dx, int Dy) OffsetFromCenter(int part) => Footprint.OffsetFromCenter(part, Size);
 }

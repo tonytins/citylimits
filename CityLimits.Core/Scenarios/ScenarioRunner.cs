@@ -99,15 +99,15 @@ public sealed class ScenarioRunner
     }
 
     /// <summary>
-    /// What stands on a map: road tiles, bridges among them, zones of each kind, and developed
-    /// zones, which are those with any population, houses included.
+    /// What stands on a map: road tiles, bridges among them, zones of each kind, developed zones,
+    /// which are those with any population, houses included, and power plants of each kind.
     /// </summary>
     public static CityCounts Count(TileMap map, CityDefinitions definitions)
     {
         ArgumentNullException.ThrowIfNull(map);
         ArgumentNullException.ThrowIfNull(definitions);
 
-        int road = 0, bridge = 0, residential = 0, commercial = 0, industrial = 0, developed = 0;
+        int road = 0, bridge = 0, residential = 0, commercial = 0, industrial = 0, developed = 0, coal = 0, nuclear = 0;
         for (var y = 0; y < map.Height; y++)
         {
             for (var x = 0; x < map.Width; x++)
@@ -117,6 +117,12 @@ public sealed class ScenarioRunner
                 {
                     road++;
                     bridge += state.IsBridge ? 1 : 0;
+                }
+
+                if (state.IsBuildingCenter)
+                {
+                    coal += state.Use == TileUse.CoalPowerPlant ? 1 : 0;
+                    nuclear += state.Use == TileUse.NuclearPowerPlant ? 1 : 0;
                 }
 
                 if (!state.IsZoneCenter)
@@ -131,7 +137,7 @@ public sealed class ScenarioRunner
             }
         }
 
-        return new CityCounts(road, bridge, residential, commercial, industrial, developed);
+        return new CityCounts(road, bridge, residential, commercial, industrial, developed, coal, nuclear);
     }
 
     // The stroke is planned first, for what it would skip and why, then applied as the tool

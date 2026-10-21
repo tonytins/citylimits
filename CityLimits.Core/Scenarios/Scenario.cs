@@ -75,6 +75,12 @@ public enum CountSubject
 
     /// <summary>Zones with a development level above zero.</summary>
     Developed,
+
+    /// <summary>Coal power plants, by their centres.</summary>
+    CoalPowerPlant,
+
+    /// <summary>Nuclear power plants, by their centres.</summary>
+    NuclearPowerPlant,
 }
 
 /// <summary>

@@ -11,6 +11,8 @@ public sealed class ToolPalette
         Tool.Commercial,
         Tool.Industrial,
         Tool.Bulldozer,
+        Tool.CoalPowerPlant,
+        Tool.NuclearPowerPlant,
     ];
 
     /// <summary>The tool that is held when the game starts.</summary>

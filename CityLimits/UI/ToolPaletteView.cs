@@ -12,6 +12,8 @@ public sealed class ToolPaletteView
         KeyboardKey.Four,
         KeyboardKey.Five,
         KeyboardKey.Six,
+        KeyboardKey.Seven,
+        KeyboardKey.Eight,
     ];
 
     private const int FontSize = 14;
@@ -42,6 +44,8 @@ public sealed class ToolPaletteView
         KeyboardKey.Four => Tool.Commercial,
         KeyboardKey.Five => Tool.Industrial,
         KeyboardKey.Six => Tool.Bulldozer,
+        KeyboardKey.Seven => Tool.CoalPowerPlant,
+        KeyboardKey.Eight => Tool.NuclearPowerPlant,
         _ => null,
     };
 
@@ -167,6 +171,8 @@ public sealed class ToolPaletteView
         Tool.Commercial => "Commercial",
         Tool.Industrial => "Industrial",
         Tool.Bulldozer => "Bulldozer",
+        Tool.CoalPowerPlant => "Coal plant",
+        Tool.NuclearPowerPlant => "Nuclear plant",
         _ => "Inspect",
     };
 }

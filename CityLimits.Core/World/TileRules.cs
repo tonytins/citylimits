@@ -18,6 +18,9 @@ public static class TileRules
     /// <summary>Tells whether a use is one of the three zones.</summary>
     public static bool IsZone(TileUse use) => use is TileUse.Residential or TileUse.Commercial or TileUse.Industrial;
 
+    /// <summary>Tells whether a use is a power plant.</summary>
+    public static bool IsPowerPlant(TileUse use) => use is TileUse.CoalPowerPlant or TileUse.NuclearPowerPlant;
+
     /// <summary>Tells whether a road can be laid on the given ground. Water takes a bridge, which has rules of its own.</summary>
     public static bool CanLayRoad(TileKind kind) => CanBuildOn(kind);
 
@@ -26,7 +29,7 @@ public static class TileRules
 
     /// <summary>
     /// Tells whether the bulldozer can clear a tile on its own: a road, a bridge, trees, or
-    /// rubble. A zone is cleared only through its centre.
+    /// rubble. A zone or a plant is cleared only through its centre.
     /// </summary>
     public static bool HasSomethingToClear(TileState state) =>
         state.IsRoad || (state.Use == TileUse.None && NeedsClearing(state.Kind));

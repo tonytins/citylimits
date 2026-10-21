@@ -58,8 +58,14 @@ public sealed class CityBuilder
             case BuildAction.Bulldoze:
                 PlanBulldozer(bounds, plan);
                 break;
+            case BuildAction.CoalPowerPlant:
+                PlanFootprint(bounds.X, bounds.Y, stroke.Use, TileCosts.CoalPowerPlant, plan);
+                break;
+            case BuildAction.NuclearPowerPlant:
+                PlanFootprint(bounds.X, bounds.Y, stroke.Use, TileCosts.NuclearPowerPlant, plan);
+                break;
             default:
-                PlanZones(bounds, ZoneFor(stroke.Action), plan);
+                PlanZones(bounds, stroke.Use, plan);
                 break;
         }
 
@@ -186,32 +192,34 @@ public sealed class CityBuilder
         }
     }
 
-    // Zones are laid as a grid. A zone goes down whole or not at all: every one of its nine
-    // tiles has to be ground that can be built on, with nothing on it.
+    // Zones are laid as a grid, each one going down whole or not at all.
     private void PlanZones(TileRect bounds, TileUse use, BuildPlan plan)
     {
         for (var top = bounds.Y; top < bounds.Y + bounds.Height; top += ZoneLayout.Size)
         {
             for (var left = bounds.X; left < bounds.X + bounds.Width; left += ZoneLayout.Size)
             {
-                PlanZone(left, top, use, plan);
+                PlanFootprint(left, top, use, _definitions.Zone(use).Price, plan);
             }
         }
     }
 
-    private void PlanZone(int left, int top, TileUse use, BuildPlan plan)
+    // A zone or a plant goes down whole or not at all, on ground with nothing on it; trees and
+    // rubble are cleared first, at a price. Its centre is one tile in from its top-left corner.
+    private void PlanFootprint(int left, int top, TileUse use, int price, BuildPlan plan)
     {
+        var size = Footprint.SizeOf(use);
         var center = _map.StateAt(left + 1, top + 1);
-        if (center.IsZoneCenter && center.Use == use && _map.ZoneCenterOf(left, top) == (left + 1, top + 1))
+        if (center.IsBuildingCenter && center.Use == use && _map.ZoneCenterOf(left, top) == (left + 1, top + 1))
         {
             plan.Skip(BuildRefusal.AlreadyDone);
             return;
         }
 
-        var cost = _definitions.Zone(use).Price;
-        for (var row = 0; row < ZoneLayout.Size; row++)
+        var cost = price;
+        for (var row = 0; row < size; row++)
         {
-            for (var column = 0; column < ZoneLayout.Size; column++)
+            for (var column = 0; column < size; column++)
             {
                 var state = _map.StateAt(left + column, top + row);
                 if (state.Use != TileUse.None || !TileRules.CanZone(state.Kind))
@@ -224,11 +232,11 @@ public sealed class CityBuilder
             }
         }
 
-        for (var row = 0; row < ZoneLayout.Size; row++)
+        for (var row = 0; row < size; row++)
         {
-            for (var column = 0; column < ZoneLayout.Size; column++)
+            for (var column = 0; column < size; column++)
             {
-                var state = new TileState(TileKind.Grass, use, zonePart: ZoneLayout.PartAt(column, row));
+                var state = new TileState(TileKind.Grass, use, zonePart: Footprint.PartAt(column, row, size));
                 plan.Change(left + column, top + row, state, 0);
             }
         }
@@ -236,8 +244,8 @@ public sealed class CityBuilder
         plan.AddCost(cost);
     }
 
-    // The bulldozer clears roads, bridges, trees, and rubble tile by tile, for $1 each. A zone
-    // comes down only when its centre is in the stroke: all nine tiles turn to rubble, for $1.
+    // The bulldozer clears roads, bridges, trees, and rubble tile by tile, for $1 each. A zone or
+    // a plant comes down only when its centre is in the stroke: all its tiles turn to rubble, for $1.
     private void PlanBulldozer(TileRect bounds, BuildPlan plan)
     {
         for (var y = bounds.Y; y < bounds.Y + bounds.Height; y++)
@@ -245,7 +253,7 @@ public sealed class CityBuilder
             for (var x = bounds.X; x < bounds.X + bounds.Width; x++)
             {
                 var state = _map.StateAt(x, y);
-                if (state.IsZoned)
+                if (state.HasFootprint)
                 {
                     var (centerX, centerY) = _map.ZoneCenterOf(x, y);
                     var centerInStroke = centerX >= bounds.X && centerX < bounds.X + bounds.Width &&
@@ -273,14 +281,16 @@ public sealed class CityBuilder
         {
             for (var x = bounds.X; x < bounds.X + bounds.Width; x++)
             {
-                if (!_map.StateAt(x, y).IsZoneCenter)
+                var center = _map.StateAt(x, y);
+                if (!center.IsBuildingCenter)
                 {
                     continue;
                 }
 
-                for (var dy = -1; dy <= 1; dy++)
+                var size = Footprint.SizeOf(center.Use);
+                for (var dy = -1; dy < size - 1; dy++)
                 {
-                    for (var dx = -1; dx <= 1; dx++)
+                    for (var dx = -1; dx < size - 1; dx++)
                     {
                         plan.Change(x + dx, y + dy, new TileState(TileKind.Rubble), 0);
                     }
@@ -290,13 +300,6 @@ public sealed class CityBuilder
             }
         }
     }
-
-    private static TileUse ZoneFor(BuildAction action) => action switch
-    {
-        BuildAction.ZoneCommercial => TileUse.Commercial,
-        BuildAction.ZoneIndustrial => TileUse.Industrial,
-        _ => TileUse.Residential,
-    };
 
     private static int ClearingCost(TileState state) =>
         TileRules.NeedsClearing(state.Kind) ? TileCosts.AutoClear : 0;

@@ -94,23 +94,23 @@ public sealed class TileMap
     }
 
     /// <summary>
-    /// Finds the centre of the zone a tile belongs to, where the zone's development is kept.
-    /// A tile that isn't part of a zone is its own centre.
+    /// Finds the centre of the zone or plant a tile belongs to, where a zone's development is kept.
+    /// A tile that isn't part of one is its own centre.
     /// </summary>
     /// <exception cref="ArgumentOutOfRangeException">The coordinates are outside the map.</exception>
     public (int X, int Y) ZoneCenterOf(int x, int y)
     {
         var state = StateAt(x, y);
-        if (!state.IsZoned)
+        if (!state.HasFootprint)
         {
             return (x, y);
         }
 
-        var (dx, dy) = ZoneLayout.OffsetFromCenter(state.ZonePart);
+        var (dx, dy) = Footprint.OffsetFromCenter(state.ZonePart, Footprint.SizeOf(state.Use));
         return (x - dx, y - dy);
     }
 
-    /// <summary>The state of the centre of the zone a tile belongs to, or the tile's own state when it isn't part of one.</summary>
+    /// <summary>The state of the centre of the zone or plant a tile belongs to, or the tile's own state when it isn't part of one.</summary>
     /// <exception cref="ArgumentOutOfRangeException">The coordinates are outside the map.</exception>
     public TileState ZoneStateAt(int x, int y)
     {

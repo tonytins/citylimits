@@ -314,9 +314,11 @@ public sealed class GameLoop : IDisposable
     {
         BuildStatus.Built when action == BuildAction.Bulldoze => $"Cleared {Count(result.TilesChanged, "tile")} for ${result.Cost}",
         BuildStatus.Built when action == BuildAction.Road => $"Built {Count(result.TilesChanged, "tile")} of road for ${result.Cost}",
+        BuildStatus.Built when action == BuildAction.CoalPowerPlant => $"Built a coal power plant for ${result.Cost}",
+        BuildStatus.Built when action == BuildAction.NuclearPowerPlant => $"Built a nuclear power plant for ${result.Cost}",
         BuildStatus.Built => $"Zoned {Count(result.TilesChanged / ZoneLayout.Parts, "zone")} for ${result.Cost}",
         BuildStatus.Unchanged when result.Reason == BuildRefusal.AlreadyDone => "The land is already like that",
-        BuildStatus.Refused when result.Reason == BuildRefusal.PartOfAZone => "Bulldoze a zone's centre to clear it",
+        BuildStatus.Refused when result.Reason == BuildRefusal.PartOfAZone => "Bulldoze its centre to clear it",
         BuildStatus.Unchanged => "There was nothing to clear",
         BuildStatus.Refused when result.Reason == BuildRefusal.NotEnoughFunds => $"Not enough money, it costs ${result.Cost}",
         BuildStatus.Refused when result.Reason == BuildRefusal.CannotBuildHere => "That ground cannot be built on",

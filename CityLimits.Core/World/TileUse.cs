@@ -17,4 +17,10 @@ public enum TileUse
 
     /// <summary>The tile is zoned for factories.</summary>
     Industrial,
+
+    /// <summary>The tile is part of a coal power plant, 4 by 4.</summary>
+    CoalPowerPlant,
+
+    /// <summary>The tile is part of a nuclear power plant, 4 by 4.</summary>
+    NuclearPowerPlant,
 }

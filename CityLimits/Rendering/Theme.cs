@@ -54,6 +54,9 @@ public static class Theme
     /// <summary>The color of an industrial zone.</summary>
     public static readonly Color Industrial = new() { R = 198, G = 156, B = 58, A = 255 };
 
+    /// <summary>The color of a power plant, when the tile sheet could not be loaded.</summary>
+    public static readonly Color PowerPlant = new() { R = 150, G = 150, B = 160, A = 255 };
+
     /// <summary>Returns the color of a kind of ground.</summary>
     public static Color For(TileKind kind) => kind switch
     {
@@ -70,6 +73,7 @@ public static class Theme
         TileUse.Residential => Residential,
         TileUse.Commercial => Commercial,
         TileUse.Industrial => Industrial,
+        TileUse.CoalPowerPlant or TileUse.NuclearPowerPlant => PowerPlant,
         _ => Grass,
     };
 }

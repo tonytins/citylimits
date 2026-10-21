@@ -30,6 +30,8 @@ public static class TileInfo
         TileUse.Residential => "Residential zone",
         TileUse.Commercial => "Commercial zone",
         TileUse.Industrial => "Industrial zone",
+        TileUse.CoalPowerPlant => "Coal power plant",
+        TileUse.NuclearPowerPlant => "Nuclear power plant",
         _ => "Empty",
     };
 
@@ -40,6 +42,8 @@ public static class TileInfo
         TileUse.Residential => "residential",
         TileUse.Commercial => "commercial",
         TileUse.Industrial => "industrial",
+        TileUse.CoalPowerPlant => "coal plant",
+        TileUse.NuclearPowerPlant => "nuclear plant",
         _ => "empty",
     };
 
@@ -53,6 +57,7 @@ public static class TileInfo
         TileUse.Road => "carries traffic",
         TileUse.Residential or TileUse.Commercial or TileUse.Industrial when state.Development == 0 => "not developed yet",
         TileUse.Residential or TileUse.Commercial or TileUse.Industrial => $"developed to level {state.Development}",
+        TileUse.CoalPowerPlant or TileUse.NuclearPowerPlant => "bulldoze its centre to clear it",
         _ => BuildAdvice(state.Kind),
     };
 

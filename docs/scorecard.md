@@ -16,12 +16,12 @@ change. Statuses are `done`, `partial`, and `missing`.
 | [Map](#map-and-terrain) | 4 | 0 | 0 | 4 kinds of ground, 16 shore and 17 wood drawings, one 256 by 960 atlas |
 | [Zoning](#roads-and-zoning) | 5 | 0 | 0 | 5 tools that change the world, $10 a road, $50 a bridge, $100 a 3 by 3 zone, $1 to bulldoze |
 | [Simulation](#simulation) | 7 | 0 | 0 | 16 phases a 48th of a year, 3 minutes a year at Normal, houses then 4 to 5 building levels, 3 built-in scenarios |
-| [Economy](#economy-and-services) | 0 | 1 | 4 | $20 000 in the treasury, no taxes yet |
+| [Economy](#economy-and-services) | 0 | 2 | 3 | $20 000 in the treasury, $3 000 and $5 000 plants, no grid or taxes yet |
 | [Traffic](#traffic-and-commuting) | 0 | 2 | 2 | 1 road network, trips of up to 30 tiles |
 | [Environment](#land-value-pollution-and-disasters) | 0 | 1 | 4 | land value from distance and terrain, 0 disasters |
-| [Interface](#player-interface) | 2 | 0 | 4 | 6 tools with icons, 1 status bar, the demand panel |
+| [Interface](#player-interface) | 2 | 0 | 4 | 8 tools with icons, 1 status bar, the demand panel |
 | [Platform](#platform) | 7 | 0 | 2 | Raylib-cs 8.1.0, NLog 6.2.2, .NET 10, data mods |
-| [Reliability](#reliability) | 6 | 0 | 0 | 360 tests, all passing, CI green |
+| [Reliability](#reliability) | 6 | 0 | 0 | 375 tests, all passing, CI green |
 | [Documentation](#documentation) | 3 | 0 | 2 | 3 of 5 documents exist |
 | [Known issues](#known-issues) | | | | 1 open, 3 resolved |
 
@@ -41,7 +41,7 @@ How the state was verified on 2026-10-20:
 
 ```sh
 dotnet build CityLimits.slnx                              # 4 projects: 0 warnings, 0 errors
-dotnet test  CityLimits.Tests/CityLimits.Tests.csproj     # 360 passed, 0 failed
+dotnet test  CityLimits.Tests/CityLimits.Tests.csproj     # 375 passed, 0 failed
 dotnet run --project CityLimits -- --headless            # a year of steps, 12 months logged to the console
 dotnet run --project CityLimits                           # window opened; roads, zones, buildings, the palette icons, and the tile readout were drawn
 dotnet run --project CityLimits -- --seed 7               # window opened and the assets loaded (the screen was not inspected)
@@ -107,7 +107,7 @@ there is something to grow.
 
 | Id | Target | Status | Evidence |
 |---|---|---|---|
-| ECON-1 | Power plants feed a grid, and each tile is powered or unserved | missing | No power model |
+| ECON-1 | Power plants feed a grid, and each tile is powered or unserved | partial | Coal and nuclear plants can be built: 4 by 4, at Micropolis' $3,000 and $5,000, placed whole and knocked down through their centre (`Footprint`, `CityBuilder`, `PowerPlantTests`). On a private display on 2026-10-20 both drew from the sheet, the preview followed the pointer with its price, and bulldozing a coal plant left 16 tiles of rubble for $1. There are no power lines and no grid yet, so nothing is powered |
 | ECON-2 | Power demand follows population, and a brownout is visible | missing | No demand or brownout |
 | ECON-3 | Taxes, a budget, and a deficit the player has to answer | partial | `CityLimits.Core/Economy/Treasury.cs` holds the money, and `CityBuilder` spends it and gives part of it back; the status bar shows the balance. There are no taxes, no yearly budget, and no deficit to answer |
 | ECON-4 | Police, fire, and parks have a coverage effect | missing | No services |
@@ -136,7 +136,7 @@ there is something to grow.
 
 | Id | Target | Status | Evidence |
 |---|---|---|---|
-| UI-1 | A tool palette with a hotkey for every tool | done | `CityLimits/UI/ToolPaletteView.cs`: six tools, the keys 1 to 6, and the icon of each tool drawn from `CityLimits/Assets/tools/`. The captured window on 2026-10-20 shows the icons in their own colours, with the held tool picked out, and the price of the tool beside its name |
+| UI-1 | A tool palette with a hotkey for every tool | done | `CityLimits/UI/ToolPaletteView.cs`: eight tools, the keys 1 to 8, and the icon of each tool drawn from `CityLimits/Assets/tools/`. The captured window on 2026-10-20 shows the icons in their own colours, with the held tool picked out, and the price of the tool beside its name |
 | UI-2 | A HUD with population, funds, date, speed, and the demand bars | done | `CityLimits/UI/Hud.cs`: the status bar shows the date, the tick, the speed, the population, the funds, the held tool and its price, the mouse position, and the frame rate; the demand panel under the palette shows R, C, and I, and keeps clicks off the map under it |
 | UI-3 | Panels for the budget, power, and the city score | missing | No panels; the tool palette is the only panel |
 | UI-4 | A city score that rates the city the way the classic games do | missing | No scoring |
@@ -164,7 +164,7 @@ there is something to grow.
 | REL-1 | Nothing ends the player's session: the frame loop catches, reports, and keeps drawing | done | `WindowedGame` catches every exception around the update and the draw, and `GameLoop.ReportError` puts the message on screen; the game keeps running |
 | REL-2 | The world and the simulation never call the engine | done | `CityLimits.Core` references no package at all, and the game references the core library; no Raylib type appears in the core |
 | REL-3 | Input, tile indices, map sizes, and files are validated where they enter | done | Map sizes, tile counts, and the settings file are checked, and the tile indexer throws outside the map. The mouse position is turned into a tile by `MapRenderer.TryGetTileAt`, which reports when the pointer is off the map, and `CityBuilder.Apply` refuses a tile that is off the map, ground that cannot be built on, and work the city cannot pay for |
-| REL-4 | A test project covers the engine-free logic, and the tests pass | done | `CityLimits.Tests` references `CityLimits.Core` and `CityLimits.CommandLine` and holds 360 xUnit tests over the generator and the terrain edges, the map, the tile state, the rules, the calendar and the cycle, the clock, the simulation, the settings, the treasury, the road network and its connections, the map's change event, the builder and its strokes, the scenario loader and runner, every built-in scenario, the definitions and the mod loader, zone growth, the census and demand, trips, growth and the city maps, the option reader, and the dispatcher. All 360 passed on 2026-10-20. Letting an unknown option and an out-of-range number through on purpose failed 3 of them, and letting `--headless` reach a command that needs a window failed 2 |
+| REL-4 | A test project covers the engine-free logic, and the tests pass | done | `CityLimits.Tests` references `CityLimits.Core` and `CityLimits.CommandLine` and holds 375 xUnit tests over the generator and the terrain edges, the power plants, the map, the tile state, the rules, the calendar and the cycle, the clock, the simulation, the settings, the treasury, the road network and its connections, the map's change event, the builder and its strokes, the scenario loader and runner, every built-in scenario, the definitions and the mod loader, zone growth, the census and demand, trips, growth and the city maps, the option reader, and the dispatcher. All 375 passed on 2026-10-20. Letting an unknown option and an out-of-range number through on purpose failed 3 of them, and letting `--headless` reach a command that needs a window failed 2 |
 | REL-5 | A determinism test proves the same seed gives the same city | done | `DeterministicRandomTests.TheSameSeedGivesTheSameSequence`, `CitySimulationTests.TheSameSeedAndTheSameTicksGiveTheSameCity`, and `CitySimulationTests.TheSameSeedAndTheSameWorkGiveTheSameCity`, which builds the same road and zones in two cities and compares the tiles and the money after 40 ticks |
 | REL-6 | CI builds and tests on every push | done | `.github/workflows/dotnet.yml` runs on a push to `main` and on a pull request: restore, build, and test. The first run, on the commit 273fd9f on 2026-10-20, finished with the conclusion `success` (run 39443031762) |
 

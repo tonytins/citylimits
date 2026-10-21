@@ -1,8 +1,8 @@
 namespace CityLimits.Core.World;
 
 /// <summary>
-/// Everything a tile knows about itself: its ground, its use, which part of a zone it is, and how
-/// its zone has grown. As in Micropolis, a zone's building is kept on its centre tile: its
+/// Everything a tile knows about itself: its ground, its use, which part of a zone or plant it
+/// is, and how its zone has grown. As in Micropolis, a zone's building is kept on its centre tile: its
 /// development level and its land-value class. A residential zone with no building yet grows
 /// single houses instead, and each house is kept on the outer tile it stands on.
 /// </summary>
@@ -17,24 +17,29 @@ public readonly struct TileState : IEquatable<TileState>
     /// <summary>The number of single-house drawings, three for each land-value class.</summary>
     public const int HouseDrawings = 12;
 
-    /// <summary>Creates a state, rejecting a level, a class, a house, or a zone part the city does not have.</summary>
+    /// <summary>
+    /// Creates a state, rejecting a level, a class, a house, or a part the city does not have. The
+    /// part defaults to the centre of the use's footprint.
+    /// </summary>
     /// <exception cref="ArgumentOutOfRangeException">
     /// The development level is outside 0 to <see cref="MaxDevelopment"/>, the value class outside
     /// 0 to <see cref="MaxValueClass"/>, the house outside 0 to <see cref="HouseDrawings"/>, or the
-    /// zone part outside 0 to 8.
+    /// part outside the use's footprint.
     /// </exception>
     public TileState(
         TileKind kind,
         TileUse use = TileUse.None,
         int development = 0,
-        int zonePart = ZoneLayout.CenterPart,
+        int? zonePart = null,
         int valueClass = 0,
         int house = 0)
     {
+        var size = Footprint.SizeOf(use);
+        var part = zonePart ?? Footprint.CenterPart(size);
         ArgumentOutOfRangeException.ThrowIfNegative(development);
         ArgumentOutOfRangeException.ThrowIfGreaterThan(development, MaxDevelopment);
-        ArgumentOutOfRangeException.ThrowIfNegative(zonePart);
-        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(zonePart, ZoneLayout.Parts);
+        ArgumentOutOfRangeException.ThrowIfNegative(part, nameof(zonePart));
+        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(part, Footprint.Parts(Math.Max(size, ZoneLayout.Size)), nameof(zonePart));
         ArgumentOutOfRangeException.ThrowIfNegative(valueClass);
         ArgumentOutOfRangeException.ThrowIfGreaterThan(valueClass, MaxValueClass);
         ArgumentOutOfRangeException.ThrowIfNegative(house);
@@ -43,13 +48,13 @@ public readonly struct TileState : IEquatable<TileState>
         Kind = kind;
         Use = use;
 
-        // Only a zone has parts, a building, or houses; any other tile keeps the defaults, so
-        // equal tiles compare equal.
+        // Only a zone or a plant has parts, and only a zone has a building or houses; any other
+        // tile keeps the defaults, so equal tiles compare equal.
         var zoned = TileRules.IsZone(use);
-        ZonePart = zoned ? zonePart : ZoneLayout.CenterPart;
+        ZonePart = size > 1 ? part : 0;
         Development = zoned ? development : 0;
         ValueClass = zoned ? valueClass : 0;
-        House = zoned && zonePart != ZoneLayout.CenterPart ? house : 0;
+        House = zoned && part != ZoneLayout.CenterPart ? house : 0;
     }
 
     /// <summary>The ground the tile stands on.</summary>
@@ -70,13 +75,22 @@ public readonly struct TileState : IEquatable<TileState>
     /// <summary>The single house on an outer tile of a residential zone: 0 for none, or 1 to 12 for its drawing.</summary>
     public int House { get; }
 
-    /// <summary>Which part of its zone the tile is, 0 to 8 across and then down; 4 is the centre.</summary>
+    /// <summary>
+    /// Which part of its zone or plant the tile is, across and then down: 0 to 8 for a zone, with
+    /// 4 the centre, and 0 to 15 for a plant, with 5 the centre. Any other tile is part 0.
+    /// </summary>
     public int ZonePart { get; }
 
     /// <summary>Tells whether the tile carries a zone.</summary>
     public bool IsZoned => TileRules.IsZone(Use);
 
-    /// <summary>Tells whether the tile is the centre of a zone, where the simulation works on it.</summary>
+    /// <summary>Tells whether the tile is part of something bigger than one tile: a zone or a plant.</summary>
+    public bool HasFootprint => Footprint.SizeOf(Use) > 1;
+
+    /// <summary>Tells whether the tile is the centre of a zone or a plant, where the simulation works on it.</summary>
+    public bool IsBuildingCenter => HasFootprint && ZonePart == Footprint.CenterPart(Footprint.SizeOf(Use));
+
+    /// <summary>Tells whether the tile is the centre of a zone.</summary>
     public bool IsZoneCenter => IsZoned && ZonePart == ZoneLayout.CenterPart;
 
     /// <summary>Tells whether the tile is an outer tile of a zone with a house on it.</summary>
@@ -108,5 +122,5 @@ public readonly struct TileState : IEquatable<TileState>
     /// <inheritdoc />
     public override string ToString() => IsZoned
         ? $"{Kind} {Use} {Development} part {ZonePart} class {ValueClass} house {House}"
-        : $"{Kind} {Use}";
+        : HasFootprint ? $"{Kind} {Use} part {ZonePart}" : $"{Kind} {Use}";
 }

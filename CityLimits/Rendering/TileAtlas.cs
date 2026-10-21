@@ -43,6 +43,15 @@ public static class TileAtlas
     private const int FirstHouseTile = 249;
 
     /// <summary>
+    /// The first tile of the coal power plant's 4 by 4 drawing. Its sixteen tiles follow each other
+    /// in the sheet across and then down, so a part's tile is the first tile plus its part number.
+    /// </summary>
+    private const int CoalPowerPlantTile = 745;
+
+    /// <inheritdoc cref="CoalPowerPlantTile"/>
+    private const int NuclearPowerPlantTile = 811;
+
+    /// <summary>
     /// Where each zone's drawings are. A drawing is 3 by 3, its nine tiles following each other in
     /// the sheet across and then down, so a part's tile is the drawing's first tile plus its part
     /// number. The empty zone comes first; then the buildings, one per development level within
@@ -148,6 +157,16 @@ public static class TileAtlas
         if (state.IsRoad)
         {
             return RoadTiles[(int)roads & 0b1111];
+        }
+
+        if (state.Use == TileUse.CoalPowerPlant)
+        {
+            return CoalPowerPlantTile + state.ZonePart;
+        }
+
+        if (state.Use == TileUse.NuclearPowerPlant)
+        {
+            return NuclearPowerPlantTile + state.ZonePart;
         }
 
         if (state.IsZoned)

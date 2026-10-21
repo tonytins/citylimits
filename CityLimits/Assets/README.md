@@ -12,6 +12,8 @@ tools/icres.png      residential
 tools/iccom.png      commercial
 tools/icind.png      industrial
 tools/icbulldozer.png bulldozer
+tools/iccoal.png     coal power plant
+tools/icnuc.png      nuclear power plant
 Scenarios/           the built-in scenarios, one JSON file each, named for its id
 ```
 
@@ -99,6 +101,15 @@ A building's first tile is the zone's first building plus 9 times
 building shows its single houses on its outer tiles: tiles 249 to 260,
 three for each land-value class. 405 and 414, after the residential
 buildings, are a hospital and a church.
+
+A power plant is 4 by 4, its sixteen tiles in a row in the sheet, read
+across and then down, so a tile's drawing is the plant's first tile plus
+its part number (0 to 15, with 5 the centre):
+
+| Plant               | Tiles      |
+| ------------------- | ---------- |
+| Coal power plant    | 745 to 760 |
+| Nuclear power plant | 811 to 826 |
 
 ## Licensing
 
