@@ -22,11 +22,11 @@ public class TileRulesTests
         Assert.False(TileRules.IsClearGround(kind));
     }
 
-    [Theory]
-    [InlineData(TileKind.Water)]
-    [InlineData(TileKind.Rock)]
-    public void WaterAndRockCannotBeBuiltOn(TileKind kind)
+    [Fact]
+    public void WaterCannotBeBuiltOn()
     {
+        var kind = TileKind.Water;
+
         Assert.False(TileRules.CanBuildOn(kind));
         Assert.False(TileRules.NeedsClearing(kind));
         Assert.False(TileRules.IsClearGround(kind));
@@ -40,7 +40,6 @@ public class TileRulesTests
         Assert.Equal("Grass", TileInfo.Name(TileKind.Grass));
         Assert.Equal("Water", TileInfo.Name(TileKind.Water));
         Assert.Equal("Trees", TileInfo.Name(TileKind.Trees));
-        Assert.Equal("Rock", TileInfo.Name(TileKind.Rock));
         Assert.Equal("Rubble", TileInfo.Name(TileKind.Rubble));
     }
 
@@ -51,14 +50,13 @@ public class TileRulesTests
         Assert.Equal("cleared for $1 a tile when built on", TileInfo.BuildAdvice(TileKind.Trees));
         Assert.Equal("cleared for $1 a tile when built on", TileInfo.BuildAdvice(TileKind.Rubble));
         Assert.Equal("only a bridge can cross it", TileInfo.BuildAdvice(TileKind.Water));
-        Assert.Equal("cannot be built on", TileInfo.BuildAdvice(TileKind.Rock));
     }
 
     [Fact]
     public void TheDescriptionNamesTheGroundAndTheAdvice()
     {
         Assert.Equal("Trees - cleared for $1 a tile when built on", TileInfo.Describe(TileKind.Trees));
-        Assert.Equal("Rock - cannot be built on", TileInfo.Describe(TileKind.Rock));
+        Assert.Equal("Water - only a bridge can cross it", TileInfo.Describe(TileKind.Water));
     }
 
     [Theory]

@@ -5,19 +5,19 @@
   "seed": 2000,
   "ticks": 7680,
   "actions": [
-    { "tick": 0, "tool": "Road", "from": { "x": 63, "y": 61 }, "to": { "x": 82, "y": 61 }, "expect": "Built" },
-    { "tick": 0, "tool": "Road", "from": { "x": 63, "y": 68 }, "to": { "x": 82, "y": 68 }, "expect": "Built" },
-    { "tick": 0, "tool": "ZoneResidential", "from": { "x": 65, "y": 63 }, "to": { "x": 80, "y": 63 }, "expect": "Built" },
-    { "tick": 0, "tool": "ZoneResidential", "from": { "x": 65, "y": 66 }, "to": { "x": 68, "y": 66 }, "expect": "Built" },
-    { "tick": 0, "tool": "ZoneCommercial", "from": { "x": 71, "y": 66 }, "to": { "x": 74, "y": 66 }, "expect": "Built" },
-    { "tick": 0, "tool": "ZoneIndustrial", "from": { "x": 77, "y": 66 }, "to": { "x": 80, "y": 66 }, "expect": "Built" }
+    { "tick": 0, "tool": "Road", "from": { "x": 33, "y": 47 }, "to": { "x": 52, "y": 47 }, "expect": "Built" },
+    { "tick": 0, "tool": "Road", "from": { "x": 33, "y": 54 }, "to": { "x": 52, "y": 54 }, "expect": "Built" },
+    { "tick": 0, "tool": "ZoneResidential", "from": { "x": 35, "y": 49 }, "to": { "x": 50, "y": 49 }, "expect": "Built" },
+    { "tick": 0, "tool": "ZoneResidential", "from": { "x": 35, "y": 52 }, "to": { "x": 38, "y": 52 }, "expect": "Built" },
+    { "tick": 0, "tool": "ZoneCommercial", "from": { "x": 41, "y": 52 }, "to": { "x": 44, "y": 52 }, "expect": "Built" },
+    { "tick": 0, "tool": "ZoneIndustrial", "from": { "x": 47, "y": 52 }, "to": { "x": 50, "y": 52 }, "expect": "Built" }
   ],
   "checks": [
     { "tick": 0, "fundsEquals": 18400 },
-    { "tick": 768, "tile": { "x": 77, "y": 66 }, "use": "Industrial", "developmentAtLeast": 1 },
+    { "tick": 768, "tile": { "x": 47, "y": 52 }, "use": "Industrial", "developmentAtLeast": 1 },
     { "tick": 7680, "count": "Developed", "equals": 12 },
-    { "tick": 7680, "tile": { "x": 77, "y": 63 }, "use": "Residential", "developmentAtLeast": 1 },
-    { "tick": 7680, "tile": { "x": 71, "y": 66 }, "developmentAtLeast": 3 },
-    { "tick": 7680, "tile": { "x": 77, "y": 66 }, "development": 4 }
+    { "tick": 7680, "tile": { "x": 47, "y": 49 }, "use": "Residential", "developmentAtLeast": 1 },
+    { "tick": 7680, "tile": { "x": 41, "y": 52 }, "developmentAtLeast": 3 },
+    { "tick": 7680, "tile": { "x": 47, "y": 52 }, "development": 4 }
   ]
 }

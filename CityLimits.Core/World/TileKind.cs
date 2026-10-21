@@ -12,9 +12,6 @@ public enum TileKind
     /// <summary>Trees, which the tools clear for a little more money.</summary>
     Trees,
 
-    /// <summary>Bare rock, which cannot be built on. Micropolis has no rock; it goes with the new terrain.</summary>
-    Rock,
-
     /// <summary>What a bulldozed zone leaves behind, which the tools clear like trees.</summary>
     Rubble,
 }

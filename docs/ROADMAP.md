@@ -1,6 +1,6 @@
 # CityLimits roadmap
 
-> **Last reviewed:** 2026-10-20 · **Last updated:** 2026-10-20 · **Change:** major (Kowloon is complete: zones grow and decline as in Micropolis) · **Stage:** pre-alpha
+> **Last reviewed:** 2026-10-20 · **Last updated:** 2026-10-20 · **Change:** major (Neat Map is complete, and with it the baseline refactor: the terrain is Micropolis') · **Stage:** pre-alpha
 
 Forward-looking: where CityLimits stands, what blocks the next milestone,
 and what comes next. Verified status and evidence are in the
@@ -24,7 +24,7 @@ it a later milestone.
 
 | Core workflow | Works end to end? | Evidence | Hours to pass (est.) |
 |---|---|---|---|
-| Start a game and look at a map | yes | A resizable "CityLimits" window opens on a 128 by 128 seeded map, drawn from a tile sheet, with a camera that pans, zooms, and clamps, and a readout of the tile under the mouse (CORE-1, MAP-1, MAP-2, MAP-3, MAP-4, CORE-6) | 0 |
+| Start a game and look at a map | yes | A resizable "CityLimits" window opens on a 120 by 100 seeded map of rivers, lakes, and woods, drawn from a tile sheet, with a camera that pans, zooms, and clamps, and a readout of the tile under the mouse (CORE-1, MAP-1, MAP-2, MAP-3, MAP-4, CORE-6) | 0 |
 | Lay roads, zone land, and see the city grow | yes | The player lays roads and bridges, zones 3 by 3 land, and bulldozes, as in Micropolis and at its prices, and the city grows on its own: zones take trips, follow residential, commercial, and industrial demand, grow houses and then buildings where they cluster, and decline when demand turns (ZONE-1 to ZONE-5, SIM-1 to SIM-7) | 0 |
 | Read the city's state: money, power, demand, and problems | partial | The HUD shows the date, the tick, the speed, the funds, and what the held tool costs, and the tile readout names what is on the tile. The status bar shows the population and a panel shows demand; there is no power and no budget panel (UI-2, ECON-1, ECON-3) | 20–35 |
 | Keep the city running for a long session without a crash | partial | The frame loop catches and reports, the tick loop runs, and the settings survive a session (REL-1, CORE-8). The city itself cannot be saved yet (UI-5) | 10–20 |
@@ -35,12 +35,12 @@ Joffburg's power and budget.
 
 ## Current focus
 
-The engine has to play like Micropolis before anything else. Parts of
-it were built to other rules: tools apply tile by tile with no preview,
-roads are freehand, zones are 1 by 1, the bulldozer refunds money, every
-zoned tile grows on a flat chance, a year passes in 3 seconds, and the
-terrain has no rivers. The focus is the refactor that brings them to the
-baseline, in order:
+The engine had to play like Micropolis before anything else, and parts of
+it had been built to other rules: tools applied tile by tile with no
+preview, roads were freehand, zones were 1 by 1, the bulldozer refunded
+money, every zoned tile grew on a flat chance, a year passed in 3 seconds,
+and the terrain had no rivers. The refactor that brought them to the
+baseline is complete:
 
 1. ~~**Tool strokes**: a preview with its total cost, applied all or
    nothing (Line City).~~ Done.
@@ -49,10 +49,10 @@ baseline, in order:
 3. ~~**Time and the 16-phase simulation cycle**, at the baseline's pace
    (Kowloon).~~ Done.
 4. ~~**Growth per zone**: population, demand, growth and decline (Kowloon).~~ Done.
-5. **Terrain**: rivers, lakes, and smoothed edges, on Micropolis' 120 by
-   100 map (Neat Map).
+5. ~~**Terrain**: rivers, lakes, and smoothed edges, on Micropolis' 120 by
+   100 map (Neat Map).~~ Done.
 
-Then Joffburg: power, taxes, and the budget.
+The focus moves to Joffburg: power, taxes, and the budget.
 
 ## Milestones
 
@@ -62,27 +62,25 @@ Then Joffburg: power, taxes, and the budget.
 | Milestone | Done | Remaining (h, est.) | Notes |
 |---|---:|---:|---|
 | New Dullsville: Foundation | 100% | 0 | The solution, the core library, the tests, the fixed timestep, the camera, the tools, and the settings are all in |
-| Neat Map: Terrain and the tile grid | 83% | 6–10 | Reopened for the baseline: the terrain needs rivers, lakes, and smoothed edges, and no rock |
+| Neat Map: Terrain and the tile grid | 100% | 0 | Meets the baseline: Micropolis' terrain on its 120 by 100 map, with rivers, lakes, an island one map in ten, and woods, and shores and wood edges drawn from the sheet |
 | Line City: Roads and zoning | 100% | 0 | Meets the baseline: strokes with a preview, straight roads and bridges, 3 by 3 zones laid as a grid and served from their edges, and the $1 bulldozer, at Micropolis' prices |
-| Kowloon: Simulation core | 100% | 0 | Time runs as in Micropolis: the 16-phase cycle, the 48ths-of-a-year calendar, and its pace. Scenarios run from files and from the command line. Per-zone growth with population and demand is still to come. The heart of the game |
+| Kowloon: Simulation core | 100% | 0 | Time runs as in Micropolis: the 16-phase cycle, the 48ths-of-a-year calendar, and its pace. Scenarios run from files and from the command line. Zones grow and decline one by one, with population, demand, and trips. The heart of the game |
 | Joffburg: Services and economy | 0% | 15–25 | Nothing yet |
 | Radial: Traffic and commuting | 0% | 12–20 | Nothing yet |
 | Deadwood: Land value, pollution, disasters | 0% | 12–20 | Nothing yet |
 | Happy Isle: Player-facing game | 0% | 15–25 | Nothing yet |
 | Yokohama: Polish and release | 0% | 10–20 | Nothing yet |
-| | **Total** | **≈ 70–120** | |
+| | **Total** | **≈ 64–110** | |
 
 ## Upcoming work, ranked
 
 | Rank | Work | Milestone | Estimate (h) |
 |---|---|---|---|
-| 1 | Terrain: rivers, lakes, islands, and smoothed edges, on a 120 by 100 map | Neat Map | 6–10 |
-| 2 | Power plants and a power grid, with unpowered zones that don't grow | Joffburg | 6–10 |
-| 3 | Taxes, a budget, and a deficit the player has to answer | Joffburg | 6–10 |
+| 1 | Power plants and a power grid, with unpowered zones that don't grow | Joffburg | 6–10 |
+| 2 | Taxes, a budget, and a deficit the player has to answer | Joffburg | 6–10 |
 
-Alpha needs ranks 2 and 3 in substance, about 12–20 hours, and a city
-that can be saved (UI-5). Rank 1 doesn't block alpha; it finishes the
-baseline refactor.
+Alpha needs ranks 1 and 2 in substance, about 12–20 hours, and a city
+that can be saved (UI-5).
 
 ## Milestone checklists
 
@@ -120,10 +118,12 @@ baseline refactor.
   readout names the ground and says what can be done with it.
 - [x] The map edge is defined: the world outside the map is not a tile
   that can be built on.
-- [ ] Terrain like the baseline's: meandering rivers, lakes, sometimes an
+- [x] Terrain like the baseline's: meandering rivers, lakes, sometimes an
   island, and patches of trees, with shores and forest edges smoothed by
   the sheet's edge tiles, and no rock, on a map of 120 by 100 tiles, the
-  size Micropolis uses.
+  size Micropolis uses. `CityLimits.Core/World/TileMapGenerator.cs` lays
+  it out, `TerrainEdges` reads the edges from the map, and `TileAtlas`
+  picks the sheet's shore and wood-edge drawings from them.
 
 ### Line City: Roads and zoning
 
@@ -272,6 +272,7 @@ right, cut scope inside Radial and Deadwood first, not inside Kowloon.
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-20 | major | Neat Map is complete, and with it step 5 and the whole baseline refactor: the terrain is laid out as in Micropolis, on its 120 by 100 map. One map in ten is an island; the rest have two wide rivers and a narrow one, and up to ten lakes. Woods are scattered and thinned, and shores and wood edges are drawn from the sheet's edge tiles, chosen from the ground beside each tile. Rock is gone. The built-in scenarios move onto the new map. The version becomes 0.2.100. The focus moves to Joffburg; 64–110 h left, 360 tests. |
 | 2026-10-20 | patch | The land value, pollution, and disasters milestone is renamed from Bad News to Deadwood, another of the cities Micropolis ships with, like the other milestones' names. No change to its scope. |
 | 2026-10-20 | major | Kowloon is complete, and with it step 4 of the baseline refactor: zones grow and decline as in Micropolis. Each zone takes trips, and demand plus its worth against a roll decide each step; residential zones grow houses and then buildings where they cluster, commerce is held to what land value carries, and zones without a road decline. Land value comes from distance to the city's centre and nearby trees and water, and population density from the zones around. A new built-in scenario, `small-town`, grows twelve zones for ten years. The alpha gate's growth row passes; 70–120 h left, 343 tests. |
 | 2026-10-20 | patch | Step 4d: zones' trips, as in Micropolis. A trip sets out from the first road along a zone's edge and drives up to 30 road tiles, picking its way with the seeded generator, looking for a zone of a kind the zone's spec lists, which a mod can change. Growth uses trips from 4e. 76–130 h left, 331 tests. |

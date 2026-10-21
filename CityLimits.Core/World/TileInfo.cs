@@ -8,7 +8,6 @@ public static class TileInfo
     {
         TileKind.Water => "Water",
         TileKind.Trees => "Trees",
-        TileKind.Rock => "Rock",
         TileKind.Rubble => "Rubble",
         _ => "Grass",
     };
@@ -17,7 +16,6 @@ public static class TileInfo
     public static string BuildAdvice(TileKind kind) => kind switch
     {
         TileKind.Water => "only a bridge can cross it",
-        TileKind.Rock => "cannot be built on",
         TileKind.Trees or TileKind.Rubble => "cleared for $1 a tile when built on",
         _ => "ready to build on",
     };

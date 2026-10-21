@@ -18,13 +18,16 @@ public static class TileAtlas
     /// <summary>The tile of open water.</summary>
     private const int WaterTile = 2;
 
-    /// <summary>The first of the tiles that hold a tree.</summary>
-    private const int FirstTreeTile = 21;
+    /// <summary>The tile of trees with trees on every side.</summary>
+    private const int WoodsTile = 37;
 
-    /// <summary>The number of tree tiles the sheet holds.</summary>
-    private const int TreeTiles = 8;
+    /// <summary>How far each shore's second drawing is from its first.</summary>
+    private const int ShoreVariantOffset = 1;
 
-    /// <summary>The first of the tiles that hold rubble; rock borrows the first of them until the new terrain.</summary>
+    /// <summary>How far each wood's edge's second drawing is from its first.</summary>
+    private const int WoodEdgeVariantOffset = 8;
+
+    /// <summary>The first of the tiles that hold rubble.</summary>
     private const int FirstRubbleTile = 44;
 
     /// <summary>The number of rubble tiles the sheet holds.</summary>
@@ -54,6 +57,56 @@ public static class TileAtlas
     private static readonly ZoneDrawings Industrial = new(EmptyZone: 612, FirstBuilding: 621, Levels: 4, ValueClasses: 2);
 
     /// <summary>
+    /// The shore drawing for each set of sides with water beside them, indexed by
+    /// <see cref="TerrainSides"/>. Each shore has a second drawing just after it. Water with land
+    /// on opposite sides, or on three or four, has no drawing in the sheet and is drawn open.
+    /// </summary>
+    private static readonly int[] ShoreTiles =
+    [
+        WaterTile, // land all round
+        WaterTile, // water only to the north
+        WaterTile, // water only to the east
+        15, // water north and east: land south and west
+        WaterTile, // water only to the south
+        WaterTile, // water north and south: land east and west
+        19, // water east and south: land north and west
+        17, // land to the west
+        WaterTile, // water only to the west
+        11, // water north and west: land east and south
+        WaterTile, // water east and west: land north and south
+        13, // land to the south
+        7, // water south and west: land north and east
+        9, // land to the east
+        5, // land to the north
+        WaterTile, // water all round
+    ];
+
+    /// <summary>
+    /// The drawing of trees at the edge of a wood for each set of sides with trees beside them,
+    /// indexed by <see cref="TerrainSides"/>. Each edge has a second drawing eight tiles on. Trees
+    /// a map would not grow, such as the last of a wood the bulldozer cleared, are drawn as woods.
+    /// </summary>
+    private static readonly int[] WoodEdgeTiles =
+    [
+        WoodsTile, // no trees beside
+        WoodsTile, // trees only to the north
+        WoodsTile, // trees only to the east
+        26, // trees north and east
+        WoodsTile, // trees only to the south
+        WoodsTile, // trees north and south
+        28, // trees east and south
+        27, // trees north, east, and south
+        WoodsTile, // trees only to the west
+        24, // trees north and west
+        WoodsTile, // trees east and west
+        25, // trees north, east, and west
+        22, // trees south and west
+        23, // trees north, south, and west
+        21, // trees east, south, and west
+        WoodsTile, // trees all round
+    ];
+
+    /// <summary>
     /// The road drawing for each set of joined sides, indexed by <see cref="RoadConnections"/>.
     /// A road that joins nothing, or only one side, is drawn straight along that side.
     /// </summary>
@@ -78,10 +131,11 @@ public static class TileAtlas
     ];
 
     /// <summary>
-    /// The sheet index that draws a tile, given the sides of it that join a road and, for a zone,
-    /// the state of its centre, which holds the zone's building.
+    /// The sheet index that draws a tile, given the sides of it that join a road, the sides of
+    /// it with the same ground beside them, and, for a zone, the state of its centre, which holds
+    /// the zone's building.
     /// </summary>
-    public static int IndexFor(TileState state, RoadConnections roads, TileState zoneCenter, int tileX, int tileY)
+    public static int IndexFor(TileState state, RoadConnections roads, TerrainSides ground, TileState zoneCenter, int tileX, int tileY)
     {
         if (state.IsBridge)
         {
@@ -117,13 +171,16 @@ public static class TileAtlas
         var variant = (tileX * 7) + (tileY * 13);
         return state.Kind switch
         {
-            TileKind.Water => WaterTile,
-            TileKind.Trees => FirstTreeTile + (variant % TreeTiles),
+            TileKind.Water => Varied(ShoreTiles[(int)ground & 0b1111], WaterTile, ShoreVariantOffset, variant),
+            TileKind.Trees => Varied(WoodEdgeTiles[(int)ground & 0b1111], WoodsTile, WoodEdgeVariantOffset, variant),
             TileKind.Rubble => FirstRubbleTile + (variant % RubbleTiles),
-            TileKind.Rock => FirstRubbleTile,
             _ => LandTile,
         };
     }
+
+    // An edge drawing, or its second drawing on every other tile; the open drawing has no second.
+    private static int Varied(int tile, int open, int offset, int variant) =>
+        tile == open ? tile : tile + (offset * (variant % 2));
 
     /// <summary>The part of the sheet that holds the tile at an index.</summary>
     public static Rectangle SourceFor(int index) => new()

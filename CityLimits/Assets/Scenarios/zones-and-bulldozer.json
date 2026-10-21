@@ -5,21 +5,21 @@
   "seed": 2000,
   "ticks": 768,
   "actions": [
-    { "tick": 0, "tool": "Road", "from": { "x": 64, "y": 68 }, "to": { "x": 75, "y": 68 }, "expect": "Built" },
-    { "tick": 0, "tool": "ZoneResidential", "from": { "x": 65, "y": 66 }, "to": { "x": 71, "y": 66 }, "expect": "Built" },
-    { "tick": 0, "tool": "ZoneCommercial", "from": { "x": 74, "y": 62 }, "expect": "Built" },
-    { "tick": 0, "tool": "ZoneIndustrial", "from": { "x": 66, "y": 66 }, "expect": "Refused:CannotBuildHere" },
-    { "tick": 0, "tool": "Bulldoze", "from": { "x": 64, "y": 65 }, "expect": "Refused:PartOfAZone" },
-    { "tick": 0, "tool": "Bulldoze", "from": { "x": 64, "y": 62 }, "expect": "Unchanged:NothingToClear" },
-    { "tick": 768, "tool": "Bulldoze", "from": { "x": 67, "y": 66 }, "to": { "x": 69, "y": 66 }, "expect": "Built" }
+    { "tick": 0, "tool": "Road", "from": { "x": 34, "y": 54 }, "to": { "x": 45, "y": 54 }, "expect": "Built" },
+    { "tick": 0, "tool": "ZoneResidential", "from": { "x": 35, "y": 52 }, "to": { "x": 41, "y": 52 }, "expect": "Built" },
+    { "tick": 0, "tool": "ZoneCommercial", "from": { "x": 44, "y": 48 }, "expect": "Built" },
+    { "tick": 0, "tool": "ZoneIndustrial", "from": { "x": 36, "y": 52 }, "expect": "Refused:CannotBuildHere" },
+    { "tick": 0, "tool": "Bulldoze", "from": { "x": 34, "y": 51 }, "expect": "Refused:PartOfAZone" },
+    { "tick": 0, "tool": "Bulldoze", "from": { "x": 34, "y": 48 }, "expect": "Unchanged:NothingToClear" },
+    { "tick": 768, "tool": "Bulldoze", "from": { "x": 37, "y": 52 }, "to": { "x": 39, "y": 52 }, "expect": "Built" }
   ],
   "checks": [
     { "tick": 0, "count": "Residential", "equals": 3 },
-    { "tick": 0, "tile": { "x": 65, "y": 66 }, "served": true },
-    { "tick": 0, "tile": { "x": 74, "y": 62 }, "served": false },
+    { "tick": 0, "tile": { "x": 35, "y": 52 }, "served": true },
+    { "tick": 0, "tile": { "x": 44, "y": 48 }, "served": false },
     { "tick": 767, "count": "Developed", "atLeast": 1 },
-    { "tick": 767, "tile": { "x": 74, "y": 62 }, "development": 0 },
-    { "tick": 768, "tile": { "x": 68, "y": 66 }, "kind": "Rubble", "use": "None" },
+    { "tick": 767, "tile": { "x": 44, "y": 48 }, "development": 0 },
+    { "tick": 768, "tile": { "x": 38, "y": 52 }, "kind": "Rubble", "use": "None" },
     { "tick": 768, "count": "Residential", "equals": 2 },
     { "tick": 768, "fundsEquals": 19479 }
   ]

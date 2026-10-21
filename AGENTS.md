@@ -84,20 +84,25 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   titled "CityLimits" at the saved size, runs the frame loop until the
   window is closed, saves the settings, and closes the window. Every frame is
   guarded: a failure is reported on the screen and the game keeps running.
-- **The map.** `GameLoop` builds a 128 by 128 map at startup from the seed
-  2000: value-noise terrain with water, grass, trees, and rock. The renderer
+- **The map.** `GameLoop` builds a 120 by 100 map, Micropolis' size, at
+  startup from the seed 2000. `TileMapGenerator` lays it out as Micropolis
+  does: one map in ten is an island, and the rest have two wide rivers, a
+  narrow one, and a few lakes; then woods are scattered and thinned. The
+  ground is grass, water, trees, or rubble. The renderer
   draws only the tiles the camera can see, and it draws them from the tile
   sheet in `Assets/tiles.png`. Each tile is one lookup and one draw:
   `Rendering/TileAtlas.cs` turns a tile's state into a sheet index, and a
   road's index comes from the sides that join another road, which
   `RoadNetwork.ConnectionsAt` reads from the map. A road over water is
-  drawn as a bridge. A zone's nine tiles are drawn from the sheet as one
+  drawn as a bridge. Water and trees are drawn from the sides with the
+  same ground beside them, which `TerrainEdges.SidesAt` reads from the
+  map, so shores and wood edges join up. A zone's nine tiles are drawn from the sheet as one
   3 by 3 drawing, chosen by the development its centre holds.
 - **The chunk cache.** The map is drawn ahead of time into render
   textures of 32 by 32 tiles (`Rendering/MapChunkCache.cs`), and a frame
   draws only the chunks the camera can see. `TileMap.TileChanged` reports
   each tile whose state changes, and the cache redraws that tile's chunk,
-  and its neighbours' when a road's drawing depends on them, before the
+  and its neighbours', because a road's, a shore's, and a wood's drawing depends on them, before the
   next frame begins. If the textures can't be made, the log says so and
   the map is drawn tile by tile, which gives the same picture.
 - **The camera.** The WASD keys and the arrow keys pan, the mouse wheel
@@ -236,7 +241,7 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   and no project. It holds the parser, the dispatcher, the default
   command, the strict option reader, and the exit codes.
 - **The tests.** `CityLimits.Tests` uses xUnit 2 with the VSTest runner
-  and coverlet, and holds 343 tests over the generator, the map, the
+  and coverlet, and holds 360 tests over the generator, the terrain edges, the map, the
   calendar, the clock, the simulation, the settings, the tile rules, the
   build actions, the road network, the treasury, the scenario loader and
   runner, every built-in scenario, the definitions and the mod loader, zone growth, the census and demand, trips, growth and the city maps,
@@ -253,9 +258,11 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   it out from git: `GitInfo.txt` holds the base `major.minor.patch`, and
   GitInfo adds its own count of the commits since that file last changed
   to the patch. Don't edit `GitInfo.txt`; changing it restarts the count
-  and can send the version backwards. Only the owner changes the base. A
-  changelog entry is titled with the version GitInfo gives the commit that
-  carries it: commit, rebuild, read `GitSemVerPatch` from
+  and can send the version backwards. Only the owner changes the base.
+  Patch numbers have three digits and always start at 100, as the .NET
+  SDK's do: a new minor version's base is `major.minor.100`, such as
+  `0.2.100`, never `0.2.0`. A changelog entry is titled with the version
+  GitInfo gives the commit that carries it: commit, rebuild, read `GitSemVerPatch` from
   `CityLimits/obj/Debug/net10.0/GitInfo.cache`, and correct the title if
   it differs. GitInfo counts only commits that touch the game project's
   folder, `CityLimits/`: a commit that changes only the libraries, the

@@ -7,7 +7,7 @@ public class TileMapTests
     [Fact]
     public void TheMapKeepsTheTilesItWasGiven()
     {
-        var tiles = new[] { TileKind.Grass, TileKind.Water, TileKind.Trees, TileKind.Rock };
+        var tiles = new[] { TileKind.Grass, TileKind.Water, TileKind.Trees, TileKind.Rubble };
         var map = TileMap.FromTerrain(2, 2, tiles);
 
         Assert.Equal(2, map.Width);
@@ -15,7 +15,7 @@ public class TileMapTests
         Assert.Equal(TileKind.Grass, map[0, 0]);
         Assert.Equal(TileKind.Water, map[1, 0]);
         Assert.Equal(TileKind.Trees, map[0, 1]);
-        Assert.Equal(TileKind.Rock, map[1, 1]);
+        Assert.Equal(TileKind.Rubble, map[1, 1]);
     }
 
     [Fact]
@@ -24,7 +24,7 @@ public class TileMapTests
         var tiles = new[] { TileKind.Grass };
         var map = TileMap.FromTerrain(1, 1, tiles);
 
-        tiles[0] = TileKind.Rock;
+        tiles[0] = TileKind.Water;
 
         Assert.Equal(TileKind.Grass, map[0, 0]);
     }

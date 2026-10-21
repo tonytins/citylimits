@@ -1,5 +1,72 @@
 # CityLimits Changelog
 
+## 0.2.100
+
+CityLimits now plays like Micropolis at its core. Its features aren't yet at
+parity with SimCity, or with any city builder made since, but it has the
+basics down: a map to build on, roads and zones laid as Micropolis lays
+them, and a city that grows and declines on its own, at Micropolis' pace.
+There is no power, no budget, no traffic, no pollution or crime, no
+disasters, and no saving yet; those come next.
+
+### New in 0.2.100
+
+The land is laid out as in Micropolis, on its 120 by 100 map. One map in
+ten is an island. The rest are crossed by two wide rivers and a narrow
+one, with up to ten lakes, and woods are scattered over the land and
+thinned so they stand together. Shores and the edges of woods are drawn
+from the tile sheet's edge drawings, so water and woods have soft, joined
+edges instead of square ones. Rock is gone; Micropolis has none.
+
+The same seed now gives a different map than it did before 0.2.100, so a
+scenario file written for the old 128 by 128 map needs new coordinates.
+The built-in scenarios have moved onto the new map.
+
+### Since 0.1.100
+
+- **Building.** Tools work in strokes: press, drag, and see what the
+  stroke would build and what it would cost before letting go. A stroke
+  the city can't pay for, or that runs off the map, builds nothing, and
+  Escape cancels it.
+- **Roads and bridges.** Roads run straight from where the drag started
+  and join up as they are drawn. They cross water as bridges, from either
+  bank.
+- **Zones.** Residential, commercial, and industrial zones are 3 by 3,
+  laid as a grid, and served by a road along one of their edges.
+- **The bulldozer** costs $1 a tile, clears trees and rubble, and knocks a
+  zone down through its centre, leaving rubble.
+- **Prices** are Micropolis': $10 a road, $50 a bridge, $100 a zone, $1 to
+  bulldoze or to clear a tile.
+- **Time** runs as in Micropolis, from January 1900, at Normal, Fast, and
+  Super fast, through its 16-phase simulation cycle.
+- **Growth.** The city takes a census and feels demand for each kind of
+  zone. Zones send trips along the roads, and demand and what the land is
+  worth decide whether each one grows, declines, or stays. Residential
+  zones grow houses, then buildings where zones cluster; shops grow as far
+  as land value carries them; factories follow demand; and a zone with no
+  road declines.
+- **Land value** is highest near the city's centre and beside trees and
+  water, and buildings come in styles that follow it.
+- **The status bar** shows the date, the speed, the population, and the
+  funds, and a panel shows the three demands. The tile readout describes
+  the whole zone under the pointer: its houses, its level, and its
+  population.
+
+For developers, modders, and scripts:
+
+- **The command line** checks every option and refuses a bad one with exit
+  code 2. `--headless` runs the city with no window and logs it to the
+  console.
+- **Scenarios** set a city up from a file, with timed tool strokes and
+  checks, and run with `citylimits scenario <id> --headless`. `--json`
+  writes a versioned report, and the exit code says whether every check
+  passed. Four are built in: the demo town, `bridges`,
+  `zones-and-bulldozer`, and `small-town`.
+- **Mods** are folders of JSON in `Mods/` that change the zones: their
+  names, prices, populations, houses, and where their trips go. The
+  game's own rules are written the same way. `docs/modding.md` explains
+  how.
+
 ## 0.1.116
 
 The city grows on its own, as in Micropolis. Each zone sends trips along

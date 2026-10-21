@@ -12,8 +12,8 @@ change. Statuses are `done`, `partial`, and `missing`.
 
 | Area | Done | Partial | Missing | Key numbers |
 |---|---:|---:|---:|---|
-| [Core](#core) | 8 | 0 | 0 | 0.25 s steps at Normal, seed 2000, 128 by 128 map |
-| [Map](#map-and-terrain) | 4 | 0 | 0 | 4 kinds of ground, one 256 by 960 atlas |
+| [Core](#core) | 8 | 0 | 0 | 0.25 s steps at Normal, seed 2000, 120 by 100 map |
+| [Map](#map-and-terrain) | 4 | 0 | 0 | 4 kinds of ground, 16 shore and 17 wood drawings, one 256 by 960 atlas |
 | [Zoning](#roads-and-zoning) | 5 | 0 | 0 | 5 tools that change the world, $10 a road, $50 a bridge, $100 a 3 by 3 zone, $1 to bulldoze |
 | [Simulation](#simulation) | 7 | 0 | 0 | 16 phases a 48th of a year, 3 minutes a year at Normal, houses then 4 to 5 building levels, 3 built-in scenarios |
 | [Economy](#economy-and-services) | 0 | 1 | 4 | $20 000 in the treasury, no taxes yet |
@@ -21,25 +21,27 @@ change. Statuses are `done`, `partial`, and `missing`.
 | [Environment](#land-value-pollution-and-disasters) | 0 | 1 | 4 | land value from distance and terrain, 0 disasters |
 | [Interface](#player-interface) | 2 | 0 | 4 | 6 tools with icons, 1 status bar, the demand panel |
 | [Platform](#platform) | 7 | 0 | 2 | Raylib-cs 8.1.0, NLog 6.2.2, .NET 10, data mods |
-| [Reliability](#reliability) | 6 | 0 | 0 | 343 tests, all passing, CI green |
+| [Reliability](#reliability) | 6 | 0 | 0 | 360 tests, all passing, CI green |
 | [Documentation](#documentation) | 3 | 0 | 2 | 3 of 5 documents exist |
 | [Known issues](#known-issues) | | | | 1 open, 3 resolved |
 
-The game today opens a resizable window on a seeded map of water, grass,
-trees, and rock, drawn from a tile sheet. The camera pans and zooms, the
+The game today opens a resizable window on a seeded map laid out as in
+Micropolis, with rivers, lakes, woods, and now and then an island, drawn
+from a tile sheet with smoothed shores and wood edges. The camera pans and zooms, the
 clock runs the city at Micropolis' pace, the tool palette shows the icon of each
 tool, the status bar is in place, and the tile under the mouse is highlighted
 and read out. The player can draw roads, zone land, and bulldoze, and the
-city charges for the work and refuses what it cannot pay for. A zoned tile
-that touches a road develops, and the building on it is drawn from the tile's
-own state. Population, demand, taxes, and traffic are still missing, and
-that is the point of the table: it is the contract the work has to meet.
+city charges for the work and refuses what it cannot pay for. Zones grow
+and decline with population, demand, and trips, as in Micropolis, and their
+buildings are drawn from the tiles' own state. Power, taxes, the budget, and
+traffic are still missing, and that is the point of the table: it is the
+contract the work has to meet.
 
 How the state was verified on 2026-10-20:
 
 ```sh
 dotnet build CityLimits.slnx                              # 4 projects: 0 warnings, 0 errors
-dotnet test  CityLimits.Tests/CityLimits.Tests.csproj     # 343 passed, 0 failed
+dotnet test  CityLimits.Tests/CityLimits.Tests.csproj     # 360 passed, 0 failed
 dotnet run --project CityLimits -- --headless            # a year of steps, 12 months logged to the console
 dotnet run --project CityLimits                           # window opened; roads, zones, buildings, the palette icons, and the tile readout were drawn
 dotnet run --project CityLimits -- --seed 7               # window opened and the assets loaded (the screen was not inspected)
@@ -66,7 +68,7 @@ there is something to grow.
 | CORE-3 | The simulation advances in fixed-size ticks, independent of the frame rate | done | `CityLimits.Core/Simulation/GameClock.cs`: a 0.25 s step with an accumulator; `GameLoop.Update` runs the steps that are due, at most 16 a frame |
 | CORE-4 | Pause and speed control change how many ticks run per frame, not the tick size | done | `GameSpeed`: Normal, Fast (5 times), and Super fast (50 times), as in Micropolis, multiply the time fed to the clock, so a step stays 0.25 s. On a private display on 2026-10-20, Normal ran 69 steps in 17 seconds and moved the date a month, and Super fast ran 811 steps in 4 seconds, about 200 a second |
 | CORE-5 | The mouse position is known in world space, and the keyboard is read | done | `Camera.ScreenToWorld` and `Raylib.GetMousePosition`; the HUD shows the world position, and the keys pan, zoom, and pick tools |
-| CORE-6 | A camera pans and zooms, clamped to the map | done | `CityLimits/Rendering/Camera.cs`: `Pan`, `ZoomAt`, and `ClampTo`; the run on 2026-10-20 showed the view clamped to the 128 by 128 map |
+| CORE-6 | A camera pans and zooms, clamped to the map | done | `CityLimits/Rendering/Camera.cs`: `Pan`, `ZoomAt`, and `ClampTo`; the run on 2026-10-20 showed the whole 120 by 100 map zoomed out, held inside the view |
 | CORE-7 | One seeded PRNG owned by the simulation makes a run reproducible | done | `CityLimits.Core/Randomness/DeterministicRandom.cs`; the simulation owns it, and `GameLoop` builds the map from the seed 2000 |
 | CORE-8 | Settings persist to disk and a bad settings file is reported, not fatal | done | `CityLimits.Core/Settings/SettingsStore.cs`: `Load` falls back to the defaults with a warning, `TrySave` reports a failure; the game writes `settings.json` beside the executable when it ends |
 
@@ -75,8 +77,8 @@ there is something to grow.
 | Id | Target | Status | Evidence |
 |---|---|---|---|
 | MAP-1 | A tile grid of a fixed size, stored as arrays | done | `CityLimits.Core/World/TileMap.cs`: a `TileState` array behind a width and a height, with the tile count checked against the size. `TileState` holds the ground, the use, and the development level, so a tile carries its own story |
-| MAP-2 | Terrain is generated from the seed, and the same seed gives the same map | done | `CityLimits.Core/World/TileMapGenerator.cs`: value noise over four octaves; `TileMapGeneratorTests` proves the same seed gives the same map |
-| MAP-3 | Terrain is rendered from a tile atlas with no per-frame allocation | done | `CityLimits/Rendering/MapChunkCache.cs` draws the map into 32 by 32 tile render textures, redrawn only when `TileMap.TileChanged` reports a change, and a frame draws the visible chunks. On a private display on 2026-10-20, the cached map matched the tile-by-tile drawing pixel for pixel over 580 800 pixels, at two zoom levels and across chunk edges, and a cache that ignored changes was caught. `MapRenderer.DrawTile` draws each tile from `CityLimits/Assets/tiles.png` with `DrawTexturePro`; `CityLimits/Rendering/TileAtlas.cs` holds the tile indices, roads included, chosen from `RoadNetwork.ConnectionsAt`, and `GameAssets` loads the sheet once at startup and unloads it at shutdown. The captured window on 2026-10-20 holds the atlas colours: 61% clear ground, 6% water, 5% trees |
+| MAP-2 | Terrain is generated from the seed, and the same seed gives the same map | done | `CityLimits.Core/World/TileMapGenerator.cs` lays the land out as Micropolis does: an island one map in ten, otherwise two wide rivers and a narrow one from a random start, up to ten lakes, then woods scattered by random walks and thinned twice. `TileMapGeneratorTests` proves the same seed gives the same map, about one map in ten is an island (20 of 200), rivers run off the map's edges, at most 1 tree in 200 is left outside a wood (92 of 53 835 over 20 seeds), and every size a scenario allows generates. Removing the thinning, the islands, or the rivers' run to the edge each failed a test. On a private display on 2026-10-20, seed 2000 showed a river with lakes and woods, and seed 4 an island |
+| MAP-3 | Terrain is rendered from a tile atlas with no per-frame allocation | done | `CityLimits/Rendering/MapChunkCache.cs` draws the map into 32 by 32 tile render textures, redrawn only when `TileMap.TileChanged` reports a change, and a frame draws the visible chunks. On a private display on 2026-10-20, the cached map matched the tile-by-tile drawing pixel for pixel over 580 800 pixels, at two zoom levels and across chunk edges, and a cache that ignored changes was caught. `MapRenderer.DrawTile` draws each tile from `CityLimits/Assets/tiles.png` with `DrawTexturePro`; `CityLimits/Rendering/TileAtlas.cs` holds the tile indices, roads included, chosen from `RoadNetwork.ConnectionsAt`, and shores and wood edges chosen from `TerrainEdges.SidesAt`, which the screenshot on 2026-10-20 showed running the right way round, and `GameAssets` loads the sheet once at startup and unloads it at shutdown. The captured window on 2026-10-20 held the atlas colours |
 | MAP-4 | The tile under the mouse is highlighted and readable | done | `MapRenderer.DrawHover` outlines the tile under the pointer, and `Hud.DrawTileReadout` names it: the tile's place and what can be done with it, from `CityLimits.Core/World/TileInfo.cs` |
 
 ## Roads and zoning
@@ -162,7 +164,7 @@ there is something to grow.
 | REL-1 | Nothing ends the player's session: the frame loop catches, reports, and keeps drawing | done | `WindowedGame` catches every exception around the update and the draw, and `GameLoop.ReportError` puts the message on screen; the game keeps running |
 | REL-2 | The world and the simulation never call the engine | done | `CityLimits.Core` references no package at all, and the game references the core library; no Raylib type appears in the core |
 | REL-3 | Input, tile indices, map sizes, and files are validated where they enter | done | Map sizes, tile counts, and the settings file are checked, and the tile indexer throws outside the map. The mouse position is turned into a tile by `MapRenderer.TryGetTileAt`, which reports when the pointer is off the map, and `CityBuilder.Apply` refuses a tile that is off the map, ground that cannot be built on, and work the city cannot pay for |
-| REL-4 | A test project covers the engine-free logic, and the tests pass | done | `CityLimits.Tests` references `CityLimits.Core` and `CityLimits.CommandLine` and holds 343 xUnit tests over the generator, the map, the tile state, the rules, the calendar and the cycle, the clock, the simulation, the settings, the treasury, the road network and its connections, the map's change event, the builder and its strokes, the scenario loader and runner, every built-in scenario, the definitions and the mod loader, zone growth, the census and demand, trips, growth and the city maps, the option reader, and the dispatcher. All 343 passed on 2026-10-20. Letting an unknown option and an out-of-range number through on purpose failed 3 of them, and letting `--headless` reach a command that needs a window failed 2 |
+| REL-4 | A test project covers the engine-free logic, and the tests pass | done | `CityLimits.Tests` references `CityLimits.Core` and `CityLimits.CommandLine` and holds 360 xUnit tests over the generator and the terrain edges, the map, the tile state, the rules, the calendar and the cycle, the clock, the simulation, the settings, the treasury, the road network and its connections, the map's change event, the builder and its strokes, the scenario loader and runner, every built-in scenario, the definitions and the mod loader, zone growth, the census and demand, trips, growth and the city maps, the option reader, and the dispatcher. All 360 passed on 2026-10-20. Letting an unknown option and an out-of-range number through on purpose failed 3 of them, and letting `--headless` reach a command that needs a window failed 2 |
 | REL-5 | A determinism test proves the same seed gives the same city | done | `DeterministicRandomTests.TheSameSeedGivesTheSameSequence`, `CitySimulationTests.TheSameSeedAndTheSameTicksGiveTheSameCity`, and `CitySimulationTests.TheSameSeedAndTheSameWorkGiveTheSameCity`, which builds the same road and zones in two cities and compares the tiles and the money after 40 ticks |
 | REL-6 | CI builds and tests on every push | done | `.github/workflows/dotnet.yml` runs on a push to `main` and on a pull request: restore, build, and test. The first run, on the commit 273fd9f on 2026-10-20, finished with the conclusion `success` (run 39443031762) |
 

@@ -123,9 +123,9 @@ public sealed class MapChunkCache : IDisposable
         }
     }
 
-    // A tile's drawing can depend on the tiles around it: a road's on the roads beside it, and a
-    // zone's eight outer tiles on the development its centre holds. So a change stales the chunks
-    // of the whole 3 by 3 around it.
+    // A tile's drawing can depend on the tiles around it: a road's on the roads beside it, a
+    // shore's and a wood's on the ground beside them, and a zone's eight outer tiles on the
+    // development its centre holds. So a change stales the chunks of the whole 3 by 3 around it.
     private void OnTileChanged(int x, int y)
     {
         for (var dy = -1; dy <= 1; dy++)

@@ -148,7 +148,7 @@ public class BuildStrokeTests
     public void TilesThatCantBeBuiltOnAreSkippedAndTheRestIsBuilt()
     {
         var city = NewCity();
-        city.Map.SetState(2, 1, new TileState(TileKind.Rock));
+        city.Map.SetState(2, 1, new TileState(TileKind.Grass, TileUse.Industrial, zonePart: 1));
         city.Map.SetState(3, 1, new TileState(TileKind.Grass, TileUse.Road));
         var plan = new BuildPlan();
 
@@ -159,7 +159,7 @@ public class BuildStrokeTests
         Assert.Equal(1, plan.SkippedBecause(BuildRefusal.AlreadyDone));
         Assert.Equal(3, result.TilesChanged);
         Assert.Equal(1000 - (3 * TileCosts.Road), city.Treasury.Funds);
-        Assert.Equal(TileKind.Rock, city.Map.StateAt(2, 1).Kind);
+        Assert.Equal(TileUse.Industrial, city.Map.StateAt(2, 1).Use);
     }
 
     [Fact]
@@ -171,12 +171,12 @@ public class BuildStrokeTests
         city.Builder.Plan(stroke, plan);
 
         // The map changes between the preview and the release.
-        city.Map.SetState(1, 1, new TileState(TileKind.Rock));
+        city.Map.SetState(1, 1, new TileState(TileKind.Grass, TileUse.Industrial, zonePart: 1));
         var result = city.Builder.Apply(stroke);
 
         Assert.Equal(3, plan.Tiles.Count);
         Assert.Equal(2, result.TilesChanged);
-        Assert.Equal(TileKind.Rock, city.Map.StateAt(1, 1).Kind);
+        Assert.Equal(TileUse.Industrial, city.Map.StateAt(1, 1).Use);
     }
 
     [Fact]

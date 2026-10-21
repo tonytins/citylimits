@@ -76,7 +76,7 @@ public sealed class MapRenderer : IDisposable
     /// colours when the sheet is missing. The chunk cache and the tile-by-tile path share it.
     /// </summary>
     internal static void DrawTile(TileMap map, Texture2D? sheet, int x, int y, int left, int top) =>
-        DrawTileAs(sheet, map.StateAt(x, y), RoadNetwork.ConnectionsAt(map, x, y), map.ZoneStateAt(x, y), x, y, left, top);
+        DrawTileAs(sheet, map.StateAt(x, y), RoadNetwork.ConnectionsAt(map, x, y), TerrainEdges.SidesAt(map, x, y), map.ZoneStateAt(x, y), x, y, left, top);
 
     /// <summary>
     /// Draws a stroke's preview over the map, as Micropolis does: each tile it would change, as
@@ -107,9 +107,10 @@ public sealed class MapRenderer : IDisposable
             plan.Refusal == BuildRefusal.None ? Theme.Hover : Theme.Error);
     }
 
-    // A planned zone is new, so it shows undeveloped; a planned tile that isn't a zone has no development to show.
+    // A planned zone is new, so it shows undeveloped; a planned tile that isn't a zone has no
+    // development to show. A planned tile is built on or cleared, so it has no shore or wood edge.
     private void DrawPlanned(BuildPlan plan, int x, int y) =>
-        DrawTileAs(_sheet, plan.StateAt(x, y), plan.RoadConnectionsAt(x, y), default, x, y, x * TileSize, y * TileSize);
+        DrawTileAs(_sheet, plan.StateAt(x, y), plan.RoadConnectionsAt(x, y), TerrainSides.None, default, x, y, x * TileSize, y * TileSize);
 
     // An existing road beside the stroke changes shape when a new road joins it.
     private void DrawJoiningRoad(BuildPlan plan, int x, int y)
@@ -120,7 +121,7 @@ public sealed class MapRenderer : IDisposable
         }
     }
 
-    private static void DrawTileAs(Texture2D? sheet, TileState state, RoadConnections roads, TileState zoneCenter, int x, int y, int left, int top)
+    private static void DrawTileAs(Texture2D? sheet, TileState state, RoadConnections roads, TerrainSides ground, TileState zoneCenter, int x, int y, int left, int top)
     {
         var destination = new Rectangle { X = left, Y = top, Width = TileSize, Height = TileSize };
 
@@ -132,7 +133,7 @@ public sealed class MapRenderer : IDisposable
         {
             Raylib.DrawTexturePro(
                 sheet.Value,
-                TileAtlas.SourceFor(TileAtlas.IndexFor(state, roads, zoneCenter, x, y)),
+                TileAtlas.SourceFor(TileAtlas.IndexFor(state, roads, ground, zoneCenter, x, y)),
                 destination,
                 Vector2.Zero,
                 0f,

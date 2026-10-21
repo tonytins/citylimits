@@ -48,7 +48,7 @@ public class ScenarioRunnerTests
     {
         var report = Run("""
             { "format": 1, "name": "Same tick", "seed": 2000, "ticks": 0,
-              "actions": [ { "tick": 0, "tool": "Road", "from": { "x": 64, "y": 67 }, "to": { "x": 66, "y": 67 } } ],
+              "actions": [ { "tick": 0, "tool": "Road", "from": { "x": 34, "y": 53 }, "to": { "x": 36, "y": 53 } } ],
               "checks": [ { "tick": 0, "count": "Road", "equals": 3 }, { "tick": 0, "fundsEquals": 19970 } ] }
             """);
 
@@ -62,8 +62,8 @@ public class ScenarioRunnerTests
         // The road is laid first, so the zone that would cover it can't go down.
         var report = Run("""
             { "format": 1, "name": "Order", "seed": 2000, "ticks": 0, "actions": [
-              { "tick": 0, "tool": "Road", "from": { "x": 65, "y": 65 } },
-              { "tick": 0, "tool": "ZoneResidential", "from": { "x": 65, "y": 65 }, "expect": "Refused:CannotBuildHere" } ] }
+              { "tick": 0, "tool": "Road", "from": { "x": 35, "y": 51 } },
+              { "tick": 0, "tool": "ZoneResidential", "from": { "x": 35, "y": 51 }, "expect": "Refused:CannotBuildHere" } ] }
             """);
 
         Assert.True(report.Passed);
@@ -77,7 +77,7 @@ public class ScenarioRunnerTests
     {
         var report = Run("""
             { "format": 1, "name": "Broke", "seed": 2000, "ticks": 0, "funds": 5,
-              "actions": [ { "tick": 0, "tool": "Road", "from": { "x": 64, "y": 67 }, "expect": "Built" } ] }
+              "actions": [ { "tick": 0, "tool": "Road", "from": { "x": 34, "y": 53 }, "expect": "Built" } ] }
             """);
 
         Assert.False(report.Passed);
@@ -93,15 +93,15 @@ public class ScenarioRunnerTests
             { "format": 1, "name": "Wrong", "seed": 2000, "ticks": 0, "checks": [
               { "tick": 0, "fundsEquals": 1 },
               { "tick": 0, "count": "Road", "atLeast": 2 },
-              { "tick": 0, "tile": { "x": 64, "y": 64 }, "served": true },
-              { "tick": 0, "tile": { "x": 64, "y": 64 }, "use": "Road" } ] }
+              { "tick": 0, "tile": { "x": 34, "y": 50 }, "served": true },
+              { "tick": 0, "tile": { "x": 34, "y": 50 }, "use": "Road" } ] }
             """);
 
         Assert.False(report.Passed);
         Assert.Equal(("funds equal 1", "20000"), (report.Checks[0].Expected, report.Checks[0].Actual));
         Assert.Equal(("Road count at least 2", "0"), (report.Checks[1].Expected, report.Checks[1].Actual));
-        Assert.Equal(("tile (64, 64) served is true", "the tile has no zone"), (report.Checks[2].Expected, report.Checks[2].Actual));
-        Assert.Equal(("tile (64, 64) use is Road", "None"), (report.Checks[3].Expected, report.Checks[3].Actual));
+        Assert.Equal(("tile (34, 50) served is true", "the tile has no zone"), (report.Checks[2].Expected, report.Checks[2].Actual));
+        Assert.Equal(("tile (34, 50) use is Road", "None"), (report.Checks[3].Expected, report.Checks[3].Actual));
     }
 
     [Fact]
@@ -109,9 +109,9 @@ public class ScenarioRunnerTests
     {
         var report = Run("""
             { "format": 1, "name": "Zone", "seed": 2000, "ticks": 0, "actions": [
-              { "tick": 0, "tool": "ZoneCommercial", "from": { "x": 65, "y": 65 } } ],
+              { "tick": 0, "tool": "ZoneCommercial", "from": { "x": 35, "y": 51 } } ],
               "checks": [
-              { "tick": 0, "tile": { "x": 64, "y": 64 }, "use": "Commercial", "development": 0, "served": false },
+              { "tick": 0, "tile": { "x": 34, "y": 50 }, "use": "Commercial", "development": 0, "served": false },
               { "tick": 0, "count": "Commercial", "equals": 1 } ] }
             """);
 

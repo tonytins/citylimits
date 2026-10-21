@@ -106,18 +106,18 @@ simulation is deterministic in. Phase 2 adds goals by date, such as
   "funds": 20000,
   "ticks": 1536,
   "actions": [
-    { "tick": 0, "tool": "Road", "from": { "x": 64, "y": 67 }, "to": { "x": 72, "y": 67 }, "expect": "Built" },
-    { "tick": 0, "tool": "ZoneResidential", "from": { "x": 65, "y": 65 } },
-    { "tick": 0, "tool": "ZoneCommercial", "from": { "x": 68, "y": 65 } },
-    { "tick": 0, "tool": "ZoneIndustrial", "from": { "x": 71, "y": 65 } },
-    { "tick": 768, "tool": "Bulldoze", "from": { "x": 71, "y": 65 }, "expect": "Built" }
+    { "tick": 0, "tool": "Road", "from": { "x": 34, "y": 53 }, "to": { "x": 42, "y": 53 }, "expect": "Built" },
+    { "tick": 0, "tool": "ZoneResidential", "from": { "x": 35, "y": 51 } },
+    { "tick": 0, "tool": "ZoneCommercial", "from": { "x": 38, "y": 51 } },
+    { "tick": 0, "tool": "ZoneIndustrial", "from": { "x": 41, "y": 51 } },
+    { "tick": 768, "tool": "Bulldoze", "from": { "x": 41, "y": 51 }, "expect": "Built" }
   ],
   "checks": [
-    { "tick": 1536, "tile": { "x": 65, "y": 65 }, "use": "Residential", "development": 0 },
-    { "tick": 1536, "tile": { "x": 68, "y": 65 }, "use": "Commercial", "development": 0 },
+    { "tick": 1536, "tile": { "x": 35, "y": 51 }, "use": "Residential", "development": 0 },
+    { "tick": 1536, "tile": { "x": 38, "y": 51 }, "use": "Commercial", "development": 0 },
     { "tick": 1536, "count": "Developed", "equals": 1 },
-    { "tick": 1536, "tile": { "x": 68, "y": 64 }, "served": true },
-    { "tick": 1536, "tile": { "x": 72, "y": 66 }, "kind": "Rubble", "use": "None" },
+    { "tick": 1536, "tile": { "x": 38, "y": 50 }, "served": true },
+    { "tick": 1536, "tile": { "x": 42, "y": 52 }, "kind": "Rubble", "use": "None" },
     { "tick": 1536, "fundsEquals": 19609 },
     { "tick": 1536, "count": "Road", "equals": 9 },
     { "tick": 1536, "count": "Industrial", "equals": 0 }

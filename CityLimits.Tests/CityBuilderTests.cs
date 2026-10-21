@@ -37,18 +37,6 @@ public class CityBuilderTests
     }
 
     [Fact]
-    public void ARoadCannotBeLaidOnRock()
-    {
-        var city = NewCity();
-        city.Map.SetState(2, 2, new TileState(TileKind.Rock));
-
-        var result = city.Builder.Apply(BuildAction.Road, 2, 2);
-
-        Assert.Equal(BuildRefusal.CannotBuildHere, result.Reason);
-        Assert.Equal(1000, city.Treasury.Funds);
-    }
-
-    [Fact]
     public void LayingTheSameRoadTwiceChangesNothing()
     {
         var city = NewCity();

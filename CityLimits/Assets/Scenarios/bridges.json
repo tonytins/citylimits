@@ -5,16 +5,16 @@
   "seed": 2000,
   "ticks": 0,
   "actions": [
-    { "tick": 0, "tool": "Road", "from": { "x": 72, "y": 55 }, "to": { "x": 85, "y": 55 }, "expect": "Built" },
-    { "tick": 0, "tool": "Road", "from": { "x": 78, "y": 56 }, "to": { "x": 85, "y": 56 }, "expect": "Built" },
-    { "tick": 0, "tool": "Road", "from": { "x": 79, "y": 52 }, "expect": "Refused:CannotBuildHere" }
+    { "tick": 0, "tool": "Road", "from": { "x": 55, "y": 51 }, "to": { "x": 70, "y": 51 }, "expect": "Built" },
+    { "tick": 0, "tool": "Road", "from": { "x": 62, "y": 52 }, "to": { "x": 70, "y": 52 }, "expect": "Built" },
+    { "tick": 0, "tool": "Road", "from": { "x": 62, "y": 48 }, "expect": "Refused:CannotBuildHere" }
   ],
   "checks": [
-    { "tick": 0, "tile": { "x": 78, "y": 55 }, "kind": "Water", "use": "Road" },
-    { "tick": 0, "tile": { "x": 72, "y": 55 }, "kind": "Grass", "use": "Road" },
-    { "tick": 0, "tile": { "x": 79, "y": 52 }, "kind": "Water", "use": "None" },
-    { "tick": 0, "count": "Bridge", "equals": 13 },
-    { "tick": 0, "count": "Road", "equals": 22 },
-    { "tick": 0, "fundsEquals": 19260 }
+    { "tick": 0, "tile": { "x": 62, "y": 51 }, "kind": "Water", "use": "Road" },
+    { "tick": 0, "tile": { "x": 55, "y": 51 }, "kind": "Grass", "use": "Road" },
+    { "tick": 0, "tile": { "x": 62, "y": 48 }, "kind": "Water", "use": "None" },
+    { "tick": 0, "count": "Bridge", "equals": 18 },
+    { "tick": 0, "count": "Road", "equals": 25 },
+    { "tick": 0, "fundsEquals": 19030 }
   ]
 }

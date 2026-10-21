@@ -25,8 +25,38 @@ is found by its index: the tile at index *n* is at column *n* mod 16 and row
 | ------ | ---------- | ------------------------- |
 | Grass  | 0          | clear ground              |
 | Water  | 2          | open water                |
-| Trees  | 21 to 28   | eight drawings of trees   |
-| Rock   | 44         | bare rubble               |
+| Trees  | 37         | woods, trees on every side |
+
+Water and trees are drawn from the sides of them with the same ground
+beside them, which `TerrainEdges.SidesAt` reads from the map; the edge of
+the map counts as the same ground. Each shore and each wood edge has two
+drawings, used on alternate tiles: a shore's second is the next tile, and a
+wood edge's second is eight tiles on. The tables were made by measuring
+where the land and the trees sit in each drawing of this copy of the sheet:
+
+| Water has land               | Tile index | What it looks like                 |
+| ---------------------------- | ---------- | ---------------------------------- |
+| to the north                 | 5, 6       | a shore along the top              |
+| to the north and east        | 7, 8       | a shore across the top-right       |
+| to the east                  | 9, 10      | a shore down the right             |
+| to the east and south        | 11, 12     | a shore across the bottom-right    |
+| to the south                 | 13, 14     | a shore along the bottom           |
+| to the south and west        | 15, 16     | a shore across the bottom-left     |
+| to the west                  | 17, 18     | a shore down the left              |
+| to the north and west        | 19, 20     | a shore across the top-left        |
+| on no side, or on opposite or three or four sides | 2 | open water; the sheet has no drawing for the rest |
+
+| Trees have trees             | Tile index | What it looks like                 |
+| ---------------------------- | ---------- | ---------------------------------- |
+| to the east, south, and west | 21, 29     | trees in the bottom half           |
+| to the south and west        | 22, 30     | trees in the bottom-left           |
+| to the north, south, and west | 23, 31    | trees in the left half             |
+| to the north and west        | 24, 32     | trees in the top-left              |
+| to the north, east, and west | 25, 33     | trees in the top half              |
+| to the north and east        | 26, 34     | trees in the top-right             |
+| to the north, east, and south | 27, 35    | trees in the right half            |
+| to the east and south        | 28, 36     | trees in the bottom-right          |
+| on every side, or on fewer than two sides that meet | 37 | woods; a new map has very few of the second |
 
 A road is drawn from the sides of it that join another road, which
 `RoadNetwork.ConnectionsAt` reads from the map. The table was made by
@@ -50,7 +80,7 @@ A road over water is a bridge: tile 64 runs across, and tile 65 runs down,
 used when the bridge joins a road only above or below it.
 
 Rubble, which a bulldozed zone leaves, is tiles 44 to 47, chosen by the
-tile's place. Rock borrows tile 44 until the new terrain removes it.
+tile's place.
 
 A zone is 3 by 3. Its nine tiles are nine tiles in a row in the sheet,
 read across and then down, so a tile's drawing is the drawing's first

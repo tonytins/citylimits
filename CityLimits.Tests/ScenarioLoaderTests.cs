@@ -111,7 +111,7 @@ public class ScenarioLoaderTests
         Assert.Equal(error, Refuse(With("actions", action)));
 
     [Theory]
-    [InlineData("""{ "tick": 0, "tile": { "x": 128, "y": 0 }, "use": "Road" }""", "checks[0].tile: (128, 0) is outside the 128 by 128 map.")]
+    [InlineData("""{ "tick": 0, "tile": { "x": 120, "y": 0 }, "use": "Road" }""", "checks[0].tile: (120, 0) is outside the 120 by 100 map.")]
     [InlineData("""{ "tick": 0, "tile": { "x": 1, "y": 1 }, "count": "Road", "equals": 1 }""", "checks[0]: checks one subject, so it can't have both tile and count.")]
     [InlineData("""{ "tick": 0, "tile": { "x": 1, "y": 1 }, "equals": 1 }""", "checks[0]: a tile check takes only kind, use, development, developmentAtLeast, developmentAtMost, or served.")]
     [InlineData("""{ "tick": 0, "tile": { "x": 1, "y": 1 } }""", "checks[0]: a tile check needs at least one of kind, use, development, developmentAtLeast, developmentAtMost, or served.")]
