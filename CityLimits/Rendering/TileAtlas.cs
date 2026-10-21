@@ -39,6 +39,18 @@ public static class TileAtlas
     /// <summary>A bridge running down, north to south.</summary>
     private const int BridgeDownTile = 65;
 
+    /// <summary>A road running across over a power line running down.</summary>
+    private const int RoadAcrossPowerLineTile = 77;
+
+    /// <summary>A road running down over a power line running across.</summary>
+    private const int RoadDownPowerLineTile = 78;
+
+    /// <summary>A power line under water, running down.</summary>
+    private const int UnderwaterLineDownTile = 208;
+
+    /// <summary>A power line under water, running across.</summary>
+    private const int UnderwaterLineAcrossTile = 209;
+
     /// <summary>The first of the twelve single-house drawings, three for each land-value class.</summary>
     private const int FirstHouseTile = 249;
 
@@ -64,6 +76,31 @@ public static class TileAtlas
 
     /// <inheritdoc cref="Residential"/>
     private static readonly ZoneDrawings Industrial = new(EmptyZone: 612, FirstBuilding: 621, Levels: 4, ValueClasses: 2);
+
+    /// <summary>
+    /// The power line drawing for each set of sides that join something carrying power, indexed
+    /// by <see cref="RoadConnections"/>. A line that joins nothing, or only one side, is drawn
+    /// straight along that side. The table was made by looking at the drawings in the sheet.
+    /// </summary>
+    private static readonly int[] PowerLineTiles =
+    [
+        210, // none: east-west
+        211, // north: north-south
+        210, // east: east-west
+        212, // north and east: a corner
+        211, // south: north-south
+        211, // north and south: north-south
+        213, // east and south: a corner
+        217, // north, east, and south: a junction branching east
+        210, // west: east-west
+        215, // north and west: a corner
+        210, // east and west: east-west
+        216, // north, east, and west: a junction branching north
+        214, // south and west: a corner
+        219, // north, south, and west: a junction branching west
+        218, // east, south, and west: a junction branching south
+        220, // all four: a crossing
+    ];
 
     /// <summary>
     /// The shore drawing for each set of sides with water beside them, indexed by
@@ -140,12 +177,27 @@ public static class TileAtlas
     ];
 
     /// <summary>
-    /// The sheet index that draws a tile, given the sides of it that join a road, the sides of
-    /// it with the same ground beside them, and, for a zone, the state of its centre, which holds
-    /// the zone's building.
+    /// The sheet index that draws a tile, given the sides of it that join a road, the sides that
+    /// join something carrying power, the sides with the same ground beside them, and, for a
+    /// zone, the state of its centre, which holds the zone's building.
     /// </summary>
-    public static int IndexFor(TileState state, RoadConnections roads, TerrainSides ground, TileState zoneCenter, int tileX, int tileY)
+    public static int IndexFor(TileState state, RoadConnections roads, RoadConnections lines, TerrainSides ground, TileState zoneCenter, int tileX, int tileY)
     {
+        switch (state.Use)
+        {
+            case TileUse.RoadAcrossPowerLine:
+                return RoadAcrossPowerLineTile;
+            case TileUse.RoadDownPowerLine:
+                return RoadDownPowerLineTile;
+            case TileUse.PowerLine when state.Kind == TileKind.Water:
+                // Under water a line runs down only when it joins nothing across, as a bridge does.
+                var across = (lines & (RoadConnections.East | RoadConnections.West)) != 0;
+                var down = (lines & (RoadConnections.North | RoadConnections.South)) != 0;
+                return down && !across ? UnderwaterLineDownTile : UnderwaterLineAcrossTile;
+            case TileUse.PowerLine:
+                return PowerLineTiles[(int)lines & 0b1111];
+        }
+
         if (state.IsBridge)
         {
             // A bridge runs down only when it joins nothing across, as in Micropolis.

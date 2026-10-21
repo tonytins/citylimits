@@ -23,4 +23,13 @@ public enum TileUse
 
     /// <summary>The tile is part of a nuclear power plant, 4 by 4.</summary>
     NuclearPowerPlant,
+
+    /// <summary>The tile carries a power line: on poles over land, or under water.</summary>
+    PowerLine,
+
+    /// <summary>The tile carries a road running across, east to west, over a power line running down.</summary>
+    RoadAcrossPowerLine,
+
+    /// <summary>The tile carries a road running down, north to south, over a power line running across.</summary>
+    RoadDownPowerLine,
 }

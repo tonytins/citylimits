@@ -13,6 +13,7 @@ public sealed class ToolPalette
         Tool.Bulldozer,
         Tool.CoalPowerPlant,
         Tool.NuclearPowerPlant,
+        Tool.PowerLine,
     ];
 
     /// <summary>The tool that is held when the game starts.</summary>

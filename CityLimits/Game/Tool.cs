@@ -26,6 +26,9 @@ public enum Tool
 
     /// <summary>Build a nuclear power plant.</summary>
     NuclearPowerPlant,
+
+    /// <summary>String a power line.</summary>
+    PowerLine,
 }
 
 /// <summary>The work each tool asks the city to do.</summary>
@@ -41,6 +44,7 @@ public static class ToolActions
         Tool.Bulldozer => BuildAction.Bulldoze,
         Tool.CoalPowerPlant => BuildAction.CoalPowerPlant,
         Tool.NuclearPowerPlant => BuildAction.NuclearPowerPlant,
+        Tool.PowerLine => BuildAction.PowerLine,
         _ => null,
     };
 }

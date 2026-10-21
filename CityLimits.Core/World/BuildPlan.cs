@@ -55,30 +55,41 @@ public sealed class BuildPlan
     /// <exception cref="InvalidOperationException">The plan has not been filled in.</exception>
     public RoadConnections RoadConnectionsAt(int x, int y)
     {
-        if (!StateAt(x, y).IsRoad)
+        var state = StateAt(x, y);
+        if (!state.IsRoad)
         {
             return RoadConnections.None;
         }
 
         var connections = RoadConnections.None;
-        if (IsRoad(x, y - 1))
+        foreach (var (side, dx, dy) in Sides.All)
         {
-            connections |= RoadConnections.North;
+            if (RoadNetwork.RunsToward(state, side) && RoadNetwork.RunsToward(StateAt(x + dx, y + dy), Sides.Opposite(side)))
+            {
+                connections |= side;
+            }
         }
 
-        if (IsRoad(x + 1, y))
+        return connections;
+    }
+
+    /// <summary>Tells which sides of a tile with a power line would join something that carries power once the stroke is applied.</summary>
+    /// <exception cref="InvalidOperationException">The plan has not been filled in.</exception>
+    public RoadConnections PowerConnectionsAt(int x, int y)
+    {
+        var state = StateAt(x, y);
+        if (!state.HasPowerLine)
         {
-            connections |= RoadConnections.East;
+            return RoadConnections.None;
         }
 
-        if (IsRoad(x, y + 1))
+        var connections = RoadConnections.None;
+        foreach (var (side, dx, dy) in Sides.All)
         {
-            connections |= RoadConnections.South;
-        }
-
-        if (IsRoad(x - 1, y))
-        {
-            connections |= RoadConnections.West;
+            if (PowerLines.RunsToward(state, side) && PowerLines.RunsToward(StateAt(x + dx, y + dy), Sides.Opposite(side)))
+            {
+                connections |= side;
+            }
         }
 
         return connections;
@@ -120,6 +131,4 @@ public sealed class BuildPlan
     internal void Skip(BuildRefusal reason) => _skipped[(int)reason]++;
 
     internal void Refuse(BuildRefusal reason) => Refusal = reason;
-
-    private bool IsRoad(int x, int y) => StateAt(x, y).IsRoad;
 }

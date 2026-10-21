@@ -138,7 +138,18 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   and then down, so a plant's tiles are parts 0 to 15 with 5 the centre.
   `TileState.HasFootprint` and `IsBuildingCenter` cover zones and plants
   alike; `IsZoned` and `IsZoneCenter` stay the three zones only. Plants
-  don't make power yet: the power grid comes next, in Joffburg.
+  don't make power yet: the power scan comes next, in Joffburg.
+- **Power lines.** A line (`TileUse.PowerLine`) is strung like a road, in
+  one straight line, and under water when something beside it carries
+  power. Over a straight road it makes one tile that is both
+  (`RoadAcrossPowerLine`, `RoadDownPowerLine`), which joins roads only
+  along its road and lines only along its line, as in Micropolis.
+  `PowerLines.RunsToward` says which sides of a tile carry power: every
+  side of a line, a crossing's line, and every tile of a zone or a plant.
+  `PowerLines.ConnectionsAt` reads a line's joins from the map, as
+  `RoadNetwork.ConnectionsAt` does a road's, and the drawing comes from
+  them. `TileState.IsRoad` includes crossings, so they carry traffic and
+  serve zones.
 - **Growth and decline.** As in Micropolis, when the scan reaches a
   zone's centre (`ZoneGrowth.Visit`), a zone with people sometimes sends a
   trip out, and a zone with no road along its edge declines. Otherwise,
@@ -179,11 +190,11 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   R, C, I demand panel under the palette, and the headless run logs both
   each month. Until their systems exist, the difficulty is Easy, the tax
   has no effect, and the demand caps are off.
-- **The tools.** Eight tools sit in the palette down the left, each with its
+- **The tools.** Nine tools sit in the palette down the left, each with its
   icon, and the number keys pick one: inspect, road, residential,
-  commercial, industrial, bulldozer, coal plant, and nuclear plant. A tool is used in a stroke, as
+  commercial, industrial, bulldozer, coal plant, nuclear plant, and power line. A tool is used in a stroke, as
   in Micropolis: pressing on the map starts a `BuildStroke`, dragging
-  stretches it (a road runs in one straight line, a plant is one building
+  stretches it (a road or a power line runs in one straight line, a plant is one building
   that follows the pointer, and the other tools cover a rectangle), and the map shows a preview of the tiles it would change
   and its total cost while the button is held. Releasing applies the
   stroke all at once: the tiles that can't be built on are skipped, and
@@ -191,7 +202,8 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   pay for all of it. Escape cancels a stroke, or quits when there is none.
 - **The money.** The city starts with a treasury, and the prices are
   Micropolis' (`Economy/TileCosts.cs`, and the zones' in their
-  `ZoneSpec`): $10 a road tile, $50 a bridge tile, $100 a zone, $3,000 a
+  `ZoneSpec`): $10 a road tile, $50 a bridge tile, $5 a power line tile,
+  $25 under water, $100 a zone, $3,000 a
   coal power plant, $5,000 a nuclear power plant, $1 more for each tile of trees or rubble a tool
   clears first, and $1 for each tile the bulldozer clears or each zone or
   plant it knocks down. Nothing is refunded. The palette and the HUD show the
@@ -200,10 +212,12 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
 - **The building rules.** A road runs in a straight line and is laid on
   land, clearing trees and rubble; over water it becomes a bridge, which
   needs a road beside it to start from, so a stroke can start from either
-  bank. Zones are laid as a grid, the first centred where the stroke
+  bank. A power line follows the same rules, under water from anything
+  that carries power, and crosses a straight road, or is crossed by one,
+  to make a road-and-line tile. Zones are laid as a grid, the first centred where the stroke
   started; a zone goes down whole or not at all, on ground with nothing on
   it. A plant is placed the same way, one at a time, centred on the
-  pointer. The bulldozer clears roads, bridges, trees, and rubble tile by tile,
+  pointer. The bulldozer clears roads, bridges, power lines, trees, and rubble tile by tile,
   but a zone or a plant only through its centre, which turns all its tiles
   to rubble. Clicking the palette picks a tool, and never builds on the map
   under it.
@@ -251,7 +265,7 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   and no project. It holds the parser, the dispatcher, the default
   command, the strict option reader, and the exit codes.
 - **The tests.** `CityLimits.Tests` uses xUnit 2 with the VSTest runner
-  and coverlet, and holds 375 tests over the generator, the terrain edges, the power plants, the map, the
+  and coverlet, and holds 397 tests over the generator, the terrain edges, the power plants and lines, the map, the
   calendar, the clock, the simulation, the settings, the tile rules, the
   build actions, the road network, the treasury, the scenario loader and
   runner, every built-in scenario, the definitions and the mod loader, zone growth, the census and demand, trips, growth and the city maps,

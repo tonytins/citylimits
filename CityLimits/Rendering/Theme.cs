@@ -54,6 +54,9 @@ public static class Theme
     /// <summary>The color of an industrial zone.</summary>
     public static readonly Color Industrial = new() { R = 198, G = 156, B = 58, A = 255 };
 
+    /// <summary>The color of a power line, when the tile sheet could not be loaded.</summary>
+    public static readonly Color PowerLine = new() { R = 210, G = 190, B = 80, A = 255 };
+
     /// <summary>The color of a power plant, when the tile sheet could not be loaded.</summary>
     public static readonly Color PowerPlant = new() { R = 150, G = 150, B = 160, A = 255 };
 
@@ -69,7 +72,8 @@ public static class Theme
     /// <summary>Returns the color of a use.</summary>
     public static Color For(TileUse use) => use switch
     {
-        TileUse.Road => Road,
+        TileUse.Road or TileUse.RoadAcrossPowerLine or TileUse.RoadDownPowerLine => Road,
+        TileUse.PowerLine => PowerLine,
         TileUse.Residential => Residential,
         TileUse.Commercial => Commercial,
         TileUse.Industrial => Industrial,

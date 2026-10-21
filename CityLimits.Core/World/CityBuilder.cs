@@ -55,6 +55,9 @@ public sealed class CityBuilder
             case BuildAction.Road:
                 PlanRoad(bounds, plan);
                 break;
+            case BuildAction.PowerLine:
+                PlanPowerLine(bounds, plan);
+                break;
             case BuildAction.Bulldoze:
                 PlanBulldozer(bounds, plan);
                 break;
@@ -136,9 +139,9 @@ public sealed class CityBuilder
             : BuildResult.Unchanged(BuildRefusal.NothingToClear);
     }
 
-    // A road on land is laid where it can be. A road on water is a bridge, which needs a road
-    // beside it to start from, so the water is crossed in passes until no more of it can be:
-    // a stroke can start on either bank, as in Micropolis.
+    // A road on land is laid where it can be, and over a straight power line it makes a
+    // crossing. A road on water is a bridge, which needs a road beside it to start from, so a
+    // stroke can start on either bank, as in Micropolis.
     private void PlanRoad(TileRect bounds, BuildPlan plan)
     {
         _water.Clear();
@@ -156,6 +159,10 @@ public sealed class CityBuilder
                 {
                     _water.Add((x, y));
                 }
+                else if (state.Use == TileUse.PowerLine && state.Kind == TileKind.Grass)
+                {
+                    PlanCrossing(x, y, CrossingOverLine(PowerLines.ConnectionsAt(_map, x, y)), TileCosts.Road, plan);
+                }
                 else if (state.Use != TileUse.None || !TileRules.CanLayRoad(state.Kind))
                 {
                     plan.Skip(BuildRefusal.CannotBuildHere);
@@ -167,22 +174,72 @@ public sealed class CityBuilder
             }
         }
 
-        var bridged = true;
-        while (bridged)
+        CrossWater(new TileState(TileKind.Water, TileUse.Road), TileCosts.Bridge, RoadNetwork.RunsToward, plan);
+    }
+
+    // A power line is strung like a road: in one straight line, clearing trees and rubble. It
+    // crosses a straight road to make one tile that is both, and water as a line under water,
+    // which needs something beside it that carries power to start from, as a bridge needs a road.
+    private void PlanPowerLine(TileRect bounds, BuildPlan plan)
+    {
+        _water.Clear();
+
+        for (var y = bounds.Y; y < bounds.Y + bounds.Height; y++)
         {
-            bridged = false;
+            for (var x = bounds.X; x < bounds.X + bounds.Width; x++)
+            {
+                var state = _map.StateAt(x, y);
+                if (state.HasPowerLine)
+                {
+                    plan.Skip(BuildRefusal.AlreadyDone);
+                }
+                else if (state.Kind == TileKind.Water && state.Use == TileUse.None)
+                {
+                    _water.Add((x, y));
+                }
+                else if (state.Use == TileUse.Road && state.Kind == TileKind.Grass)
+                {
+                    PlanCrossing(x, y, CrossingUnderRoad(RoadNetwork.ConnectionsAt(_map, x, y)), TileCosts.PowerLine, plan);
+                }
+                else if (state.Use != TileUse.None || !TileRules.CanBuildOn(state.Kind))
+                {
+                    plan.Skip(BuildRefusal.CannotBuildHere);
+                }
+                else
+                {
+                    plan.Change(x, y, new TileState(TileKind.Grass, TileUse.PowerLine), TileCosts.PowerLine + ClearingCost(state));
+                }
+            }
+        }
+
+        CrossWater(new TileState(TileKind.Water, TileUse.PowerLine), TileCosts.UnderwaterPowerLine, PowerLines.RunsToward, plan);
+    }
+
+    // Water is crossed in passes until no more of it can be: a tile is crossed once something
+    // beside it, planned or already there, runs toward it. So a stroke can start on either bank.
+    private void CrossWater(TileState crossing, int cost, Func<TileState, RoadConnections, bool> runsToward, BuildPlan plan)
+    {
+        var crossed = true;
+        while (crossed)
+        {
+            crossed = false;
             for (var i = _water.Count - 1; i >= 0; i--)
             {
                 var (x, y) = _water[i];
-                if (!plan.StateAt(x, y - 1).IsRoad && !plan.StateAt(x + 1, y).IsRoad &&
-                    !plan.StateAt(x, y + 1).IsRoad && !plan.StateAt(x - 1, y).IsRoad)
+                var reached = false;
+                foreach (var (side, dx, dy) in Sides.All)
+                {
+                    reached |= runsToward(plan.StateAt(x + dx, y + dy), Sides.Opposite(side));
+                }
+
+                if (!reached)
                 {
                     continue;
                 }
 
-                plan.Change(x, y, new TileState(TileKind.Water, TileUse.Road), TileCosts.Bridge);
+                plan.Change(x, y, crossing, cost);
                 _water.RemoveAt(i);
-                bridged = true;
+                crossed = true;
             }
         }
 
@@ -191,6 +248,37 @@ public sealed class CityBuilder
             plan.Skip(BuildRefusal.CannotBuildHere);
         }
     }
+
+    // A crossing goes only where the road or the line already runs straight; a corner or a
+    // junction can't take one.
+    private static void PlanCrossing(int x, int y, TileUse? crossing, int cost, BuildPlan plan)
+    {
+        if (crossing is null)
+        {
+            plan.Skip(BuildRefusal.CannotBuildHere);
+            return;
+        }
+
+        plan.Change(x, y, new TileState(TileKind.Grass, crossing.Value), cost);
+    }
+
+    // A road laid on a line runs the other way to it. A line joined to nothing is drawn across,
+    // as in Micropolis, so a road on it runs down.
+    private static TileUse? CrossingOverLine(RoadConnections line) => line switch
+    {
+        _ when (line & (RoadConnections.North | RoadConnections.South)) == 0 => TileUse.RoadDownPowerLine,
+        _ when (line & (RoadConnections.East | RoadConnections.West)) == 0 => TileUse.RoadAcrossPowerLine,
+        _ => null,
+    };
+
+    // A line strung over a road runs the other way to it. A road joined to nothing is drawn
+    // across, so a line over it runs down.
+    private static TileUse? CrossingUnderRoad(RoadConnections road) => road switch
+    {
+        _ when (road & (RoadConnections.North | RoadConnections.South)) == 0 => TileUse.RoadAcrossPowerLine,
+        _ when (road & (RoadConnections.East | RoadConnections.West)) == 0 => TileUse.RoadDownPowerLine,
+        _ => null,
+    };
 
     // Zones are laid as a grid, each one going down whole or not at all.
     private void PlanZones(TileRect bounds, TileUse use, BuildPlan plan)
@@ -272,7 +360,7 @@ public sealed class CityBuilder
                     continue;
                 }
 
-                var cleared = state.IsBridge ? new TileState(TileKind.Water) : new TileState(TileKind.Grass);
+                var cleared = state.Kind == TileKind.Water ? new TileState(TileKind.Water) : new TileState(TileKind.Grass);
                 plan.Change(x, y, cleared, TileCosts.Bulldoze);
             }
         }

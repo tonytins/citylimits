@@ -147,7 +147,7 @@ tool pressed on `from` and dragged to `to`.
 | Field | Required | Meaning |
 |---|---|---|
 | `tick` | yes | The stroke is made after this many ticks, before the next one. `0` is the start |
-| `tool` | yes | A `BuildAction` name: `Road`, `ZoneResidential`, `ZoneCommercial`, `ZoneIndustrial`, `Bulldoze`, `CoalPowerPlant`, `NuclearPowerPlant` |
+| `tool` | yes | A `BuildAction` name: `Road`, `ZoneResidential`, `ZoneCommercial`, `ZoneIndustrial`, `Bulldoze`, `CoalPowerPlant`, `NuclearPowerPlant`, `PowerLine` |
 | `from` | yes | `{ "x", "y" }`: the tile the stroke starts on |
 | `to` | no | `{ "x", "y" }`: the tile the stroke is dragged to. Default: `from`, a stroke that doesn't move |
 | `expect` | no | A `BuildStatus` (`Built`, `Unchanged`, `Refused`), or a status and a `BuildRefusal`, as in `Refused:NotEnoughFunds`, `Refused:PartOfAZone`, or `Unchanged:AlreadyDone` |
@@ -161,6 +161,9 @@ game:
 - **Zones** are laid as a grid of 3 by 3 zones, the first centred on
   `from`, adding a zone for each whole 3 tiles `to` lies away. A single
   zone is a stroke with no `to`, centred on `from`.
+- **A power line** runs like a road. Under water it needs something
+  beside it that carries power to start from, and over a straight road
+  it makes a road-and-line tile.
 - **A power plant** is one 4 by 4 building, centred on `to` (or on `from`
   when there is no `to`), one tile in from its top-left corner. As in the
   game, dragging moves it rather than adding more.
@@ -169,7 +172,7 @@ game:
 
 Every action goes through `CityBuilder.Apply`, so it is priced, refused,
 and skipped exactly as the tools are: $10 a road tile, $50 a bridge
-tile, $100 a zone, $3,000 a coal power plant, $5,000 a nuclear power
+tile, $5 a power line tile, $25 under water, $100 a zone, $3,000 a coal power plant, $5,000 a nuclear power
 plant, $1 more for each tile of trees or rubble cleared, $1 for each tile
 bulldozed or zone or plant knocked down, and nothing refunded. A
 stroke the city can't pay for, or that runs off the map, changes
@@ -209,6 +212,7 @@ part of a zone fails, with the reason that the tile has no zone.
 | `Residential`, `Commercial`, `Industrial` | Zones of that kind, by their centres, not tiles |
 | `Developed` | Zones with any population, single houses included, as the `--headless` summary does |
 | `CoalPowerPlant`, `NuclearPowerPlant` | Power plants of that kind, by their centres, not tiles |
+| `PowerLine` | Tiles with a power line, under water or under a road included |
 
 Phase 2 adds `population` and the demand values as subjects.
 
@@ -247,7 +251,7 @@ or changing the meaning of a field means bumping `format`.
     "cityTime": 96,
     "date": "1902-01",
     "funds": 19609,
-    "counts": { "road": 9, "bridge": 0, "residential": 1, "commercial": 1, "industrial": 0, "developed": 1, "coalPowerPlant": 0, "nuclearPowerPlant": 0 }
+    "counts": { "road": 9, "bridge": 0, "residential": 1, "commercial": 1, "industrial": 0, "developed": 1, "coalPowerPlant": 0, "nuclearPowerPlant": 0, "powerLine": 0 }
   },
   "actions": [
     { "index": 0, "tick": 0, "tool": "Road", "status": "Built", "tiles": 9, "skipped": {}, "cost": 90, "met": true },

@@ -1,6 +1,6 @@
 # CityLimits roadmap
 
-> **Last reviewed:** 2026-10-20 · **Last updated:** 2026-10-20 · **Change:** minor (Joffburg begins: power plants can be built) · **Stage:** pre-alpha
+> **Last reviewed:** 2026-10-20 · **Last updated:** 2026-10-20 · **Change:** minor (Joffburg J1b: power lines) · **Stage:** pre-alpha
 
 Forward-looking: where CityLimits stands, what blocks the next milestone,
 and what comes next. Verified status and evidence are in the
@@ -57,7 +57,7 @@ baseline in four phases: J1 power, J2 taxes and the budget, J3 services,
 and J4 the budget panel and the power overlay. The budget is a liberty the
 owner chose: it is always automatic, and its panel opens on its own only
 when spending outpaces income. J1 is under way: coal and nuclear plants
-can be built; power lines, the power scan, and the palette laid out as
+and power lines can be built; the power scan and the palette laid out as
 Micropolis' come next.
 
 ## Milestones
@@ -71,7 +71,7 @@ Micropolis' come next.
 | Neat Map: Terrain and the tile grid | 100% | 0 | Meets the baseline: Micropolis' terrain on its 120 by 100 map, with rivers, lakes, an island one map in ten, and woods, and shores and wood edges drawn from the sheet |
 | Line City: Roads and zoning | 100% | 0 | Meets the baseline: strokes with a preview, straight roads and bridges, 3 by 3 zones laid as a grid and served from their edges, and the $1 bulldozer, at Micropolis' prices |
 | Kowloon: Simulation core | 100% | 0 | Time runs as in Micropolis: the 16-phase cycle, the 48ths-of-a-year calendar, and its pace. Scenarios run from files and from the command line. Zones grow and decline one by one, with population, demand, and trips. The heart of the game |
-| Joffburg: Services and economy | 0% | 15–25 | Under way: coal and nuclear plants can be built, 4 by 4, at Micropolis' prices, but nothing is powered until the lines and the power scan land |
+| Joffburg: Services and economy | 0% | 15–25 | Under way: coal and nuclear plants and power lines can be built, at Micropolis' prices, but nothing is powered until the power scan lands |
 | Radial: Traffic and commuting | 0% | 12–20 | Nothing yet |
 | Deadwood: Land value, pollution, disasters | 0% | 12–20 | Nothing yet |
 | Happy Isle: Player-facing game | 0% | 15–25 | Nothing yet |
@@ -190,8 +190,8 @@ that can be saved (UI-5).
 ### Joffburg: Services and economy
 
 - [ ] Power plants and a power grid, with each tile either powered or
-  unserved. The plants are in (`Footprint`, `CityBuilder`); the lines and
-  the power scan are not.
+  unserved. The plants and the lines are in (`Footprint`, `PowerLines`,
+  `CityBuilder`); the power scan is not.
 - [ ] Power demand that follows population, and a visible brownout when
   demand outruns supply.
 - [ ] Taxes, a budget, and a deficit the player has to answer.
@@ -279,6 +279,7 @@ right, cut scope inside Radial and Deadwood first, not inside Kowloon.
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-20 | minor | Joffburg, phase J1b: power lines, as in Micropolis. $5 a tile and $25 under water, strung in a straight line; under water only from something beside it that carries power, as a bridge needs a road. A line over a straight road, or a road over a straight line, makes a road-and-line tile that joins roads only along its road and lines only along its line. Lines join zones and plants, and the bulldozer clears them for $1. 397 tests. |
 | 2026-10-20 | minor | Joffburg begins, phase J1a: coal and nuclear power plants, 4 by 4 at $3,000 and $5,000, as in Micropolis, placed one at a time centred on the pointer and knocked down through their centre. `Footprint` generalises the zone's 3 by 3 layout to any size. The plan, from the owner: services follow Micropolis, the budget is always automatic and opens only when spending outpaces income, and the palette takes Micropolis' layout. No milestone moves yet; 375 tests. |
 | 2026-10-20 | major | Neat Map is complete, and with it step 5 and the whole baseline refactor: the terrain is laid out as in Micropolis, on its 120 by 100 map. One map in ten is an island; the rest have two wide rivers and a narrow one, and up to ten lakes. Woods are scattered and thinned, and shores and wood edges are drawn from the sheet's edge tiles, chosen from the ground beside each tile. Rock is gone. The built-in scenarios move onto the new map. The version becomes 0.2.100. The focus moves to Joffburg; 64–110 h left, 360 tests. |
 | 2026-10-20 | patch | The land value, pollution, and disasters milestone is renamed from Bad News to Deadwood, another of the cities Micropolis ships with, like the other milestones' names. No change to its scope. |

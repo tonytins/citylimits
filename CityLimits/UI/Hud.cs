@@ -9,7 +9,7 @@ public sealed class Hud
     private const int FontSize = 14;
     private const int Padding = 10;
     private const int ReadoutHeight = 46;
-    private const string Hints = "WASD pan   wheel zoom   space pause   , . speed   1-8 tools   drag to build   esc cancel or quit";
+    private const string Hints = "WASD pan   wheel zoom   space pause   , . speed   1-9 tools   drag to build   esc cancel or quit";
 
     /// <summary>Draws the top bar with the state of the city.</summary>
     public void DrawStatus(GameDate date, long tickCount, int speed, int population, Tool tool, int funds, int toolCost, Vector2 mouseWorld, int framesPerSecond)
@@ -155,6 +155,7 @@ public sealed class Hud
         Tool.Bulldozer => "bulldozer",
         Tool.CoalPowerPlant => "coal plant",
         Tool.NuclearPowerPlant => "nuclear plant",
+        Tool.PowerLine => "power line",
         _ => "inspect",
     };
 }

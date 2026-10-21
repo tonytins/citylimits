@@ -64,39 +64,38 @@ public sealed class RoadNetwork
     /// <summary>
     /// Tells which sides of a road tile join another road, read straight from the map so it
     /// is never out of date. A tile with no road has no connections, and the map edge joins nothing.
+    /// A road crossing a power line joins only along its road, as in Micropolis.
     /// </summary>
     public static RoadConnections ConnectionsAt(TileMap map, int x, int y)
     {
         ArgumentNullException.ThrowIfNull(map);
 
-        if (!map.StateAtOrDefault(x, y).IsRoad)
+        var state = map.StateAtOrDefault(x, y);
+        if (!state.IsRoad)
         {
             return RoadConnections.None;
         }
 
         var connections = RoadConnections.None;
-        if (map.StateAtOrDefault(x, y - 1).IsRoad)
+        foreach (var (side, dx, dy) in Sides.All)
         {
-            connections |= RoadConnections.North;
-        }
-
-        if (map.StateAtOrDefault(x + 1, y).IsRoad)
-        {
-            connections |= RoadConnections.East;
-        }
-
-        if (map.StateAtOrDefault(x, y + 1).IsRoad)
-        {
-            connections |= RoadConnections.South;
-        }
-
-        if (map.StateAtOrDefault(x - 1, y).IsRoad)
-        {
-            connections |= RoadConnections.West;
+            if (RunsToward(state, side) && RunsToward(map.StateAtOrDefault(x + dx, y + dy), Sides.Opposite(side)))
+            {
+                connections |= side;
+            }
         }
 
         return connections;
     }
+
+    /// <summary>Tells whether a road leaves a tile through one of its sides: any side of a road, and only along the road of a crossing.</summary>
+    public static bool RunsToward(TileState state, RoadConnections side) => state.Use switch
+    {
+        TileUse.Road => true,
+        TileUse.RoadAcrossPowerLine => side is RoadConnections.East or RoadConnections.West,
+        TileUse.RoadDownPowerLine => side is RoadConnections.North or RoadConnections.South,
+        _ => false,
+    };
 
     /// <summary>Tells whether there is a road on the given tile.</summary>
     public bool HasRoad(int x, int y) =>

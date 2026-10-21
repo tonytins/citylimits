@@ -76,11 +76,11 @@ public sealed class MapRenderer : IDisposable
     /// colours when the sheet is missing. The chunk cache and the tile-by-tile path share it.
     /// </summary>
     internal static void DrawTile(TileMap map, Texture2D? sheet, int x, int y, int left, int top) =>
-        DrawTileAs(sheet, map.StateAt(x, y), RoadNetwork.ConnectionsAt(map, x, y), TerrainEdges.SidesAt(map, x, y), map.ZoneStateAt(x, y), x, y, left, top);
+        DrawTileAs(sheet, map.StateAt(x, y), RoadNetwork.ConnectionsAt(map, x, y), PowerLines.ConnectionsAt(map, x, y), TerrainEdges.SidesAt(map, x, y), map.ZoneStateAt(x, y), x, y, left, top);
 
     /// <summary>
     /// Draws a stroke's preview over the map, as Micropolis does: each tile it would change, as
-    /// it would look, and the roads beside them that would join it. The outline shows what the
+    /// it would look, and the roads and power lines beside them that would join it. The outline shows what the
     /// stroke covers, in the warning colour when it would be refused.
     /// </summary>
     public void DrawPreview(BuildPlan plan, Camera camera)
@@ -88,10 +88,10 @@ public sealed class MapRenderer : IDisposable
         foreach (var tile in plan.Tiles)
         {
             DrawPlanned(plan, tile.X, tile.Y);
-            DrawJoiningRoad(plan, tile.X, tile.Y - 1);
-            DrawJoiningRoad(plan, tile.X + 1, tile.Y);
-            DrawJoiningRoad(plan, tile.X, tile.Y + 1);
-            DrawJoiningRoad(plan, tile.X - 1, tile.Y);
+            DrawJoining(plan, tile.X, tile.Y - 1);
+            DrawJoining(plan, tile.X + 1, tile.Y);
+            DrawJoining(plan, tile.X, tile.Y + 1);
+            DrawJoining(plan, tile.X - 1, tile.Y);
         }
 
         var bounds = plan.Bounds;
@@ -110,18 +110,18 @@ public sealed class MapRenderer : IDisposable
     // A planned zone is new, so it shows undeveloped; a planned tile that isn't a zone has no
     // development to show. A planned tile is built on or cleared, so it has no shore or wood edge.
     private void DrawPlanned(BuildPlan plan, int x, int y) =>
-        DrawTileAs(_sheet, plan.StateAt(x, y), plan.RoadConnectionsAt(x, y), TerrainSides.None, default, x, y, x * TileSize, y * TileSize);
+        DrawTileAs(_sheet, plan.StateAt(x, y), plan.RoadConnectionsAt(x, y), plan.PowerConnectionsAt(x, y), TerrainSides.None, default, x, y, x * TileSize, y * TileSize);
 
-    // An existing road beside the stroke changes shape when a new road joins it.
-    private void DrawJoiningRoad(BuildPlan plan, int x, int y)
+    // An existing road or power line beside the stroke changes shape when a new one joins it.
+    private void DrawJoining(BuildPlan plan, int x, int y)
     {
-        if (_map.Contains(x, y) && !plan.TryGetPlanned(x, y, out _) && _map.StateAt(x, y).IsRoad)
+        if (_map.Contains(x, y) && !plan.TryGetPlanned(x, y, out _) && (_map.StateAt(x, y).IsRoad || _map.StateAt(x, y).HasPowerLine))
         {
             DrawPlanned(plan, x, y);
         }
     }
 
-    private static void DrawTileAs(Texture2D? sheet, TileState state, RoadConnections roads, TerrainSides ground, TileState zoneCenter, int x, int y, int left, int top)
+    private static void DrawTileAs(Texture2D? sheet, TileState state, RoadConnections roads, RoadConnections lines, TerrainSides ground, TileState zoneCenter, int x, int y, int left, int top)
     {
         var destination = new Rectangle { X = left, Y = top, Width = TileSize, Height = TileSize };
 
@@ -133,7 +133,7 @@ public sealed class MapRenderer : IDisposable
         {
             Raylib.DrawTexturePro(
                 sheet.Value,
-                TileAtlas.SourceFor(TileAtlas.IndexFor(state, roads, ground, zoneCenter, x, y)),
+                TileAtlas.SourceFor(TileAtlas.IndexFor(state, roads, lines, ground, zoneCenter, x, y)),
                 destination,
                 Vector2.Zero,
                 0f,

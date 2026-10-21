@@ -50,7 +50,7 @@ public sealed class BuildStroke
     };
 
     /// <summary>
-    /// The tiles the stroke covers. A road runs in one straight line from where it started,
+    /// The tiles the stroke covers. A road or a power line runs in one straight line from where it started,
     /// across or down, whichever way the drag has gone further; across wins a tie. Zones are
     /// laid as a grid of 3 by 3 zones, the first centred where the stroke started, growing a
     /// whole zone at a time toward the pointer. A building, such as a power plant, is one
@@ -74,7 +74,7 @@ public sealed class BuildStroke
                 return new TileRect(x, y, width, height);
             }
 
-            if (Action != BuildAction.Road)
+            if (Action is not (BuildAction.Road or BuildAction.PowerLine))
             {
                 return TileRect.Spanning(StartX, StartY, EndX, EndY);
             }

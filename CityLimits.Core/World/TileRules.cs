@@ -28,9 +28,9 @@ public static class TileRules
     public static bool CanZone(TileKind kind) => CanBuildOn(kind);
 
     /// <summary>
-    /// Tells whether the bulldozer can clear a tile on its own: a road, a bridge, trees, or
-    /// rubble. A zone or a plant is cleared only through its centre.
+    /// Tells whether the bulldozer can clear a tile on its own: a road, a bridge, a power line,
+    /// trees, or rubble. A zone or a plant is cleared only through its centre.
     /// </summary>
     public static bool HasSomethingToClear(TileState state) =>
-        state.IsRoad || (state.Use == TileUse.None && NeedsClearing(state.Kind));
+        state.IsRoad || state.HasPowerLine || (state.Use == TileUse.None && NeedsClearing(state.Kind));
 }

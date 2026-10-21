@@ -96,11 +96,14 @@ public readonly struct TileState : IEquatable<TileState>
     /// <summary>Tells whether the tile is an outer tile of a zone with a house on it.</summary>
     public bool HasHouse => House > 0;
 
-    /// <summary>Tells whether the tile carries a road, over land or over water.</summary>
-    public bool IsRoad => Use == TileUse.Road;
+    /// <summary>Tells whether the tile carries a road, over land or over water, or across a power line.</summary>
+    public bool IsRoad => Use is TileUse.Road or TileUse.RoadAcrossPowerLine or TileUse.RoadDownPowerLine;
 
     /// <summary>Tells whether the tile is a road over water.</summary>
-    public bool IsBridge => IsRoad && Kind == TileKind.Water;
+    public bool IsBridge => Use == TileUse.Road && Kind == TileKind.Water;
+
+    /// <summary>Tells whether the tile carries a power line, on its own or under a road.</summary>
+    public bool HasPowerLine => Use is TileUse.PowerLine or TileUse.RoadAcrossPowerLine or TileUse.RoadDownPowerLine;
 
     /// <summary>Tells whether two states are the same.</summary>
     public static bool operator ==(TileState left, TileState right) => left.Equals(right);

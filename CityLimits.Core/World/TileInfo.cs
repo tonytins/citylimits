@@ -15,7 +15,7 @@ public static class TileInfo
     /// <summary>What the player can do with a kind of ground.</summary>
     public static string BuildAdvice(TileKind kind) => kind switch
     {
-        TileKind.Water => "only a bridge can cross it",
+        TileKind.Water => "only a bridge or a power line can cross it",
         TileKind.Trees or TileKind.Rubble => "cleared for $1 a tile when built on",
         _ => "ready to build on",
     };
@@ -32,6 +32,8 @@ public static class TileInfo
         TileUse.Industrial => "Industrial zone",
         TileUse.CoalPowerPlant => "Coal power plant",
         TileUse.NuclearPowerPlant => "Nuclear power plant",
+        TileUse.PowerLine => "Power line",
+        TileUse.RoadAcrossPowerLine or TileUse.RoadDownPowerLine => "Road and power line",
         _ => "Empty",
     };
 
@@ -44,6 +46,8 @@ public static class TileInfo
         TileUse.Industrial => "industrial",
         TileUse.CoalPowerPlant => "coal plant",
         TileUse.NuclearPowerPlant => "nuclear plant",
+        TileUse.PowerLine => "power line",
+        TileUse.RoadAcrossPowerLine or TileUse.RoadDownPowerLine => "road and line",
         _ => "empty",
     };
 
@@ -58,6 +62,9 @@ public static class TileInfo
         TileUse.Residential or TileUse.Commercial or TileUse.Industrial when state.Development == 0 => "not developed yet",
         TileUse.Residential or TileUse.Commercial or TileUse.Industrial => $"developed to level {state.Development}",
         TileUse.CoalPowerPlant or TileUse.NuclearPowerPlant => "bulldoze its centre to clear it",
+        TileUse.PowerLine when state.Kind == TileKind.Water => "laid under water",
+        TileUse.PowerLine => "strung on poles",
+        TileUse.RoadAcrossPowerLine or TileUse.RoadDownPowerLine => "carries traffic across the line",
         _ => BuildAdvice(state.Kind),
     };
 

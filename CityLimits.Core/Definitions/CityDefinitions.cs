@@ -43,6 +43,7 @@ public sealed class CityDefinitions
         BuildAction.Bulldoze => TileCosts.Bulldoze,
         BuildAction.CoalPowerPlant => TileCosts.CoalPowerPlant,
         BuildAction.NuclearPowerPlant => TileCosts.NuclearPowerPlant,
+        BuildAction.PowerLine => TileCosts.PowerLine,
         _ => 0,
     };
 

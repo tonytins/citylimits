@@ -81,6 +81,9 @@ public enum CountSubject
 
     /// <summary>Nuclear power plants, by their centres.</summary>
     NuclearPowerPlant,
+
+    /// <summary>Tiles with a power line, under water or under a road included.</summary>
+    PowerLine,
 }
 
 /// <summary>

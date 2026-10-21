@@ -1,5 +1,17 @@
 # CityLimits Changelog
 
+## 0.2.102
+
+Power lines. Pick the line from the palette (key 9) and drag it like a
+road: $5 a tile on land, $25 under water. A line can only go under water
+from something beside it that already carries power, as a bridge needs a
+road, so it can start from either bank. Strung across a straight road, or
+crossed by one, it makes a tile that is both. Lines join each other,
+zones, and plants, and the bulldozer clears them for $1 a tile. Nothing
+is powered yet: the power grid comes next.
+
+Scenarios can string lines with the `PowerLine` tool and count them.
+
 ## 0.2.101
 
 Power plants, the start of Joffburg. A coal plant costs $3,000 and a

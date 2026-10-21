@@ -14,6 +14,7 @@ tools/icind.png      industrial
 tools/icbulldozer.png bulldozer
 tools/iccoal.png     coal power plant
 tools/icnuc.png      nuclear power plant
+tools/icwire.png     power line
 Scenarios/           the built-in scenarios, one JSON file each, named for its id
 ```
 
@@ -101,6 +102,30 @@ A building's first tile is the zone's first building plus 9 times
 building shows its single houses on its outer tiles: tiles 249 to 260,
 three for each land-value class. 405 and 414, after the residential
 buildings, are a hospital and a church.
+
+A power line is drawn from the sides of it that join something carrying
+power (another line, a crossing's line, a zone, or a plant), which
+`PowerLines.ConnectionsAt` reads from the map. The table was made by
+looking at the drawings in this copy of the sheet:
+
+| Line joins                     | Tile index | What it looks like                  |
+| ------------------------------ | ---------- | ----------------------------------- |
+| nothing, east, west, or both   | 210        | a straight line, east to west       |
+| north, south, or both          | 211        | a straight line, north to south     |
+| north and east                 | 212        | a corner                            |
+| east and south                 | 213        | a corner                            |
+| south and west                 | 214        | a corner                            |
+| north and west                 | 215        | a corner                            |
+| east, west, and north          | 216        | a junction, branching north         |
+| north, south, and east         | 217        | a junction, branching east          |
+| east, west, and south          | 218        | a junction, branching south         |
+| north, south, and west         | 219        | a junction, branching west          |
+| all four sides                 | 220        | a crossing                          |
+
+A line under water is tile 208 running down, used when it joins nothing
+across, and 209 running across. A road crossing a line is tile 77 for a
+road running across over a line running down, and 78 for a road running
+down over a line running across.
 
 A power plant is 4 by 4, its sixteen tiles in a row in the sheet, read
 across and then down, so a tile's drawing is the plant's first tile plus

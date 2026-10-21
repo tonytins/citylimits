@@ -23,4 +23,7 @@ public enum BuildAction
 
     /// <summary>Build a nuclear power plant, centred on the tile.</summary>
     NuclearPowerPlant,
+
+    /// <summary>String a power line.</summary>
+    PowerLine,
 }
