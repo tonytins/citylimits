@@ -1,5 +1,13 @@
 # CityLimits Changelog
 
+## 0.2.104
+
+The tool palette is laid out as Micropolis' is: the tool's name and price
+at the top, then rows of icon buttons, with the held tool's icon lit up.
+Point at a button to see its name and price; the number keys still pick
+tools. If an icon is missing, its button shows a short label instead of
+disappearing.
+
 ## 0.2.103
 
 Power works. Plants send power through lines into zones, and zones pass

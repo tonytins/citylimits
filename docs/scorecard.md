@@ -136,7 +136,7 @@ there is something to grow.
 
 | Id | Target | Status | Evidence |
 |---|---|---|---|
-| UI-1 | A tool palette with a hotkey for every tool | done | `CityLimits/UI/ToolPaletteView.cs`: nine tools, the keys 1 to 9, and the icon of each tool drawn from `CityLimits/Assets/tools/`. The captured window on 2026-10-20 shows the icons in their own colours, with the held tool picked out, and the price of the tool beside its name |
+| UI-1 | A tool palette with a hotkey for every tool | done | `CityLimits/UI/ToolPaletteView.cs` lays the palette out as Micropolis does: the name and price of the tool under the pointer, or the held one, over centred rows of icon buttons in Micropolis' order, with the held tool's highlighted icon, from `CityLimits/Assets/tools/`. The keys 1 to 9 pick the nine tools. On a private display on 2026-10-20 the palette drew its five rows, clicking the commercial button held it and highlighted it, hovering the nuclear plant named it with its price, and with one icon hidden the button fell back to a labelled box; that check found and fixed `GameAssets.IconFor` never returning null for a missing icon |
 | UI-2 | A HUD with population, funds, date, speed, and the demand bars | done | `CityLimits/UI/Hud.cs`: the status bar shows the date, the tick, the speed, the population, the funds, the held tool and its price, the mouse position, and the frame rate; the demand panel under the palette shows R, C, and I, and keeps clicks off the map under it |
 | UI-3 | Panels for the budget, power, and the city score | missing | No panels; the tool palette is the only panel |
 | UI-4 | A city score that rates the city the way the classic games do | missing | No scoring |

@@ -5,7 +5,8 @@ beside the executable, so the game finds them at run time.
 
 ```text
 tiles.png            the sheet that holds every kind of ground, 256 by 960
-tools/               the icon of each tool in the palette
+tools/               the icon of each tool in the palette, and beside each its highlighted
+                     version, named with "hi" (icqryhi.png), drawn while the tool is held
 tools/icqry.png      inspect
 tools/icroad.png     road
 tools/icres.png      residential
@@ -149,7 +150,8 @@ GNU General Public License version 3. CityLimits is under the same licence, so t
 art can be used and redistributed here. The tile sheet is the core's
 `MicropolisCore/src/images/micropolisEngine/tiles.png`, byte for byte. The
 tool icons are the same drawings, converted to PNG in the same way as the
-others; the bulldozer icon is the Micropolis dozer icon, `icdozr`. The art
+others, with their highlighted versions, the core's `*hi.png`; the
+bulldozer icons are the Micropolis dozer icons, `icdozr` and `icdozrhi`. The art
 is the property of its authors, and CityLimits is not a SimCity product and
 does not use the SimCity name or trademarks.
 

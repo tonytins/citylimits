@@ -206,9 +206,14 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   R, C, I demand panel under the palette, and the headless run logs both
   each month. Until their systems exist, the difficulty is Easy, the tax
   has no effect, and the demand caps are off.
-- **The tools.** Nine tools sit in the palette down the left, each with its
-  icon, and the number keys pick one: inspect, road, residential,
-  commercial, industrial, bulldozer, coal plant, nuclear plant, and power line. A tool is used in a stroke, as
+- **The tools.** Nine tools sit in the palette down the left, laid out as
+  Micropolis' is (`UI/ToolPaletteView.cs`): the name and price of the tool
+  under the pointer, or of the held one, then centred rows of icon
+  buttons in Micropolis' order, leaving out the tools CityLimits doesn't
+  have yet. The held tool shows its highlighted icon, and a missing icon
+  falls back to a box with a short label. The number keys pick tools too:
+  inspect, road, residential, commercial, industrial, bulldozer, coal
+  plant, nuclear plant, and power line, 1 to 9. A tool is used in a stroke, as
   in Micropolis: pressing on the map starts a `BuildStroke`, dragging
   stretches it (a road or a power line runs in one straight line, a plant is one building
   that follows the pointer, and the other tools cover a rectangle), and the map shows a preview of the tiles it would change

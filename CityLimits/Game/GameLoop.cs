@@ -115,7 +115,7 @@ public sealed class GameLoop : IDisposable
 
         Raylib.EndMode2D();
 
-        _toolPaletteView.Draw(_tools);
+        _toolPaletteView.Draw(_tools, mouse);
 
         var world = _camera.ScreenToWorld(mouse);
         var onMap = MapRenderer.TryGetTileAt(_simulation.Map, world, out var tileX, out var tileY, out var state);
@@ -131,7 +131,7 @@ public sealed class GameLoop : IDisposable
             world,
             Raylib.GetFPS());
         _hud.DrawTileReadout(_simulation.Map, onMap ? state : null, tileX, tileY, _simulation.Definitions);
-        _hud.DrawDemand(_simulation.Demand, _toolPaletteView.Bottom(_tools) + 8);
+        _hud.DrawDemand(_simulation.Demand, _toolPaletteView.Bottom() + 8);
         _hud.DrawHints();
         _hud.DrawMessage(_error ?? _notice, _error is not null || _noticeIsError);
 
@@ -269,15 +269,15 @@ public sealed class GameLoop : IDisposable
             }
 
             // A press on a panel never reaches the map underneath.
-            if (Raylib.CheckCollisionPointRec(mouse, Hud.DemandBounds(_toolPaletteView.Bottom(_tools) + 8)))
+            if (Raylib.CheckCollisionPointRec(mouse, Hud.DemandBounds(_toolPaletteView.Bottom() + 8)))
             {
                 return;
             }
 
             // A press on the palette picks a tool.
-            if (_toolPaletteView.Contains(_tools, mouse))
+            if (_toolPaletteView.Contains(mouse))
             {
-                var picked = _toolPaletteView.ToolAt(_tools, mouse);
+                var picked = _toolPaletteView.ToolAt(mouse);
                 if (picked is not null)
                 {
                     _tools.Select(picked.Value);

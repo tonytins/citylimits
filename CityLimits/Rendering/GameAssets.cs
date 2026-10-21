@@ -27,7 +27,11 @@ public sealed class GameAssets : IDisposable
         (Tool.PowerLine, "icwire.png"),
     ];
 
+    // Each icon's highlighted version, drawn while its tool is held, is beside it with "hi" on its name.
+    private const string SelectedIconSuffix = "hi";
+
     private readonly Dictionary<Tool, Texture2D> _icons = new();
+    private readonly Dictionary<Tool, Texture2D> _selectedIcons = new();
     private readonly List<Texture2D> _textures = [];
 
     /// <summary>The sheet that holds every tile of ground, or null when it is missing.</summary>
@@ -37,7 +41,10 @@ public sealed class GameAssets : IDisposable
     public Texture2D? Logo { get; private set; }
 
     /// <summary>The icon for a tool, or null when the tool has none.</summary>
-    public Texture2D? IconFor(Tool tool) => _icons.GetValueOrDefault(tool);
+    public Texture2D? IconFor(Tool tool) => _icons.TryGetValue(tool, out var icon) ? icon : null;
+
+    /// <summary>The highlighted icon drawn while a tool is held, or null when it has none.</summary>
+    public Texture2D? SelectedIconFor(Tool tool) => _selectedIcons.TryGetValue(tool, out var icon) ? icon : null;
 
     /// <summary>Loads the assets from a folder, and names the ones that are missing.</summary>
     public static GameAssets Load(string directory, out IReadOnlyList<string> problems)
@@ -82,6 +89,17 @@ public sealed class GameAssets : IDisposable
 
             assets._icons[tool] = icon.Value;
             assets._textures.Add(icon.Value);
+
+            var selectedPath = Path.Combine(toolDirectory, Path.GetFileNameWithoutExtension(fileName) + SelectedIconSuffix + Path.GetExtension(fileName));
+            var selected = LoadTexture(selectedPath);
+            if (!selected.HasValue)
+            {
+                missing.Add($"The highlighted icon for the {tool} tool is missing: {selectedPath}");
+                continue;
+            }
+
+            assets._selectedIcons[tool] = selected.Value;
+            assets._textures.Add(selected.Value);
         }
 
         problems = missing;
@@ -98,6 +116,7 @@ public sealed class GameAssets : IDisposable
 
         _textures.Clear();
         _icons.Clear();
+        _selectedIcons.Clear();
         TileSheet = null;
     }
 
