@@ -19,9 +19,9 @@ change. Statuses are `done`, `partial`, and `missing`.
 | [Economy](#economy-and-services) | 4 | 1 | 0 | $20 000 in the treasury, 7% tax, 700 and 2 000 tile plants, the budget panel, the overview map's six modes |
 | [Traffic](#traffic-and-commuting) | 0 | 2 | 2 | 1 road network, trips of up to 30 tiles |
 | [Environment](#land-value-pollution-and-disasters) | 0 | 1 | 4 | land value from distance and terrain, 0 disasters |
-| [Interface](#player-interface) | 2 | 1 | 3 | 12 tools with icons, 1 status bar, the demand panel, the budget panel, the overview map |
+| [Interface](#player-interface) | 2 | 1 | 3 | 12 tools with icons, the top bar, the demand panel, the budget panel, the overview map |
 | [Platform](#platform) | 7 | 0 | 2 | Raylib-cs 8.1.0, NLog 6.2.2, .NET 10, data mods |
-| [Reliability](#reliability) | 6 | 0 | 0 | 481 tests, all passing, CI green |
+| [Reliability](#reliability) | 6 | 0 | 0 | 489 tests, all passing, CI green |
 | [Documentation](#documentation) | 3 | 0 | 2 | 3 of 5 documents exist |
 | [Known issues](#known-issues) | | | | 1 open, 3 resolved |
 
@@ -138,8 +138,8 @@ there is something to grow.
 | Id | Target | Status | Evidence |
 |---|---|---|---|
 | UI-1 | A tool palette with a hotkey for every tool | done | `CityLimits/UI/ToolPaletteView.cs` lays the palette out as Micropolis does: the name and price of the tool under the pointer, or the held one, over centred rows of icon buttons in Micropolis' order, with the held tool's highlighted icon, from `CityLimits/Assets/tools/`. The keys 1 to 9 pick the first nine of the twelve tools; the park and the two stations are picked from the palette. On a private display on 2026-10-20 the palette drew its five rows, clicking the commercial button held it and highlighted it, hovering the nuclear plant named it with its price, and with one icon hidden the button fell back to a labelled box; that check found and fixed `GameAssets.IconFor` never returning null for a missing icon |
-| UI-2 | A HUD with population, funds, date, speed, and the demand bars | done | `CityLimits/UI/Hud.cs`: the status bar shows the date, the tick, the speed, the population, the funds, the held tool and its price, the mouse position, and the frame rate; the demand panel under the palette shows R, C, and I, and keeps clicks off the map under it |
-| UI-3 | Panels for the budget, power, and the city score | partial | The budget panel and the overview map, with its power mode, are in (ECON-5); there is no city score panel (UI-4) |
+| UI-2 | A HUD with population, funds, date, speed, and the demand bars | done | `CityLimits/UI/Hud.cs` draws the top bar after the owner's mock-up in `docs/design/`: a pause and play button, the month, speed buttons that light up to the speed, the city's name (`CitySimulation.Name`), an R, C, I demand meter, the funds, the population, the steps, and the frame rate. The meter opens `CityLimits/UI/DemandPanel.cs`, with each demand against its limit, the economy's pull and the tax's push at the last update, jobs per resident, workers per job, and the population's parts (`CensusAndDemandTests` and `CitySimulationTests` cover the figures and the name; dropping the tax push or the name's control-character check each failed a test). On a private display on 2026-10-21 the bar lit three arrows at Super fast and two at Fast, paused to a play button with the arrows dimmed, played at Normal from the first arrow, opened the budget from the funds, and opened the panel from the meter; a press on the panel with the road tool built nothing, and its x and Escape closed it, the next Escape quitting |
+| UI-3 | Panels for the budget, power, and the city score | partial | The budget panel, the demand panel, and the overview map, with its power mode, are in (ECON-5, UI-2); there is no city score panel (UI-4) |
 | UI-4 | A city score that rates the city the way the classic games do | missing | No scoring |
 | UI-5 | A city saves to disk and reloads exactly, and a corrupt file is reported, not fatal | missing | No save format |
 | UI-6 | A start screen and a new-city flow: name, seed, and map size | missing | No screen flow |

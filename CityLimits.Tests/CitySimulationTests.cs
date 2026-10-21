@@ -7,6 +7,39 @@ namespace CityLimits.Tests;
 public class CitySimulationTests
 {
     [Fact]
+    public void ACityIsNamedCityLimitsUntilItIsRenamed()
+    {
+        var simulation = new CitySimulation(SmallMap(), 1);
+        Assert.Equal(CitySimulation.DefaultName, simulation.Name);
+
+        simulation.Rename("  New Dullsville ");
+
+        Assert.Equal("New Dullsville", simulation.Name);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    [InlineData("Line\nbreak")]
+    [InlineData("A name far too long to fit in the top bar")]
+    public void ANameThatCantBeACitysIsRefusedAndTheOldOneKept(string name)
+    {
+        var simulation = new CitySimulation(SmallMap(), 1);
+
+        Assert.False(CitySimulation.IsValidName(name));
+        Assert.Throws<ArgumentException>(() => simulation.Rename(name));
+        Assert.Equal(CitySimulation.DefaultName, simulation.Name);
+    }
+
+    [Fact]
+    public void ANameOfTheLongestLengthIsAllowed()
+    {
+        Assert.True(CitySimulation.IsValidName(new string('a', CitySimulation.MaxNameLength)));
+        Assert.False(CitySimulation.IsValidName(new string('a', CitySimulation.MaxNameLength + 1)));
+        Assert.False(CitySimulation.IsValidName(null));
+    }
+
+    [Fact]
     public void TheCalendarMovesOnOnceEverySixteenSteps()
     {
         var simulation = new CitySimulation(SmallMap(), 1);

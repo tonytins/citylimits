@@ -1,6 +1,6 @@
 # CityLimits roadmap
 
-> **Last reviewed:** 2026-10-21 · **Last updated:** 2026-10-21 · **Change:** minor (Joffburg J4: the overview map, and Joffburg is complete) · **Stage:** pre-alpha
+> **Last reviewed:** 2026-10-21 · **Last updated:** 2026-10-21 · **Change:** minor (Happy Isle: the top bar after the owner's mock-up, and the demand panel) · **Stage:** pre-alpha
 
 Forward-looking: where CityLimits stands, what blocks the next milestone,
 and what comes next. Verified status and evidence are in the
@@ -66,7 +66,7 @@ Next, in order:
 | Joffburg: Services and economy | 100% | 0 | Meets the baseline: power, taxes and the budget, services (stations, coverage, parks, hospitals, and churches), and the overview map with its power, coverage, land value, and density modes, as in Micropolis |
 | Radial: Traffic and commuting | 0% | 12–20 | Nothing yet |
 | Deadwood: Land value, pollution, disasters | 0% | 12–20 | Nothing yet |
-| Happy Isle: Player-facing game | 33% | 12–22 | The palette, laid out as Micropolis', and the HUD are in; the budget panel is too. Saving, the city score, the power panel, and a start screen are left |
+| Happy Isle: Player-facing game | 33% | 12–22 | The palette, laid out as Micropolis', and the HUD, with its top bar after the owner's mock-up, are in; the budget and demand panels and the overview's power mode are too. Saving, the city score, and a start screen are left |
 | Yokohama: Polish and release | 0% | 10–20 | Nothing yet |
 | | **Total** | **≈ 46–82** | |
 
@@ -226,9 +226,12 @@ gate is in or partial.
   Micropolis' (`UI/ToolPaletteView.cs`); keys 1 to 9 pick the first nine
   tools, and the park and the stations are picked from the palette.
 - [x] A HUD: population, funds, date, speed, and the demand bars
-  (`UI/Hud.cs`).
+  (`UI/Hud.cs`). The top bar follows the owner's mock-up in
+  `docs/design/`, with pause and speed buttons, the city's name, and a
+  demand meter that opens the demand panel (`UI/DemandPanel.cs`).
 - [ ] Panels for the budget, power, and the city score. The budget panel
-  is in (`UI/BudgetPanel.cs`); power and the score are not.
+  (`UI/BudgetPanel.cs`) and power, as the overview map's power mode
+  (`UI/OverviewMap.cs`), are in; the score is not.
 - [ ] Save and load: a city serializes to disk and reloads exactly, and a
   corrupt file is reported, not fatal. The format is under discussion.
 - [ ] A city score, rating the city the way the classic games do.
@@ -284,6 +287,7 @@ baseline's growth depends on.
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-21 | minor | Happy Isle, ahead of saving, as the owner chose, since it is cosmetic: the top bar follows the owner's mock-up in `docs/design/`. It has a pause and play button, the month, speed buttons that fill up like a meter, the city's name (`CitySimulation.Name`, "CityLimits" until saves can name it), an R, C, I meter, the funds, and the population, with the steps and the frame rate on the right. The meter opens a demand panel, a liberty the owner chose since Micropolis has only the meter: each demand against its limit, what moved it, and the census behind it. The held tool's name and the mouse position leave the bar; the palette's header still names the tool. The panels item notes power as the overview's mode. 489 tests. |
 | 2026-10-21 | minor | Joffburg, phase J4, and with it Joffburg, is complete: the overview map, as in Micropolis, shows the whole city in the top-right corner with the main view outlined, moves the view where it is clicked or dragged, and switches between the city, power, fire and police coverage, land value, and population density. The owner chose the overview and its modes. The alpha gate's read-the-city row passes; 46–82 h left in total, 481 tests. |
 | 2026-10-21 | patch | The owner settled the power-demand item: demand follows the grid, every zone and line tile drawing power whether anyone lives there or not, as in Micropolis (a coal plant carries about 50 zones), not population. The item is reworded and checked off; Joffburg is at 80%, with the power overlay left. 48–86 h left in total. |
 | 2026-10-21 | patch | Housekeeping, at the owner's request: the current focus is put in order (the power overlay, saving, traffic, then crime, pollution, and disasters), Happy Isle's palette and HUD are checked off (33%), Joffburg's and Kowloon's notes and the critical path are brought up to date, and the ranked list gains traffic. 49–88 h left in total. |

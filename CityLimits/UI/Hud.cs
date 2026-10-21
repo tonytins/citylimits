@@ -11,34 +11,177 @@ public sealed class Hud
     private const int ReadoutHeight = 46;
     private const string Hints = "WASD pan   wheel zoom   space pause   , . speed   1-9 tools   drag to build   B budget   esc cancel or quit";
 
-    /// <summary>Where the funds are in the top bar, as last drawn, so a click on them can open the budget.</summary>
-    public Rectangle FundsBounds { get; private set; }
+    // The pieces of the top bar, from left to right, as wide as each needs.
+    private const int ButtonSize = 22;
+    private const int SpeedWidth = 16;
+    private const int Gap = 16;
+    private const int MeterBarWidth = 6;
+    private const int MeterHeight = 22;
 
-    /// <summary>Draws the top bar with the state of the city.</summary>
-    public void DrawStatus(GameDate date, long tickCount, int speed, int population, Tool tool, int funds, int toolCost, Vector2 mouseWorld, int framesPerSecond)
+    private static readonly int[] Speeds = [GameSpeed.Normal, GameSpeed.Fast, GameSpeed.SuperFast];
+
+    // Where each button was last drawn, so a click can be matched to it in the next frame.
+    private Rectangle _pauseBounds;
+    private readonly Rectangle[] _speedBounds = new Rectangle[3];
+    private Rectangle _demandBounds;
+    private Rectangle _fundsBounds;
+
+    /// <summary>A button in the top bar.</summary>
+    public enum BarButton
     {
-        Raylib.DrawRectangle(0, 0, Raylib.GetScreenWidth(), BarHeight, Theme.Panel);
-        Raylib.DrawRectangleLinesEx(new Rectangle { X = 0, Y = 0, Width = Raylib.GetScreenWidth(), Height = BarHeight }, 1f, Theme.PanelBorder);
+        /// <summary>No button.</summary>
+        None,
 
-        var speedText = speed switch
+        /// <summary>Pauses the game, or plays it at the speed it last ran.</summary>
+        PausePlay,
+
+        /// <summary>Plays at Normal speed.</summary>
+        Normal,
+
+        /// <summary>Plays at Fast speed.</summary>
+        Fast,
+
+        /// <summary>Plays at Super fast speed.</summary>
+        SuperFast,
+
+        /// <summary>The demand meter, which opens the demand panel.</summary>
+        Demand,
+
+        /// <summary>The funds, which open the budget.</summary>
+        Funds,
+    }
+
+    /// <summary>Tells which button of the top bar, as last drawn, is under a point on the screen.</summary>
+    public BarButton ButtonAt(Vector2 point)
+    {
+        if (Raylib.CheckCollisionPointRec(point, _pauseBounds))
         {
-            GameSpeed.Normal => "normal",
-            GameSpeed.Fast => "fast",
-            GameSpeed.SuperFast => "super fast",
-            _ => "paused",
-        };
-        var costText = toolCost > 0 ? $" ${toolCost}" : string.Empty;
-        var before = $"CityLimits   {date}   tick {tickCount}   {speedText}   pop {population}   ";
-        var fundsText = $"${funds}";
-        var after = $"   {ToolName(tool)}{costText}   {mouseWorld.X:0}, {mouseWorld.Y:0}   {framesPerSecond} fps";
+            return BarButton.PausePlay;
+        }
+
+        for (var i = 0; i < _speedBounds.Length; i++)
+        {
+            if (Raylib.CheckCollisionPointRec(point, _speedBounds[i]))
+            {
+                return BarButton.Normal + i;
+            }
+        }
+
+        if (Raylib.CheckCollisionPointRec(point, _demandBounds))
+        {
+            return BarButton.Demand;
+        }
+
+        return Raylib.CheckCollisionPointRec(point, _fundsBounds) ? BarButton.Funds : BarButton.None;
+    }
+
+    /// <summary>The speed a speed button plays at; nothing for any other button.</summary>
+    public static int? SpeedOf(BarButton button) => button switch
+    {
+        BarButton.Normal => GameSpeed.Normal,
+        BarButton.Fast => GameSpeed.Fast,
+        BarButton.SuperFast => GameSpeed.SuperFast,
+        _ => null,
+    };
+
+    /// <summary>
+    /// Draws the top bar: the pause or play button, the month, the speed, the city's name, the
+    /// demand meter, the funds, and the population, with the step count and the frame rate on
+    /// the right. The speed buttons light up to the speed, so two lit is Fast; while paused they
+    /// show, dimmed, the speed play will bring back.
+    /// </summary>
+    public void DrawStatus(string cityName, GameDate date, long tickCount, int speed, int resumeSpeed, int population, CityDemand demand, int funds, int framesPerSecond)
+    {
+        ArgumentNullException.ThrowIfNull(demand);
+
+        var width = Raylib.GetScreenWidth();
+        Raylib.DrawRectangle(0, 0, width, BarHeight, Theme.Bar);
+        var textY = (BarHeight - FontSize) / 2;
+        var x = Padding;
+
+        _pauseBounds = new Rectangle { X = x, Y = (BarHeight - ButtonSize) / 2, Width = ButtonSize, Height = ButtonSize };
+        DrawPausePlay(_pauseBounds, paused: speed == GameSpeed.Paused);
+        x += ButtonSize + 10;
+
+        var dateText = $"{date.Month:00}/{date.Year:0000}";
+        Raylib.DrawText(dateText, x, textY, FontSize, Theme.Text);
+        x += Raylib.MeasureText(dateText, FontSize) + 10;
+
+        var shown = speed == GameSpeed.Paused ? resumeSpeed : speed;
+        for (var i = 0; i < Speeds.Length; i++)
+        {
+            _speedBounds[i] = new Rectangle { X = x, Y = (BarHeight - ButtonSize) / 2, Width = SpeedWidth, Height = ButtonSize };
+            var lit = Speeds[i] <= shown ? (speed == GameSpeed.Paused ? Theme.SpeedResume : Theme.SpeedLit) : Theme.SpeedUnlit;
+            DrawArrow(_speedBounds[i], lit);
+            x += SpeedWidth;
+        }
+
+        x += Gap;
+        Raylib.DrawText(cityName, x, textY, FontSize, Theme.Text);
+        x += Raylib.MeasureText(cityName, FontSize) + Gap;
+
+        _demandBounds = new Rectangle { X = x - 3, Y = (BarHeight - MeterHeight) / 2, Width = (MeterBarWidth * 3) + 4 + 6, Height = MeterHeight };
+        DrawDemandMeter(demand, x, (BarHeight - MeterHeight) / 2);
+        x += (MeterBarWidth * 3) + 4 + Gap;
 
         // The funds are drawn on their own, so they can show red below zero and be clicked.
-        var fundsX = Padding + Raylib.MeasureText(before, FontSize);
+        var fundsText = Money(funds);
         var fundsWidth = Raylib.MeasureText(fundsText, FontSize);
-        FundsBounds = new Rectangle { X = fundsX - 4, Y = 0, Width = fundsWidth + 8, Height = BarHeight };
-        Raylib.DrawText(before, Padding, 8, FontSize, Theme.Text);
-        Raylib.DrawText(fundsText, fundsX, 8, FontSize, funds < 0 ? Theme.Error : Theme.Accent);
-        Raylib.DrawText(after, fundsX + fundsWidth, 8, FontSize, Theme.Text);
+        _fundsBounds = new Rectangle { X = x - 4, Y = 0, Width = fundsWidth + 8, Height = BarHeight };
+        Raylib.DrawText(fundsText, x, textY, FontSize, funds < 0 ? Theme.Error : Theme.Accent);
+        x += fundsWidth + Gap;
+
+        Raylib.DrawText($"{Count(population)} Pop", x, textY, FontSize, Theme.Text);
+
+        var right = $"{Count(tickCount)} Ticks   {framesPerSecond} FPS";
+        Raylib.DrawText(right, width - Padding - Raylib.MeasureText(right, FontSize), textY, FontSize, Theme.TextDim);
+    }
+
+    /// <summary>Writes an amount of money as the bar and the panels show it, such as $20,000 or -$1,500.</summary>
+    public static string Money(long amount) => amount < 0 ? $"-${Count(-amount)}" : $"${Count(amount)}";
+
+    /// <summary>Writes a count with its thousands separated, such as 12,340, whatever the machine's language.</summary>
+    public static string Count(long count) => count.ToString("N0", CultureInfo.InvariantCulture);
+
+    private static void DrawPausePlay(Rectangle bounds, bool paused)
+    {
+        var cx = bounds.X + (bounds.Width / 2);
+        var cy = bounds.Y + (bounds.Height / 2);
+        if (paused)
+        {
+            // Play: a triangle pointing right.
+            Raylib.DrawTriangle(new Vector2(cx - 5, cy - 7), new Vector2(cx - 5, cy + 7), new Vector2(cx + 7, cy), Theme.Text);
+            return;
+        }
+
+        Raylib.DrawRectangleRec(new Rectangle { X = cx - 6, Y = cy - 7, Width = 4, Height = 14 }, Theme.Text);
+        Raylib.DrawRectangleRec(new Rectangle { X = cx + 2, Y = cy - 7, Width = 4, Height = 14 }, Theme.Text);
+    }
+
+    // A triangle pointing right, as the speed buttons are drawn; raylib wants its corners anticlockwise.
+    private static void DrawArrow(Rectangle bounds, Color color)
+    {
+        var cy = bounds.Y + (bounds.Height / 2);
+        Raylib.DrawTriangle(new Vector2(bounds.X + 2, cy - 6), new Vector2(bounds.X + 2, cy + 6), new Vector2(bounds.X + bounds.Width - 3, cy), color);
+    }
+
+    // As Micropolis shows demand: each bar rises from the middle when the city wants more of the
+    // kind and falls below it when it wants less, as far as its limit allows.
+    private static void DrawDemandMeter(CityDemand demand, int left, int top)
+    {
+        var middle = top + (MeterHeight / 2);
+        var reach = MeterHeight / 2;
+        Raylib.DrawLine(left - 2, middle, left + (MeterBarWidth * 3) + 6, middle, Theme.TextDim);
+        DrawMeterBar(demand.Residential, CityDemand.ResidentialLimit, left, middle, reach, Theme.Residential);
+        DrawMeterBar(demand.Commercial, CityDemand.BusinessLimit, left + MeterBarWidth + 2, middle, reach, Theme.Commercial);
+        DrawMeterBar(demand.Industrial, CityDemand.BusinessLimit, left + ((MeterBarWidth + 2) * 2), middle, reach, Theme.Industrial);
+    }
+
+    private static void DrawMeterBar(int value, int limit, int left, int middle, int reach, Color color)
+    {
+        var length = (int)Math.Round((double)Math.Clamp(value, -limit, limit) / limit * reach);
+        var top = length >= 0 ? middle - length : middle;
+        Raylib.DrawRectangle(left, top, MeterBarWidth, Math.Abs(length), color);
     }
 
     /// <summary>Draws the readout of the tile under the mouse, naming zones as the city's definitions do.</summary>
@@ -55,40 +198,6 @@ public sealed class Hud
         Raylib.DrawRectangleLinesEx(new Rectangle { X = x, Y = y, Width = width, Height = ReadoutHeight }, 1f, Theme.PanelBorder);
         Raylib.DrawText(heading, x + Padding, y + 6, FontSize, Theme.Text);
         Raylib.DrawText(detail, x + Padding, y + 24, FontSize, AdviceColor(state));
-    }
-
-    /// <summary>
-    /// Draws the demand for each kind of zone, as Micropolis does: a bar for residential,
-    /// commercial, and industrial, rising from the middle line when the city wants more of it and
-    /// falling below when it wants less, each as far as its limit allows.
-    /// </summary>
-    public void DrawDemand(CityDemand demand, int top)
-    {
-        ArgumentNullException.ThrowIfNull(demand);
-
-        const int Reach = 34;
-        const int BarWidth = 16;
-        var bounds = DemandBounds(top);
-        var middle = top + 12 + Reach;
-
-        Raylib.DrawRectangleRec(bounds, Theme.Panel);
-        Raylib.DrawRectangleLinesEx(bounds, 1f, Theme.PanelBorder);
-        Raylib.DrawLine(Padding + 4, middle, Padding + (int)bounds.Width - 10, middle, Theme.TextDim);
-
-        DrawDemandBar(demand.Residential, CityDemand.ResidentialLimit, Padding + 8, middle, Reach, BarWidth, Theme.Residential, "R");
-        DrawDemandBar(demand.Commercial, CityDemand.BusinessLimit, Padding + 8 + 24, middle, Reach, BarWidth, Theme.Commercial, "C");
-        DrawDemandBar(demand.Industrial, CityDemand.BusinessLimit, Padding + 8 + 48, middle, Reach, BarWidth, Theme.Industrial, "I");
-    }
-
-    /// <summary>Where the demand panel is on the screen, so a click on it isn't a click on the map.</summary>
-    public static Rectangle DemandBounds(int top) => new() { X = Padding - 2, Y = top, Width = 84, Height = 96 };
-
-    private static void DrawDemandBar(int value, int limit, int left, int middle, int reach, int width, Color color, string label)
-    {
-        var length = (int)Math.Round((double)Math.Clamp(value, -limit, limit) / limit * reach);
-        var top = length >= 0 ? middle - length : middle;
-        Raylib.DrawRectangle(left, top, width, Math.Abs(length), color);
-        Raylib.DrawText(label, left + 4, middle + reach + 2, FontSize, Theme.TextDim);
     }
 
     /// <summary>Draws the line of hints that tells the player what the keys do.</summary>
@@ -157,20 +266,4 @@ public sealed class Hud
 
         return TileRules.NeedsClearing(state.Value.Kind) ? Theme.Accent : Theme.TextDim;
     }
-
-    private static string ToolName(Tool tool) => tool switch
-    {
-        Tool.Road => "road",
-        Tool.Residential => "residential",
-        Tool.Commercial => "commercial",
-        Tool.Industrial => "industrial",
-        Tool.Bulldozer => "bulldozer",
-        Tool.CoalPowerPlant => "coal plant",
-        Tool.NuclearPowerPlant => "nuclear plant",
-        Tool.PowerLine => "power line",
-        Tool.FireStation => "fire station",
-        Tool.PoliceStation => "police station",
-        Tool.Park => "park",
-        _ => "inspect",
-    };
 }

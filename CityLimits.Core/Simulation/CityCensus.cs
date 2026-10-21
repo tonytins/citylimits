@@ -29,6 +29,15 @@ public sealed class CityCensus
     /// </summary>
     public int CityPopulation { get; private set; }
 
+    /// <summary>The residents' share of <see cref="CityPopulation"/>, as of the last monthly record.</summary>
+    public int ResidentPopulation { get; private set; }
+
+    /// <summary>Commerce's share of <see cref="CityPopulation"/>, as of the last monthly record.</summary>
+    public int CommercialPopulation { get; private set; }
+
+    /// <summary>Industry's share of <see cref="CityPopulation"/>, as of the last monthly record.</summary>
+    public int IndustrialPopulation { get; private set; }
+
     /// <summary>The residential count recorded a number of months ago, in eighths, as Micropolis keeps it; 0 is the latest.</summary>
     public int ResidentialHistory(int monthsAgo) => _residentialHistory[monthsAgo];
 
@@ -72,6 +81,9 @@ public sealed class CityCensus
         _residentialHistory[0] = Residential / 8;
         _commercialHistory[0] = Commercial;
         _industrialHistory[0] = Industrial;
-        CityPopulation = (Residential + (Commercial * 8) + (Industrial * 8)) * 20;
+        ResidentPopulation = Residential * 20;
+        CommercialPopulation = Commercial * 8 * 20;
+        IndustrialPopulation = Industrial * 8 * 20;
+        CityPopulation = ResidentPopulation + CommercialPopulation + IndustrialPopulation;
     }
 }

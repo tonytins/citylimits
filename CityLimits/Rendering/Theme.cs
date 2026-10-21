@@ -24,6 +24,18 @@ public static class Theme
     /// <summary>The color of the tile under the mouse.</summary>
     public static readonly Color Hover = new() { R = 255, G = 235, B = 120, A = 255 };
 
+    /// <summary>The top bar's background.</summary>
+    public static readonly Color Bar = new() { R = 0, G = 0, B = 0, A = 255 };
+
+    /// <summary>A lit speed button, up to the speed the game runs at.</summary>
+    public static readonly Color SpeedLit = new() { R = 62, G = 110, B = 190, A = 255 };
+
+    /// <summary>A speed button lit, dimmed, up to the speed play brings back while the game is paused.</summary>
+    public static readonly Color SpeedResume = new() { R = 46, G = 70, B = 110, A = 255 };
+
+    /// <summary>A speed button above the speed.</summary>
+    public static readonly Color SpeedUnlit = new() { R = 217, G = 217, B = 217, A = 255 };
+
     /// <summary>A zone or building with power, on the overview's power map.</summary>
     public static readonly Color OverviewPowered = new() { R = 240, G = 70, B = 50, A = 255 };
 

@@ -5,6 +5,11 @@ namespace CityLimits.Core.Simulation;
 /// <summary>The city itself: the map, the calendar, the money, and the tick that advances all of them.</summary>
 public sealed class CitySimulation
 {
+    /// <summary>The name a city has until the player gives it one.</summary>
+    public const string DefaultName = "CityLimits";
+
+    /// <summary>The longest name a city can have, in characters.</summary>
+    public const int MaxNameLength = 32;
 
     // The phases of the cycle that do more than scan the map.
     private const int CensusPhase = 9;
@@ -74,6 +79,28 @@ public sealed class CitySimulation
         _growth = new ZoneGrowth(map, Random, Trips, Definitions, Demand, Maps, Community);
     }
 
+    /// <summary>
+    /// Tells whether a name can be a city's: once trimmed, it isn't empty, it is no longer than
+    /// <see cref="MaxNameLength"/>, and it has no control characters.
+    /// </summary>
+    public static bool IsValidName(string? name)
+    {
+        var trimmed = name?.Trim();
+        return !string.IsNullOrEmpty(trimmed) && trimmed.Length <= MaxNameLength && !trimmed.Any(char.IsControl);
+    }
+
+    /// <summary>Gives the city a new name, trimmed of the spaces around it.</summary>
+    /// <exception cref="ArgumentException">The name isn't one a city can have (<see cref="IsValidName"/>).</exception>
+    public void Rename(string name)
+    {
+        if (!IsValidName(name))
+        {
+            throw new ArgumentException($"A city's name needs 1 to {MaxNameLength} characters and no control characters.", nameof(name));
+        }
+
+        Name = name.Trim();
+    }
+
     /// <summary>Raised when the city has something to tell the player, as often as Micropolis would say it.</summary>
     public event Action<CityMessage>? MessageSent;
 
@@ -88,6 +115,9 @@ public sealed class CitySimulation
 
     /// <summary>The seed the city was created with.</summary>
     public int Seed { get; }
+
+    /// <summary>The city's name; <see cref="DefaultName"/> until it is renamed.</summary>
+    public string Name { get; private set; } = DefaultName;
 
     /// <summary>The generator the simulation owns.</summary>
     public DeterministicRandom Random { get; }

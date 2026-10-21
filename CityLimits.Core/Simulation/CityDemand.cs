@@ -66,6 +66,27 @@ public sealed class CityDemand
     public int TaxablePopulation { get; private set; }
 
     /// <summary>
+    /// How far residential demand moved from the economy at the last update, before the tax: up
+    /// when the city has more jobs than residents, down when it has fewer.
+    /// </summary>
+    public int ResidentialPull { get; private set; }
+
+    /// <summary>How far commercial demand moved from the economy at the last update, before the tax.</summary>
+    public int CommercialPull { get; private set; }
+
+    /// <summary>How far industrial demand moved from the economy at the last update, before the tax.</summary>
+    public int IndustrialPull { get; private set; }
+
+    /// <summary>How far the tax rate pushed every demand at the last update.</summary>
+    public int TaxPushApplied { get; private set; }
+
+    /// <summary>Last month's jobs for each resident at the last update; above 1, people move in.</summary>
+    public double JobsPerResident { get; private set; } = 1.0;
+
+    /// <summary>Last month's residents for each job at the last update, as far as it tilts commerce and industry.</summary>
+    public double WorkersPerJob { get; private set; } = 1.0;
+
+    /// <summary>
     /// Moves each demand by how far its population is from what the city's economy calls for, and
     /// by the push of the tax rate.
     /// </summary>
@@ -96,7 +117,13 @@ public sealed class CityDemand
         var industrialRatio = industry > 0 ? projectedIndustry / industry : projectedIndustry;
 
         TaxablePopulation = (int)(residents + commerce + industry);
+        JobsPerResident = employment;
+        WorkersPerJob = labour;
+        ResidentialPull = PullOf(residentialRatio);
+        CommercialPull = PullOf(commercialRatio);
+        IndustrialPull = PullOf(industrialRatio);
         var push = TaxPush[taxRate];
+        TaxPushApplied = push;
         Residential = Move(Residential, residentialRatio, push, ResidentialLimit);
         Commercial = Move(Commercial, commercialRatio, push, BusinessLimit);
         Industrial = Move(Industrial, industrialRatio, push, BusinessLimit);
@@ -105,7 +132,13 @@ public sealed class CityDemand
     // A ratio above 1 raises demand, below 1 lowers it, and the tax pushes it as well.
     private static int Move(int demand, double ratio, int push, int limit)
     {
-        var change = (int)(((Math.Min(ratio, MostRatio) - 1) * Pull) + push);
+        var change = (int)(Economy(ratio) + push);
         return Math.Clamp(demand + change, -limit, limit);
     }
+
+    private static double Economy(double ratio) => (Math.Min(ratio, MostRatio) - 1) * Pull;
+
+    // For showing the player; the move itself adds the tax before it rounds, so the two together
+    // can differ from it by one.
+    private static int PullOf(double ratio) => (int)Math.Round(Economy(ratio));
 }

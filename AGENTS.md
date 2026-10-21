@@ -24,7 +24,7 @@ CityLimits/                  the game project (Raylib-cs, NLog, net10.0)
   Game/                         namespace CityLimits.Game: the game command, the window, the loop, the tools, the city's messages, the mods folder, the headless run, the log
     Commands/                   namespace CityLimits.Game.Commands: the subcommands, one class each
   Rendering/                    namespace CityLimits.Rendering: the camera, the tile drawing, the chunk cache, the tile sheet, the theme
-  UI/                           namespace CityLimits.UI: the HUD, the tool palette, the budget panel, the overview map
+  UI/                           namespace CityLimits.UI: the HUD and its top bar, the tool palette, the budget and demand panels, the overview map
   Assets/                       the tile sheet, the tool icons, the logo, and the built-in scenarios (Scenarios/*.json), copied to the output folder
 CityLimits.Core/              engine-free library: the world and the simulation, no Raylib
   CityLimits.Core.csproj        the project file; it must never reference Raylib-cs
@@ -49,6 +49,7 @@ docs/
   ROADMAP.md                    milestones, current focus, estimates, revision history
   scorecard.md                  verified status per area, with evidence
   scenarios.md                  the scenario file and report formats
+  design/                       the owner's mock-ups of the interface, with a README on their intent
   modding/
     README.md                   what a mod is, installing one, writing one, how mods are applied, and the code behind them
     tuning.md                   what a tuning mod can change in zones, plants, and stations, and the limits on each
@@ -121,8 +122,9 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   `CityCalendar` turns the count into a month: 4 counts a month, 48 a
   year, from January 1900. At Normal speed a step runs every quarter of a
   second, so a month takes 16 seconds and a year about 3 minutes; Fast is
-  5 times that and Super fast 50 times (`GameSpeed`). Space pauses the
-  game, and the comma and period keys change the speed. The speed changes
+  5 times that and Super fast 50 times (`GameSpeed`). Space or the top
+  bar's pause button pauses the game and brings back the last speed, and
+  the comma and period keys or the bar's speed buttons change the speed. The speed changes
   how many steps run in a frame, never the size of a step.
 - **The zones.** A zone is 3 by 3 tiles, as in Micropolis. Each tile
   knows its part of the zone (`TileState.ZonePart`, 0 to 8, with 4 the
@@ -239,9 +241,12 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   city's population is residents plus eight per commercial and industrial
   unit, times twenty. Every second count, each of the three demands
   (`CityDemand`) moves by how far its population is from what jobs,
-  births, and the market call for. The HUD shows the population and an
-  R, C, I demand panel under the palette, and the headless run logs both
-  each month. The tax rate pushes all three demands by Micropolis' own
+  births, and the market call for. `CityDemand` keeps what moved each
+  demand at its last update (the economy's pull and the tax's push) and
+  the jobs per resident and workers per job behind them, and `CityCensus`
+  keeps residents', commerce's, and industry's shares of the population,
+  so the demand panel can show them. The headless run logs the
+  population and demand each month. The tax rate pushes all three demands by Micropolis' own
   steps, from +200 at 0% to -600 at 20%, none at 7%. Until their systems
   exist, the difficulty is Easy and the demand caps are off.
 - **Taxes and the budget.** As in Micropolis (`Economy/CityBudget.cs`),
@@ -272,6 +277,22 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   a frame, takes no other input, and gets its speed back when the panel
   closes, with Continue, Escape, Enter, or B. The funds show red below
   zero.
+- **The top bar.** `UI/Hud.cs` draws a black strip across the top, laid
+  out after the owner's mock-up in `docs/design/`: a pause and play
+  button, the month and year (`MM/YYYY`), three speed buttons that light
+  up to the speed (one Normal, two Fast, three Super fast, dimmed while
+  paused at the speed play brings back), the city's name, a small R, C,
+  I demand meter, the funds, and the population, with the step count and
+  the frame rate on the right. A speed button sets that speed and plays a
+  paused game. The meter opens the demand panel (`UI/DemandPanel.cs`),
+  which shows each demand against its limit, what moved it at the last
+  update, the jobs and workers behind it, the tax's push, and the
+  population's parts; the game keeps running while it is open, and its x,
+  the meter, or Escape closes it. Micropolis has only the meter; the
+  panel is a liberty the owner chose. A press anywhere on the bar never
+  reaches the map. The city's name is `CitySimulation.Name`,
+  "CityLimits" until `Rename` gives it another: 1 to 32 characters once
+  trimmed, with no control characters.
 - **The overview map.** As in Micropolis, `UI/OverviewMap.cs` shows the
   whole city small in the top-right corner, two pixels a tile, scaled
   down for a bigger map, with the main view outlined; a click or a drag
@@ -377,7 +398,7 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   and no project. It holds the parser, the dispatcher, the default
   command, the strict option reader, and the exit codes.
 - **The tests.** `CityLimits.Tests` uses xUnit 2 with the VSTest runner
-  and coverlet, and holds 481 tests over the generator, the terrain edges, the power plants, lines, and grid, the budget, the stations and their coverage, parks, hospitals and churches, the map, the
+  and coverlet, and holds 489 tests over the generator, the terrain edges, the power plants, lines, and grid, the budget, the stations and their coverage, parks, hospitals and churches, the map, the
   calendar, the clock, the simulation, the settings, the tile rules, the
   build actions, the road network, the treasury, the scenario loader and
   runner, every built-in scenario, the definitions and the mod loader, zone growth, the census and demand, trips, growth and the city maps,

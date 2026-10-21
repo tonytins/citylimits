@@ -1,3 +1,4 @@
+global using System.Globalization;
 global using System.Numerics;
 global using CityLimits.Core.Definitions;
 global using CityLimits.Core.Economy;

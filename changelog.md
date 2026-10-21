@@ -1,5 +1,30 @@
 # CityLimits Changelog
 
+## 0.2.111
+
+A new top bar, after a mock-up by the owner. From the left: a pause and
+play button, the month and year, three speed buttons, the city's name, a
+small demand meter, the funds, and the population, with the step count
+and the frame rate on the far right. The speed buttons fill up like a
+meter (one lit for Normal, two for Fast, three for Super fast) and stay
+dimmed at your last speed while the game is paused; click one to play at
+that speed. The bar no longer shows the held tool or the mouse position;
+the palette's header still names the tool and its price.
+
+Click the demand meter for the demand panel, which replaces the one under
+the palette. It shows how far residential, commercial, and industrial
+demand stand toward their limits, how much the economy and your taxes
+moved each one last time, how many jobs there are for each resident, and
+what the population is made of. The game keeps running while it's open;
+close it with its x, the meter, or Escape.
+
+Clicking the top bar never builds on the map underneath it any more.
+
+For developers: a city has a name (`CitySimulation.Name` and `Rename`),
+"CityLimits" until saving can set it. `CityDemand` reports what moved each
+demand at its last update, and `CityCensus` reports residents',
+commerce's, and industry's shares of the population.
+
 ## 0.2.110
 
 An overview map, as in Micropolis. The whole city sits small in the

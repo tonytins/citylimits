@@ -23,6 +23,9 @@ public sealed class GameLoop : IDisposable
 
     // Whether the press that is held began on the overview, so dragging there moves the view.
     private bool _draggingOverview;
+
+    // The demand panel, opened from the meter in the top bar; the game keeps running under it.
+    private bool _demandOpen;
     private int _lastSpeed = 1;
     private string? _error;
     private string? _notice;
@@ -134,17 +137,21 @@ public sealed class GameLoop : IDisposable
         var onMap = MapRenderer.TryGetTileAt(_simulation.Map, world, out var tileX, out var tileY, out var state);
 
         _hud.DrawStatus(
+            _simulation.Name,
             _simulation.Date,
             _simulation.TickCount,
             _settings.Speed,
+            _lastSpeed,
             _simulation.Census.CityPopulation,
-            _tools.Selected,
+            _simulation.Demand,
             _simulation.Treasury.Funds,
-            CostOfSelectedTool(),
-            world,
             Raylib.GetFPS());
         _hud.DrawTileReadout(_simulation.Map, onMap ? state : null, tileX, tileY, _simulation.Definitions);
-        _hud.DrawDemand(_simulation.Demand, _toolPaletteView.Bottom() + 8);
+        if (_demandOpen)
+        {
+            DemandPanel.Draw(_simulation, DemandPanelTop());
+        }
+
         _overview.Draw(_camera);
         _hud.DrawHints();
         _hud.DrawMessage(_error ?? _notice, _error is not null || _noticeIsError);
@@ -268,6 +275,10 @@ public sealed class GameLoop : IDisposable
                 _stroke = null;
                 _notice = null;
             }
+            else if (_demandOpen)
+            {
+                _demandOpen = false;
+            }
             else
             {
                 ShouldClose = true;
@@ -367,10 +378,10 @@ public sealed class GameLoop : IDisposable
                 return;
             }
 
-            // A press on the funds opens the budget.
-            if (Raylib.CheckCollisionPointRec(mouse, _hud.FundsBounds))
+            // A press on the top bar works its buttons, and never reaches the map under it.
+            if (mouse.Y < Hud.BarHeight)
             {
-                OpenBudget(null);
+                PressBar(_hud.ButtonAt(mouse));
                 return;
             }
 
@@ -382,9 +393,10 @@ public sealed class GameLoop : IDisposable
                 return;
             }
 
-            // A press on a panel never reaches the map underneath.
-            if (Raylib.CheckCollisionPointRec(mouse, Hud.DemandBounds(_toolPaletteView.Bottom() + 8)))
+            // A press on the demand panel never reaches the map underneath; its x closes it.
+            if (_demandOpen && Raylib.CheckCollisionPointRec(mouse, DemandPanel.Bounds(DemandPanelTop())))
             {
+                _demandOpen = !DemandPanel.IsOnClose(mouse, DemandPanelTop());
                 return;
             }
 
@@ -463,11 +475,32 @@ public sealed class GameLoop : IDisposable
 
     private static string Count(int count, string thing) => count == 1 ? $"1 {thing}" : $"{count} {thing}s";
 
-    private int CostOfSelectedTool()
+    private void PressBar(Hud.BarButton button)
     {
-        var action = ToolActions.ActionFor(_tools.Selected);
-        return action is null ? 0 : _simulation.Definitions.CostOf(action.Value);
+        switch (button)
+        {
+            case Hud.BarButton.PausePlay:
+                TogglePause();
+                break;
+            case Hud.BarButton.Demand:
+                _demandOpen = !_demandOpen;
+                break;
+            case Hud.BarButton.Funds:
+                OpenBudget(null);
+                break;
+            default:
+                // A speed button sets that speed, and plays the game if it was paused.
+                if (Hud.SpeedOf(button) is { } speed)
+                {
+                    _lastSpeed = speed;
+                    _settings = _settings with { Speed = speed };
+                }
+
+                break;
+        }
     }
+
+    private int DemandPanelTop() => _toolPaletteView.Bottom() + 8;
 
     private void TogglePause()
     {

@@ -48,6 +48,34 @@ public class CensusAndDemandTests
     }
 
     [Fact]
+    public void TheDemandSaysWhatMovedIt()
+    {
+        var demand = new CityDemand();
+
+        demand.Update(Census(160, 0, 0), taxRate: 0);
+
+        Assert.Equal(-588, demand.ResidentialPull);
+        Assert.Equal(600, demand.CommercialPull);
+        Assert.Equal(600, demand.IndustrialPull);
+        Assert.Equal(200, demand.TaxPushApplied);
+        Assert.Equal(0.0, demand.JobsPerResident);
+        Assert.Equal(-588 + 200, demand.Residential);
+    }
+
+    [Fact]
+    public void AnEmptyCitysPullsAreItsFirstMoves()
+    {
+        var demand = new CityDemand();
+
+        demand.Update(new CityCensus());
+
+        Assert.Equal((demand.Residential, demand.Commercial, demand.Industrial), (demand.ResidentialPull, demand.CommercialPull, demand.IndustrialPull));
+        Assert.Equal(0, demand.TaxPushApplied);
+        Assert.Equal(1.0, demand.JobsPerResident);
+        Assert.Equal(1.0, demand.WorkersPerJob);
+    }
+
+    [Fact]
     public void DemandStopsAtItsLimits()
     {
         var demand = new CityDemand();
@@ -88,6 +116,9 @@ public class CensusAndDemandTests
         census.RecordMonth();
 
         Assert.Equal((40 + (5 * 8) + (4 * 8)) * 20, census.CityPopulation);
+        Assert.Equal(40 * 20, census.ResidentPopulation);
+        Assert.Equal(5 * 8 * 20, census.CommercialPopulation);
+        Assert.Equal(4 * 8 * 20, census.IndustrialPopulation);
     }
 
     [Fact]
