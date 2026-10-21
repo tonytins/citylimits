@@ -21,6 +21,9 @@ fail() {
 
 command -v dotnet >/dev/null || fail "dotnet isn't installed; the .NET 10 SDK is needed to build."
 
+# GitInfo's targets come from its package, so a fresh clone has to restore before it can be asked.
+dotnet restore "$PROJECT" --nologo -v quiet >/dev/null || fail "couldn't restore the game's packages."
+
 # The version is GitInfo's major.minor.patch, the one the game shows and the changelog uses, not
 # the commit hash. Asked for one property at a time, msbuild prints the bare value.
 version_part() {

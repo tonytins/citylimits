@@ -1,7 +1,7 @@
 # Modding CityLimits
 
 You can change how CityLimits plays without touching its code. A mod is a
-small folder of text files that you drop beside the game. This page
+small folder of text files that you drop into your Documents folder. This page
 explains what a mod is, how to install one, and how to write your first.
 
 ## What a mod can do today
@@ -23,10 +23,15 @@ broken mod can't crash the game.
 
 ## Installing a mod
 
-1. Find the folder the game runs from, the one holding the `CityLimits`
-   program and its `Assets` folder.
-2. Make a folder called `Mods` there, if there isn't one.
-3. Put the mod's folder inside `Mods`. Each mod is one folder, named for
+1. Find the `Mods` folder. The game makes it the first time it opens:
+
+   - **Linux:** `~/Documents/CityLimits/Mods` (your Documents folder may
+     have another name if your desktop uses another language)
+   - **Windows:** `Documents\CityLimits\Mods`
+   - **A portable copy** (one that keeps a `settings.json` beside the
+     `CityLimits` program): the `Mods` folder beside the program
+
+2. Put the mod's folder inside `Mods`. Each mod is one folder, named for
    the mod:
 
    ```text
@@ -36,8 +41,11 @@ broken mod can't crash the game.
        zones.json
    ```
 
-4. Start the game. It reads every mod in `Mods` when it starts, and says
+3. Start the game. It reads every mod in `Mods` when it starts, and says
    on screen if any were skipped.
+
+Older versions of CityLimits read mods from a `Mods` folder beside the
+program. Move any mods you had there into the new folder.
 
 To remove a mod, delete its folder.
 
@@ -122,8 +130,11 @@ The definitions live in `CityLimits.Core/Definitions/`:
 - `CityDefinitions` holds the specs a city runs on (`ZoneSpec`,
   `PlantSpec`, `ServiceSpec`); a city keeps the definitions it was made
   with (`CitySimulation.Definitions`).
-- The game reads `Mods/` beside its executable (`Game/GameMods.cs`), and
-  both the window and `--headless` use it; `ScenarioRunner` never does.
+- The game reads the mods folder `GameFolders` works out
+  (`Core/Settings/GameFolders.cs`, `Game/GameMods.cs`):
+  `Documents/CityLimits/Mods`, or `Mods/` beside the executable in a
+  portable copy. Both the window and `--headless` use it;
+  `ScenarioRunner` never does.
 
 To make something moddable:
 

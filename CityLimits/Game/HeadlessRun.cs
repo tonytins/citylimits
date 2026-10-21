@@ -25,7 +25,13 @@ public sealed class HeadlessRun
     public int Run()
     {
         var map = TileMapGenerator.Generate(_seed, MapSize.DefaultWidth, MapSize.DefaultHeight);
-        var simulation = new CitySimulation(map, _seed, definitions: GameMods.Load(out _));
+        var folders = GameFolders.Detect();
+        if (folders.Problem is not null)
+        {
+            Logger.Warn("{Problem}", folders.Problem);
+        }
+
+        var simulation = new CitySimulation(map, _seed, definitions: GameMods.Load(folders.ModsFolder, out _));
 
         Logger.Info(
             "Headless run: seed {Seed}, map {Width} by {Height}, {Ticks} ticks",

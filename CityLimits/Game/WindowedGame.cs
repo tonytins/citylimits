@@ -10,8 +10,25 @@ public static class WindowedGame
     /// <summary>Opens the window, runs the game until it is closed, and returns the exit code.</summary>
     public static int Play(int seed)
     {
-        var settingsPath = Path.Combine(AppContext.BaseDirectory, "settings.json");
-        var settings = SettingsStore.Load(settingsPath, out var warning);
+        var folders = GameFolders.Detect();
+        if (folders.Problem is not null)
+        {
+            Logger.Warn("{Problem}", folders.Problem);
+        }
+
+        Logger.Info(
+            "Settings in {Settings}, mods in {Mods}, cities in {Cities}{Portable}",
+            folders.SettingsFile,
+            folders.ModsFolder,
+            folders.CitiesFolder,
+            folders.IsPortable ? ", all beside the game" : string.Empty);
+        if (folders.SettingsToRead != folders.SettingsFile)
+        {
+            Logger.Info("Reading the settings an older version left at {Old}; they'll be saved to {New}", folders.SettingsToRead, folders.SettingsFile);
+        }
+
+        MakeModsFolder(folders.ModsFolder);
+        var settings = SettingsStore.Load(folders.SettingsToRead, out var warning);
         if (warning is not null)
         {
             Logger.Warn("{Warning}", warning);
@@ -39,7 +56,7 @@ public static class WindowedGame
 
         try
         {
-            using var game = new GameLoop(settings, settingsPath, assets, seed);
+            using var game = new GameLoop(settings, folders, assets, seed);
 
             while (!Raylib.WindowShouldClose() && !game.ShouldClose)
             {
@@ -68,5 +85,19 @@ public static class WindowedGame
         }
 
         return ExitCodes.Success;
+    }
+
+    // The game makes the mods folder so a player can find where mods go; without it, the game
+    // simply runs with none.
+    private static void MakeModsFolder(string folder)
+    {
+        try
+        {
+            Directory.CreateDirectory(folder);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            Logger.Warn("The mods folder {Folder} couldn't be made: {Reason}", folder, ex.Message);
+        }
     }
 }

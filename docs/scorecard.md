@@ -21,7 +21,7 @@ change. Statuses are `done`, `partial`, and `missing`.
 | [Environment](#land-value-pollution-and-disasters) | 0 | 1 | 4 | land value from distance and terrain, 0 disasters |
 | [Interface](#player-interface) | 2 | 1 | 3 | 12 tools with icons, the top bar, the demand panel, the budget panel, the overview map |
 | [Platform](#platform) | 7 | 0 | 2 | Raylib-cs 8.1.0, NLog 6.2.2, .NET 10, data mods |
-| [Reliability](#reliability) | 6 | 0 | 0 | 491 tests, all passing, CI green |
+| [Reliability](#reliability) | 6 | 0 | 0 | 500 tests, all passing, CI green |
 | [Documentation](#documentation) | 3 | 0 | 2 | 3 of 5 documents exist |
 | [Known issues](#known-issues) | | | | 1 open, 3 resolved |
 
@@ -71,7 +71,7 @@ there is something to grow.
 | CORE-5 | The mouse position is known in world space, and the keyboard is read | done | `Camera.ScreenToWorld` and `Raylib.GetMousePosition`; the HUD shows the world position, and the keys pan, zoom, and pick tools |
 | CORE-6 | A camera pans and zooms, clamped to the map | done | `CityLimits/Rendering/Camera.cs`: `Pan`, `ZoomAt`, and `ClampTo`; the run on 2026-10-20 showed the whole 120 by 100 map zoomed out, held inside the view |
 | CORE-7 | One seeded PRNG owned by the simulation makes a run reproducible | done | `CityLimits.Core/Randomness/DeterministicRandom.cs`; the simulation owns it, and `GameLoop` builds the map from the seed 2000 |
-| CORE-8 | Settings persist to disk and a bad settings file is reported, not fatal | done | `CityLimits.Core/Settings/SettingsStore.cs`: `Load` falls back to the defaults with a warning, `TrySave` reports a failure; the game writes `settings.json` beside the executable when it ends |
+| CORE-8 | Settings persist to disk and a bad settings file is reported, not fatal | done | `CityLimits.Core/Settings/SettingsStore.cs`: `Load` falls back to the defaults with a warning, `TrySave` reports a failure. `CityLimits.Core/Settings/GameFolders.cs` puts the settings in the per-user config folder and mods and saves under `Documents/CityLimits`, unless the copy is portable (`GameFoldersTests`). On 2026-10-21 an AppImage run from its read-only mount with an empty home folder wrote `~/.config/CityLimits/settings.json` and made `~/Documents/CityLimits/Mods`, and read the speed back on the next run; before, its settings could never be saved. A development build stays portable |
 
 ## Map and terrain
 
@@ -156,7 +156,7 @@ there is something to grow.
 | PLAT-6 | A release build can be handed to someone else | missing | No packaging, no version, no repository |
 | PLAT-7 | The city can be run and checked without a display | done | `dotnet run --project CityLimits -- --headless` runs the simulation for a year with no window and writes each month to the console; `CityLimits/Game/HeadlessRun.cs` and `CityLimits/Game/GameLog.cs`, which sends NLog to the console and nowhere else |
 | PLAT-8 | The command line refuses what it cannot use, and the game is the default | done | `CityLimits.CommandLine`: `CommandOptions` refuses an unknown option, a missing or malformed value, a value out of range, a repeat, and a stray argument, with exit code 2. Running with no command plays the game, and there is no `play` command. `--headless` is a global flag, and the dispatcher refuses it for a command that can't run without a window. On 2026-10-20, `--headless --ticks -1`, `--headless --bogus`, `--ticks 5` without `--headless`, `play`, `headless`, and `scenario town` without `--headless` were each refused with exit code 2; `--headless --ticks 2` and `--ticks 2 --headless --seed 9` ran; `scenario town --headless` reported that scenarios are not implemented and exited with 1 |
-| PLAT-9 | The game can be modded with data, safely | done | `CityLimits.Core/Definitions/`: zone specs are data, the base game's in `BaseGame.Json` read by the same `DefinitionLoader` as a mod's, and `ModLoader` applies the mods in `Mods/` in id order, skipping a broken one whole with its reason. `DefinitionTests` covers the base game, patches, every refusal, load order, and a city paying a modded price. On 2026-10-20 a real mod made the headless town's commercial zone $40 ($19,670 instead of $19,610), a broken one was skipped and named on screen, the palette showed the modded price, and `scenario demo-town` was unchanged. `docs/modding/README.md` is the guide, and `docs/modding/tuning.md` lists what a tuning mod can change |
+| PLAT-9 | The game can be modded with data, safely | done | `CityLimits.Core/Definitions/`: zone specs are data, the base game's in `BaseGame.Json` read by the same `DefinitionLoader` as a mod's, and `ModLoader` applies the mods in `Documents/CityLimits/Mods` (or `Mods/` beside a portable copy) in id order, skipping a broken one whole with its reason. `DefinitionTests` covers the base game, patches, every refusal, load order, and a city paying a modded price. On 2026-10-20 a real mod made the headless town's commercial zone $40 ($19,670 instead of $19,610), a broken one was skipped and named on screen, the palette showed the modded price, and `scenario demo-town` was unchanged. `docs/modding/README.md` is the guide, and `docs/modding/tuning.md` lists what a tuning mod can change |
 
 ## Reliability
 

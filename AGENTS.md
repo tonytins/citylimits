@@ -33,7 +33,7 @@ CityLimits.Core/              engine-free library: the world and the simulation,
   World/                        namespace CityLimits.Core.World: the map and its default size, the tiles and their footprints, the terrain and its edges, the tile rules, the build actions, roads, power lines
   Simulation/                   namespace CityLimits.Core.Simulation: the clock, the calendar, the tick and its cycle, the census, demand, growth, trips, the city maps, the power grid, service coverage, the city's messages
   Economy/                      namespace CityLimits.Core.Economy: the treasury, the costs, the budget
-  Settings/                     namespace CityLimits.Core.Settings: the settings that survive a session
+  Settings/                     namespace CityLimits.Core.Settings: the settings that survive a session, and the folders the game keeps its files in
   Scenarios/                    namespace CityLimits.Core.Scenarios: the scenario loader, the runner, the report, the demo town
   Definitions/                  namespace CityLimits.Core.Definitions: the definitions as data, the base game's, and the mod loader
 CityLimits.CommandLine/       engine-free library: the command line, no Raylib
@@ -355,9 +355,20 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   names it and says what can be done with it. A zone is described as a
   whole, from its centre: its houses or its level, its population, and
   "no power" when the scan last found it without (`TileInfo.Describe`).
-- **The settings.** The window size and the speed are written to
-  `settings.json` beside the executable when the game ends, and read back
-  when it starts. A damaged file is reported and the defaults are used.
+- **The settings and the game's folders.** `GameFolders` works out where
+  the game keeps its files, because a packaged game, such as the
+  AppImage, runs from a read-only folder. The settings go in the hidden
+  per-user config folder (`~/.config/CityLimits/settings.json`, or
+  `%APPDATA%\CityLimits` on Windows), and mods and, later, saved cities
+  under `Documents/CityLimits` (`Mods/`, `Cities/`), which the window
+  makes the mods folder of. A copy with a `settings.json` beside the
+  executable, in a folder it can write to, is portable and keeps
+  everything there, as development builds do. Settings an older version
+  left beside a read-only executable are read once and saved to the new
+  place. Without a config or Documents folder, the game falls back to
+  the executable's folder and logs why. The window size and the speed
+  are written when the game ends and read back when it starts; a damaged
+  file is reported and the defaults are used.
 - **The headless run.** `citylimits --headless` runs the city with no
   window at all and writes a line to the console each month, so the
   simulation can be checked on a machine with no screen. It takes `--seed`
@@ -407,7 +418,7 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   and no project. It holds the parser, the dispatcher, the default
   command, the strict option reader, and the exit codes.
 - **The tests.** `CityLimits.Tests` uses xUnit 2 with the VSTest runner
-  and coverlet, and holds 491 tests over the generator, the terrain edges, the power plants, lines, and grid, the budget, the stations and their coverage, parks, hospitals and churches, the map, the
+  and coverlet, and holds 500 tests over the generator, the terrain edges, the power plants, lines, and grid, the budget, the stations and their coverage, parks, hospitals and churches, the map, the
   calendar, the clock, the simulation, the settings, the tile rules, the
   build actions, the road network, the treasury, the scenario loader and
   runner, every built-in scenario, the definitions and the mod loader, zone growth, the census and demand, trips, growth and the city maps,

@@ -20,7 +20,7 @@ public sealed class GameLoop : IDisposable
     private readonly OverviewMap _overview;
     private readonly BudgetPanel _budgetPanel = new();
     private readonly DemandPanel _demandPanel = new();
-    private readonly string _settingsPath;
+    private readonly GameFolders _folders;
     private GameSettings _settings;
 
     // Whether the press that is held began on the overview, so dragging there moves the view.
@@ -42,14 +42,15 @@ public sealed class GameLoop : IDisposable
     private BuildStroke? _stroke;
 
     /// <summary>Creates the game with the settings it was started with.</summary>
-    public GameLoop(GameSettings settings, string settingsPath, GameAssets assets, int seed = DefaultSeed)
+    public GameLoop(GameSettings settings, GameFolders folders, GameAssets assets, int seed = DefaultSeed)
     {
         _settings = settings;
         _lastSpeed = settings.Speed == 0 ? 1 : settings.Speed;
-        _settingsPath = settingsPath;
+        ArgumentNullException.ThrowIfNull(folders);
+        _folders = folders;
 
         var map = TileMapGenerator.Generate(seed, MapSize.DefaultWidth, MapSize.DefaultHeight);
-        var definitions = GameMods.Load(out var modProblems);
+        var definitions = GameMods.Load(folders.ModsFolder, out var modProblems);
         _simulation = new CitySimulation(map, seed, definitions: definitions);
         if (modProblems.Count > 0)
         {
@@ -194,7 +195,7 @@ public sealed class GameLoop : IDisposable
         _settings = _settings with { WindowWidth = width, WindowHeight = height };
         var saved = _budgetOpen ? _settings with { Speed = _speedBeforeBudget } : _settings;
 
-        if (!SettingsStore.TrySave(_settingsPath, saved, out var error))
+        if (!SettingsStore.TrySave(_folders.SettingsFile, saved, out var error))
         {
             Logger.Error("{Error}", error);
             return false;

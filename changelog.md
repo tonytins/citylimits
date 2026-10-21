@@ -1,5 +1,26 @@
 # CityLimits Changelog
 
+## 0.2.113
+
+CityLimits now keeps its files where your computer expects them, so
+packaged versions such as the Linux AppImage, which run from a read-only
+folder, can save their settings at last.
+
+- **Settings** go in your hidden settings folder: `~/.config/CityLimits`
+  on Linux, `%APPDATA%\CityLimits` on Windows. Settings an older version
+  left beside the game are picked up once and moved there.
+- **Mods** now go in `Documents/CityLimits/Mods`, which the game makes
+  the first time it opens. Move any mods from the old `Mods` folder
+  beside the game. Saved cities will go beside them, in
+  `Documents/CityLimits/Cities`, once saving arrives.
+- **A portable copy** (one with a `settings.json` beside the game, in a
+  folder it can write to) keeps everything beside the game, as before.
+
+For developers: `GameFolders` (`CityLimits.Core/Settings`) works out
+these folders, and `GameMods.Load` takes the mods folder. The AppImage
+script restores packages before asking GitInfo for the version, so it
+works from a fresh clone.
+
 ## 0.2.112
 
 The budget and demand windows can be moved: drag either by its title.
