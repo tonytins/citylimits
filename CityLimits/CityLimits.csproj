@@ -6,13 +6,25 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <RollForward>LatestMajor</RollForward>
-    <!-- A backport is frozen at its own version: GitInfo would count its commits into the patch and
-         collide with the next real release, so it keeps only the commit for the build number. -->
+    <!-- A backport's version is GitInfo.txt's, such as 0.3.100.1: the release it backports and a
+         revision, which GitInfo reads as its label. Its commits aren't counted into the patch, which
+         would run into the next release, and tags and branch names, such as release/0.3.100, are
+         ignored, since GitInfo would otherwise take them ahead of the file. -->
+    <GitIgnoreTagVersion>true</GitIgnoreTagVersion>
+    <GitIgnoreBranchVersion>true</GitIgnoreBranchVersion>
+    <GitBaseVersionRegex>^(?&lt;MAJOR&gt;\d+)\.(?&lt;MINOR&gt;\d+)\.(?&lt;PATCH&gt;\d+)\.(?&lt;LABEL&gt;\d+)$</GitBaseVersionRegex>
     <GitVersion>false</GitVersion>
-    <Version>0.3.100.1</Version>
-    <AssemblyVersion>0.3.100.1</AssemblyVersion>
-    <FileVersion>0.3.100.1</FileVersion>
   </PropertyGroup>
+
+  <!-- GitInfo's own version would carry the counted patch, so the backport sets its four parts itself. -->
+  <Target Name="SetBackportVersion" DependsOnTargets="GitVersion" BeforeTargets="GetAssemblyVersion;GenerateAssemblyInfo">
+    <PropertyGroup>
+      <Version>$(GitBaseVersionMajor).$(GitBaseVersionMinor).$(GitBaseVersionPatch).$(GitSemVerLabel)</Version>
+      <AssemblyVersion>$(Version)</AssemblyVersion>
+      <FileVersion>$(Version)</FileVersion>
+      <InformationalVersion>$(Version)</InformationalVersion>
+    </PropertyGroup>
+  </Target>
 
   <ItemGroup>
     <PackageReference Include="GitInfo" Version="3.6.1">
