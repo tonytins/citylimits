@@ -2,6 +2,7 @@ global using System.Globalization;
 global using System.Numerics;
 global using CityLimits.Core.Definitions;
 global using CityLimits.Core.Economy;
+global using CityLimits.Core.News;
 global using CityLimits.Core.Randomness;
 global using CityLimits.Core.Saving;
 global using CityLimits.Core.Settings;

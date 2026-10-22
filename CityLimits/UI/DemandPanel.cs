@@ -1,7 +1,7 @@
 namespace CityLimits.UI;
 
 /// <summary>
-/// The demand panel, opened from the meter in the top bar. It charts residential, commercial, and
+/// The demand panel, opened from the meter in the bar. It charts residential, commercial, and
 /// industrial demand over the history the city keeps, each line rising and falling against its own
 /// limit. Under the chart are the demand now, what moved it at the last update, and the census
 /// behind it. Micropolis has only the meter; the panel is a liberty the owner chose, after later city

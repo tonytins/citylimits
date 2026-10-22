@@ -45,7 +45,7 @@ public sealed class OverviewMap : IDisposable
     // The buttons are laid out in rows of this many, so each label fits its button.
     private const int ButtonsPerRow = 4;
     private const int FontSize = 10;
-    private const int Top = Hud.BarHeight + 40;
+    private const int Top = 8;
     private const int Margin = 8;
 
     // A value at or above this is shown as the highest band; the coverage figure is a fully

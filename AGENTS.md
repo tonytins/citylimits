@@ -24,7 +24,7 @@ CityLimits/                  the game project (Raylib-cs, NLog, net10.0)
   Game/                         namespace CityLimits.Game: the game command, the window, the loop, the tools, the city's messages, the mods folder, the headless run, the log
     Commands/                   namespace CityLimits.Game.Commands: the subcommands, one class each
   Rendering/                    namespace CityLimits.Rendering: the camera, the tile drawing, the chunk cache, the tile sheet, the theme
-  UI/                           namespace CityLimits.UI: the loading screen, the start menu and its new-city panel, the HUD and its top bar, the tool palette, the budget, demand, and city panels and how windows are moved, the in-game menu, the overview map
+  UI/                           namespace CityLimits.UI: the loading screen, the start menu and its new-city panel, the HUD and its bar along the bottom, the news ticker, the pointer's hints, the tool palette, the budget, demand, city, and help panels and how windows are moved, the in-game menu, the overview map
   Assets/                       the tile sheet, the tool icons, the logo, and the built-in scenarios (Scenarios/*.json), copied to the output folder
 CityLimits.Core/              engine-free library: the world and the simulation, no Raylib
   CityLimits.Core.csproj        the project file; it must never reference Raylib-cs
@@ -33,6 +33,7 @@ CityLimits.Core/              engine-free library: the world and the simulation,
   World/                        namespace CityLimits.Core.World: the map and its default size, the tiles and their footprints, the terrain and its edges, the tile rules, the build actions, roads, power lines
   Simulation/                   namespace CityLimits.Core.Simulation: the clock, the calendar, the tick and its cycle, the census, demand, growth, trips, traffic and its animation, the city maps, the power grid, service coverage, the city's messages
   Economy/                      namespace CityLimits.Core.Economy: the treasury, the costs, the budget
+  News/                         namespace CityLimits.Core.News: the news ticker's queue, its headlines and the desk that picks them, and the loading screen's phrases
   Settings/                     namespace CityLimits.Core.Settings: the settings that survive a session, and the folders the game keeps its files in
   Formats/                      namespace CityLimits.Core.Formats: format versions, and the JSON Schemas generated from the readers
   Saving/                       namespace CityLimits.Core.Saving: the save model, the binary (.cl) and flat (.fcl) city formats, importing Micropolis cities (.cty), autosave, the map's layers and words, and the saved cities' files
@@ -93,12 +94,14 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   (`UI/LoadingScreen.cs`), then the start menu (`UI/StartMenu.cs`), then
   the cities started from it, until the player quits or closes the
   window; then it saves the settings and closes the window. Every frame,
-  the menu's and the city's, is guarded: a failure is logged, shown in a
-  city, and the game keeps running.
+  the menu's and the city's, is guarded: a failure is logged, told on a
+  city's news ticker, and the game keeps running.
 - **The loading screen and the start menu.** The loading screen shows
-  the logo and a line of text ("Reticulating splines", a nod to SimCity
-  2000) on the blue background for 2.5 seconds, or until a key or a
-  click; it is for show, since the game loads in well under a second.
+  the logo on the blue background, with phrases scrolling along the
+  bottom as the news ticker does (`LoadingPhrases`, starting with
+  "Reticulating splines", a nod to SimCity 2000), for 2.5 seconds, or
+  until a key or a click; it is for show, since the game loads in well
+  under a second.
   The start menu glides the logo up from the middle to a sixth of the way
   down, with New Game, Load Game (dimmed while no city is saved), and
   Quit under it and the version in the bottom right. New Game opens a
@@ -312,18 +315,19 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   press for the tax, a tenth for funding. It opens by itself when a
   settled year needs attention (`BudgetYear.NeedsAttention`: upkeep came
   to more than the taxes, or the money ran out and funding was cut),
-  saying why; B or a click on the funds in the top bar opens it too. The
+  saying why; B or a click on the funds in the bar opens it too. The
   game pauses while it is open, stops ticking at once even partway through
   a frame, takes no other input, and gets its speed back when the panel
   closes, with Continue, Escape, Enter, or B. The funds show red below
   zero.
-- **The top bar.** `UI/Hud.cs` draws a black strip across the top, laid
-  out after the owner's mock-up in `docs/design/`: a pause and play
+- **The bar.** `UI/Hud.cs` draws a black strip along the bottom of the
+  screen, over the news ticker, laid out after Tony Bark's mock-up in
+  `docs/design/`: a pause and play
   button, the month and year (`MM/YYYY`), three speed buttons that light
   up to the speed (one Normal, two Fast, three Super fast, dimmed while
   paused at the speed play brings back), the city's name, a small R, C,
-  I demand meter, the funds, and the population, with the step count and
-  the frame rate on the right. A speed button sets that speed and plays a
+  I demand meter, the funds, and the population, with the step count,
+  the frame rate, and a green question mark on the right. A speed button sets that speed and plays a
   paused game. The meter opens the demand panel (`UI/DemandPanel.cs`): a
   chart of plain lines for R, C, and I over the history `CityDemand`
   keeps (each update, two a month, ten years at most), oldest on the
@@ -332,8 +336,34 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   and the population's parts. The game keeps running while it is open,
   and its x, the meter, or Escape closes it. It draws over the rest of
   the interface and takes presses before it. Micropolis has only the meter; the
-  panel is a liberty the owner chose. A press anywhere on the bar never
-  reaches the map. The city's name is `CitySimulation.Name`, set from the
+  panel is a liberty the owner chose. A press anywhere on the bar or the
+  ticker never reaches the map. The question mark, or F1, opens the help
+  window (`UI/HelpPanel.cs`), which lists what the keys and the mouse do;
+  the game keeps running while it is open, and its x, the question mark,
+  F1, or Escape closes it. The palette and the overview sit in the top
+  corners.
+- **The news ticker.** Under the bar, `UI/NewsTicker.cs` scrolls lines
+  from right to left without stopping, after Tony Bark's mock-up and
+  SimCity 3000's ticker. Each line is coloured by its kind (`NewsKind`):
+  white for headlines from the city's world, yellow for advisories (the
+  game's notices, such as a save, an autosave, a failure, or what opening
+  a city came to, and the city's messages), and red for disasters, which
+  don't exist yet. Lines wait in a `NewsQueue`, disasters and advisories
+  ahead of headlines, a line already waiting isn't queued twice, and it
+  holds 16. When nothing waits, `NewsDesk` picks a headline
+  (`Headlines`): a population milestone the city has just passed or a
+  new year, otherwise, half the time, a line about how the city is doing
+  (taxes, demand, money, traffic, power, the season), resting for 12
+  headlines once shown, and the rest of the time flavour, each line once
+  before any comes again. The desk only reads the city and picks with its
+  own generator, so the news never changes what the city does and isn't
+  saved; the milestones and the year a city is opened at aren't news.
+  The ticker stands still while the city is paused, a panel holding it
+  included, and a city's first line starts a third of the way across.
+- **The pointer's hints.** What a stroke would cost while it is dragged,
+  or why it can't be built, and what the work came to once it is let go,
+  are shown beside the pointer in black on yellow (`Hud.DrawPointerHint`),
+  one line or two, the last for 3 seconds. The city's name is `CitySimulation.Name`, set from the
   new-city panel: 1 to 32 characters once trimmed, with no control
   characters. The play and pause button is blue, as a lit speed is.
 - **The city panel.** A click on the city's name in the bar opens
@@ -353,8 +383,8 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   button is let go. Each opens where its panel puts it at first (the
   budget and the city panel in the middle of the screen, the demand
   panel under the palette), keeps where it was left for the next time it
-  opens, and is held on the screen below the top bar, even when the
-  window is resized.
+  opens, and is held on the screen above the bar, even when the window
+  is resized. The help window opens in the middle, like the budget.
 - **The overview map.** As in Micropolis, `UI/OverviewMap.cs` shows the
   whole city small in the top-right corner, two pixels a tile, scaled
   down for a bigger map, with the main view outlined; a click or a drag
@@ -382,8 +412,8 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   and its total cost while the button is held. Releasing applies the
   stroke all at once: the tiles that can't be built on are skipped, and
   the whole stroke is refused when it runs off the map or the city can't
-  pay for all of it. Escape cancels a stroke, closes the demand panel, or
-  else opens the in-game menu (`UI/GameMenu.cs`): Resume, Main menu,
+  pay for all of it. Escape cancels a stroke, closes the help window or
+  the demand panel, or else opens the in-game menu (`UI/GameMenu.cs`): Resume, Main menu,
   which leaves the city for the start menu, and Quit. The menu, the
   budget, and the city panel each pause the city and take every key
   and click while open.
@@ -408,10 +438,13 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   but a zone, a plant, or a station only through its centre, which turns all its tiles
   to rubble. Clicking the palette picks a tool, and never builds on the map
   under it.
-- **The tile readout.** The tile under the mouse is outlined, and a panel
-  names it and says what can be done with it. A zone is described as a
-  whole, from its centre: its houses or its level, its population, and
-  "no power" when the scan last found it without (`TileInfo.Describe`).
+- **The tile readout.** The tile under the mouse is outlined, and with
+  the Inspect tool held, the pointer's hint names it on two lines: the
+  tile, and what it is and what can be done with it, unless the pointer
+  is over the palette, the overview, the bar, or a window. A zone is
+  described as a whole, from its centre: its houses or its level, its
+  population, and "no power" when the scan last found it without
+  (`TileInfo.Describe`).
 - **Saving cities.** As `docs/saving.md` describes, a city saves to
   `Documents/CityLimits/Cities` under its own name (`CityFiles`), in the
   binary city format, `.cl` (`Saving/BinaryCityFormat.cs`): a header and
@@ -441,8 +474,8 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   (`Saving/MicropolisCityImport.cs`), never writing it back: tiles by
   Micropolis' numbers, buildings whole from their centres, and what
   CityLimits doesn't have yet (rail, seaports, airports, stadiums, fire,
-  flood, radiation) as bare ground, listed in the log and on the notice
-  line.
+  flood, radiation) as bare ground, listed in the log and on the news
+  ticker.
 - **The settings and the game's folders.** `GameFolders` works out where
   the game keeps its files, because a packaged game, such as the
   AppImage, runs from a read-only folder. The settings go in the hidden
@@ -512,7 +545,7 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   and no project. It holds the parser, the dispatcher, the default
   command, the strict option reader, and the exit codes.
 - **The tests.** `CityLimits.Tests` uses xUnit 2 with the VSTest runner
-  and coverlet, and holds 657 tests over opening newer saves, traffic and its animation, saving, loading, autosave, importing Micropolis cities, format versions and schemas, with a city
+  and coverlet, and holds 673 tests over the news ticker's queue, its headlines, and the loading phrases, opening newer saves, traffic and its animation, saving, loading, autosave, importing Micropolis cities, format versions and schemas, with a city
   the owner built in both formats in `CityLimits.Tests/Assets/`, the generator, the terrain edges, the power plants, lines, and grid, the budget, the stations and their coverage, parks, hospitals and churches, the map, the
   calendar, the clock, the simulation, the settings, the tile rules, the
   build actions, the road network, the treasury, the scenario loader and

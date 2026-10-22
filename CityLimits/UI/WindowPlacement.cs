@@ -3,7 +3,7 @@ namespace CityLimits.UI;
 /// <summary>
 /// Where a window sits on the screen. The player moves it by dragging its title strip, as windows
 /// move anywhere else; it starts where its panel asks, keeps where it was left for the next time it
-/// opens, and is always kept on the screen below the top bar.
+/// opens, and is always kept on the screen above the bar along the bottom.
 /// </summary>
 public sealed class WindowPlacement
 {
@@ -59,11 +59,11 @@ public sealed class WindowPlacement
         IsDragging = held;
     }
 
-    // A window bigger than the screen keeps its top-left corner, and so its title, in view.
+    // A window bigger than the space above the bar keeps its top-left corner, and so its title, in view.
     private static Vector2 Keep(Vector2 position, Vector2 size)
     {
         var right = Math.Max(0f, Raylib.GetScreenWidth() - size.X);
-        var bottom = Math.Max(Hud.BarHeight, Raylib.GetScreenHeight() - size.Y);
-        return new Vector2(Math.Clamp(position.X, 0f, right), Math.Clamp(position.Y, Hud.BarHeight, bottom));
+        var bottom = Math.Max(0f, Hud.BarTop() - size.Y);
+        return new Vector2(Math.Clamp(position.X, 0f, right), Math.Clamp(position.Y, 0f, bottom));
     }
 }

@@ -24,7 +24,7 @@ public static class Theme
     /// <summary>The color of the tile under the mouse.</summary>
     public static readonly Color Hover = new() { R = 255, G = 235, B = 120, A = 255 };
 
-    /// <summary>The top bar's background.</summary>
+    /// <summary>The bar's background, and the news ticker's.</summary>
     public static readonly Color Bar = new() { R = 0, G = 0, B = 0, A = 255 };
 
     /// <summary>A lit speed button, up to the speed the game runs at.</summary>
@@ -74,6 +74,24 @@ public static class Theme
 
     /// <summary>The color of a failure the player needs to know about.</summary>
     public static readonly Color Error = new() { R = 232, G = 106, B = 96, A = 255 };
+
+    /// <summary>The ticker's headlines from the city's world, after Tony Bark's mock-up: white.</summary>
+    public static readonly Color NewsHeadline = new() { R = 240, G = 240, B = 240, A = 255 };
+
+    /// <summary>The ticker's advisories, the game's notices and the city's messages: yellow.</summary>
+    public static readonly Color NewsAdvisory = new() { R = 250, G = 210, B = 60, A = 255 };
+
+    /// <summary>The ticker's disasters: red.</summary>
+    public static readonly Color NewsDisaster = new() { R = 235, G = 70, B = 60, A = 255 };
+
+    /// <summary>The background of a hint beside the pointer, as Tony Bark chose: yellow.</summary>
+    public static readonly Color HintBackground = new() { R = 250, G = 215, B = 80, A = 255 };
+
+    /// <summary>The text of a hint beside the pointer, and of the help button's mark: black.</summary>
+    public static readonly Color HintText = new() { R = 0, G = 0, B = 0, A = 255 };
+
+    /// <summary>The help button in the bar, after Tony Bark's mock-up: green.</summary>
+    public static readonly Color HelpButton = new() { R = 74, G = 138, B = 66, A = 255 };
 
     /// <summary>The color of a road, when the tile sheet could not be loaded.</summary>
     public static readonly Color Road = new() { R = 66, G = 66, B = 70, A = 255 };

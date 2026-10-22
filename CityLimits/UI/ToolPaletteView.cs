@@ -36,7 +36,7 @@ public sealed class ToolPaletteView
     private const int LineHeight = 18;
     private const int Padding = 8;
     private const int Gap = 2;
-    private const int Top = 46;
+    private const int Top = 8;
     private const int MissingIconSize = 34;
     private const int MissingIconFontSize = 10;
 

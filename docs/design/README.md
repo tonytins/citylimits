@@ -14,14 +14,49 @@ linked like a prototype: **Loading**, then the **Start Menu**, then the
 **Game**. It shows where things go; sizes come from the game and its
 art.
 
-- **Loading:** the logo in the middle of the blue screen, and a line of
-  text in the bottom right. Clicking moves on, and the logo glides up to
-  its place on the start menu.
+- **Loading:** the logo in the middle of the blue screen, and a strip of
+  text scrolling along the bottom, as the news ticker does. Clicking
+  moves on, and the logo glides up to its place on the start menu.
 - **Start Menu:** the logo near the top, New Game and Load Game under it,
   and the version in the bottom right.
-- **Game:** the city under the top bar, for completeness; it adds
-  the play and pause button the toolbar mock-up lacked, and corrects the
-  date to `MM/YYYY`.
+- **Game:** the city, with the bar along the bottom and a news strip
+  under it. The bar has what the top bar had, the play and pause button
+  and the `MM/YYYY` date among it, and a green question mark at its right
+  end. The tool palette and the overview map sit in the top corners.
+
+### The news ticker and the help window
+
+The second version of `citylimits.figcraft` moves the bar to the bottom
+and puts a news ticker under it, an idea from SimCity 3000. The ticker
+is for everything the game has to say, and for headlines from the
+city's own world. Its colours say what a line is:
+
+- **White:** a headline, as filler from the city's world, or news of how
+  the city is doing.
+- **Yellow:** the game's notices, such as saving, autosaving, and
+  warnings, and the city's own messages.
+- **Red:** a disaster.
+
+The key bindings move from the bottom of the screen into a help window
+of their own, opened from the green question mark. The mock-up isn't to
+scale.
+
+### Where the game differs (the second version)
+
+- **The ticker never stops:** there is always news scrolling by, and
+  headlines fill the gaps between notices. It stays where it is, under
+  the bar, and never moves.
+- **Build hints** (what a stroke costs, why it can't be built, and what
+  it came to) show beside the pointer, in black on yellow, rather than
+  on the ticker, so they come at once.
+- **The tile readout** is the Inspect tool's hint beside the pointer,
+  rather than a panel above the bar.
+- **The ticker stands still while the city is paused.**
+- **The help window** moves like the budget and demand panels, keeps the
+  city running, and F1 opens it too.
+- **The loading screen's phrases** scroll by one after another, in the
+  manner of The Sims' loading screen, starting with "Reticulating
+  splines".
 
 ### Where the game differs
 

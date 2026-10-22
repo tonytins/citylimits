@@ -1,21 +1,23 @@
 namespace CityLimits.UI;
 
 /// <summary>
-/// The loading screen, after the owner's mock-up in <c>docs/design/</c>: the logo in the middle of
-/// the blue screen and a line of text in the bottom right. The game loads in well under a second,
-/// so the screen is for show: it stays a moment, or until the player presses a key or clicks,
-/// and then the start menu takes over, gliding the logo up to its place.
+/// The loading screen, after Tony Bark's mock-up in <c>docs/design/</c>: the logo in the middle of
+/// the blue screen, and its phrases scrolling by along the bottom as the news ticker does. The game
+/// loads in well under a second, so the screen is for show: it stays a moment, or until the player
+/// presses a key or clicks, and then the start menu takes over, gliding the logo up to its place.
 /// </summary>
 public sealed class LoadingScreen
 {
-    // The lines the screen shows, one at a time. More can join; the first is a nod to SimCity 2000.
-    private static readonly string[] Lines = ["Reticulating splines"];
-
     private const float DurationSeconds = 2.5f;
-    private const int FontSize = 20;
     private const int Margin = 24;
+    private const int FontSize = 20;
+
+    // The first phrase starts a third of the way across, so there is something to read at once.
+    private const float StartShare = 1f / 3f;
 
     private readonly Texture2D? _logo;
+    private readonly NewsTicker _phrases;
+    private int _nextPhrase;
     private float _elapsed;
     private bool _skipped;
 
@@ -24,6 +26,7 @@ public sealed class LoadingScreen
     {
         ArgumentNullException.ThrowIfNull(assets);
         _logo = assets.Logo;
+        _phrases = new NewsTicker(NextPhrase, FontSize);
     }
 
     /// <summary>Whether the screen is done and the start menu may follow.</summary>
@@ -36,7 +39,9 @@ public sealed class LoadingScreen
     /// <summary>Advances the screen by a frame, and ends it on any key or click.</summary>
     public void Update()
     {
-        _elapsed += Raylib.GetFrameTime();
+        var elapsed = Raylib.GetFrameTime();
+        _elapsed += elapsed;
+        _phrases.Update(elapsed, Raylib.GetScreenWidth(), StartShare);
         if (Raylib.GetKeyPressed() != 0
             || Raylib.IsMouseButtonPressed(MouseButton.Left)
             || Raylib.IsMouseButtonPressed(MouseButton.Right)
@@ -57,11 +62,16 @@ public sealed class LoadingScreen
             Raylib.DrawTextureV(logo, LogoPosition(new Vector2(logo.Width, logo.Height)), Color.White);
         }
 
-        // A new line every second, should there be more than one.
-        var line = Lines[(int)_elapsed % Lines.Length];
-        var width = Raylib.MeasureText(line, FontSize);
-        Raylib.DrawText(line, Raylib.GetScreenWidth() - width - Margin, Raylib.GetScreenHeight() - FontSize - Margin, FontSize, Theme.Text);
+        _phrases.Draw(Raylib.GetScreenHeight() - NewsTicker.Height - Margin, Raylib.GetScreenWidth(), background: false);
 
         Raylib.EndDrawing();
+    }
+
+    // The phrases in order, round again after the last.
+    private NewsItem NextPhrase()
+    {
+        var phrase = LoadingPhrases.All[_nextPhrase];
+        _nextPhrase = (_nextPhrase + 1) % LoadingPhrases.All.Length;
+        return new NewsItem(phrase, NewsKind.Headline);
     }
 }

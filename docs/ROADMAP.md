@@ -1,6 +1,6 @@
 # CityLimits roadmap
 
-> **Last reviewed:** 2026-10-21 · **Last updated:** 2026-10-22 · **Change:** minor (Radial R2: traffic on the roads, its upkeep, its average, and its overview mode) · **Stage:** alpha
+> **Last reviewed:** 2026-10-21 · **Last updated:** 2026-10-22 · **Change:** minor (Happy Isle: the bar moves to the bottom over a news ticker, with a help window and hints beside the pointer) · **Stage:** alpha
 
 Forward-looking: where CityLimits stands, what blocks the next milestone,
 and what comes next. Verified status and evidence are in the
@@ -64,7 +64,7 @@ Next, in order:
 | Joffburg: Services and economy | 100% | 0 | Meets the baseline: power, taxes and the budget, services (stations, coverage, parks, hospitals, and churches), and the overview map with its power, coverage, land value, and density modes, as in Micropolis |
 | Radial: Traffic and commuting | 75% | 6–10 | R0 to R2 are in: versioned file formats with schemas, read without reflection, the traffic map trips leave, and what it shows and costs: animated light and heavy traffic, heavy roads' upkeep, the yearly average and its message, and the overview's Traffic mode. Rail is left |
 | Deadwood: Land value, pollution, disasters | 0% | 12–20 | Nothing yet |
-| Happy Isle: Player-facing game | 50% | 6–10 | The palette, laid out as Micropolis', and the HUD, with its top bar after the owner's mock-up, are in; the budget, demand, and city panels and the overview's power mode are too, and cities save, load, autosave, and import from Micropolis. The city score and map size on the start screen are left |
+| Happy Isle: Player-facing game | 50% | 6–10 | The palette, laid out as Micropolis', and the HUD, with its bar along the bottom over a news ticker after Tony Bark's mock-up, are in; the budget, demand, and city panels and the overview's power mode are too, and cities save, load, autosave, and import from Micropolis. The city score and map size on the start screen are left |
 | Yokohama: Polish and release | 0% | 10–20 | Nothing yet |
 | | **Total** | **≈ 34–60** | |
 
@@ -236,9 +236,13 @@ pollution, in Deadwood.
   Micropolis' (`UI/ToolPaletteView.cs`); keys 1 to 9 pick the first nine
   tools, and the park and the stations are picked from the palette.
 - [x] A HUD: population, funds, date, speed, and the demand bars
-  (`UI/Hud.cs`). The top bar follows the owner's mock-up in
-  `docs/design/`, with pause and speed buttons, the city's name, and a
-  demand meter that opens the demand panel (`UI/DemandPanel.cs`).
+  (`UI/Hud.cs`). The bar follows Tony Bark's mock-up in
+  `docs/design/`, along the bottom, with pause and speed buttons, the
+  city's name, a demand meter that opens the demand panel
+  (`UI/DemandPanel.cs`), and a help button that opens the help window
+  (`UI/HelpPanel.cs`). Under it, a news ticker (`UI/NewsTicker.cs`)
+  carries the game's notices, the city's messages, and headlines from
+  the city's world; build hints show beside the pointer.
 - [ ] Panels for the budget, power, and the city score. The budget panel
   (`UI/BudgetPanel.cs`) and power, as the overview map's power mode
   (`UI/OverviewMap.cs`), are in; the score is not.
@@ -327,6 +331,7 @@ baseline's growth depends on.
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-22 | minor | An interface update of its own before Radial's R3, after Tony Bark's revised mock-up and SimCity 3000's ticker: the bar moves to the bottom, over a news ticker that never stops (white headlines, some reacting to the city and some flavour; yellow notices and the city's messages; red for disasters to come), replacing the notice line; the key hints become a movable help window behind a green question mark or F1; build results and refusals, and the Inspect tool's tile readout in place of its old panel, show beside the pointer in black on yellow; the ticker stands still while the city is paused; the palette and the overview move to the top corners; and the loading screen's phrases scroll like the ticker. 673 tests. |
 | 2026-10-22 | minor | Radial, R2, as in Micropolis: the scan shows each road light traffic from 64 and heavy from 192, drawn over the map from the sheet's four-frame animations at Micropolis' pace; a road that showed heavy traffic counts twice toward upkeep, which leaves the demo town $6 poorer after two years; the year's traffic average reports jams above 60; and the overview gains a Traffic mode, its buttons in two rows. Saves move to format 1.3. Radial is at 75%; 34–60 h left in total, 657 tests. |
 | 2026-10-22 | minor | An update of its own before Radial's R2, settled with Tony Bark: from 0.3.103 a newer save opens in an older version when every part it doesn't know is ignorable, by a parts list each save carries with two flags a part, as PNG does, and the keepable parts are written back in their own format; saves move to format 1.2 for the list. Autosaves follow their city's format. Each setting falls back on its own, so one bad value keeps the rest. 640 tests. |
 | 2026-10-22 | minor | Radial, R1: the traffic map, as in Micropolis. A trip that arrives lays 50 on each road tile it remembered, on 2 by 2 blocks, capped at 240 always (Micropolis caps only one time in six; Tony Bark chose always), and phase 10 fades it. Saves move to format 1.1 with a `traffic` section and a `TRAF` chunk; 1.0 saves upgrade to quiet roads. The headless run logs the busiest road. Traffic has no effect until R2. Radial is at 50%; 38–67 h left in total, 626 tests. |

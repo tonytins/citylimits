@@ -41,7 +41,7 @@ beside the city's own file, in the same format, such as
 `Joffburg (autosave).cl`, or `Joffburg (autosave).fcl` for a city saved
 as `.fcl`, so a newer save's parts it keeps go into its autosaves too.
 It is skipped when the city is as it was last saved, by the player or by
-an autosave. The notice line says when one is written.
+an autosave. The news ticker says when one is written.
 
 - **One slot or two.** `AutosaveSlots` in `settings.json` is `1` by
   default, or `2`: with two, `Joffburg (autosave 2).cl` joins the first,
@@ -159,7 +159,7 @@ plants, stations, hospitals, and churches.
 airports, stadiums, and burning, flooded, or radioactive tiles, as does
 what's left of a building with no centre. Where rail crosses a road or a
 power line, the road or the line stays. The import lists what it
-replaced; the game logs it, and the notice line says so.
+replaced; the game logs it, and the news ticker says so.
 
 Also carried over: the date, the money, the tax rate (back to 7% when it
 is outside 0 to 20, as Micropolis does), the funding levels, the
@@ -276,7 +276,7 @@ Saving such a city writes back the keepable parts it kept, in the same
 format they came in (a binary chunk can't become JSON without being
 understood). When it kept them all, the save keeps the newer version;
 when it left one out, it is this version's, so the newer game knows to
-rebuild. A city opened this way says so on the notice line, and the log
+rebuild. A city opened this way says so on the news ticker, and the log
 lists each part and what will happen to it. A part a newer version adds
 is always a whole new section or chunk, never a new field in an existing
 one, so it can be kept or left out whole.

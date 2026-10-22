@@ -1,5 +1,36 @@
 # CityLimits Changelog
 
+## 0.3.105
+
+The bar is now at the bottom of the screen, with a news ticker running
+underneath it that never stops, much like SimCity 3000's. It carries the
+game's notices and the city's warnings in yellow (saves, autosaves, "The
+city needs a power plant") among white headlines from your city's world.
+Some headlines react to how your city is doing: its population passing a
+milestone, a new year, high taxes, a housing shortage, money troubles,
+traffic, blackouts, the season. Others are just flavour. Red is kept for
+disasters, which come later.
+
+The key list along the bottom is now a Help window. Open it with the
+green question mark at the end of the bar or with F1, move it by its
+title, and close it with its x, the question mark, F1, or Escape. The
+city keeps running while it's open.
+
+What a stroke costs, why it can't be built, and what it came to now show
+beside the pointer, in black on yellow. Hold the Inspect tool and point
+at a tile to read what it is in the same way; the readout panel in the
+corner is gone.
+
+The ticker stands still while your city is paused.
+
+The tool palette and the overview map have moved up into the top
+corners, and the loading screen's phrases now scroll by like the ticker.
+
+For developers: the ticker's queue, its headlines, and the desk that
+picks them live in `CityLimits.Core/News/`. The desk only reads the city
+and uses its own random generator, so headlines never change the
+simulation and aren't saved.
+
 ## 0.3.104
 
 Traffic now shows on your roads. Cars appear on a road when its block

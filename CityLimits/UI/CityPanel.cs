@@ -1,7 +1,7 @@
 namespace CityLimits.UI;
 
 /// <summary>
-/// The city panel, opened by a click on the city's name in the top bar. At the top, the name, ready
+/// The city panel, opened by a click on the city's name in the bar. At the top, the name, ready
 /// to edit: Enter renames the city, and closing drops an edit that wasn't entered. Under it, two
 /// columns: the city at a glance (its date and age, population, demand, and money) and the mods it
 /// was made with. At the bottom, the seed its map grew from, which a click copies. The game is

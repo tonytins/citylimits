@@ -8,6 +8,9 @@ public sealed class GameLoop : IDisposable
 
     private const float PanSpeed = 600f;
 
+    // How long what a stroke came to stays beside the pointer once it is let go.
+    private const float HintSeconds = 3f;
+
     private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
 
     private readonly GameClock _clock = new();
@@ -21,18 +24,25 @@ public sealed class GameLoop : IDisposable
     private readonly OverviewMap _overview;
     private readonly BudgetPanel _budgetPanel = new();
     private readonly DemandPanel _demandPanel = new();
+    private readonly HelpPanel _helpPanel = new();
+    private readonly NewsTicker _ticker;
     private GameSettings _settings;
 
     // Whether the press that is held began on the overview, so dragging there moves the view.
     private bool _draggingOverview;
 
-    // The demand panel, opened from the meter in the top bar; the game keeps running under it.
+    // The demand panel, opened from the meter in the bar, and the help window, opened from its
+    // question mark; the game keeps running under both.
     private bool _demandOpen;
+    private bool _helpOpen;
     private int _lastSpeed = 1;
-    private string? _error;
-    private string? _notice;
-    private bool _noticeIsError;
     private readonly CityMessageFilter _messages = new();
+
+    // What the last stroke came to, beside the pointer for a moment; and the last failure the
+    // ticker was told of, so a frame that keeps failing doesn't fill it.
+    private string? _hint;
+    private float _hintSeconds;
+    private string? _lastError;
 
     // The budget, the menu, and the rename panel each hold the game while open, taking every key
     // and click, and give the speed back when they close.
@@ -84,21 +94,24 @@ public sealed class GameLoop : IDisposable
         _savedText = cityFile is null || CityFiles.IsImport(cityFile) ? null : FlatCityFormat.Write(city);
         var map = city.Map;
         var definitions = city.Definitions;
+
+        // The news runs on headlines from the city whenever the game has nothing to say. They are
+        // picked with a generator of their own, so they never change what the city does.
+        var desk = new NewsDesk(city, new Random());
+        _ticker = new NewsTicker(desk.Next);
+
         modProblems ??= [];
         if (modProblems.Count > 0)
         {
-            // The log holds every skipped mod; the screen says how many, so the player knows to look.
-            _notice = modProblems.Count == 1 ? modProblems[0] : $"{modProblems.Count} mods were skipped; the log says why";
-            _noticeIsError = true;
+            // The log holds every skipped mod; the ticker says how many, so the player knows to look.
+            _ticker.Advise(modProblems.Count == 1 ? modProblems[0] : $"{modProblems.Count} mods were skipped; the log says why");
         }
 
-        // What opening the city came to, such as what an import replaced or a newer save's parts: the
-        // first on the notice line, and the rest in the log, where the load list wrote them all.
-        openNotes ??= [];
-        if (openNotes.Count > 0)
+        // What opening the city came to, such as what an import replaced or a newer save's parts,
+        // each in turn on the ticker; the load list wrote them all to the log.
+        foreach (var note in openNotes ?? [])
         {
-            _notice = openNotes.Count == 1 ? openNotes[0] : $"{openNotes[0]} ({openNotes.Count - 1} more in the log)";
-            _noticeIsError = false;
+            _ticker.Advise(note);
         }
 
         _simulation.MessageSent += ShowMessage;
@@ -204,6 +217,10 @@ public sealed class GameLoop : IDisposable
 
         _simulation.Roads.EnsureCurrent(_simulation.Map);
         _trafficAnimation.Advance(elapsed, _modal == Modal.None ? _settings.Speed : GameSpeed.Paused);
+        // The news stands still while the city does, a panel holding it included. Its first line
+        // starts a third of the way across, so a city opened paused still shows the news.
+        _ticker.Update(_settings.Speed > 0 && _modal == Modal.None ? elapsed : 0f, Raylib.GetScreenWidth(), 1f / 3f);
+        _hintSeconds = Math.Max(0f, _hintSeconds - elapsed);
 
         if (_autosave.Advance(elapsed, _settings.Speed > 0 && _modal == Modal.None))
         {
@@ -247,7 +264,7 @@ public sealed class GameLoop : IDisposable
         _toolPaletteView.Draw(_tools, mouse);
 
         var world = _camera.ScreenToWorld(mouse);
-        var onMap = MapRenderer.TryGetTileAt(_simulation.Map, world, out var tileX, out var tileY, out var state);
+        var onMap = MapRenderer.TryGetTileAt(_simulation.Map, world, out var tileX, out var tileY, out _);
 
         _hud.DrawStatus(
             _simulation.Name,
@@ -259,10 +276,8 @@ public sealed class GameLoop : IDisposable
             _simulation.Demand,
             _simulation.Treasury.Funds,
             Raylib.GetFPS());
-        _hud.DrawTileReadout(_simulation.Map, onMap ? state : null, tileX, tileY, _simulation.Definitions);
         _overview.Draw(_camera);
-        _hud.DrawHints();
-        _hud.DrawMessage(_error ?? _notice, _error is not null || _noticeIsError);
+        _ticker.Draw(Raylib.GetScreenHeight() - NewsTicker.Height, Raylib.GetScreenWidth());
 
         // Windows go over the rest of the interface, wherever the player has moved them.
         if (_demandOpen)
@@ -270,9 +285,24 @@ public sealed class GameLoop : IDisposable
             _demandPanel.Draw(_simulation);
         }
 
+        if (_helpOpen)
+        {
+            _helpPanel.Draw();
+        }
+
+        // Beside the pointer: what the stroke being dragged would cost, what the last one came to,
+        // or, with the Inspect tool, what the tile under the pointer is, when it isn't over the interface.
         if (_stroke is not null)
         {
-            _hud.DrawStrokeCost(mouse, _preview);
+            Hud.DrawPointerHint(mouse, Hud.StrokeHint(_preview));
+        }
+        else if (_hintSeconds > 0 && _hint is not null)
+        {
+            Hud.DrawPointerHint(mouse, _hint);
+        }
+        else if (_tools.Selected == Tool.Inspect && onMap && _modal == Modal.None && !IsOverInterface(mouse))
+        {
+            Hud.DrawPointerHint(mouse, $"Tile {tileX}, {tileY}", TileInfo.Describe(_simulation.Map, tileX, tileY, _simulation.Definitions));
         }
 
         switch (_modal)
@@ -304,11 +334,16 @@ public sealed class GameLoop : IDisposable
         _mapRenderer.Dispose();
     }
 
-    /// <summary>Records a failure so the player can see it, and keeps the game running.</summary>
+    /// <summary>Records a failure, tells the player on the ticker, and keeps the game running.</summary>
     public void ReportError(Exception exception)
     {
-        _error = exception.Message;
+        ArgumentNullException.ThrowIfNull(exception);
         Logger.Error(exception, "The frame failed");
+        if (exception.Message != _lastError)
+        {
+            _lastError = exception.Message;
+            _ticker.Advise($"Something went wrong: {exception.Message}");
+        }
     }
 
     private void HandleInput(float elapsed)
@@ -371,6 +406,11 @@ public sealed class GameLoop : IDisposable
             return;
         }
 
+        if (Raylib.IsKeyPressed(KeyboardKey.F1))
+        {
+            _helpOpen = !_helpOpen;
+        }
+
         var wheel = Raylib.GetMouseWheelMove();
         if (wheel != 0f)
         {
@@ -427,7 +467,10 @@ public sealed class GameLoop : IDisposable
             if (_stroke is not null)
             {
                 _stroke = null;
-                _notice = null;
+            }
+            else if (_helpOpen)
+            {
+                _helpOpen = false;
             }
             else if (_demandOpen)
             {
@@ -611,13 +654,13 @@ public sealed class GameLoop : IDisposable
         if (!CityFiles.TryWrite(_simulation, path, out var problem))
         {
             Logger.Error("Autosave failed: {Problem}", problem);
-            (_notice, _noticeIsError) = ($"Autosave failed: {problem}", true);
+            _ticker.Advise($"Autosave failed: {problem}");
             return;
         }
 
         _autosavedText = text;
         Logger.Info("Autosaved {Name} to {Path}", _simulation.Name, path);
-        (_notice, _noticeIsError) = ($"Autosaved {_simulation.Name}", false);
+        _ticker.Advise($"Autosaved {_simulation.Name}");
     }
 
     // A city saves in its own format: flat when it came from a flat file, and otherwise binary, a
@@ -651,13 +694,13 @@ public sealed class GameLoop : IDisposable
         if (!CityFiles.TryWrite(_simulation, path, out var problem))
         {
             Logger.Error("{Problem}", problem);
-            (_notice, _noticeIsError) = (problem, true);
+            _ticker.Advise(problem);
             return;
         }
 
         (_cityFile, _savedText, _autosavedText) = (path, text, text);
         Logger.Info("Saved {Name} to {Path}", _simulation.Name, path);
-        (_notice, _noticeIsError) = ($"Saved {_simulation.Name} to {file}", false);
+        _ticker.Advise($"Saved {_simulation.Name} to {file}");
     }
 
     // The panel's x closes it before its title can start a drag, since the x sits in the title.
@@ -737,10 +780,26 @@ public sealed class GameLoop : IDisposable
                 return;
             }
 
-            // A press on the top bar works its buttons, and never reaches the map under it.
-            if (mouse.Y < Hud.BarHeight)
+            // A press on the bar works its buttons, and neither it nor the ticker under it reaches the map.
+            if (Hud.IsOnBottom(mouse))
             {
                 PressBar(_hud.ButtonAt(mouse));
+                return;
+            }
+
+            // A press on the help window, which sits over everything else, never reaches what is
+            // under it: its x closes it, and its title moves it.
+            if (_helpOpen && Raylib.CheckCollisionPointRec(mouse, _helpPanel.Bounds))
+            {
+                if (_helpPanel.IsOnClose(mouse))
+                {
+                    _helpOpen = false;
+                }
+                else
+                {
+                    TryBeginDrag(_helpPanel, mouse);
+                }
+
                 return;
             }
 
@@ -785,7 +844,7 @@ public sealed class GameLoop : IDisposable
             {
                 _stroke = new BuildStroke(tool.Value, tileX, tileY);
                 _simulation.Builder.Plan(_stroke, _preview);
-                _notice = null;
+                _hintSeconds = 0;
             }
 
             return;
@@ -804,8 +863,8 @@ public sealed class GameLoop : IDisposable
         var result = _simulation.Builder.Apply(_stroke);
         var applied = _stroke.Action;
         _stroke = null;
-        _noticeIsError = result.Status == BuildStatus.Refused;
-        _notice = Describe(applied, result);
+        _hint = Describe(applied, result);
+        _hintSeconds = HintSeconds;
     }
 
     private static string Describe(BuildAction action, BuildResult result) => result.Status switch
@@ -828,7 +887,7 @@ public sealed class GameLoop : IDisposable
         _ => "The work was refused",
     };
 
-    // A message from the city takes the notice line, as Micropolis shows it, and goes to the log.
+    // A message from the city goes on the ticker as an advisory, and to the log.
     private void ShowMessage(CityMessage message)
     {
         if (!_messages.ShouldPass(message, _simulation.CityTime))
@@ -836,9 +895,9 @@ public sealed class GameLoop : IDisposable
             return;
         }
 
-        _notice = CityMessages.Describe(message);
-        _noticeIsError = true;
-        Logger.Warn(_notice);
+        var text = CityMessages.Describe(message);
+        _ticker.Advise(text);
+        Logger.Warn(text);
     }
 
     private static string Count(int count, string thing) => count == 1 ? $"1 {thing}" : $"{count} {thing}s";
@@ -855,6 +914,9 @@ public sealed class GameLoop : IDisposable
                 break;
             case Hud.BarButton.Funds:
                 OpenModal(Modal.Budget);
+                break;
+            case Hud.BarButton.Help:
+                _helpOpen = !_helpOpen;
                 break;
             case Hud.BarButton.CityName:
                 _cityPanel.Reset(_simulation);
@@ -873,6 +935,14 @@ public sealed class GameLoop : IDisposable
     }
 
     private int DemandPanelTop() => _toolPaletteView.Bottom() + 8;
+
+    // Whether the pointer is over the palette, the overview, the bar, the ticker, or an open window, rather than the map.
+    private bool IsOverInterface(Vector2 mouse) =>
+        Hud.IsOnBottom(mouse)
+        || _toolPaletteView.Contains(mouse)
+        || _overview.Contains(mouse)
+        || (_demandOpen && Raylib.CheckCollisionPointRec(mouse, _demandPanel.Bounds))
+        || (_helpOpen && Raylib.CheckCollisionPointRec(mouse, _helpPanel.Bounds));
 
     private void TogglePause()
     {

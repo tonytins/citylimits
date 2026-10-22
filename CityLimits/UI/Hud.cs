@@ -1,17 +1,24 @@
 namespace CityLimits.UI;
 
-/// <summary>Draws the bar along the top and the hints along the bottom.</summary>
+/// <summary>
+/// Draws the bar along the bottom, over the news ticker, after Tony Bark's mock-up in
+/// <c>docs/design/</c>, and the hints beside the pointer.
+/// </summary>
 public sealed class Hud
 {
-    /// <summary>The height of the top bar, in pixels.</summary>
+    /// <summary>The height of the bar, in pixels.</summary>
     public const int BarHeight = 30;
+
+    /// <summary>The height of everything along the bottom of the screen: the bar and the news ticker under it.</summary>
+    public const int BottomHeight = BarHeight + NewsTicker.Height;
 
     private const int FontSize = 14;
     private const int Padding = 10;
-    private const int ReadoutHeight = 46;
-    private const string Hints = "WASD pan   wheel zoom   space pause   , . speed   1-9 tools   drag to build   B budget   ctrl+S save   ctrl+O open   esc cancel or menu";
+    private const int HelpSize = 18;
+    private const int HintLine = 18;
+    private const int HintMargin = 4;
 
-    // The pieces of the top bar, from left to right, as wide as each needs.
+    // The pieces of the bar, from left to right, as wide as each needs.
     private const int ButtonSize = 22;
     private const int SpeedWidth = 16;
     private const int Gap = 16;
@@ -26,8 +33,9 @@ public sealed class Hud
     private Rectangle _nameBounds;
     private Rectangle _demandBounds;
     private Rectangle _fundsBounds;
+    private Rectangle _helpBounds;
 
-    /// <summary>A button in the top bar.</summary>
+    /// <summary>A button in the bar.</summary>
     public enum BarButton
     {
         /// <summary>No button.</summary>
@@ -53,9 +61,18 @@ public sealed class Hud
 
         /// <summary>The funds, which open the budget.</summary>
         Funds,
+
+        /// <summary>The green question mark, which opens and closes the help window.</summary>
+        Help,
     }
 
-    /// <summary>Tells which button of the top bar, as last drawn, is under a point on the screen.</summary>
+    /// <summary>Where the bar's top edge is, on a screen of the current size; the news ticker sits under the bar.</summary>
+    public static int BarTop() => Raylib.GetScreenHeight() - BottomHeight;
+
+    /// <summary>Tells whether a point on the screen is on the bar or the ticker, where a press never reaches the map.</summary>
+    public static bool IsOnBottom(Vector2 point) => point.Y >= BarTop();
+
+    /// <summary>Tells which button of the bar, as last drawn, is under a point on the screen.</summary>
     public BarButton ButtonAt(Vector2 point)
     {
         if (Raylib.CheckCollisionPointRec(point, _pauseBounds))
@@ -81,6 +98,11 @@ public sealed class Hud
             return BarButton.Demand;
         }
 
+        if (Raylib.CheckCollisionPointRec(point, _helpBounds))
+        {
+            return BarButton.Help;
+        }
+
         return Raylib.CheckCollisionPointRec(point, _fundsBounds) ? BarButton.Funds : BarButton.None;
     }
 
@@ -94,9 +116,9 @@ public sealed class Hud
     };
 
     /// <summary>
-    /// Draws the top bar: the pause or play button, the month, the speed, the city's name, the
-    /// demand meter, the funds, and the population, with the step count and the frame rate on
-    /// the right. The speed buttons light up to the speed, so two lit is Fast; while paused they
+    /// Draws the bar: the pause or play button, the month, the speed, the city's name, the
+    /// demand meter, the funds, and the population, with the step count, the frame rate, and the
+    /// help button on the right. The speed buttons light up to the speed, so two lit is Fast; while paused they
     /// show, dimmed, the speed play will bring back.
     /// </summary>
     public void DrawStatus(string cityName, GameDate date, long tickCount, int speed, int resumeSpeed, int population, CityDemand demand, int funds, int framesPerSecond)
@@ -104,11 +126,12 @@ public sealed class Hud
         ArgumentNullException.ThrowIfNull(demand);
 
         var width = Raylib.GetScreenWidth();
-        Raylib.DrawRectangle(0, 0, width, BarHeight, Theme.Bar);
-        var textY = (BarHeight - FontSize) / 2;
+        var top = BarTop();
+        Raylib.DrawRectangle(0, top, width, BarHeight, Theme.Bar);
+        var textY = top + ((BarHeight - FontSize) / 2);
         var x = Padding;
 
-        _pauseBounds = new Rectangle { X = x, Y = (BarHeight - ButtonSize) / 2, Width = ButtonSize, Height = ButtonSize };
+        _pauseBounds = new Rectangle { X = x, Y = top + ((BarHeight - ButtonSize) / 2), Width = ButtonSize, Height = ButtonSize };
         DrawPausePlay(_pauseBounds, paused: speed == GameSpeed.Paused);
         x += ButtonSize + 10;
 
@@ -119,7 +142,7 @@ public sealed class Hud
         var shown = speed == GameSpeed.Paused ? resumeSpeed : speed;
         for (var i = 0; i < Speeds.Length; i++)
         {
-            _speedBounds[i] = new Rectangle { X = x, Y = (BarHeight - ButtonSize) / 2, Width = SpeedWidth, Height = ButtonSize };
+            _speedBounds[i] = new Rectangle { X = x, Y = top + ((BarHeight - ButtonSize) / 2), Width = SpeedWidth, Height = ButtonSize };
             var lit = Speeds[i] <= shown ? (speed == GameSpeed.Paused ? Theme.SpeedResume : Theme.SpeedLit) : Theme.SpeedUnlit;
             DrawArrow(_speedBounds[i], lit);
             x += SpeedWidth;
@@ -127,25 +150,38 @@ public sealed class Hud
 
         x += Gap;
         var nameWidth = Raylib.MeasureText(cityName, FontSize);
-        _nameBounds = new Rectangle { X = x - 4, Y = 0, Width = nameWidth + 8, Height = BarHeight };
+        _nameBounds = new Rectangle { X = x - 4, Y = top, Width = nameWidth + 8, Height = BarHeight };
         Raylib.DrawText(cityName, x, textY, FontSize, Theme.Text);
         x += nameWidth + Gap;
 
-        _demandBounds = new Rectangle { X = x - 3, Y = (BarHeight - MeterHeight) / 2, Width = (MeterBarWidth * 3) + 4 + 6, Height = MeterHeight };
-        DrawDemandMeter(demand, x, (BarHeight - MeterHeight) / 2);
+        _demandBounds = new Rectangle { X = x - 3, Y = top + ((BarHeight - MeterHeight) / 2), Width = (MeterBarWidth * 3) + 4 + 6, Height = MeterHeight };
+        DrawDemandMeter(demand, x, top + ((BarHeight - MeterHeight) / 2));
         x += (MeterBarWidth * 3) + 4 + Gap;
 
         // The funds are drawn on their own, so they can show red below zero and be clicked.
         var fundsText = Money(funds);
         var fundsWidth = Raylib.MeasureText(fundsText, FontSize);
-        _fundsBounds = new Rectangle { X = x - 4, Y = 0, Width = fundsWidth + 8, Height = BarHeight };
+        _fundsBounds = new Rectangle { X = x - 4, Y = top, Width = fundsWidth + 8, Height = BarHeight };
         Raylib.DrawText(fundsText, x, textY, FontSize, funds < 0 ? Theme.Error : Theme.Accent);
         x += fundsWidth + Gap;
 
         Raylib.DrawText($"{Count(population)} Pop", x, textY, FontSize, Theme.Text);
 
+        // The help button sits at the far right, after the frame rate, as the mock-up has it.
+        _helpBounds = new Rectangle { X = width - Padding - HelpSize, Y = top + ((BarHeight - HelpSize) / 2), Width = HelpSize, Height = HelpSize };
+        DrawHelpButton(_helpBounds);
+
         var right = $"{Count(tickCount)} Ticks   {framesPerSecond} FPS";
-        Raylib.DrawText(right, width - Padding - Raylib.MeasureText(right, FontSize), textY, FontSize, Theme.TextDim);
+        Raylib.DrawText(right, (int)_helpBounds.X - 10 - Raylib.MeasureText(right, FontSize), textY, FontSize, Theme.TextDim);
+    }
+
+    // A green circle with a dark question mark.
+    private static void DrawHelpButton(Rectangle bounds)
+    {
+        var radius = bounds.Width / 2;
+        Raylib.DrawCircleV(new Vector2(bounds.X + radius, bounds.Y + radius), radius, Theme.HelpButton);
+        var mark = Raylib.MeasureText("?", FontSize);
+        Raylib.DrawText("?", (int)(bounds.X + radius - (mark / 2f)), (int)(bounds.Y + ((bounds.Height - FontSize) / 2) + 1), FontSize, Theme.HintText);
     }
 
     /// <summary>Writes an amount of money as the bar and the panels show it, such as $20,000 or -$1,500.</summary>
@@ -196,86 +232,55 @@ public sealed class Hud
         Raylib.DrawRectangle(left, top, MeterBarWidth, Math.Abs(length), color);
     }
 
-    /// <summary>Draws the readout of the tile under the mouse, naming zones as the city's definitions do.</summary>
-    public void DrawTileReadout(TileMap map, TileState? state, int tileX, int tileY, CityDefinitions definitions)
+    /// <summary>What the stroke being dragged would cost, or why it can't be built, as the pointer's hint shows it.</summary>
+    public static string StrokeHint(BuildPlan plan) => plan switch
     {
-        var heading = state is null ? "Outside the map" : $"Tile {tileX}, {tileY}";
-        var detail = state is null ? "Move the pointer over the map" : TileInfo.Describe(map, tileX, tileY, definitions);
+        { Refusal: BuildRefusal.OffTheMap } => "Runs off the map",
+        { Refusal: BuildRefusal.NotEnoughFunds } => $"${plan.Cost} - not enough money",
+        { Tiles.Count: 0 } => "Nothing to do here",
+        _ => $"${plan.Cost}",
+    };
 
-        var width = Math.Max(Raylib.MeasureText(heading, FontSize), Raylib.MeasureText(detail, FontSize)) + (Padding * 2);
-        var x = Raylib.GetScreenWidth() - width - 8;
-        var y = Raylib.GetScreenHeight() - 26 - ReadoutHeight - 6;
-
-        Raylib.DrawRectangle(x, y, width, ReadoutHeight, Theme.Panel);
-        Raylib.DrawRectangleLinesEx(new Rectangle { X = x, Y = y, Width = width, Height = ReadoutHeight }, 1f, Theme.PanelBorder);
-        Raylib.DrawText(heading, x + Padding, y + 6, FontSize, Theme.Text);
-        Raylib.DrawText(detail, x + Padding, y + 24, FontSize, AdviceColor(state));
-    }
-
-    /// <summary>Draws the line of hints that tells the player what the keys do.</summary>
-    public void DrawHints()
+    /// <summary>
+    /// Draws a hint beside the pointer, in black on yellow, of one line or two: what a stroke would
+    /// cost while it is dragged, what the work came to, or why it was refused, once it is let go,
+    /// and, with the Inspect tool, what the tile under the pointer is. It stays on the screen,
+    /// moving left or up from the pointer when the edge is near.
+    /// </summary>
+    public static void DrawPointerHint(Vector2 mouse, string hint, string? second = null)
     {
-        var width = Raylib.MeasureText(Hints, FontSize);
-        var y = Raylib.GetScreenHeight() - 26;
-
-        Raylib.DrawRectangle(0, y - 6, width + (Padding * 2), 26, Theme.Panel);
-        Raylib.DrawText(Hints, Padding, y, FontSize, Theme.TextDim);
-    }
-
-    /// <summary>Draws what the stroke being dragged would cost, beside the pointer, or why it can't be built.</summary>
-    public void DrawStrokeCost(Vector2 mouse, BuildPlan plan)
-    {
-        var (text, color) = plan switch
-        {
-            { Refusal: BuildRefusal.OffTheMap } => ("Runs off the map", Theme.Error),
-            { Refusal: BuildRefusal.NotEnoughFunds } => ($"${plan.Cost} - not enough money", Theme.Error),
-            { Tiles.Count: 0 } => ("Nothing to do here", Theme.TextDim),
-            _ => ($"${plan.Cost}", Theme.Accent),
-        };
-
-        var width = Raylib.MeasureText(text, FontSize) + (Padding * 2);
-        var x = (int)mouse.X + 16;
-        var y = (int)mouse.Y + 16;
-
-        Raylib.DrawRectangle(x, y, width, 22, Theme.Panel);
-        Raylib.DrawText(text, x + Padding, y + 4, FontSize, color);
-    }
-
-    /// <summary>Draws a message the player needs to know about, or nothing when there is none.</summary>
-    public void DrawMessage(string? message, bool isError)
-    {
-        if (string.IsNullOrEmpty(message))
+        if (string.IsNullOrEmpty(hint))
         {
             return;
         }
 
-        var width = Raylib.MeasureText(message, FontSize);
-        Raylib.DrawRectangle(Raylib.GetScreenWidth() - width - (Padding * 2), BarHeight + 8, width + (Padding * 2), 24, Theme.Panel);
-        Raylib.DrawText(message, Raylib.GetScreenWidth() - width - Padding, BarHeight + 12, FontSize, isError ? Theme.Error : Theme.Accent);
-    }
-
-    private static Color AdviceColor(TileState? state)
-    {
-        if (state is null)
+        var lines = string.IsNullOrEmpty(second) ? 1 : 2;
+        var textWidth = Raylib.MeasureText(hint, FontSize);
+        if (lines == 2)
         {
-            return Theme.TextDim;
+            textWidth = Math.Max(textWidth, Raylib.MeasureText(second, FontSize));
         }
 
-        if (state.Value.IsRoad)
+        var width = textWidth + (Padding * 2);
+        var height = (lines * HintLine) + (HintMargin * 2);
+        var x = (int)mouse.X + 16;
+        var y = (int)mouse.Y + 16;
+        if (x + width > Raylib.GetScreenWidth())
         {
-            return Theme.TextDim;
+            x = (int)mouse.X - 8 - width;
         }
 
-        if (state.Value.HasFootprint)
+        if (y + height > BarTop())
         {
-            return Theme.Accent;
+            y = (int)mouse.Y - 8 - height;
         }
 
-        if (!TileRules.CanBuildOn(state.Value.Kind))
+        Raylib.DrawRectangle(x, y, width, height, Theme.HintBackground);
+        var textY = y + HintMargin + ((HintLine - FontSize) / 2);
+        Raylib.DrawText(hint, x + Padding, textY, FontSize, Theme.HintText);
+        if (lines == 2)
         {
-            return Theme.Error;
+            Raylib.DrawText(second!, x + Padding, textY + HintLine, FontSize, Theme.HintText);
         }
-
-        return TileRules.NeedsClearing(state.Value.Kind) ? Theme.Accent : Theme.TextDim;
     }
 }
