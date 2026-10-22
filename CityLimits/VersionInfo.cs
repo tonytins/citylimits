@@ -10,10 +10,10 @@ internal struct VersionInfo
     public const string Name = "CityLimits";
 
     /// <summary>
-    /// The version, frozen on this backport branch as 0.3.101 with a revision, since GitInfo would count
-    /// the backport's commits into the patch and collide with 0.3.102. Keep it in step with the project file.
+    /// The version from GitInfo.txt: on this backport branch, the release it backports and a revision,
+    /// such as 0.3.101.1, the revision being what GitInfo reads as the label.
     /// </summary>
-    public const string Version = "0.3.101.1";
+    public const string Version = $"{ThisAssembly.Git.BaseVersion.Major}.{ThisAssembly.Git.BaseVersion.Minor}.{ThisAssembly.Git.BaseVersion.Patch}.{ThisAssembly.Git.SemVer.Label}";
 
     /// <summary>
     /// The name, version, and build number as shown to the user, such as <c>CityLimits 0.1.116 (Build 123456)</c>.
