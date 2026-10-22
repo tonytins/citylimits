@@ -14,6 +14,7 @@ public static class CityMessages
         CityMessage.NeedPoliceStation => "The city needs a police station",
         CityMessage.FireNeedsFunding => "The fire department needs funding",
         CityMessage.PoliceNeedsFunding => "The police department needs funding",
+        CityMessage.TrafficJams => "Frequent traffic jams reported",
         _ => "Brownouts: the power plants can't keep up, so build another",
     };
 }

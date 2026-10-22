@@ -16,12 +16,12 @@ change. Statuses are `done`, `partial`, and `missing`.
 | [Map](#map-and-terrain) | 4 | 0 | 0 | 4 kinds of ground, 16 shore and 17 wood drawings, one 256 by 960 atlas |
 | [Zoning](#roads-and-zoning) | 5 | 0 | 0 | 5 tools that change the world, $10 a road, $50 a bridge, $100 a 3 by 3 zone, $1 to bulldoze |
 | [Simulation](#simulation) | 7 | 0 | 0 | 16 phases a 48th of a year, 3 minutes a year at Normal, houses then 4 to 5 building levels, 3 built-in scenarios |
-| [Economy](#economy-and-services) | 4 | 1 | 0 | $20 000 in the treasury, 7% tax, 700 and 2 000 tile plants, the budget panel, the overview map's six modes |
-| [Traffic](#traffic-and-commuting) | 1 | 1 | 3 | 1 road network, trips of up to 30 tiles, traffic up to 240 a block |
+| [Economy](#economy-and-services) | 4 | 1 | 0 | $20 000 in the treasury, 7% tax, 700 and 2 000 tile plants, the budget panel, the overview map's seven modes |
+| [Traffic](#traffic-and-commuting) | 3 | 1 | 1 | 1 road network, trips of up to 30 tiles, traffic up to 240 a block, light from 64 and heavy from 192, jams above an average of 60 |
 | [Environment](#land-value-pollution-and-disasters) | 0 | 1 | 4 | land value from distance and terrain, 0 disasters |
 | [Interface](#player-interface) | 3 | 2 | 1 | 12 tools with icons, the top bar, the demand panel, the budget panel, the overview map, a loading screen and start menu |
 | [Platform](#platform) | 8 | 0 | 2 | Raylib-cs 8.1.0, NLog 6.2.2, .NET 10, data mods, versioned formats with schemas |
-| [Reliability](#reliability) | 6 | 0 | 0 | 640 tests, all passing, CI green |
+| [Reliability](#reliability) | 6 | 0 | 0 | 657 tests, all passing, CI green |
 | [Documentation](#documentation) | 3 | 0 | 2 | 3 of 5 documents exist |
 | [Known issues](#known-issues) | | | | 1 open, 3 resolved |
 
@@ -34,8 +34,8 @@ and read out. The player can draw roads, zone land, and bulldoze, and the
 city charges for the work and refuses what it cannot pay for. Zones grow
 and decline with population, demand, and trips, as in Micropolis, and their
 buildings are drawn from the tiles' own state. Power, taxes, the budget,
-services, an overview map with its overlays, and saving are in; traffic, crime,
-pollution, and disasters are still missing, and that is the point
+services, an overview map with its overlays, saving, and traffic on the
+roads are in; rail, crime, pollution, and disasters are still missing, and that is the point
 of the table: it is the contract the work has to meet.
 
 How the state was verified on 2026-10-20:
@@ -120,8 +120,8 @@ there is something to grow.
 |---|---|---|---|
 | TRAF-1 | A road graph is built from the tile map and rebuilt only when roads change | partial | `CityLimits.Core/World/RoadNetwork.cs` is built from the tile map and is rebuilt only when the roads change: `CityBuilder` marks it dirty when a road is laid or cleared, and `RoadNetwork.EnsureCurrent` rebuilds it when it is asked and out of date. It holds the road tiles and who they serve, but it is not yet a graph of links and carries no volumes |
 | TRAF-2 | Traffic volumes per road tile come from commuting trips | done | `CityLimits.Core/Simulation/TrafficMap.cs`: as in Micropolis, a trip that arrives (`TripPlanner`) lays 50 on each road tile it remembered, on 2 by 2 blocks, always capped at 240 as Tony Bark chose, and phase 10 fades every block by 34 above 200 and 24 above 24. `TrafficTests` cover laying, the cap, the fade's steps, a street of zones whose roads carry traffic that fades at phase 10, and saving it from format 1.1 with 1.0 saves upgraded to quiet roads; not restoring it, not fading it, laying it on grass, or trips laying nothing each failed a test. The headless run logs the busiest block monthly: the demo town's reached 32 in its second year |
-| TRAF-3 | Traffic shows on the roads, and heavy traffic costs upkeep and draws the city's notice | missing | Radial's R2: light and heavy traffic drawn on roads, heavy traffic counting twice toward road upkeep, and the traffic average and its message. The earlier target, congestion feeding back into demand and land value, isn't Micropolis, and Tony Bark dropped it |
-| TRAF-4 | A traffic overlay shows the volumes | missing | Radial's R2: a traffic mode on the overview map |
+| TRAF-3 | Traffic shows on the roads, and heavy traffic costs upkeep and draws the city's notice | done | As in Micropolis, the scan shows each road the level its block calls for (`TrafficMap.LevelAt`: light from 64, heavy from 192), counts a road that showed heavy traffic once more toward upkeep, and the year's end works out the traffic average, which above 60 reports traffic jams (`TrafficTests`; counting heavy roads once, counting the new level instead of the one shown before, keeping a level when a road changes, working the average out for an empty city, reporting jams at 60, and keeping a level on a tile that is no longer a road each failed a test). `MapRenderer` draws light and heavy traffic over the cached map from the sheet's four-frame animations, timed as Micropolis' (`TrafficAnimationTests`). Saved from format 1.3, with older saves upgraded to quiet roads. The demo town now ends its second year $6 poorer, at $16 603, from its busiest roads. On a private display on 2026-10-22 a copy of Bridgeport given heavy traffic west of column 60 and light east of it showed packed and sparse cars on roads, corners, junctions, and bridges, and the frames moved while the city ran. The earlier target, congestion feeding back into demand and land value, isn't Micropolis, and Tony Bark dropped it |
+| TRAF-4 | A traffic overlay shows the volumes | done | `UI/OverviewMap.cs`: a Traffic mode shows each block's traffic in four bands over the city dimmed; the mode buttons are now two rows of four, so each label fits. On a private display on 2026-10-22 it showed the busy copy of Bridgeport's heavy roads red and light ones yellow |
 | TRAF-5 | Rail, as in Micropolis | missing | Radial's R3: a rail tool, rail crossing roads and power lines, and trips along rail |
 
 ## Land value, pollution, and disasters

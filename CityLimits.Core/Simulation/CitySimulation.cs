@@ -31,6 +31,7 @@ public sealed class CitySimulation
     private const int RoadsNeedFundingCount = 54;
     private const int FireNeedsFundingCount = 57;
     private const int PoliceNeedsFundingCount = 60;
+    private const int TrafficJamsCount = 63;
 
     // A city of more than this many people needs a fire and a police station, and minds when they
     // are funded below this effect.
@@ -54,6 +55,9 @@ public sealed class CitySimulation
     // A city needs power once it has more zones than this, and has blackouts below this share powered.
     private const int ZonesBeforePowerIsNeeded = 10;
     private const double PoweredShareBeforeBlackouts = 0.7;
+
+    // Micropolis reports traffic jams when the year's traffic average is above this.
+    private const int MostTrafficBeforeJams = 60;
 
     private readonly ZoneGrowth _growth;
 
@@ -170,7 +174,10 @@ public sealed class CitySimulation
     /// <summary>How well fire and police stations cover the city, and how many there are.</summary>
     public ServiceCoverage Services { get; }
 
-    /// <summary>The road tiles the scan counted this cycle, a bridge counting five, as the roads' upkeep counts them.</summary>
+    /// <summary>
+    /// The road tiles the scan counted this cycle, as the roads' upkeep counts them: a bridge counts
+    /// five, and a road showing heavy traffic one more.
+    /// </summary>
     public int RoadTiles { get; private set; }
 
     // The road tiles and stations as of the last count's budget, which a fresh estimate works from.
@@ -268,7 +275,16 @@ public sealed class CitySimulation
         Budget.Accrue(EstimateBudget());
         if (CityTime % CityBudget.CountsPerYear == 0)
         {
-            YearSettled?.Invoke(Budget.Settle(Treasury));
+            var year = Budget.Settle(Treasury);
+
+            // Micropolis' yearly evaluation works the traffic average out after the taxes, and
+            // only for a city with people in it; an empty one keeps the last.
+            if (Demand.TaxablePopulation != 0)
+            {
+                Traffic.UpdateAverage(Maps);
+            }
+
+            YearSettled?.Invoke(year);
         }
     }
 
@@ -323,6 +339,11 @@ public sealed class CitySimulation
         {
             MessageSent?.Invoke(CityMessage.PoliceNeedsFunding);
         }
+
+        if (count == TrafficJamsCount && Traffic.Average > MostTrafficBeforeJams)
+        {
+            MessageSent?.Invoke(CityMessage.TrafficJams);
+        }
     }
 
     // The scan reaches each zone and plant at its centre, as in Micropolis: it counts plants for
@@ -375,7 +396,8 @@ public sealed class CitySimulation
 
     // As in Micropolis, the scan counts each road tile for the roads' upkeep, and when the roads
     // are underfunded a tile now and then crumbles: to rubble on land, back to water as a bridge.
-    // A road crossing a power line never crumbles.
+    // A road crossing a power line never crumbles. A road that stands shows the traffic its block
+    // has now, and one that showed heavy traffic counts again.
     private void VisitRoad(int x, int y, TileState state)
     {
         RoadTiles++;
@@ -392,6 +414,11 @@ public sealed class CitySimulation
         if (state.IsBridge)
         {
             RoadTiles += BridgeRoadTiles - 1;
+        }
+
+        if (Traffic.Show(x, y) == TrafficLevel.Heavy)
+        {
+            RoadTiles++;
         }
     }
 
@@ -423,6 +450,7 @@ public sealed class CitySimulation
             BudgetedPoliceStations = _budgetedPoliceStations,
         },
         Traffic = Traffic.Capture(),
+        RoadTraffic = Traffic.CaptureRoads(),
     };
 
     /// <summary>Makes a city from a save, checking each part as it goes.</summary>
@@ -471,6 +499,7 @@ public sealed class CitySimulation
         city._budgetedFireStations = SaveChecks.InRange(cycle.BudgetedFireStations, 0, int.MaxValue, "cycle.budgetedFireStations");
         city._budgetedPoliceStations = SaveChecks.InRange(cycle.BudgetedPoliceStations, 0, int.MaxValue, "cycle.budgetedPoliceStations");
         city.Traffic.Restore(save.Traffic ?? throw new InvalidSave("traffic: missing."));
+        city.Traffic.RestoreRoads(save.RoadTraffic ?? throw new InvalidSave("roadTraffic: missing."));
         return city;
     }
 

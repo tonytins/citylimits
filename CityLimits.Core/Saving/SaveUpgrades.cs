@@ -10,7 +10,7 @@ namespace CityLimits.Core.Saving;
 internal static class SaveUpgrades
 {
     /// <summary>The save model's version, which both save formats write.</summary>
-    public static readonly FormatVersion Current = new(1, 2);
+    public static readonly FormatVersion Current = new(1, 3);
 
     /// <summary>Upgrades a save in place, from whatever older 1.x version it is.</summary>
     public static void ToCurrent(CitySave save)
@@ -22,6 +22,11 @@ internal static class SaveUpgrades
         }
 
         // 1.2 added the parts list, which a save from before simply has no newer parts in.
+        if (save.Format < new FormatVersion(1, 3))
+        {
+            AddRoadTraffic(save);
+        }
+
         save.Format = Current;
     }
 
@@ -32,6 +37,16 @@ internal static class SaveUpgrades
         if (save.Map is { Width: >= 1 and <= MapCodec.MaxSide, Height: >= 1 and <= MapCodec.MaxSide } map)
         {
             save.Traffic ??= new TrafficSave { Density = new int[TrafficMap.BlocksFor(map.Width, map.Height)] };
+        }
+    }
+
+    // 1.3 added the traffic each road shows and the year's average. A city from before shows quiet
+    // roads, which the scan sets from its traffic within a cycle, and averages nothing until the year ends.
+    private static void AddRoadTraffic(CitySave save)
+    {
+        if (save.Map is { Width: >= 1 and <= MapCodec.MaxSide, Height: >= 1 and <= MapCodec.MaxSide } map)
+        {
+            save.RoadTraffic ??= new RoadTrafficSave { Levels = [.. Enumerable.Repeat(new string('0', map.Width), map.Height)], Average = 0 };
         }
     }
 }

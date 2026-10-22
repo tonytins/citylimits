@@ -44,7 +44,7 @@ public sealed class HeadlessRun
         BuildDemoTown(simulation);
 
         simulation.YearSettled += year => Logger.Info(
-            "tick {Tick}: the year's budget: taxes ${Taxes} at {Rate}%, roads ${Roads}, fire ${Fire}, police ${Police}, cash flow ${CashFlow}{Cut}",
+            "tick {Tick}: the year's budget: taxes ${Taxes} at {Rate}%, roads ${Roads}, fire ${Fire}, police ${Police}, cash flow ${CashFlow}{Cut}; traffic average {Traffic}",
             simulation.TickCount,
             year.TaxIncome,
             year.TaxRate,
@@ -52,7 +52,8 @@ public sealed class HeadlessRun
             year.FireFunded,
             year.PoliceFunded,
             year.CashFlow,
-            year.Cut ? ", funding cut" : string.Empty);
+            year.Cut ? ", funding cut" : string.Empty,
+            simulation.Traffic.Average);
 
         var messages = new CityMessageFilter();
         simulation.MessageSent += message =>

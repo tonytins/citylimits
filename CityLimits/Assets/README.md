@@ -86,6 +86,12 @@ looking at the drawings in this copy of the sheet:
 A road over water is a bridge: tile 64 runs across, and tile 65 runs down,
 used when the bridge joins a road only above or below it.
 
+Traffic is drawn over a road, a bridge, or a road crossing a line, from
+the drawing for the same road in one of four animation frames: the road's
+index less 64, added to 80, 128, 112, or 96 for light traffic, and 144,
+192, 176, or 160 for heavy, played in that order, as Micropolis plays
+them. Tiles 79 and 95, a drawbridge, aren't used.
+
 Rubble, which a bulldozed zone leaves, is tiles 44 to 47, chosen by the
 tile's place.
 

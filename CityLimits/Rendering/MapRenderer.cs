@@ -7,15 +7,20 @@ public sealed class MapRenderer : IDisposable
     public const int TileSize = 16;
 
     private readonly TileMap _map;
+    private readonly TrafficMap? _traffic;
     private readonly Texture2D? _sheet;
     private readonly MapChunkCache? _chunks;
 
-    /// <summary>Creates a renderer for a map, with the given assets. Call it after the window is open.</summary>
-    public MapRenderer(TileMap map, GameAssets? assets)
+    /// <summary>
+    /// Creates a renderer for a map, with the given assets and, when the roads are to show it, the
+    /// city's traffic. Call it after the window is open.
+    /// </summary>
+    public MapRenderer(TileMap map, GameAssets? assets, TrafficMap? traffic = null)
     {
         ArgumentNullException.ThrowIfNull(map);
 
         _map = map;
+        _traffic = traffic;
         _sheet = assets?.TileSheet;
         _chunks = MapChunkCache.TryCreate(map, _sheet);
     }
@@ -42,8 +47,11 @@ public sealed class MapRenderer : IDisposable
     /// <summary>Redraws whatever changed in the map since the last frame. Call it before <c>BeginDrawing</c>.</summary>
     public void Refresh() => _chunks?.Refresh();
 
-    /// <summary>Draws the map, and only the part the camera can see. Call it inside <c>BeginMode2D</c>.</summary>
-    public void Draw(Camera camera)
+    /// <summary>
+    /// Draws the map, and only the part the camera can see, with the roads' traffic in the given
+    /// animation frame. Call it inside <c>BeginMode2D</c>.
+    /// </summary>
+    public void Draw(Camera camera, int trafficFrame = 0)
     {
         var (minX, minY, maxX, maxY) = VisibleRange(_map, camera);
 
@@ -61,6 +69,8 @@ public sealed class MapRenderer : IDisposable
                 }
             }
         }
+
+        DrawTraffic(minX, minY, maxX, maxY, trafficFrame);
 
         if (camera.Zoom >= 0.75f)
         {
@@ -100,6 +110,34 @@ public sealed class MapRenderer : IDisposable
                 {
                     Raylib.DrawTexturePro(_sheet.Value, TileAtlas.SourceFor(TileAtlas.LightningBoltTile), destination, Vector2.Zero, 0f, Color.White);
                 }
+            }
+        }
+    }
+
+    // The traffic moves every frame, so it is drawn over the cached map, not into it: each road
+    // showing traffic is drawn again, cars and all, from its frame of the sheet's animation. With
+    // no sheet the roads stay their flat colour.
+    private void DrawTraffic(int minX, int minY, int maxX, int maxY, int frame)
+    {
+        if (_traffic is null || _sheet is null)
+        {
+            return;
+        }
+
+        for (var y = minY; y <= maxY; y++)
+        {
+            for (var x = minX; x <= maxX; x++)
+            {
+                var level = _traffic.LevelAt(x, y);
+                if (level == TrafficLevel.None)
+                {
+                    continue;
+                }
+
+                var state = _map.StateAt(x, y);
+                var road = TileAtlas.IndexFor(state, RoadNetwork.ConnectionsAt(_map, x, y), PowerLines.ConnectionsAt(_map, x, y), TerrainSides.None, state, x, y);
+                var destination = new Rectangle { X = x * TileSize, Y = y * TileSize, Width = TileSize, Height = TileSize };
+                Raylib.DrawTexturePro(_sheet.Value, TileAtlas.SourceFor(TileAtlas.TrafficIndexFor(road, level, frame)), destination, Vector2.Zero, 0f, Color.White);
             }
         }
     }

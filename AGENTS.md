@@ -31,7 +31,7 @@ CityLimits.Core/              engine-free library: the world and the simulation,
   GlobalUsings.cs               global usings shared by the project
   Randomness/                   namespace CityLimits.Core.Randomness: the seeded generator the simulation owns
   World/                        namespace CityLimits.Core.World: the map and its default size, the tiles and their footprints, the terrain and its edges, the tile rules, the build actions, roads, power lines
-  Simulation/                   namespace CityLimits.Core.Simulation: the clock, the calendar, the tick and its cycle, the census, demand, growth, trips, the city maps, the power grid, service coverage, the city's messages
+  Simulation/                   namespace CityLimits.Core.Simulation: the clock, the calendar, the tick and its cycle, the census, demand, growth, trips, traffic and its animation, the city maps, the power grid, service coverage, the city's messages
   Economy/                      namespace CityLimits.Core.Economy: the treasury, the costs, the budget
   Settings/                     namespace CityLimits.Core.Settings: the settings that survive a session, and the folders the game keeps its files in
   Formats/                      namespace CityLimits.Core.Formats: format versions, and the JSON Schemas generated from the readers
@@ -126,7 +126,10 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   each tile whose state changes, and the cache redraws that tile's chunk,
   and its neighbours', because a road's, a shore's, and a wood's drawing depends on them, before the
   next frame begins. If the textures can't be made, the log says so and
-  the map is drawn tile by tile, which gives the same picture.
+  the map is drawn tile by tile, which gives the same picture. Traffic
+  moves, so it is drawn over the cached map each frame: each road
+  showing traffic is drawn again from its frame of the sheet's animation
+  (`TileAtlas.TrafficIndexFor`).
 - **The camera.** The WASD keys and the arrow keys pan, the mouse wheel
   zooms toward the pointer, and the view is clamped to the map.
 - **The clock.** Time runs as in Micropolis. A tick is one step of the
@@ -260,8 +263,18 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   at 240 only one time in six; CityLimits always does, as Tony Bark
   chose. Phase 10 fades every block: by 34 above 200, by 24 above 24, and
   to nothing below. The headless run logs the busiest block each month.
-  Traffic has no effect on the city yet: the roads showing it, the upkeep
-  of heavy traffic, and the traffic average come in Radial's R2.
+  When the scan passes a road, bridge, or crossing, it shows the level
+  its block calls for (`TrafficMap.LevelAt`): none below 64, light to 191,
+  heavy from 192, kept apart from the tile state as Micropolis keeps it
+  in the road's drawing; a tile that changes starts again quiet. A road
+  that showed heavy traffic when the scan reached it counts once more
+  toward the roads' upkeep. The game draws light and heavy traffic from
+  the sheet's four-frame animations, a frame every eighth of a second at
+  Normal and every 25 ms faster (`TrafficAnimation`), still while paused,
+  as Micropolis does. Each year, after the taxes and only for a city with
+  people, the city works out its traffic average (`TrafficMap.Average`):
+  the traffic on every tile with land value, averaged, times 2.4. Above
+  60, the city reports frequent traffic jams.
 - **The census and demand.** As in Micropolis, the scan adds each zone's
   population to the census (`CityCensus`), which starts again every
   cycle and is recorded once a month, keeping ten years of history; the
@@ -284,7 +297,7 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   eighths, plus commerce and industry) times average land value over
   120, as whole numbers, times the tax rate (0 to 20%, 7% to start) and
   Easy's 1.4. Upkeep is the road tiles the scan counted (a bridge counts
-  five) times Easy's 0.7, and $100 a police or fire station, each paid at
+  five, and a road showing heavy traffic one more) times Easy's 0.7, and $100 a police or fire station, each paid at
   its funding level; when the money runs out, roads are paid first, then
   fire, then police, and the rest is cut. Roads funded below 30 of 32
   crumble now and then, to rubble or back to water, never at a crossing.
@@ -348,7 +361,7 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   on it moves the view there. A row of buttons under it switches it
   between the city, power (a building lit or dark by what its centre
   last had, and the lines grey), fire and police coverage, land value,
-  and population density, each map in four bands of its own colours over
+  population density, and traffic, each map in four bands of its own colours over
   the city dimmed. It reads the simulation and never writes it, and it is
   drawn into its own texture, redrawn when a tile changes, the mode
   changes, or a count begins; without the texture it is drawn straight to
@@ -457,7 +470,7 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   grow: a coal plant, a road, and three zones. Each month's line includes
   the tiles powered and the capacity, and the busiest road's traffic,
   each settled year's budget gets a
-  line, and the city's messages are logged as warnings. `--ticks` without `--headless` is refused, because
+  line with the traffic average, and the city's messages are logged as warnings. `--ticks` without `--headless` is refused, because
   the window runs until it is closed.
 - **Scenarios.** A scenario is a city set up from a file: a seed, tool
   strokes made at set ticks, and checks on tiles, zones, funds, and
@@ -499,7 +512,7 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   and no project. It holds the parser, the dispatcher, the default
   command, the strict option reader, and the exit codes.
 - **The tests.** `CityLimits.Tests` uses xUnit 2 with the VSTest runner
-  and coverlet, and holds 640 tests over opening newer saves, traffic, saving, loading, autosave, importing Micropolis cities, format versions and schemas, with a city
+  and coverlet, and holds 657 tests over opening newer saves, traffic and its animation, saving, loading, autosave, importing Micropolis cities, format versions and schemas, with a city
   the owner built in both formats in `CityLimits.Tests/Assets/`, the generator, the terrain edges, the power plants, lines, and grid, the budget, the stations and their coverage, parks, hospitals and churches, the map, the
   calendar, the clock, the simulation, the settings, the tile rules, the
   build actions, the road network, the treasury, the scenario loader and
@@ -672,8 +685,9 @@ without reflection.
   number from before, `1`, reads as `1.0`. A binary save keeps its major
   version in the header and its minor in the `VERS` chunk, and new state
   goes in new chunks, never new fields in old ones. The scenario report's
-  `format` stays a whole number, since scripts read it. Saves are at 1.2:
-  1.1 added traffic and 1.2 the parts list.
+  `format` stays a whole number, since scripts read it. Saves are at 1.3:
+  1.1 added traffic, 1.2 the parts list, and 1.3 the traffic each road
+  shows and the year's average.
 - **Older saves climb one minor version at a time,** each step a small
   function in `SaveUpgrades`, with a test from a fixture; Bridgeport's
   fixtures in `CityLimits.Tests/Assets/` stay at 1.0 for that.

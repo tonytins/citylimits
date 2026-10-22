@@ -1,6 +1,6 @@
 # CityLimits roadmap
 
-> **Last reviewed:** 2026-10-21 · **Last updated:** 2026-10-22 · **Change:** minor (newer saves open in older versions, and settings fall back one by one) · **Stage:** alpha
+> **Last reviewed:** 2026-10-21 · **Last updated:** 2026-10-22 · **Change:** minor (Radial R2: traffic on the roads, its upkeep, its average, and its overview mode) · **Stage:** alpha
 
 Forward-looking: where CityLimits stands, what blocks the next milestone,
 and what comes next. Verified status and evidence are in the
@@ -62,17 +62,17 @@ Next, in order:
 | Line City: Roads and zoning | 100% | 0 | Meets the baseline: strokes with a preview, straight roads and bridges, 3 by 3 zones laid as a grid and served from their edges, and the $1 bulldozer, at Micropolis' prices |
 | Kowloon: Simulation core | 100% | 0 | Time runs as in Micropolis: the 16-phase cycle, the 48ths-of-a-year calendar, and its pace. Scenarios run from files and from the command line. Zones grow and decline one by one, with population, demand, and trips. The heart of the game |
 | Joffburg: Services and economy | 100% | 0 | Meets the baseline: power, taxes and the budget, services (stations, coverage, parks, hospitals, and churches), and the overview map with its power, coverage, land value, and density modes, as in Micropolis |
-| Radial: Traffic and commuting | 50% | 10–17 | R0 and R1 are in: versioned file formats with schemas, read without reflection, and the traffic map trips leave, saved from format 1.1. What traffic shows and costs, and rail, are left |
+| Radial: Traffic and commuting | 75% | 6–10 | R0 to R2 are in: versioned file formats with schemas, read without reflection, the traffic map trips leave, and what it shows and costs: animated light and heavy traffic, heavy roads' upkeep, the yearly average and its message, and the overview's Traffic mode. Rail is left |
 | Deadwood: Land value, pollution, disasters | 0% | 12–20 | Nothing yet |
 | Happy Isle: Player-facing game | 50% | 6–10 | The palette, laid out as Micropolis', and the HUD, with its top bar after the owner's mock-up, are in; the budget, demand, and city panels and the overview's power mode are too, and cities save, load, autosave, and import from Micropolis. The city score and map size on the start screen are left |
 | Yokohama: Polish and release | 0% | 10–20 | Nothing yet |
-| | **Total** | **≈ 38–67** | |
+| | **Total** | **≈ 34–60** | |
 
 ## Upcoming work, ranked
 
 | Rank | Work | Milestone | Estimate (h) |
 |---|---|---|---|
-| 1 | Radial R2 and R3: what traffic shows and costs, and rail | Radial | 10–17 |
+| 1 | Radial R3: rail | Radial | 6–10 |
 
 Every row of the alpha gate passes, and CityLimits is an alpha since 0.3.100.
 
@@ -214,10 +214,10 @@ pollution, in Deadwood.
   other road tile it passed, on 2 by 2 blocks, fading each cycle, capped
   at 240 (where Micropolis caps it only one time in six, Tony Bark chose
   always). Saved from format 1.1, with 1.0 saves upgraded.
-- [ ] R2: what traffic shows and costs. Animated light and heavy traffic
+- [x] R2: what traffic shows and costs. Animated light and heavy traffic
   on roads, heavy traffic counting twice toward road upkeep, the yearly
   traffic average and its message, and a traffic mode on the overview
-  map.
+  map. Saved from format 1.3.
 - [ ] R3: rail, as in Micropolis: a rail tool, rail crossing roads and
   power lines, and trips along rail as well as roads.
 
@@ -327,6 +327,7 @@ baseline's growth depends on.
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-22 | minor | Radial, R2, as in Micropolis: the scan shows each road light traffic from 64 and heavy from 192, drawn over the map from the sheet's four-frame animations at Micropolis' pace; a road that showed heavy traffic counts twice toward upkeep, which leaves the demo town $6 poorer after two years; the year's traffic average reports jams above 60; and the overview gains a Traffic mode, its buttons in two rows. Saves move to format 1.3. Radial is at 75%; 34–60 h left in total, 657 tests. |
 | 2026-10-22 | minor | An update of its own before Radial's R2, settled with Tony Bark: from 0.3.103 a newer save opens in an older version when every part it doesn't know is ignorable, by a parts list each save carries with two flags a part, as PNG does, and the keepable parts are written back in their own format; saves move to format 1.2 for the list. Autosaves follow their city's format. Each setting falls back on its own, so one bad value keeps the rest. 640 tests. |
 | 2026-10-22 | minor | Radial, R1: the traffic map, as in Micropolis. A trip that arrives lays 50 on each road tile it remembered, on 2 by 2 blocks, capped at 240 always (Micropolis caps only one time in six; Tony Bark chose always), and phase 10 fades it. Saves move to format 1.1 with a `traffic` section and a `TRAF` chunk; 1.0 saves upgrade to quiet roads. The headless run logs the busiest road. Traffic has no effect until R2. Radial is at 50%; 38–67 h left in total, 626 tests. |
 | 2026-10-22 | minor | Radial begins, phase R0, settled with Tony Bark: saves, scenarios, and mod files carry major.minor format versions (a minor version only adds; each new Micropolis edition takes the next), every JSON format reads through source-generated code with reflection-based JSON off in the game and tests, Core is trim-analysed, and `docs/schemas/` holds JSON Schemas generated from the readers and checked by a test. Radial's checklist becomes R0 to R3, rail included, and the congestion item is dropped. Radial is at 25%; 41–72 h left in total, 618 tests. |

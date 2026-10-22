@@ -29,4 +29,7 @@ public enum CityMessage
 
     /// <summary>The police stations are funded below 70%, in a city of more than 20 people.</summary>
     PoliceNeedsFunding,
+
+    /// <summary>The year's traffic average is above 60.</summary>
+    TrafficJams,
 }

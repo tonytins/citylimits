@@ -11,6 +11,7 @@ public sealed class GameLoop : IDisposable
     private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
 
     private readonly GameClock _clock = new();
+    private readonly TrafficAnimation _trafficAnimation = new();
     private readonly CitySimulation _simulation;
     private readonly Camera _camera = new();
     private readonly ToolPalette _tools = new();
@@ -103,7 +104,7 @@ public sealed class GameLoop : IDisposable
         _simulation.MessageSent += ShowMessage;
         _simulation.YearSettled += OnYearSettled;
 
-        _mapRenderer = new MapRenderer(map, assets);
+        _mapRenderer = new MapRenderer(map, assets, _simulation.Traffic);
         Logger.Info(_mapRenderer.IsCached ? "The map is drawn from cached chunks" : "The map is drawn tile by tile");
         _toolPaletteView = new ToolPaletteView(assets, definitions);
         _overview = new OverviewMap(_simulation);
@@ -202,6 +203,7 @@ public sealed class GameLoop : IDisposable
         }
 
         _simulation.Roads.EnsureCurrent(_simulation.Map);
+        _trafficAnimation.Advance(elapsed, _modal == Modal.None ? _settings.Speed : GameSpeed.Paused);
 
         if (_autosave.Advance(elapsed, _settings.Speed > 0 && _modal == Modal.None))
         {
@@ -229,7 +231,7 @@ public sealed class GameLoop : IDisposable
         var mouse = Raylib.GetMousePosition();
 
         Raylib.BeginMode2D(_camera.ToRaylib());
-        _mapRenderer.Draw(_camera);
+        _mapRenderer.Draw(_camera, _trafficAnimation.Frame);
         _mapRenderer.DrawUnpowered(_camera, Raylib.GetTime());
         if (_stroke is not null)
         {

@@ -20,6 +20,9 @@ public enum OverviewMode
 
     /// <summary>Where people are.</summary>
     PopulationDensity,
+
+    /// <summary>How busy the roads are.</summary>
+    Traffic,
 }
 
 /// <summary>
@@ -37,6 +40,10 @@ public sealed class OverviewMap : IDisposable
     private const int MostHeight = 200;
     private const int Padding = 6;
     private const int ButtonHeight = 18;
+    private const int ButtonGap = 2;
+
+    // The buttons are laid out in rows of this many, so each label fits its button.
+    private const int ButtonsPerRow = 4;
     private const int FontSize = 10;
     private const int Top = Hud.BarHeight + 40;
     private const int Margin = 8;
@@ -47,7 +54,7 @@ public sealed class OverviewMap : IDisposable
     private const int HighDensity = 200;
 
     private static readonly OverviewMode[] Modes = Enum.GetValues<OverviewMode>();
-    private static readonly string[] Labels = ["City", "Power", "Fire", "Police", "Value", "People"];
+    private static readonly string[] Labels = ["City", "Power", "Fire", "Police", "Value", "People", "Traffic"];
 
     private readonly CitySimulation _city;
     private readonly RenderTexture2D? _texture;
@@ -192,6 +199,7 @@ public sealed class OverviewMap : IDisposable
             OverviewMode.PoliceCoverage => Band(_city.Services.PoliceCoverageAt(x, y), HighCoverage, city),
             OverviewMode.LandValue => Band(_city.Maps.LandValueAt(x, y), CityMaps.MaxLandValue, city),
             OverviewMode.PopulationDensity => Band(_city.Maps.DensityAt(x, y), HighDensity, city),
+            OverviewMode.Traffic => Band(_city.Traffic.DensityAt(x, y), TrafficMap.Most, city),
             _ => city,
         };
     }
@@ -259,7 +267,7 @@ public sealed class OverviewMap : IDisposable
         var width = (float)_city.Map.Width * PixelsPerTile;
         var height = (float)_city.Map.Height * PixelsPerTile;
         var scale = Math.Min(1f, Math.Min(MostWidth / width, MostHeight / height));
-        return new Vector2(Math.Max(width * scale, MostWidth) + (Padding * 2), (height * scale) + ButtonHeight + (Padding * 3));
+        return new Vector2(Math.Max(width * scale, MostWidth) + (Padding * 2), (height * scale) + ButtonRowsHeight() + (Padding * 3));
     }
 
     private Rectangle Bounds()
@@ -268,15 +276,20 @@ public sealed class OverviewMap : IDisposable
         return new Rectangle { X = Raylib.GetScreenWidth() - Margin - size.X, Y = Top, Width = size.X, Height = size.Y };
     }
 
+    private static int ButtonRows() => (Modes.Length + ButtonsPerRow - 1) / ButtonsPerRow;
+
+    private static int ButtonRowsHeight() => (ButtonRows() * ButtonHeight) + ((ButtonRows() - 1) * ButtonGap);
+
     private Rectangle ButtonBounds(int index)
     {
         var bounds = Bounds();
-        var width = (bounds.Width - (Padding * 2)) / Modes.Length;
+        var width = (bounds.Width - (Padding * 2)) / ButtonsPerRow;
+        var row = index / ButtonsPerRow;
         return new Rectangle
         {
-            X = bounds.X + Padding + (index * width),
-            Y = bounds.Y + bounds.Height - Padding - ButtonHeight,
-            Width = width - 2,
+            X = bounds.X + Padding + (index % ButtonsPerRow * width),
+            Y = bounds.Y + bounds.Height - Padding - ButtonRowsHeight() + (row * (ButtonHeight + ButtonGap)),
+            Width = width - ButtonGap,
             Height = ButtonHeight,
         };
     }

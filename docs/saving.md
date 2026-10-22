@@ -72,7 +72,8 @@ game is paused:
   A city keeps them, so it loads the same even if the mods folder has
   changed since;
 - the map, as described below;
-- the traffic on the roads, from format 1.1;
+- the traffic on the roads, from format 1.1, and the traffic each road
+  shows and the year's traffic average, from format 1.3;
 - the census and demand with their histories, the power grid's last trace
   and this cycle's count, police and fire coverage, hospitals and
   churches, land value, population density, the terrain's worth, and the
@@ -104,6 +105,7 @@ size of the same city as `.fcl`.
 | `BUDG`, `CENS`, `DEMD`, `POWR`, `SERV`, `COMM`, `CMAP`, `CYCL` | The budget, the census, demand, power, services, hospitals and churches, the city maps, and the cycle's counts |
 | `TRAF` | The traffic on each 2 by 2 block; from format 1.1 |
 | `PART` | The parts list (see Opening a newer save); from format 1.2, written after `VERS` |
+| `RTRF` | The traffic each road shows, and the year's average; from format 1.3 |
 
 Each tile's word holds, from its lowest bit: the ground (2 bits), the use
 (4 bits), the footprint part (4 bits), power (1 bit), and 5 bits more: a
@@ -245,6 +247,7 @@ baseline that adds to the city takes the next minor version.
 | 1.0 | The first versioned saves | |
 | 1.1 | Traffic: `"traffic"`, and the `TRAF` chunk | The roads start quiet, and the city's trips fill them again |
 | 1.2 | The parts list: `"parts"`, and the `PART` chunk, so a newer save can open in an older game | Nothing: a save without a list has no newer parts |
+| 1.3 | The traffic each road shows and the year's traffic average: `"roadTraffic"`, and the `RTRF` chunk | The roads show no traffic until the scan passes them, within a cycle, and the average is 0 until the year ends |
 - **Growing the binary format.** New state goes in new chunks, not new
   fields in old ones, so a minor version stays an addition.
 - **The flat format** writes its version as a string, `"1.0"`, so 1.10

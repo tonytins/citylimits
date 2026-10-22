@@ -1,5 +1,26 @@
 # CityLimits Changelog
 
+## 0.3.104
+
+Traffic now shows on your roads. Cars appear on a road when its block
+gets busy and pack it when traffic is heavy, on bridges and crossings
+too, and they move while the city runs and stop while it's paused, as in
+Micropolis.
+
+Busy roads cost more: a road that's showing heavy traffic when the
+simulation passes it counts twice toward the roads' upkeep, as in
+Micropolis. Each year the city works out its average traffic, and if
+it's high, you'll hear that traffic jams are frequent.
+
+The overview map has a Traffic mode, and its buttons are now in two rows
+so their names fit.
+
+For developers and agents: saves are format 1.3, adding the traffic each
+road shows and the year's average (`"roadTraffic"`, and the `RTRF`
+chunk); older saves start with quiet roads. The headless run's yearly
+line includes the traffic average. The demo town's funds after two years
+are now $16,603, down from $16,609.
+
 ## 0.3.103
 
 From this version on, CityLimits can open a city saved by a newer

@@ -120,7 +120,7 @@ simulation is deterministic in. Phase 2 adds goals by date, such as
     { "tick": 1536, "count": "Developed", "equals": 1 },
     { "tick": 1536, "tile": { "x": 38, "y": 50 }, "served": true, "powered": true },
     { "tick": 1536, "tile": { "x": 42, "y": 52 }, "kind": "Rubble", "use": "None" },
-    { "tick": 1536, "fundsEquals": 16609 },
+    { "tick": 1536, "fundsEquals": 16603 },
     { "tick": 1536, "count": "Road", "equals": 9 },
     { "tick": 1536, "count": "Industrial", "equals": 0 }
   ]
@@ -282,7 +282,7 @@ scripts already reading it keep working.
     "tick": 1536,
     "cityTime": 96,
     "date": "1902-01",
-    "funds": 16609,
+    "funds": 16603,
     "counts": { "road": 9, "bridge": 0, "residential": 1, "commercial": 1, "industrial": 0, "developed": 1, "coalPowerPlant": 1, "nuclearPowerPlant": 0, "powerLine": 0, "fireStation": 0, "policeStation": 0, "park": 0, "hospital": 0, "church": 0 }
   },
   "actions": [

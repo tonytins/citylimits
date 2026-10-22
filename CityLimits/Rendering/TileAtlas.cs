@@ -200,6 +200,34 @@ public static class TileAtlas
         76, // all four: a crossroads
     ];
 
+    // The first road drawing; each traffic frame holds a drawing for every road drawing after it,
+    // in the same order, so a road's traffic is its offset from here in that frame.
+    private const int FirstRoadTile = 64;
+    private const int LastRoadTile = RoadDownPowerLineTile;
+
+    /// <summary>How many frames each level of traffic is animated in.</summary>
+    public const int TrafficFrames = 4;
+
+    // As Micropolis plays them: each frame becomes the next in this order, which moves the cars on.
+    private static readonly int[] LightTrafficFrames = [80, 128, 112, 96];
+    private static readonly int[] HeavyTrafficFrames = [144, 192, 176, 160];
+
+    /// <summary>
+    /// The sheet index that draws a road's traffic in an animation frame, given the road's own
+    /// drawing from <see cref="IndexFor"/>; the road's own drawing for a quiet road or one the
+    /// sheet has no traffic for.
+    /// </summary>
+    public static int TrafficIndexFor(int roadIndex, TrafficLevel level, int frame)
+    {
+        if (roadIndex is < FirstRoadTile or > LastRoadTile || level == TrafficLevel.None)
+        {
+            return roadIndex;
+        }
+
+        var frames = level == TrafficLevel.Heavy ? HeavyTrafficFrames : LightTrafficFrames;
+        return frames[((frame % TrafficFrames) + TrafficFrames) % TrafficFrames] + (roadIndex - FirstRoadTile);
+    }
+
     /// <summary>
     /// The sheet index that draws a tile, given the sides of it that join a road, the sides that
     /// join something carrying power, the sides with the same ground beside them, and, for a

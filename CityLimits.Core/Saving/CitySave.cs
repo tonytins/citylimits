@@ -62,6 +62,9 @@ internal sealed class CitySave
     /// <summary>How busy the roads are; from format 1.1, and empty for a city upgraded from 1.0.</summary>
     public TrafficSave? Traffic { get; set; }
 
+    /// <summary>The traffic each road shows, and the year's average; from format 1.3, and quiet for a city upgraded from before.</summary>
+    public RoadTrafficSave? RoadTraffic { get; set; }
+
     /// <summary>
     /// A newer save's sections this version doesn't know, caught as they are so they can be checked
     /// against the parts list and written back. Unknown fields inside a known section are still refused.
@@ -327,4 +330,14 @@ internal sealed class TrafficSave
 {
     /// <summary>Each 2 by 2 block's traffic, row by row.</summary>
     public required int[] Density { get; set; }
+}
+
+[System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(SectionCodec.ModelMembers)]
+internal sealed class RoadTrafficSave
+{
+    /// <summary>Each row of the map, a character a tile: 0 for no traffic, 1 for light, 2 for heavy.</summary>
+    public required string[] Levels { get; set; }
+
+    /// <summary>The traffic average the city last worked out.</summary>
+    public required int Average { get; set; }
 }

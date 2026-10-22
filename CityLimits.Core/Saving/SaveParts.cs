@@ -40,6 +40,10 @@ internal static class SaveParts
     [
         // Traffic is any amount on any road, and fades on its own, so it may be left out or kept stale.
         new() { Name = "traffic", Chunk = "TRAF", Since = "1.1", Ignorable = true, Keepable = true },
+
+        // Each road's traffic is set again by the scan within a cycle, and a level left on a tile
+        // that is no longer a road is dropped when it is read, so it may be left out or kept stale.
+        new() { Name = "roadTraffic", Chunk = "RTRF", Since = "1.3", Ignorable = true, Keepable = true },
     ];
 
     /// <summary>

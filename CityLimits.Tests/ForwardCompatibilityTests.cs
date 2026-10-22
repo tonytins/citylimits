@@ -7,7 +7,7 @@ using CityLimits.Core.World;
 
 namespace CityLimits.Tests;
 
-// A newer CityLimits's save, made by hand: format 1.3, with a "pollution" part this version doesn't
+// A newer CityLimits's save, made by hand: format 1.4, with a "pollution" part this version doesn't
 // know, listed in its parts list with the flags each test gives it.
 public class ForwardCompatibilityTests
 {
@@ -26,7 +26,7 @@ public class ForwardCompatibilityTests
     {
         ["name"] = "pollution",
         ["chunk"] = "POLL",
-        ["since"] = "1.3",
+        ["since"] = "1.4",
         ["ignorable"] = ignorable,
         ["keepable"] = keepable,
     };
@@ -34,7 +34,7 @@ public class ForwardCompatibilityTests
     private static string FutureFlat(bool ignorable, bool keepable, bool listed = true)
     {
         var save = JsonNode.Parse(FlatCityFormat.Write(City()))!.AsObject();
-        save["format"] = "1.3";
+        save["format"] = "1.4";
         save["pollution"] = new JsonObject { ["levels"] = new JsonArray(1, 2, 3) };
         if (listed)
         {
@@ -51,15 +51,15 @@ public class ForwardCompatibilityTests
 
         Assert.Equal(
             [
-                "A newer CityLimits saved this city, in format 1.3; this version reads up to 1.2.",
-                "Its pollution, from 1.3, is kept as it was when you save it.",
+                "A newer CityLimits saved this city, in format 1.4; this version reads up to 1.3.",
+                "Its pollution, from 1.4, is kept as it was when you save it.",
             ],
             notes);
         var written = JsonNode.Parse(FlatCityFormat.Write(city))!.AsObject();
-        Assert.Equal("1.3", written["format"]!.GetValue<string>());
+        Assert.Equal("1.4", written["format"]!.GetValue<string>());
         Assert.Equal("[1,2,3]", written["pollution"]!["levels"]!.ToJsonString());
         Assert.Contains(written["parts"]!.AsArray(), part => part!["name"]!.GetValue<string>() == "pollution");
-        Assert.EndsWith("city-save.v1.3.schema.json", written["$schema"]!.GetValue<string>());
+        Assert.EndsWith("city-save.v1.4.schema.json", written["$schema"]!.GetValue<string>());
 
         // Written back, it opens the same way again.
         Assert.True(FlatCityFormat.TryRead(written.ToJsonString(), out _, out problem, out _), problem);
@@ -70,9 +70,9 @@ public class ForwardCompatibilityTests
     {
         Assert.True(FlatCityFormat.TryRead(FutureFlat(ignorable: true, keepable: false), out var city, out var problem, out var notes), problem);
 
-        Assert.Equal("Its pollution, from 1.3, will be left out when you save it, and the newer version will rebuild it.", notes[1]);
+        Assert.Equal("Its pollution, from 1.4, will be left out when you save it, and the newer version will rebuild it.", notes[1]);
         var written = JsonNode.Parse(FlatCityFormat.Write(city))!.AsObject();
-        Assert.Equal("1.2", written["format"]!.GetValue<string>());
+        Assert.Equal("1.3", written["format"]!.GetValue<string>());
         Assert.Null(written["pollution"]);
         Assert.DoesNotContain(written["parts"]!.AsArray(), part => part!["name"]!.GetValue<string>() == "pollution");
     }
@@ -83,7 +83,7 @@ public class ForwardCompatibilityTests
         Assert.False(FlatCityFormat.TryRead(FutureFlat(ignorable: false, keepable: true), out var city, out var problem));
 
         Assert.Null(city);
-        Assert.Equal("format: this is format 1.3; this version of CityLimits reads up to 1.2, and the file's pollution, from 1.3, can't be left out.", problem);
+        Assert.Equal("format: this is format 1.4; this version of CityLimits reads up to 1.3, and the file's pollution, from 1.4, can't be left out.", problem);
     }
 
     [Fact]
@@ -98,7 +98,7 @@ public class ForwardCompatibilityTests
     public void AnUnknownPartInASaveOfThisVersionIsRefused()
     {
         var save = JsonNode.Parse(FutureFlat(ignorable: true, keepable: true))!.AsObject();
-        save["format"] = "1.2";
+        save["format"] = "1.3";
 
         Assert.False(FlatCityFormat.TryRead(save.ToJsonString(), out _, out var problem));
 
@@ -124,10 +124,10 @@ public class ForwardCompatibilityTests
 
         Assert.True(BinaryCityFormat.TryRead(future, out var city, out var problem, out var notes), problem);
 
-        Assert.Equal("Its pollution, from 1.3, is kept as it was when you save it.", notes[1]);
+        Assert.Equal("Its pollution, from 1.4, is kept as it was when you save it.", notes[1]);
         var written = BinaryCityFormat.Write(city);
         var chunks = Chunks(written);
-        Assert.Equal([0, 3], chunks.Single(chunk => chunk.Tag == "VERS").Payload);
+        Assert.Equal([0, 4], chunks.Single(chunk => chunk.Tag == "VERS").Payload);
         Assert.Equal([7, 8, 9], chunks.Single(chunk => chunk.Tag == "POLL").Payload);
         Assert.True(BinaryCityFormat.TryRead(written, out _, out problem, out _), problem);
     }
@@ -137,7 +137,7 @@ public class ForwardCompatibilityTests
     {
         Assert.False(BinaryCityFormat.TryRead(FutureBinary(ignorable: false, keepable: false), out _, out var problem, out _));
 
-        Assert.Equal("format: this is format 1.3; this version of CityLimits reads up to 1.2, and the file's pollution, from 1.3, can't be left out.", problem);
+        Assert.Equal("format: this is format 1.4; this version of CityLimits reads up to 1.3, and the file's pollution, from 1.4, can't be left out.", problem);
     }
 
     [Fact]
@@ -147,7 +147,7 @@ public class ForwardCompatibilityTests
 
         var chunks = Chunks(BinaryCityFormat.Write(city));
 
-        Assert.Equal([0, 2], chunks.Single(chunk => chunk.Tag == "VERS").Payload);
+        Assert.Equal([0, 3], chunks.Single(chunk => chunk.Tag == "VERS").Payload);
         Assert.DoesNotContain(chunks, chunk => chunk.Tag == "POLL");
     }
 
@@ -159,7 +159,7 @@ public class ForwardCompatibilityTests
     }
 
     // The binary save as docs/saving.md lays it out: the header, then chunks, with the minor version
-    // made 3, the parts list given the pollution part, and the part's own chunk added.
+    // made 4, the parts list given the pollution part, and the part's own chunk added.
     private static byte[] FutureBinary(bool ignorable, bool keepable)
     {
         var bytes = BinaryCityFormat.Write(City());
@@ -168,7 +168,7 @@ public class ForwardCompatibilityTests
         {
             var changed = tag switch
             {
-                "VERS" => [0, 3],
+                "VERS" => [0, 4],
                 "PART" => [.. AddPart(payload, ignorable, keepable)],
                 _ => payload,
             };
@@ -192,7 +192,7 @@ public class ForwardCompatibilityTests
             1,
             .. Text("pollution"),
             .. Text("POLL"),
-            .. Text("1.3"),
+            .. Text("1.4"),
             (byte)(ignorable ? 1 : 0),
             (byte)(keepable ? 1 : 0),
         ];
