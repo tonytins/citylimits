@@ -21,11 +21,12 @@ public enum TripOutcome
 /// own generator, looking for a zone of a kind the zone's spec lists in <see cref="ZoneSpec.TripsTo"/>.
 /// </summary>
 /// <remarks>
-/// The route is remembered every other step, so traffic can be laid along it once roads carry
-/// traffic. A dead end drops the last remembered step and three steps of the drive's reach without
-/// moving the driver, as Micropolis does, so a dead end usually ends the trip.
+/// The route is remembered every other step, and a trip that arrives lays traffic along it on the
+/// city's <see cref="TrafficMap"/>, when it has one. A dead end drops the last remembered step and
+/// three steps of the drive's reach without moving the driver, as Micropolis does, so a dead end
+/// usually ends the trip.
 /// </remarks>
-public sealed class TripPlanner
+public sealed class TripPlanner(TrafficMap? traffic = null)
 {
     /// <summary>The most road tiles a trip drives.</summary>
     public const int MaxDistance = 30;
@@ -72,6 +73,7 @@ public sealed class TripPlanner
             {
                 if (IsBesideDestination(map, definitions, spec, x, y))
                 {
+                    traffic?.AddRoute(map, _route);
                     return TripOutcome.Arrived;
                 }
             }

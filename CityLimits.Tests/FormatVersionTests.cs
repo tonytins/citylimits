@@ -51,7 +51,7 @@ public class FormatVersionTests
         var city = new CitySimulation(TileMap.FromTerrain(6, 6, new TileKind[36]), 3);
         var save = JsonNode.Parse(FlatCityFormat.Write(city))!.AsObject();
 
-        Assert.Equal("1.0", save["format"]!.GetValue<string>());
+        Assert.Equal("1.1", save["format"]!.GetValue<string>());
         Assert.Equal(FormatSchemas.UrlFor("city-save", FlatCityFormat.Format), save["$schema"]!.GetValue<string>());
 
         // A save from before major and minor versions wrote a whole number, and no schema.
@@ -75,7 +75,7 @@ public class FormatVersionTests
         System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(newer.AsSpan(18), crc);
 
         Assert.False(BinaryCityFormat.TryRead(newer, out _, out var problem, out _));
-        Assert.Equal("format: this is format 1.7; this version of CityLimits reads up to 1.0.", problem);
+        Assert.Equal("format: this is format 1.7; this version of CityLimits reads up to 1.1.", problem);
     }
 
     [Fact]
@@ -139,7 +139,12 @@ public class FormatSchemaTests
         }
 
         Assert.True(stale.Count == 0, $"Out of date in docs/schemas: {string.Join(", ", stale)}; the new ones are beside the tests as .new files.");
-        Assert.Equal(generated.Keys.Order(), Directory.EnumerateFiles(folder, "*.schema.json").Select(Path.GetFileName).Order());
+
+        // Older versions' schemas stay, since files of those versions name them; nothing else is there.
+        var kinds = generated.Keys.Select(file => file[..file.IndexOf(".v", StringComparison.Ordinal)]).ToHashSet();
+        Assert.All(
+            Directory.EnumerateFiles(folder, "*.schema.json").Select(path => Path.GetFileName(path)),
+            file => Assert.Contains(file[..file.IndexOf(".v", StringComparison.Ordinal)], kinds));
     }
 
     [Fact]

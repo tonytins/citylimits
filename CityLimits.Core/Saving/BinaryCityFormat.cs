@@ -23,7 +23,7 @@ public static class BinaryCityFormat
     /// major version, so files from before minor versions stay valid; the minor version is in a
     /// small <c>VERS</c> chunk, and a file without one is a .0.
     /// </summary>
-    public static readonly FormatVersion Format = new(1, 0);
+    public static readonly FormatVersion Format = SaveUpgrades.Current;
 
     /// <summary>The largest file read, so a damaged or wrong one can't run away with memory.</summary>
     public const long MaxBytes = 16 * 1024 * 1024;
@@ -47,8 +47,12 @@ public static class BinaryCityFormat
     private const string CommunityTag = "COMM";
     private const string CityMapsTag = "CMAP";
     private const string CycleTag = "CYCL";
+    private const string TrafficTag = "TRAF";
 
     private static readonly string[] Required = [CityTag, DefinitionsTag, MapTag, BudgetTag, CensusTag, DemandTag, PowerTag, ServicesTag, CommunityTag, CityMapsTag, CycleTag];
+
+    // The chunks each minor version added, required from that version on; an older file goes without.
+    private static readonly (string Tag, FormatVersion Since)[] Added = [(TrafficTag, new FormatVersion(1, 1))];
 
     /// <summary>Writes a city as the format's bytes.</summary>
     public static byte[] Write(CitySimulation city)
@@ -81,6 +85,7 @@ public static class BinaryCityFormat
         WriteChunk(stream, CommunityTag, SectionCodec.Write(save.Community));
         WriteChunk(stream, CityMapsTag, SectionCodec.Write(save.CityMaps));
         WriteChunk(stream, CycleTag, SectionCodec.Write(save.Cycle));
+        WriteChunk(stream, TrafficTag, SectionCodec.Write(save.Traffic!));
         return stream.ToArray();
     }
 
@@ -198,7 +203,7 @@ public static class BinaryCityFormat
                 continue;
             }
 
-            if (!Required.Contains(tag))
+            if (!Required.Contains(tag) && !Added.Any(added => added.Tag == tag))
             {
                 skipped.Add($"Skipped a chunk this version doesn't know: '{tag}'.");
                 continue;
@@ -216,7 +221,7 @@ public static class BinaryCityFormat
             throw new InvalidSave($"format: {tooNew}");
         }
 
-        var missing = Required.FirstOrDefault(tag => !chunks.ContainsKey(tag));
+        var missing = Required.Concat(Added.Where(added => version >= added.Since).Select(added => added.Tag)).FirstOrDefault(tag => !chunks.ContainsKey(tag));
         if (missing is not null)
         {
             throw new InvalidSave($"{missing.Trim()}: the file is missing it.");
@@ -244,6 +249,7 @@ public static class BinaryCityFormat
             Community = SectionCodec.Read<CommunitySave>(chunks[CommunityTag], CommunityTag),
             CityMaps = SectionCodec.Read<CityMapsSave>(chunks[CityMapsTag], CityMapsTag),
             Cycle = SectionCodec.Read<CycleSave>(chunks[CycleTag], CycleTag),
+            Traffic = chunks.TryGetValue(TrafficTag, out var traffic) ? SectionCodec.Read<TrafficSave>(traffic, TrafficTag) : null,
         };
     }
 

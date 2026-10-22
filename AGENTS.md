@@ -134,7 +134,7 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   (`CitySimulation.Tick`): phase 0 moves the calendar on by a 48th of a
   year, and phases 1 to 8 scan the map in 8 vertical bands; phase 9
   records the census and sets a 48th of the year's taxes and upkeep
-  aside, settling the year when it comes round, 10 checks the city's messages, 11 traces power, 12
+  aside, settling the year when it comes round, 10 fades the traffic and checks the city's messages, 11 traces power, 12
   works out land value, 13 spreads police coverage, 14 population
   density, and 15 fire coverage; 13 and 15 are also where crime, and fire
   and disasters, will run.
@@ -253,7 +253,15 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   straight back, looking for a zone of a kind its spec lists
   (`ZoneSpec.TripsTo`); a residential zone counts only once it has
   people. The outcome is no road, nowhere to go, or arrived, and the
-  route is remembered every other step for traffic later.
+  route is remembered every other step.
+- **Traffic.** As in Micropolis (`TrafficMap`), a trip that arrives lays
+  50 on each road tile it remembered (roads, bridges, and crossings), on
+  2 by 2 blocks, as land value is kept, up to 240 a block. Micropolis caps
+  at 240 only one time in six; CityLimits always does, as Tony Bark
+  chose. Phase 10 fades every block: by 34 above 200, by 24 above 24, and
+  to nothing below. The headless run logs the busiest block each month.
+  Traffic has no effect on the city yet: the roads showing it, the upkeep
+  of heavy traffic, and the traffic average come in Radial's R2.
 - **The census and demand.** As in Micropolis, the scan adds each zone's
   population to the census (`CityCensus`), which starts again every
   cycle and is recorded once a month, keeping ten years of history; the
@@ -443,7 +451,8 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   and `--ticks`, the number of steps, from 0 to 100 000 (768 by default, a
   year), and builds a small demo town first so there is something to
   grow: a coal plant, a road, and three zones. Each month's line includes
-  the tiles powered and the capacity, each settled year's budget gets a
+  the tiles powered and the capacity, and the busiest road's traffic,
+  each settled year's budget gets a
   line, and the city's messages are logged as warnings. `--ticks` without `--headless` is refused, because
   the window runs until it is closed.
 - **Scenarios.** A scenario is a city set up from a file: a seed, tool
@@ -486,7 +495,7 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   and no project. It holds the parser, the dispatcher, the default
   command, the strict option reader, and the exit codes.
 - **The tests.** `CityLimits.Tests` uses xUnit 2 with the VSTest runner
-  and coverlet, and holds 618 tests over saving, loading, autosave, importing Micropolis cities, format versions and schemas, with a city
+  and coverlet, and holds 626 tests over traffic, saving, loading, autosave, importing Micropolis cities, format versions and schemas, with a city
   the owner built in both formats in `CityLimits.Tests/Assets/`, the generator, the terrain edges, the power plants, lines, and grid, the budget, the stations and their coverage, parks, hospitals and churches, the map, the
   calendar, the clock, the simulation, the settings, the tile rules, the
   build actions, the road network, the treasury, the scenario loader and

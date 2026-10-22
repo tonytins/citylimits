@@ -24,7 +24,7 @@ public static class FlatCityFormat
     /// The version of the format this game writes, and the newest it reads. A file of an older minor
     /// version reads too; one written as a whole number, such as <c>1</c>, is 1.0.
     /// </summary>
-    public static readonly FormatVersion Format = new(1, 0);
+    public static readonly FormatVersion Format = SaveUpgrades.Current;
 
     /// <summary>The schema a flat city file names, for editors to check it against.</summary>
     public static string SchemaUrl => FormatSchemas.UrlFor("city-save", Format);

@@ -1,5 +1,21 @@
 # CityLimits Changelog
 
+## 0.3.102
+
+The roads now keep track of traffic. Every time someone in your city
+makes a trip, the roads they drive along get a little busier, and the
+traffic fades away again on roads nobody uses. You can't see it yet:
+drawing it on the roads, and what heavy traffic costs, come next.
+
+Saves now use format 1.1, which includes the traffic. Cities saved
+before load as they were, with quiet roads that fill up again as people
+drive.
+
+For developers and agents: `TrafficMap` holds each 2 by 2 block's
+traffic, the headless run logs the busiest road each month, and
+`docs/saving.md` lists what each save format version added. The schema
+for 1.1 saves is `docs/schemas/city-save.v1.1.schema.json`.
+
 ## 0.3.101
 
 For modders, scenario authors, and agents: saves, scenarios, and mod

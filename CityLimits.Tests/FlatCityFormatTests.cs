@@ -190,8 +190,8 @@ public class FlatCityFormatTests
 
     // Each change breaks one thing in an otherwise good save; the message names what.
     [Theory]
-    [InlineData("format", "2", "format: this is format 2.0; this version of CityLimits reads up to 1.0.")]
-    [InlineData("format", "\"1.1\"", "format: this is format 1.1; this version of CityLimits reads up to 1.0.")]
+    [InlineData("format", "2", "format: this is format 2.0; this version of CityLimits reads up to 1.1.")]
+    [InlineData("format", "\"1.2\"", "format: this is format 1.2; this version of CityLimits reads up to 1.1.")]
     [InlineData("name", "\"\"", "name:")]
     [InlineData("random", "\"xyz\"", "random:")]
     [InlineData("cityTime", "3", "cityTime:")]

@@ -72,7 +72,7 @@ public sealed class HeadlessRun
             {
                 month = simulation.Date;
                 Logger.Info(
-                    "tick {Tick}: {Date}   ${Funds}   population {Population}   demand R {Residential} C {Commercial} I {Industrial}   power {Powered}/{Capacity}",
+                    "tick {Tick}: {Date}   ${Funds}   population {Population}   demand R {Residential} C {Commercial} I {Industrial}   power {Powered}/{Capacity}   busiest road {Traffic}",
                     simulation.TickCount,
                     simulation.Date,
                     simulation.Treasury.Funds,
@@ -81,7 +81,8 @@ public sealed class HeadlessRun
                     simulation.Demand.Commercial,
                     simulation.Demand.Industrial,
                     simulation.Power.PoweredTiles,
-                    simulation.Power.Capacity);
+                    simulation.Power.Capacity,
+                    simulation.Traffic.Busiest);
             }
         }
 

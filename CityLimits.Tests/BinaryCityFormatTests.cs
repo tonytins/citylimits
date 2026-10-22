@@ -72,10 +72,10 @@ public class BinaryCityFormatTests
 
     [Theory]
     [InlineData("magic", "The file isn't a binary CityLimits city")]
-    [InlineData("format", "format: this is format 9.0; this version of CityLimits reads up to 1.0.")]
+    [InlineData("format", "format: this is format 9.0; this version of CityLimits reads up to 1.1.")]
     [InlineData("checksum", "BUDG: is damaged: its checksum doesn't match.")]
     [InlineData("truncated", "The file ends partway through a chunk")]
-    [InlineData("cut short", "CYCL: says it is")]
+    [InlineData("cut short", "TRAF: says it is")]
     [InlineData("length", "CYCL: says it is")]
     [InlineData("duplicate", "CYCL: the file holds it twice.")]
     [InlineData("missing", "CYCL: the file is missing it.")]
@@ -85,6 +85,7 @@ public class BinaryCityFormatTests
         var bytes = BinaryCityFormat.Write(Bridgeport());
         var chunks = Chunks(bytes);
         var cycle = chunks.Single(chunk => chunk.Tag == "CYCL");
+        var afterCycle = cycle.Offset + 12 + cycle.Payload.Length;
         var damaged = damage switch
         {
             "magic" => [.. "NOTCITY"u8, .. bytes[7..]],
@@ -95,7 +96,7 @@ public class BinaryCityFormatTests
             "length" => SetLength(bytes, cycle.Offset, int.MaxValue),
             "duplicate" => bytes.Concat(Chunk("CYCL", cycle.Payload)).ToArray(),
             "missing" => bytes[..cycle.Offset],
-            "leftover" => bytes[..cycle.Offset].Concat(Chunk("CYCL", [.. cycle.Payload, 0])).ToArray(),
+            "leftover" => bytes[..cycle.Offset].Concat(Chunk("CYCL", [.. cycle.Payload, 0])).Concat(bytes[afterCycle..]).ToArray(),
             _ => throw new ArgumentOutOfRangeException(nameof(damage)),
         };
 

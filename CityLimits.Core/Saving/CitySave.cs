@@ -52,6 +52,9 @@ internal sealed class CitySave
     public required CityMapsSave CityMaps { get; set; }
 
     public required CycleSave Cycle { get; set; }
+
+    /// <summary>How busy the roads are; from format 1.1, and empty for a city upgraded from 1.0.</summary>
+    public TrafficSave? Traffic { get; set; }
 }
 
 [System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(SectionCodec.ModelMembers)]
@@ -304,4 +307,11 @@ internal sealed class CycleSave
     public required int BudgetedFireStations { get; set; }
 
     public required int BudgetedPoliceStations { get; set; }
+}
+
+[System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(SectionCodec.ModelMembers)]
+internal sealed class TrafficSave
+{
+    /// <summary>Each 2 by 2 block's traffic, row by row.</summary>
+    public required int[] Density { get; set; }
 }

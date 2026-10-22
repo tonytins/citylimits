@@ -76,6 +76,8 @@ public sealed class CitySimulation
         Builder = new CityBuilder(map, Treasury, Roads, Definitions);
         Maps = new CityMaps(map);
         Services = new ServiceCoverage(map);
+        Traffic = new TrafficMap(map);
+        Trips = new TripPlanner(Traffic);
         Budget = new CityBudget(Definitions.Service(TileUse.FireStation).Upkeep, Definitions.Service(TileUse.PoliceStation).Upkeep);
         _growth = new ZoneGrowth(map, Random, Trips, Definitions, Demand, Maps, Community);
     }
@@ -139,7 +141,10 @@ public sealed class CitySimulation
     public CityDemand Demand { get; } = new();
 
     /// <summary>Sends zones' trips out along the roads, reusing one route buffer.</summary>
-    public TripPlanner Trips { get; } = new();
+    public TripPlanner Trips { get; }
+
+    /// <summary>How busy the roads are: the traffic arriving trips leave, fading each cycle.</summary>
+    public TrafficMap Traffic { get; }
 
     /// <summary>The city's land value, population density, and commercial rate, and its centre of mass.</summary>
     public CityMaps Maps { get; }
@@ -179,7 +184,7 @@ public sealed class CitySimulation
     /// census the last cycle took, and starts the census again. Phases 1 to 8 scan the map in
     /// vertical bands, one band each, counting each zone and deciding whether it grows or
     /// declines, and counting each road tile. Phase 9 records the census once a month and sets a
-    /// 48th of the year's taxes and upkeep aside, settling the year when it comes round; phase 10 checks the city's messages,
+    /// 48th of the year's taxes and upkeep aside, settling the year when it comes round; phase 10 fades the traffic and checks the city's messages,
     /// phase 11 traces power from the plants, phase 12 works out land value, and phase 14
     /// population density and the city's centre. Phases 13 and 15 spread the police and the
     /// fire stations' coverage, and are where crime, and fire and disasters, will run.
@@ -219,6 +224,8 @@ public sealed class CitySimulation
         }
         else if (phase == MessagePhase)
         {
+            // As in Micropolis, the traffic fades before the city has its say.
+            Traffic.Fade();
             SendMessages();
         }
         else if (phase == PowerPhase)
@@ -385,7 +392,7 @@ public sealed class CitySimulation
     /// <summary>Captures everything the city needs to carry on exactly where it is, for a save.</summary>
     internal CitySave Capture() => new()
     {
-        Format = FlatCityFormat.Format,
+        Format = SaveUpgrades.Current,
         Name = Name,
         Seed = Seed,
         Random = Random.State.ToString("x16", CultureInfo.InvariantCulture),
@@ -409,6 +416,7 @@ public sealed class CitySimulation
             BudgetedFireStations = _budgetedFireStations,
             BudgetedPoliceStations = _budgetedPoliceStations,
         },
+        Traffic = Traffic.Capture(),
     };
 
     /// <summary>Makes a city from a save, checking each part as it goes.</summary>
@@ -416,6 +424,7 @@ public sealed class CitySimulation
     internal static CitySimulation Restore(CitySave save)
     {
         ArgumentNullException.ThrowIfNull(save);
+        SaveUpgrades.ToCurrent(save);
 
         if (!IsValidName(save.Name))
         {
@@ -455,6 +464,7 @@ public sealed class CitySimulation
         city._budgetedRoadTiles = SaveChecks.InRange(cycle.BudgetedRoadTiles, 0, int.MaxValue, "cycle.budgetedRoadTiles");
         city._budgetedFireStations = SaveChecks.InRange(cycle.BudgetedFireStations, 0, int.MaxValue, "cycle.budgetedFireStations");
         city._budgetedPoliceStations = SaveChecks.InRange(cycle.BudgetedPoliceStations, 0, int.MaxValue, "cycle.budgetedPoliceStations");
+        city.Traffic.Restore(save.Traffic ?? throw new InvalidSave("traffic: missing."));
         return city;
     }
 
