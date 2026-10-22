@@ -75,9 +75,11 @@ public class AutosaveTests
             Assert.True(SettingsStore.TrySave(path, GameSettings.Default with { AutosaveSlots = 2 }, out _));
             Assert.Equal(2, SettingsStore.Load(path, out _).AutosaveSlots);
 
-            File.WriteAllText(path, """{ "WindowWidth": 1280, "WindowHeight": 720, "Speed": 1, "AutosaveSlots": 3 }""");
-            Assert.Equal(1, SettingsStore.Load(path, out warning).AutosaveSlots);
-            Assert.NotNull(warning);
+            File.WriteAllText(path, """{ "WindowWidth": 1600, "WindowHeight": 900, "Speed": 2, "AutosaveSlots": 3 }""");
+            var settings = SettingsStore.Load(path, out warning);
+            Assert.Equal(1, settings.AutosaveSlots);
+            Assert.Equal((1600, 900, 2), (settings.WindowWidth, settings.WindowHeight, settings.Speed));
+            Assert.Contains("AutosaveSlots 3", warning);
         }
         finally
         {

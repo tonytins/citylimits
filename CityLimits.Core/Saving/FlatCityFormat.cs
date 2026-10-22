@@ -51,14 +51,30 @@ public static class FlatCityFormat
     {
         ArgumentNullException.ThrowIfNull(city);
         var save = city.Capture();
-        save.Schema = SchemaUrl;
+
+        // A city from a newer save writes back the parts it kept of it, and that save's version when
+        // it kept them all.
+        var (kept, version) = city.Kept?.ForSaving(Extension) ?? ([], SaveUpgrades.Current);
+        save.Format = version;
+        save.Schema = FormatSchemas.UrlFor("city-save", version);
+        save.Parts = kept.Count == 0 ? null : [.. SaveParts.Known, .. kept];
+        save.Unknown = kept.Count == 0 ? null : kept.ToDictionary(part => part.Name, part => city.Kept!.Sections[part.Name]);
         return JsonSerializer.Serialize(save, SaveInfo);
     }
 
     /// <summary>Reads a city from the format's text, or says what is wrong with it.</summary>
-    public static bool TryRead(string text, [NotNullWhen(true)] out CitySimulation? city, [NotNullWhen(false)] out string? problem)
+    public static bool TryRead(string text, [NotNullWhen(true)] out CitySimulation? city, [NotNullWhen(false)] out string? problem) =>
+        TryRead(text, out city, out problem, out _);
+
+    /// <summary>
+    /// Reads a city from the format's text, or says what is wrong with it. A save of a newer minor
+    /// version opens when every part it has that this version doesn't know is one its parts list says
+    /// may be left out; the notes say so, and what will be kept when the city is saved.
+    /// </summary>
+    public static bool TryRead(string text, [NotNullWhen(true)] out CitySimulation? city, [NotNullWhen(false)] out string? problem, out IReadOnlyList<string> notes)
     {
         city = null;
+        notes = [];
         if (string.IsNullOrWhiteSpace(text))
         {
             problem = "The file is empty.";
@@ -74,12 +90,10 @@ public static class FlatCityFormat
         try
         {
             var save = JsonSerializer.Deserialize(text, SaveInfo) ?? throw new InvalidSave("The file holds no city.");
-            if (save.Format.ProblemReadingWith(Format) is { } tooNew)
-            {
-                throw new InvalidSave($"format: {tooNew}");
-            }
-
+            var kept = KeepUnknown(save);
             city = CitySimulation.Restore(save);
+            city.Kept = kept;
+            notes = SaveParts.NotesFor(kept);
             problem = null;
             return true;
         }
@@ -97,11 +111,16 @@ public static class FlatCityFormat
     }
 
     /// <summary>Reads a city from a file, checking its size before reading it.</summary>
-    public static bool TryReadFile(string path, [NotNullWhen(true)] out CitySimulation? city, [NotNullWhen(false)] out string? problem)
+    public static bool TryReadFile(string path, [NotNullWhen(true)] out CitySimulation? city, [NotNullWhen(false)] out string? problem) =>
+        TryReadFile(path, out city, out problem, out _);
+
+    /// <summary>Reads a city from a file, checking its size before reading it; the notes say what a newer save's parts come to.</summary>
+    public static bool TryReadFile(string path, [NotNullWhen(true)] out CitySimulation? city, [NotNullWhen(false)] out string? problem, out IReadOnlyList<string> notes)
     {
         city = null;
+        notes = [];
         return SaveFiles.TryReadBytes(path, MaxBytes, out var bytes, out problem)
-            && TryRead(Encoding.UTF8.GetString(bytes), out city, out problem);
+            && TryRead(Encoding.UTF8.GetString(bytes), out city, out problem, out notes);
     }
 
     /// <summary>
@@ -132,14 +151,42 @@ public static class FlatCityFormat
 
         try
         {
+            // A newer save of the same major version is listed too: it may open, and if it can't, opening it says why.
             var save = JsonSerializer.Deserialize(bytes, SaveInfo);
-            summary = save is not null && save.Format.ProblemReadingWith(Format) is null ? SaveFiles.Summarize(path, save) : null;
+            summary = save is not null && save.Format.Major == Format.Major ? SaveFiles.Summarize(path, save) : null;
             return summary is not null;
         }
         catch (JsonException)
         {
             return false;
         }
+    }
+
+    // A newer minor version's unknown sections are kept when its parts list lets them be left out, and
+    // so are those of a save this version wrote from one, which its parts list names too. In any other
+    // save this version can read whole, an unknown section is refused like any unknown field.
+    private static KeptParts? KeepUnknown(CitySave save)
+    {
+        var unknown = save.Unknown ?? [];
+        save.Unknown = null;
+        var newer = save.Format.Major == Format.Major && save.Format.Minor > Format.Minor;
+        if (!newer && save.Format.ProblemReadingWith(Format) is { } problem)
+        {
+            throw new InvalidSave($"format: {problem}");
+        }
+
+        if (!newer && (unknown.Count == 0 || save.Parts is null))
+        {
+            return unknown.Count == 0 ? null : throw new InvalidSave($"{unknown.Keys.First()}: is not a part a save has.");
+        }
+
+        var kept = SaveParts.Keep(save.Format, Extension, save.Parts, unknown.Keys, part => part.Name);
+        foreach (var part in kept.Parts)
+        {
+            kept.Sections[part.Name] = unknown[part.Name].Clone();
+        }
+
+        return kept;
     }
 
     /// <summary>The save model, for its schema.</summary>

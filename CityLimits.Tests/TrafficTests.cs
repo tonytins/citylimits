@@ -130,7 +130,7 @@ public class TrafficTests
     }
 
     [Fact]
-    public void ASaveFromBeforeTrafficLoadsWithQuietRoadsAndSavesAs11()
+    public void ASaveFromBeforeTrafficLoadsWithQuietRoadsAndSavesAsTheCurrentVersion()
     {
         var city = Street();
         for (var i = 0; i < 300; i++)

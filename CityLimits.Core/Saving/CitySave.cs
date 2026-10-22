@@ -17,6 +17,14 @@ internal sealed class CitySave
 
     public required FormatVersion Format { get; set; }
 
+    /// <summary>
+    /// The parts each version after 1.0 added, and what an older game may do with each, from format
+    /// 1.2; a game that meets a part it doesn't know looks it up here. This version writes it only for
+    /// a city that kept a newer save's parts, so its other saves stay as 0.3.102 wrote them.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public PartSave[]? Parts { get; set; }
+
     public required string Name { get; set; }
 
     public required int Seed { get; set; }
@@ -55,6 +63,13 @@ internal sealed class CitySave
 
     /// <summary>How busy the roads are; from format 1.1, and empty for a city upgraded from 1.0.</summary>
     public TrafficSave? Traffic { get; set; }
+
+    /// <summary>
+    /// A newer save's sections this version doesn't know, caught as they are so they can be checked
+    /// against the parts list and written back. Unknown fields inside a known section are still refused.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public Dictionary<string, JsonElement>? Unknown { get; set; }
 }
 
 [System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(SectionCodec.ModelMembers)]

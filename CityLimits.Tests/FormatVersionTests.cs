@@ -61,7 +61,7 @@ public class FormatVersionTests
     }
 
     [Fact]
-    public void ABinarySaveCarriesItsMinorVersionAndATooNewOneIsRefused()
+    public void ABinarySaveCarriesItsMinorVersionAndANewerOneWithNothingUnknownOpens()
     {
         var city = new CitySimulation(TileMap.FromTerrain(6, 6, new TileKind[36]), 3);
         var bytes = BinaryCityFormat.Write(city);
@@ -74,8 +74,11 @@ public class FormatVersionTests
         var crc = Crc(newer[8..12].Concat(newer[16..18]).ToArray());
         System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(newer.AsSpan(18), crc);
 
-        Assert.False(BinaryCityFormat.TryRead(newer, out _, out var problem, out _));
-        Assert.Equal("format: this is format 1.7; this version of CityLimits reads up to 1.1.", problem);
+        // A newer save with no parts this version doesn't know holds nothing past this version: it opens,
+        // says a newer CityLimits saved it, and saves back as this version.
+        Assert.True(BinaryCityFormat.TryRead(newer, out var loaded, out var problem, out var notes), problem);
+        Assert.Empty(notes);
+        Assert.Equal(bytes, BinaryCityFormat.Write(loaded));
     }
 
     [Fact]
