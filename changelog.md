@@ -1,5 +1,63 @@
 # CityLimits Changelog
 
+## 0.3.100
+
+CityLimits is now an alpha: a playable little city. You can start a city,
+lay it out, power it, tax it, watch it grow and run into trouble, and keep
+it, saving, loading, and autosaving it, or bring one in from Micropolis.
+It still isn't at parity with SimCity, or with any city builder made since:
+there is no traffic, pollution, crime, fire, or disaster yet, and no city
+score. Those come next.
+
+### Since 0.2.100
+
+- **Starting a game.** CityLimits opens on a loading screen and a start
+  menu. New Game asks for your city's name and, if you like, a seed, the
+  number its map grows from; Load Game opens a saved city.
+- **Power.** Coal and nuclear plants, at $3,000 and $5,000, power the
+  zones around them and pass power on through power lines, which cross
+  water and roads. Each plant powers only so many tiles; past that, the
+  city browns out. Zones without power don't grow, and blink a lightning
+  bolt to say so.
+- **Taxes and the budget.** The city collects taxes and pays for its
+  roads and stations each year. The budget panel shows the year as it
+  stands and opens by itself when spending outruns income. High taxes
+  slow growth; underfunded roads crumble.
+- **Services.** Police and fire stations cover the blocks around them,
+  parks make land worth more, and the city grows hospitals and churches
+  as it needs them.
+- **The overview map** shows the whole city in a corner, and power, fire
+  and police coverage, land value, and population density over it.
+- **The interface.** A new top bar has pause, play, and speed buttons,
+  the city's name, a demand meter, the money, and the population. The
+  demand meter opens a chart of demand over time; your city's name opens
+  the city panel, with the city at a glance, its mods, and its seed. The
+  budget, demand, and city windows can be moved, and Escape opens a menu.
+  The tool palette is laid out as Micropolis' is.
+- **Saving.** Ctrl+S saves your city, Ctrl+O and Load Game open one, and
+  the city saves itself every 15 minutes of play. A loaded city carries
+  on exactly where it left off. Leaving a city with unsaved changes asks
+  first.
+- **Micropolis cities.** Drop a `.cty` file from Micropolis or SimCity
+  Classic into your Cities folder to bring it in.
+- **Your files** live where your computer expects them: saves and mods in
+  `Documents/CityLimits`, settings in your hidden settings folder. That
+  also lets the Linux AppImage save its settings.
+
+For developers, modders, and scripts:
+
+- **Saves** come in two formats: `.cl`, the game's own, and `.fcl`, one
+  readable JSON file for people and agents to read and compare.
+  `docs/saving.md` describes both, and the Micropolis import.
+- **Mods** can change plants and stations as well as zones, and now live
+  in `Documents/CityLimits/Mods`. `docs/modding/` is a guide for players
+  writing their first mod, and `tuning.md` lists everything a mod can
+  change.
+- **Scenarios** can build, count, and check everything above, power
+  included.
+- **The Linux AppImage** is named for the game's version and builds from
+  any folder without FUSE.
+
 ## 0.2.119
 
 You can bring your old Micropolis and SimCity Classic cities into

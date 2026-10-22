@@ -1,6 +1,6 @@
 # CityLimits roadmap
 
-> **Last reviewed:** 2026-10-21 · **Last updated:** 2026-10-21 · **Change:** minor (saving S5: importing Micropolis cities; saving is complete) · **Stage:** pre-alpha
+> **Last reviewed:** 2026-10-21 · **Last updated:** 2026-10-21 · **Change:** major (0.3, the alpha) · **Stage:** alpha
 
 Forward-looking: where CityLimits stands, what blocks the next milestone,
 and what comes next. Verified status and evidence are in the
@@ -29,26 +29,25 @@ it a later milestone.
 | Read the city's state: money, power, demand, and problems | yes | The HUD shows the date, the tick, the speed, the funds, and what the held tool costs, and the tile readout names what is on the tile. The status bar shows the population and a panel shows demand; unpowered zones blink a lightning bolt, the readout says when a zone has no power, and brownouts and blackouts show as messages. The budget panel shows the year's taxes and upkeep and opens by itself on a deficit. The overview map shows the whole city, and power, coverage, land value, and population density over it (UI-2, ECON-1, ECON-3, ECON-5) | 0 |
 | Keep the city running for a long session without a crash | yes | The frame loop catches and reports, the tick loop runs, and the settings survive a session, a packaged game's too (REL-1, CORE-8). A city saves with Ctrl+S and loads from the start menu or Ctrl+O, running on exactly as it would have, and a damaged save is refused with the reason (UI-5) | 0 |
 
-**Result: every row passes.** With saving in, each core workflow works
-end to end. Whether that makes CityLimits alpha is the owner's call, so
-the stage stays pre-alpha until the owner says so.
+**Result: alpha.** Every row passes: with saving in, each core workflow
+works end to end. The owner marked CityLimits an alpha with 0.3.100.
 
 ## Current focus
 
 The engine plays like Micropolis: the baseline refactor (tool strokes,
 roads and zones, time, growth, and terrain) is done, and Joffburg (power,
 taxes and the budget, services, and the overview map) was built to the
-baseline from the start and is complete. The owner's liberties so far are the always-automatic budget,
-parks' look chosen by their place, and Micropolis' hospital-then-church
-quirk fixed.
+baseline from the start and is complete. With saving finished, every row
+of the alpha gate passes, and 0.3.100 is the alpha. The owner's liberties
+so far are the always-automatic budget, parks' look chosen by their place,
+Micropolis' hospital-then-church quirk fixed, the demand panel, and
+unsupported things in imported cities becoming bare ground.
 
 Next, in order:
 
-1. **0.3, the alpha**, which the owner chose to mark once saving was
-   complete: cities save, load, autosave, and import from Micropolis.
-2. **Radial: traffic**, built to the baseline: trips already remember
+1. **Radial: traffic**, built to the baseline: trips already remember
    their routes for it.
-3. **Deadwood: crime, pollution, fire, and disasters**, which give the
+2. **Deadwood: crime, pollution, fire, and disasters**, which give the
    coverage maps and land value their effects.
 
 ## Milestones
@@ -75,7 +74,7 @@ Next, in order:
 |---|---|---|---|
 | 1 | Traffic: congestion on the roads trips already use | Radial | 12–20 |
 
-Every row of the alpha gate passes; calling it alpha is the owner's call.
+Every row of the alpha gate passes, and CityLimits is an alpha since 0.3.100.
 
 ## Milestone checklists
 
@@ -314,6 +313,7 @@ baseline's growth depends on.
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-21 | major | The owner marked CityLimits an alpha: the version's base is 0.3.100, and the changelog sums up everything since 0.2.100. Every row of the alpha gate passes. Traffic, Deadwood, the city score, and polish are left; 40–70 h in total. |
 | 2026-10-21 | minor | Saving, S5, and with it saving, is complete: Micropolis' and SimCity Classic's `.cty` files in the Cities folder are listed and imported, never written. Tiles come in by Micropolis' tile numbers, with the owner's approval, and buildings whole from their centres; what CityLimits doesn't have yet becomes bare ground, as the owner chose, and is listed. The date, money, tax, funding, populations, demand, and history come across, the seed is made from the file, and power is traced at once. Bridgeport is a fixture in `.cty` too, made by a writer that lives only in the tests. 40–70 h left in total, 599 tests. |
 | 2026-10-21 | minor | Saving, S4: autosave every 15 minutes of play, counted only while the city runs, to `Joffburg (autosave).cl` beside the city's own file, skipped when the city is as it was last saved. `AutosaveSlots` in the settings keeps one or two, the newer replacing the older. Load Game marks autosaves, and saving a city opened from one goes to its own file without asking. 43–76 h left in total, 571 tests. |
 | 2026-10-21 | minor | Saving, S3: the binary city format, `.cl`, after Micropolis' city files: a header, then tagged chunks with CRC-32 checksums, the map as a 16-bit word a tile, column by column, and the other sections written field by field from the same model as `.fcl`. An unknown chunk is skipped and noted; a damaged one refuses the file. Ctrl+S writes `.cl` unless a city came from `.fcl`, and Load Game lists both. Bridgeport, a city the owner built, is a test fixture in both formats. 45–79 h left in total, 566 tests. |
