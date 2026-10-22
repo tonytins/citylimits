@@ -135,7 +135,9 @@ public sealed class LoadPanel
             }
 
             Raylib.DrawText(city.Name, x + 6, (int)rowBounds.Y + 4, RowSize, hovered ? Theme.Accent : Theme.Text);
-            var flat = System.IO.Path.GetExtension(city.Path).Equals(FlatCityFormat.Extension, StringComparison.OrdinalIgnoreCase) ? "   flat file" : string.Empty;
+            var flat = Autosave.IsAutosave(city.Path) ? "   autosave"
+                : System.IO.Path.GetExtension(city.Path).Equals(FlatCityFormat.Extension, StringComparison.OrdinalIgnoreCase) ? "   flat file"
+                : string.Empty;
             var details = $"{city.Date.Month:00}/{city.Date.Year:0000}   {Hud.Count(city.Population)} Pop   {Hud.Money(city.Funds)}   saved {city.SavedUtc.ToLocalTime():yyyy-MM-dd HH:mm}{flat}";
             Raylib.DrawText(details, x + 6, (int)rowBounds.Y + 4 + RowSize + 2, SmallSize, Theme.TextDim);
         }

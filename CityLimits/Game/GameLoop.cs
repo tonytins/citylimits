@@ -48,6 +48,10 @@ public sealed class GameLoop : IDisposable
     private string? _cityFile;
     private string? _savedText;
 
+    // Fifteen minutes of play between autosaves; the last one written is kept to skip an unchanged city.
+    private readonly Autosave _autosave = new();
+    private string? _autosavedText;
+
     // What the question on screen is about, and the city to open once it is answered.
     private Pending _pending;
     private CitySimulation? _cityToOpen;
@@ -184,6 +188,11 @@ public sealed class GameLoop : IDisposable
         }
 
         _simulation.Roads.EnsureCurrent(_simulation.Map);
+
+        if (_autosave.Advance(elapsed, _settings.Speed > 0 && _modal == Modal.None))
+        {
+            AutosaveNow();
+        }
 
         // The preview is worked out every frame, so it keeps up with the city growing under it.
         if (_stroke is not null)
@@ -570,16 +579,42 @@ public sealed class GameLoop : IDisposable
         OpenModal(Modal.Confirm);
     }
 
+    // An autosave is a binary save beside the city's own, written only when the city has changed
+    // since it was last saved either way. It doesn't count as the player saving, so leaving still asks.
+    private void AutosaveNow()
+    {
+        var text = FlatCityFormat.Write(_simulation);
+        if (text == _savedText || text == _autosavedText)
+        {
+            Logger.Debug("Autosave skipped: {Name} hasn't changed since it was last saved", _simulation.Name);
+            return;
+        }
+
+        var path = Autosave.NextPath(_folders.CitiesFolder, _simulation.Name, _settings.AutosaveSlots);
+        if (!BinaryCityFormat.TryWriteFile(_simulation, path, out var problem))
+        {
+            Logger.Error("Autosave failed: {Problem}", problem);
+            (_notice, _noticeIsError) = ($"Autosave failed: {problem}", true);
+            return;
+        }
+
+        _autosavedText = text;
+        Logger.Info("Autosaved {Name} to {Path}", _simulation.Name, path);
+        (_notice, _noticeIsError) = ($"Autosaved {_simulation.Name}", false);
+    }
+
     private bool HasUnsavedChanges() => _savedText is null || FlatCityFormat.Write(_simulation) != _savedText;
 
     // A city is saved under its name, in the binary format unless it came from a flat file. Saving
-    // over its own file is plain saving; replacing another city's file of the same name asks first.
+    // over its own file is plain saving, an autosave's city counting as its own; replacing another
+    // city's file of the same name asks first.
     private void Save(bool confirmed)
     {
         var flat = _cityFile is not null && Path.GetExtension(_cityFile).Equals(FlatCityFormat.Extension, StringComparison.OrdinalIgnoreCase);
         var file = CityFiles.FileNameFor(_simulation.Name, flat ? FlatCityFormat.Extension : BinaryCityFormat.Extension);
         var path = Path.Combine(_folders.CitiesFolder, file);
-        if (!confirmed && File.Exists(path) && !string.Equals(Path.GetFullPath(path), _cityFile is null ? null : Path.GetFullPath(_cityFile), StringComparison.Ordinal))
+        var ownFile = _cityFile is not null && Autosave.IsAutosave(_cityFile) ? Autosave.CityFileFor(_cityFile) : _cityFile;
+        if (!confirmed && File.Exists(path) && !string.Equals(Path.GetFullPath(path), ownFile is null ? null : Path.GetFullPath(ownFile), StringComparison.Ordinal))
         {
             Ask(Pending.Overwrite, "Replace a saved city?", $"{file} already holds a saved city, and saving would replace it.", "Replace", "Cancel");
             return;
@@ -594,7 +629,7 @@ public sealed class GameLoop : IDisposable
             return;
         }
 
-        (_cityFile, _savedText) = (path, text);
+        (_cityFile, _savedText, _autosavedText) = (path, text, text);
         Logger.Info("Saved {Name} to {Path}", _simulation.Name, path);
         (_notice, _noticeIsError) = ($"Saved {_simulation.Name} to {file}", false);
     }

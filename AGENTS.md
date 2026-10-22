@@ -407,6 +407,12 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   and leaving a city with changes since its last save asks first
   (`UI/ConfirmPanel.cs`). A save goes through a temporary file, so a failure
   leaves the last one whole. A loaded city resumes at the last speed.
+  Every 15 minutes of play (only while the city runs), `GameLoop` writes
+  an autosave beside the city's own file, `Joffburg (autosave).cl`, unless
+  the city is as it was last saved; `Saving/Autosave.cs` decides when and
+  where, and `AutosaveSlots` in the settings keeps one or two, the newer
+  replacing the older. An autosave isn't the player saving, so leaving
+  still asks.
 - **The settings and the game's folders.** `GameFolders` works out where
   the game keeps its files, because a packaged game, such as the
   AppImage, runs from a read-only folder. The settings go in the hidden
@@ -420,7 +426,9 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   place. Without a config or Documents folder, the game falls back to
   the executable's folder and logs why. The window size and the speed
   are written when the game ends and read back when it starts; a damaged
-  file is reported and the defaults are used.
+  file is reported and the defaults are used. `AutosaveSlots`, 1 or 2,
+  says how many autosaves a city keeps; a settings file without it keeps
+  one.
 - **The headless run.** `citylimits --headless` runs the city with no
   window at all and writes a line to the console each month, so the
   simulation can be checked on a machine with no screen. It takes `--seed`
@@ -470,7 +478,7 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   and no project. It holds the parser, the dispatcher, the default
   command, the strict option reader, and the exit codes.
 - **The tests.** `CityLimits.Tests` uses xUnit 2 with the VSTest runner
-  and coverlet, and holds 566 tests over saving and loading, with a city
+  and coverlet, and holds 571 tests over saving, loading, and autosave, with a city
   the owner built in both formats in `CityLimits.Tests/Assets/`, the generator, the terrain edges, the power plants, lines, and grid, the budget, the stations and their coverage, parks, hospitals and churches, the map, the
   calendar, the clock, the simulation, the settings, the tile rules, the
   build actions, the road network, the treasury, the scenario loader and

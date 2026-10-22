@@ -1,6 +1,6 @@
 # CityLimits roadmap
 
-> **Last reviewed:** 2026-10-21 · **Last updated:** 2026-10-21 · **Change:** minor (saving S3: the binary `.cl` format) · **Stage:** pre-alpha
+> **Last reviewed:** 2026-10-21 · **Last updated:** 2026-10-21 · **Change:** minor (saving S4: autosave) · **Stage:** pre-alpha
 
 Forward-looking: where CityLimits stands, what blocks the next milestone,
 and what comes next. Verified status and evidence are in the
@@ -44,9 +44,8 @@ quirk fixed.
 
 Next, in order:
 
-1. **Saving's later phases** (Happy Isle). Cities save and load as `.cl`
-   and `.fcl`; S4, autosave, and S5, importing Micropolis' `.cty`, are
-   left.
+1. **Saving's last phase** (Happy Isle). Cities save and load as `.cl`
+   and `.fcl`, and autosave; S5, importing Micropolis' `.cty`, is left.
 2. **Radial: traffic**, built to the baseline: trips already remember
    their routes for it.
 3. **Deadwood: crime, pollution, fire, and disasters**, which give the
@@ -66,15 +65,15 @@ Next, in order:
 | Joffburg: Services and economy | 100% | 0 | Meets the baseline: power, taxes and the budget, services (stations, coverage, parks, hospitals, and churches), and the overview map with its power, coverage, land value, and density modes, as in Micropolis |
 | Radial: Traffic and commuting | 0% | 12–20 | Nothing yet |
 | Deadwood: Land value, pollution, disasters | 0% | 12–20 | Nothing yet |
-| Happy Isle: Player-facing game | 50% | 11–19 | The palette, laid out as Micropolis', and the HUD, with its top bar after the owner's mock-up, are in; the budget, demand, and city panels and the overview's power mode are too, and cities save and load. Saving's later phases, the city score, and map size on the start screen are left |
+| Happy Isle: Player-facing game | 50% | 9–16 | The palette, laid out as Micropolis', and the HUD, with its top bar after the owner's mock-up, are in; the budget, demand, and city panels and the overview's power mode are too, and cities save and load. Saving's later phases, the city score, and map size on the start screen are left |
 | Yokohama: Polish and release | 0% | 10–20 | Nothing yet |
-| | **Total** | **≈ 45–79** | |
+| | **Total** | **≈ 43–76** | |
 
 ## Upcoming work, ranked
 
 | Rank | Work | Milestone | Estimate (h) |
 |---|---|---|---|
-| 1 | Saving's later phases: autosave and `.cty` import (S4 and S5) | Happy Isle | 5–9 |
+| 1 | Saving's last phase: importing `.cty` (S5) | Happy Isle | 3–6 |
 | 2 | Traffic: congestion on the roads trips already use | Radial | 12–20 |
 
 Every row of the alpha gate passes; calling it alpha is the owner's call.
@@ -255,7 +254,7 @@ Every row of the alpha gate passes; calling it alpha is the owner's call.
   - [x] S3: `.cl`, the binary form, after Micropolis' city files, with
     tagged, checksummed chunks for CityLimits' own state; Ctrl+S writes
     it unless a city came from `.fcl`.
-  - [ ] S4: autosave every 15 minutes of play, skipped when nothing
+  - [x] S4: autosave every 15 minutes of play, skipped when nothing
     changed, written whole through a temporary file; one autosave, with
     an option for two.
   - [ ] S5: importing Micropolis' `.cty` cities, reporting anything
@@ -316,6 +315,7 @@ baseline's growth depends on.
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-21 | minor | Saving, S4: autosave every 15 minutes of play, counted only while the city runs, to `Joffburg (autosave).cl` beside the city's own file, skipped when the city is as it was last saved. `AutosaveSlots` in the settings keeps one or two, the newer replacing the older. Load Game marks autosaves, and saving a city opened from one goes to its own file without asking. 43–76 h left in total, 571 tests. |
 | 2026-10-21 | minor | Saving, S3: the binary city format, `.cl`, after Micropolis' city files: a header, then tagged chunks with CRC-32 checksums, the map as a 16-bit word a tile, column by column, and the other sections written field by field from the same model as `.fcl`. An unknown chunk is skipped and noted; a damaged one refuses the file. Ctrl+S writes `.cl` unless a city came from `.fcl`, and Load Game lists both. Bridgeport, a city the owner built, is a test fixture in both formats. 45–79 h left in total, 566 tests. |
 | 2026-10-21 | minor | Saving, S2c: cities save and load. A save holds everything that affects the steps to come, the cycle's half-done figures included, so a city saves at any step, even paused, and runs on exactly as it would have; a test runs a saved and a loaded town in step for two years. The flat city format, `.fcl`, is one JSON file with the map as rows of characters, read strictly. Ctrl+S saves under the city's name, asking before replacing another city's file; Load Game and Ctrl+O list the saved cities; leaving a city with unsaved changes asks first. The save-and-load checklist item is done, Happy Isle is at 50%, and every row of the alpha gate passes; calling it alpha is the owner's call. 47–83 h left in total, 551 tests. |
 | 2026-10-21 | minor | Saving, S2b, a phase the owner added: a click on the city's name opens the city panel, paused and movable, with the name to rename on Enter, the city at a glance (date and age, population, demand, funds and tax, this year's and last year's cash flow), the mods in the order applied, and the seed, which a click copies. The owner swapped the new phase in ahead of the save model, which becomes S2c; the rows below use the new letters. The budget, demand, and city panels share `IMovableWindow`. 51–90 h left in total, 513 tests. |

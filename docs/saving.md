@@ -33,6 +33,25 @@ the game lists the folder's cities itself, newest first.
 - A save is written to a temporary file first and then takes the file's
   place, so a failure partway leaves the save before it as it was.
 
+## Autosave
+
+A city saves itself every 15 minutes of play, counting only time it runs:
+paused, or with a panel holding it, the clock stops. An autosave is a
+`.cl` file beside the city's own, such as `Joffburg (autosave).cl`, and
+is skipped when the city is as it was last saved, by the player or by an
+autosave. The notice line says when one is written.
+
+- **One slot or two.** `AutosaveSlots` in `settings.json` is `1` by
+  default, or `2`: with two, `Joffburg (autosave 2).cl` joins the first,
+  and each autosave replaces the older of the two, so the one before is
+  still there if the last went wrong.
+- **Opening one.** Load Game marks autosaves. Saving a city opened from
+  its autosave goes to its own file, `Joffburg.cl`, without asking.
+- **It isn't the player saving.** Leaving a city still asks when it has
+  changes since the player last saved it.
+- `Autosave` in `CityLimits.Core/Saving/` decides when one is due and
+  where it goes; `AutosaveTests` covers both.
+
 ## What a save holds
 
 Everything that affects the steps to come, so a save can be made at any
@@ -170,5 +189,5 @@ was doing and shows the reason.
   steps, loads it, and runs both in step for two years, comparing their
   saves as they go; it catches state left out of the save, as long as
   the state changes what the city does.
-- Autosave and importing Micropolis' `.cty` are later phases on the
+- Importing Micropolis' `.cty` is a later phase on the
   [roadmap](./ROADMAP.md).

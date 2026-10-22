@@ -1,5 +1,17 @@
 # CityLimits Changelog
 
+## 0.2.118
+
+Your city now saves itself every 15 minutes of play, so a crash or a
+power cut can't cost you more than that. The clock only runs while the
+city does: paused, nothing is counted. Autosaves sit beside your saves
+as `Joffburg (autosave).cl`, are marked in Load Game, and are skipped
+when nothing has changed since your last save. Open one and press Ctrl+S
+to save it as the city's own.
+
+To keep the last two autosaves instead of one, set `"AutosaveSlots": 2`
+in `settings.json`; each new autosave then replaces the older.
+
 ## 0.2.117
 
 Cities now save in CityLimits' own binary format, `.cl`: about 40% smaller
