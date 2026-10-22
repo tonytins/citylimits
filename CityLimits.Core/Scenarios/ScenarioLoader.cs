@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
+using System.Text.Json.Serialization.Metadata;
 
 namespace CityLimits.Core.Scenarios;
 
@@ -13,8 +14,11 @@ public static class ScenarioLoader
     /// <summary>The largest file read; a bigger one is refused before it is parsed.</summary>
     public const long MaxFileBytes = 1024 * 1024;
 
-    /// <summary>The only file format this version reads.</summary>
-    public const int Format = 1;
+    /// <summary>
+    /// The newest scenario format this version reads. A file of an older minor version reads too;
+    /// one written as a whole number, such as <c>1</c>, is 1.0.
+    /// </summary>
+    public static readonly FormatVersion Format = new(1, 0);
 
     /// <summary>The most actions, and the most checks, a scenario may hold.</summary>
     public const int MaxEntries = 10_000;
@@ -45,6 +49,7 @@ public static class ScenarioLoader
         UnmappedMemberHandling = System.Text.Json.Serialization.JsonUnmappedMemberHandling.Disallow,
         ReadCommentHandling = JsonCommentHandling.Disallow,
         AllowTrailingCommas = false,
+        TypeInfoResolver = ScenarioJson.Default,
     };
 
     /// <summary>Reads a scenario file, refusing one that is too big, can't be read, or isn't valid.</summary>
@@ -93,7 +98,7 @@ public static class ScenarioLoader
         ScenarioDocument? document;
         try
         {
-            document = JsonSerializer.Deserialize<ScenarioDocument>(json, Options);
+            document = JsonSerializer.Deserialize(json, (JsonTypeInfo<ScenarioDocument>)Options.GetTypeInfo(typeof(ScenarioDocument)));
         }
         catch (JsonException ex)
         {
@@ -129,10 +134,10 @@ public static class ScenarioLoader
 
     private static Scenario Validate(ScenarioDocument document)
     {
-        var format = Required(document.Format, "format");
-        if (format != Format)
+        var format = document.Format ?? throw new InvalidScenario("format: is required.");
+        if (format.ProblemReadingWith(Format) is { } problem)
         {
-            throw new InvalidScenario($"format: this version reads format {Format}, not {format}.");
+            throw new InvalidScenario($"format: {problem}");
         }
 
         var name = Required(document.Name, "name").Trim();
@@ -345,4 +350,7 @@ public static class ScenarioLoader
     // Validation stops at the first problem. The exception never leaves TryParse; it keeps each
     // rule to one line instead of threading a result through every check.
     private sealed class InvalidScenario(string message) : Exception(message);
+
+    /// <summary>The scenario file's document, for its schema.</summary>
+    internal static JsonTypeInfo SchemaDocument() => Options.GetTypeInfo(typeof(ScenarioDocument));
 }

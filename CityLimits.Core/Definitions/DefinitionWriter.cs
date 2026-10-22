@@ -19,7 +19,7 @@ internal static class DefinitionWriter
         using (var writer = new Utf8JsonWriter(stream))
         {
             writer.WriteStartObject();
-            writer.WriteNumber("format", DefinitionLoader.Format);
+            writer.WriteString("format", DefinitionLoader.Format.ToString());
 
             writer.WriteStartArray("zones");
             foreach (var zone in definitions.Zones)

@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 
 namespace CityLimits.Core.Saving;
 
@@ -19,12 +20,20 @@ public static class FlatCityFormat
     /// <summary>The extension of a flat city file.</summary>
     public const string Extension = ".fcl";
 
-    /// <summary>The version of the format this game writes and reads.</summary>
-    public const int Format = 1;
+    /// <summary>
+    /// The version of the format this game writes, and the newest it reads. A file of an older minor
+    /// version reads too; one written as a whole number, such as <c>1</c>, is 1.0.
+    /// </summary>
+    public static readonly FormatVersion Format = new(1, 0);
+
+    /// <summary>The schema a flat city file names, for editors to check it against.</summary>
+    public static string SchemaUrl => FormatSchemas.UrlFor("city-save", Format);
 
     /// <summary>The largest file read, so a damaged or wrong one can't run away with memory.</summary>
     public const long MaxBytes = 16 * 1024 * 1024;
 
+    // The save model's code is generated at build time, so reading and writing it needs no
+    // reflection and survives trimming.
     private static readonly JsonSerializerOptions Options = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -32,13 +41,18 @@ public static class FlatCityFormat
         WriteIndented = true,
         MaxDepth = 16,
         Converters = { new CompactNumbers() },
+        TypeInfoResolver = SaveJson.Default,
     };
+
+    private static JsonTypeInfo<CitySave> SaveInfo => (JsonTypeInfo<CitySave>)Options.GetTypeInfo(typeof(CitySave));
 
     /// <summary>Writes a city as the format's text.</summary>
     public static string Write(CitySimulation city)
     {
         ArgumentNullException.ThrowIfNull(city);
-        return JsonSerializer.Serialize(city.Capture(), Options);
+        var save = city.Capture();
+        save.Schema = SchemaUrl;
+        return JsonSerializer.Serialize(save, SaveInfo);
     }
 
     /// <summary>Reads a city from the format's text, or says what is wrong with it.</summary>
@@ -59,10 +73,10 @@ public static class FlatCityFormat
 
         try
         {
-            var save = JsonSerializer.Deserialize<CitySave>(text, Options) ?? throw new InvalidSave("The file holds no city.");
-            if (save.Format != Format)
+            var save = JsonSerializer.Deserialize(text, SaveInfo) ?? throw new InvalidSave("The file holds no city.");
+            if (save.Format.ProblemReadingWith(Format) is { } tooNew)
             {
-                throw new InvalidSave($"format: this version reads format {Format}, not {save.Format}.");
+                throw new InvalidSave($"format: {tooNew}");
             }
 
             city = CitySimulation.Restore(save);
@@ -118,8 +132,8 @@ public static class FlatCityFormat
 
         try
         {
-            var save = JsonSerializer.Deserialize<CitySave>(bytes, Options);
-            summary = save is { Format: Format } ? SaveFiles.Summarize(path, save) : null;
+            var save = JsonSerializer.Deserialize(bytes, SaveInfo);
+            summary = save is not null && save.Format.ProblemReadingWith(Format) is null ? SaveFiles.Summarize(path, save) : null;
             return summary is not null;
         }
         catch (JsonException)
@@ -128,9 +142,12 @@ public static class FlatCityFormat
         }
     }
 
+    /// <summary>The save model, for its schema.</summary>
+    internal static JsonTypeInfo SchemaDocument() => Options.GetTypeInfo(typeof(CitySave));
+
     // Arrays of numbers on one line each, so the indented file stays readable: the land value map
     // alone is thousands of numbers.
-    private sealed class CompactNumbers : JsonConverter<int[]>
+    internal sealed class CompactNumbers : JsonConverter<int[]>
     {
         public override int[]? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
@@ -162,3 +179,6 @@ public static class FlatCityFormat
 
 /// <summary>What a list of saved cities shows about one: its name, date, population, and money, and when the file was last written.</summary>
 public sealed record SavedCitySummary(string Path, string Name, GameDate Date, long Population, int Funds, DateTime SavedUtc);
+
+[JsonSerializable(typeof(CitySave))]
+internal sealed partial class SaveJson : JsonSerializerContext;

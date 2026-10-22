@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Text;
 using System.Text.Json;
@@ -13,8 +14,18 @@ namespace CityLimits.Core.Saving;
 /// or two; text is UTF-8 with its length first. Reading checks every length against what is left,
 /// so a damaged chunk can't ask for any amount of memory.
 /// </summary>
+/// <remarks>
+/// It reads properties by reflection, which a trimmed build would cut away. The save model's classes
+/// carry <c>[DynamicallyAccessedMembers(SectionCodec.ModelMembers)]</c>, which tells the trimmer to
+/// keep their properties and constructors, so the codec still works trimmed.
+/// </remarks>
 internal static class SectionCodec
 {
+    /// <summary>What the codec reads of each class in the save model, kept by the trimmer for it.</summary>
+    public const DynamicallyAccessedMemberTypes ModelMembers = DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicParameterlessConstructor;
+
+    private const string ModelKept = "Every class the codec reads is a save model class, marked [DynamicallyAccessedMembers(SectionCodec.ModelMembers)], so its properties and constructor survive trimming.";
+
     private static readonly ConcurrentDictionary<Type, PropertyInfo[]> Properties = new();
 
     /// <summary>Writes a section.</summary>
@@ -28,7 +39,7 @@ internal static class SectionCodec
 
     /// <summary>Reads a section of the given type from a chunk's bytes, all of which it must use.</summary>
     /// <exception cref="InvalidSave">The bytes don't hold the section.</exception>
-    public static T Read<T>(ReadOnlySpan<byte> bytes, string chunk)
+    public static T Read<[DynamicallyAccessedMembers(ModelMembers)] T>(ReadOnlySpan<byte> bytes, string chunk)
         where T : class
     {
         var reader = new Reader(bytes, chunk);
@@ -41,9 +52,18 @@ internal static class SectionCodec
         return section;
     }
 
-    private static PropertyInfo[] PropertiesOf(Type type) =>
-        Properties.GetOrAdd(type, t => [.. t.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.CanRead && p.CanWrite).OrderBy(p => p.MetadataToken)]);
+    private static PropertyInfo[] PropertiesOf([DynamicallyAccessedMembers(ModelMembers)] Type type)
+    {
+        if (!Properties.TryGetValue(type, out var properties))
+        {
+            properties = [.. type.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.CanRead && p.CanWrite).OrderBy(p => p.MetadataToken)];
+            Properties[type] = properties;
+        }
 
+        return properties;
+    }
+
+    [UnconditionalSuppressMessage("Trimming", "IL2072", Justification = ModelKept)]
     private static void WriteObject(Stream stream, object section)
     {
         foreach (var property in PropertiesOf(section.GetType()))
@@ -52,6 +72,7 @@ internal static class SectionCodec
         }
     }
 
+    [UnconditionalSuppressMessage("Trimming", "IL2072", Justification = ModelKept)]
     private static void WriteValue(Stream stream, Type type, object? value)
     {
         switch (value)
@@ -143,7 +164,8 @@ internal static class SectionCodec
 
         public readonly bool AtEnd => _position == _bytes.Length;
 
-        public object ReadObject(Type type)
+        [UnconditionalSuppressMessage("Trimming", "IL2072", Justification = ModelKept)]
+        public object ReadObject([DynamicallyAccessedMembers(ModelMembers)] Type type)
         {
             var section = Activator.CreateInstance(type) ?? throw new InvalidSave($"{_chunk}: can't hold a {type.Name}.");
             foreach (var property in PropertiesOf(type))
@@ -154,6 +176,9 @@ internal static class SectionCodec
             return section;
         }
 
+        [UnconditionalSuppressMessage("Trimming", "IL2072", Justification = ModelKept)]
+        [UnconditionalSuppressMessage("Trimming", "IL2062", Justification = ModelKept)]
+        [UnconditionalSuppressMessage("Trimming", "IL2067", Justification = ModelKept)]
         private object? ReadValue(Type type)
         {
             if (type == typeof(int))

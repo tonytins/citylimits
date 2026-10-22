@@ -8,9 +8,14 @@ namespace CityLimits.Core.Saving;
 // file's. Each part of the simulation captures and restores its own section.
 
 /// <summary>A saved city, as the flat format holds it.</summary>
+[System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(SectionCodec.ModelMembers)]
 internal sealed class CitySave
 {
-    public required int Format { get; set; }
+    /// <summary>The schema that describes the file, for editors; the game ignores it when reading.</summary>
+    [System.Text.Json.Serialization.JsonPropertyName("$schema")]
+    public string? Schema { get; set; }
+
+    public required FormatVersion Format { get; set; }
 
     public required string Name { get; set; }
 
@@ -49,6 +54,7 @@ internal sealed class CitySave
     public required CycleSave Cycle { get; set; }
 }
 
+[System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(SectionCodec.ModelMembers)]
 internal sealed class ModSave
 {
     public required string Id { get; set; }
@@ -63,6 +69,7 @@ internal sealed class ModSave
 /// can be read and compared: the ground, the use, and the part of a building's footprint. What
 /// only a building's centre or a house's tile holds is listed beside them.
 /// </summary>
+[System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(SectionCodec.ModelMembers)]
 internal sealed class MapSave
 {
     public required int Width { get; set; }
@@ -80,6 +87,7 @@ internal sealed class MapSave
     public required HouseSave[] Houses { get; set; }
 }
 
+[System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(SectionCodec.ModelMembers)]
 internal sealed class BuildingSave
 {
     public required int X { get; set; }
@@ -93,6 +101,7 @@ internal sealed class BuildingSave
     public bool Powered { get; set; }
 }
 
+[System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(SectionCodec.ModelMembers)]
 internal sealed class HouseSave
 {
     public required int X { get; set; }
@@ -102,6 +111,7 @@ internal sealed class HouseSave
     public required int House { get; set; }
 }
 
+[System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(SectionCodec.ModelMembers)]
 internal sealed class BudgetSave
 {
     public required int TaxRate { get; set; }
@@ -135,6 +145,7 @@ internal sealed class BudgetSave
     public BudgetYearSave? Estimated { get; set; }
 }
 
+[System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(SectionCodec.ModelMembers)]
 internal sealed class BudgetYearSave
 {
     public required int TaxRate { get; set; }
@@ -156,6 +167,7 @@ internal sealed class BudgetYearSave
     public required bool Cut { get; set; }
 }
 
+[System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(SectionCodec.ModelMembers)]
 internal sealed class CensusSave
 {
     public required int Residential { get; set; }
@@ -177,6 +189,7 @@ internal sealed class CensusSave
     public required int[] IndustrialHistory { get; set; }
 }
 
+[System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(SectionCodec.ModelMembers)]
 internal sealed class DemandSave
 {
     public required int Residential { get; set; }
@@ -208,6 +221,7 @@ internal sealed class DemandSave
     public required int[] IndustrialHistory { get; set; }
 }
 
+[System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(SectionCodec.ModelMembers)]
 internal sealed class PowerSave
 {
     /// <summary>The plants the scan has passed this cycle, as x and y pairs, in the order passed.</summary>
@@ -233,6 +247,7 @@ internal sealed class PowerSave
     public required bool BrownedOut { get; set; }
 }
 
+[System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(SectionCodec.ModelMembers)]
 internal sealed class ServicesSave
 {
     public required int FireStations { get; set; }
@@ -248,6 +263,7 @@ internal sealed class ServicesSave
     public required int[] Police { get; set; }
 }
 
+[System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(SectionCodec.ModelMembers)]
 internal sealed class CommunitySave
 {
     public required int Hospitals { get; set; }
@@ -259,6 +275,7 @@ internal sealed class CommunitySave
     public required int ChurchNeed { get; set; }
 }
 
+[System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(SectionCodec.ModelMembers)]
 internal sealed class CityMapsSave
 {
     public required int CenterX { get; set; }
@@ -277,6 +294,7 @@ internal sealed class CityMapsSave
 }
 
 /// <summary>What the city counts as its scan goes, and what the last count set aside for the budget.</summary>
+[System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(SectionCodec.ModelMembers)]
 internal sealed class CycleSave
 {
     public required int RoadTiles { get; set; }

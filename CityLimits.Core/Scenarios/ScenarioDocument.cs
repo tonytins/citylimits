@@ -8,7 +8,10 @@ namespace CityLimits.Core.Scenarios;
 
 internal sealed class ScenarioDocument
 {
-    public int? Format { get; set; }
+    [JsonPropertyName("$schema")]
+    public string? Schema { get; set; }
+
+    public FormatVersion? Format { get; set; }
 
     public string? Name { get; set; }
 
@@ -90,3 +93,8 @@ internal sealed class CheckDocument
 
     public int? AtMost { get; set; }
 }
+
+// The documents' code is generated at build time, so reading them needs no reflection and
+// survives trimming.
+[JsonSerializable(typeof(ScenarioDocument))]
+internal sealed partial class ScenarioJson : JsonSerializerContext;

@@ -85,14 +85,16 @@ holds CityLimits' own state. It doesn't open in Micropolis, and isn't
 meant to. At about 47 KB for a 120 by 100 city, it is around 60% the
 size of the same city as `.fcl`.
 
-- **The header:** the six bytes `CLCITY`, then the format's version as a
-  16-bit number: `1`.
+- **The header:** the six bytes `CLCITY`, then the format's major version
+  as a 16-bit number: `1`. The minor version is in the `VERS` chunk, so
+  files from before minor versions, which have none, stay valid as 1.0.
 - **The chunks**, one after another to the end of the file: a four-letter
   tag, the payload's length as a 32-bit number, the payload, and a
   CRC-32 of the tag and the payload.
 
 | Tag | What it holds |
 |---|---|
+| `VERS` | The format's minor version, as a 16-bit number; written first, and read as 0 when it is missing |
 | `CITY` | The name, the seed, the generator, the steps, the calendar's count, and the money |
 | `DEFS` | The definitions, as definitions-format JSON text, and the mods applied |
 | `MAP ` | The width and the height, then a word a tile |
@@ -136,7 +138,7 @@ editions of SimCity add, of big-endian 16-bit numbers:
    tile number in the low 10 bits and flags above, power the highest.
 
 The import (`MicropolisCityImport` in `CityLimits.Core/Saving/`) reads the
-tiles with Micropolis' tile numbers, which the owner approved for this
+tiles with Micropolis' tile numbers, which Tony Bark approved for this
 and which the tile sheet uses too. Ground, water, trees, rubble, parks and
 fountains, roads at any level of traffic, bridges and drawbridges, power
 lines, and road-and-line crossings come in a tile at a time. Buildings come
@@ -165,7 +167,8 @@ arrays of numbers sit on one line each.
 
 | Field | What it is |
 |---|---|
-| `format` | The format's version: `1` |
+| `$schema` | The schema the file follows, `docs/schemas/city-save.v1.0.schema.json`, for editors; the game ignores it |
+| `format` | The format's version, `"1.0"`; a save written before versions had minor numbers says `1`, which reads as 1.0 |
 | `name`, `seed`, `random` | The city's name, its seed, and the generator state |
 | `tick`, `cityTime` | The steps run, and the calendar's count |
 | `funds` | The money, which may be below zero |
@@ -213,6 +216,57 @@ refuses the file on the first problem, saying what and where, such as
 A city that can't be loaded is never half loaded: the game keeps what it
 was doing and shows the reason.
 
+## Versions
+
+Each format has a version, major and minor, such as 1.0. A minor version
+only adds: 1.1 brings something new, such as traffic, and a game that
+reads 1.1 reads 1.0 too, starting what 1.0 didn't have empty. A major
+version breaks with the one before. Each new edition of the Micropolis
+baseline that adds to the city takes the next minor version.
+
+- **Reading.** A save of the game's own major version and of its minor
+  version or an older one loads; a newer one is refused with a message
+  saying which this version reads, such as `this is format 1.2; this
+  version of CityLimits reads up to 1.1.`
+- **Upgrading.** An older save climbs to the current version one minor
+  version at a time, each step filling in what that version added.
+  Bridgeport's fixtures stay at 1.0, so the steps stay tested.
+- **Growing the binary format.** New state goes in new chunks, not new
+  fields in old ones, so a minor version stays an addition.
+- **The flat format** writes its version as a string, `"1.0"`, so 1.10
+  can't read as 1.1; a whole number, as saves before minor versions
+  wrote, reads as that major version's .0. Scenarios and mod definitions
+  are versioned the same way.
+
+## Schemas
+
+`docs/schemas/` holds a JSON Schema for each format people and agents
+write or read: `city-save` for `.fcl` saves, `scenario`, and the mod
+files `mod`, `zones`, `plants`, and `services`, with `definitions` for
+the base game's, one file a version, such as `city-save.v1.0.schema.json`.
+A schema describes a file's shape: its fields and their types, with no
+others. A file names its schema in `"$schema"`, which every loader
+accepts and ignores, and an editor such as VS Code then checks the file
+and suggests its fields. The game writes it into every `.fcl` save.
+
+The schemas are generated from the same code that reads the files
+(`FormatSchemas` in `CityLimits.Core/Formats/`), and a test fails when a
+committed one no longer matches, writing the current one beside the
+tests to look at and copy in. The game's own checks go further than a
+schema can, to ranges and the rules between fields, and decide what
+loads; the schemas are for people, editors, and agents.
+
+## Reading needs no reflection
+
+Every JSON format reads and writes through code generated at build time
+(System.Text.Json's source generator), not reflection, so saves,
+scenarios, mods, and settings survive a trimmed build. The binary
+format's codec reads the save model's properties by reflection, so the
+model's classes are marked for the trimmer to keep them. Reflection-based
+JSON is switched off in the game and the tests, so a path that still
+needs it fails at once, and the core library is analysed for trimming,
+so new reflection shows up as a build warning.
+
 ## For contributors
 
 - `CityLimits.Core/Saving/` holds the formats: `CitySave` is the save
@@ -221,7 +275,7 @@ was doing and shows the reason.
   bytes, `MapCodec` handles the map's layers and words, and `CityFiles`
   names the files, lists a folder, and reads and writes either format by
   its extension.
-- `CityLimits.Tests/Assets/` holds Bridgeport, a city the owner built in
+- `CityLimits.Tests/Assets/` holds Bridgeport, a city Tony Bark built in
   the game, in both formats. The tests read each and check they are the
   same city, so a change that stops an older save loading is caught.
 - Each part of the simulation captures and restores its own state with

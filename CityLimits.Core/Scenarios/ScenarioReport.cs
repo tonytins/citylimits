@@ -1,6 +1,7 @@
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 
 namespace CityLimits.Core.Scenarios;
 
@@ -109,12 +110,17 @@ public static class ScenarioReportJson
 
         // A dollar sign or a quote in a message stays readable rather than escaped.
         Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+        TypeInfoResolver = ScenarioReportJsonContext.Default,
     };
 
     /// <summary>The report as indented JSON, with the fields that are absent left out.</summary>
     public static string Serialize(ScenarioReport report)
     {
         ArgumentNullException.ThrowIfNull(report);
-        return JsonSerializer.Serialize(report, Options);
+        return JsonSerializer.Serialize(report, (JsonTypeInfo<ScenarioReport>)Options.GetTypeInfo(typeof(ScenarioReport)));
     }
 }
+
+// The report's code is generated at build time, so writing it needs no reflection and survives trimming.
+[JsonSerializable(typeof(ScenarioReport))]
+internal sealed partial class ScenarioReportJsonContext : JsonSerializerContext;

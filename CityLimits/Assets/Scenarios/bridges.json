@@ -1,5 +1,6 @@
 {
-  "format": 1,
+  "$schema": "https://raw.githubusercontent.com/tonytins/citylimits/main/docs/schemas/scenario.v1.0.schema.json",
+  "format": "1.0",
   "name": "Bridges",
   "description": "Roads cross a lake as bridges from either bank; water with no road beside it can't be bridged.",
   "seed": 2000,

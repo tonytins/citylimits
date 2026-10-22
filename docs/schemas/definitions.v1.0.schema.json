@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/tonytins/citylimits/main/docs/schemas/definitions.v1.0.schema.json",
+  "title": "CityLimits definitions: zones, power plants, and services, as the base game writes them",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "description": "The schema the file follows, for editors; the game ignores it.",
+      "type": "string"
+    },
+    "format": {
+      "description": "The file's format version, as \"major.minor\"; a whole number, as older files wrote it, is that major version, .0.",
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+$"
+        },
+        {
+          "type": "integer",
+          "minimum": 0
+        }
+      ]
+    },
+    "zones": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "price": {
+            "type": "integer"
+          },
+          "populations": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          },
+          "valueClasses": {
+            "type": "integer"
+          },
+          "houses": {
+            "type": "integer"
+          },
+          "trips": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "plants": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "price": {
+            "type": "integer"
+          },
+          "capacity": {
+            "type": "integer"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "services": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "price": {
+            "type": "integer"
+          },
+          "upkeep": {
+            "type": "integer"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

@@ -10,7 +10,7 @@ public static class BaseGame
     /// <summary>The base game's definitions file.</summary>
     public const string Json = """
         {
-          "format": 1,
+          "format": "1.0",
           "zones": [
             { "id": "residential", "name": "Residential zone", "price": 100, "populations": [16, 24, 32, 40], "valueClasses": 4, "houses": 8, "trips": ["commercial", "industrial"] },
             { "id": "commercial", "name": "Commercial zone", "price": 100, "populations": [1, 2, 3, 4, 5], "valueClasses": 4, "houses": 0, "trips": ["residential", "commercial", "industrial"] },

@@ -1,5 +1,19 @@
 # CityLimits Changelog
 
+## 0.3.101
+
+For modders, scenario authors, and agents: saves, scenarios, and mod
+files now carry a version with a major and a minor number, written as
+`"format": "1.0"`. Files that say `"format": 1` still work. A file can
+also name its schema in a `"$schema"` line, and an editor such as VS Code
+will then check it and suggest its fields as you type; the schemas are in
+`docs/schemas/`, and the built-in scenarios name theirs. The game ignores
+the line, and writes it into every `.fcl` save.
+
+Under the hood, every file the game reads or writes as JSON goes through
+code generated at build time instead of reflection, so saves, scenarios,
+mods, and settings keep working in a trimmed build.
+
 ## 0.3.100
 
 CityLimits is now an alpha: a playable little city. You can start a city,

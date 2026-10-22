@@ -34,6 +34,7 @@ CityLimits.Core/              engine-free library: the world and the simulation,
   Simulation/                   namespace CityLimits.Core.Simulation: the clock, the calendar, the tick and its cycle, the census, demand, growth, trips, the city maps, the power grid, service coverage, the city's messages
   Economy/                      namespace CityLimits.Core.Economy: the treasury, the costs, the budget
   Settings/                     namespace CityLimits.Core.Settings: the settings that survive a session, and the folders the game keeps its files in
+  Formats/                      namespace CityLimits.Core.Formats: format versions, and the JSON Schemas generated from the readers
   Saving/                       namespace CityLimits.Core.Saving: the save model, the binary (.cl) and flat (.fcl) city formats, importing Micropolis cities (.cty), autosave, the map's layers and words, and the saved cities' files
   Scenarios/                    namespace CityLimits.Core.Scenarios: the scenario loader, the runner, the report, the demo town
   Definitions/                  namespace CityLimits.Core.Definitions: the definitions as data, the base game's, and the mod loader
@@ -50,7 +51,8 @@ docs/
   ROADMAP.md                    milestones, current focus, estimates, revision history
   scorecard.md                  verified status per area, with evidence
   scenarios.md                  the scenario file and report formats
-  saving.md                     where saves go, saving and loading in the game, and the flat city format
+  saving.md                     where saves go, saving and loading in the game, the save formats, their versions, and the schemas
+  schemas/                      JSON Schemas for saves, scenarios, and mod files, one a version, generated and checked by a test
   design/                       the owner's mock-ups of the interface, with a README on their intent
   modding/
     README.md                   what a mod is, installing one, writing one, how mods are applied, and the code behind them
@@ -484,7 +486,7 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   and no project. It holds the parser, the dispatcher, the default
   command, the strict option reader, and the exit codes.
 - **The tests.** `CityLimits.Tests` uses xUnit 2 with the VSTest runner
-  and coverlet, and holds 599 tests over saving, loading, autosave, and importing Micropolis cities, with a city
+  and coverlet, and holds 618 tests over saving, loading, autosave, importing Micropolis cities, format versions and schemas, with a city
   the owner built in both formats in `CityLimits.Tests/Assets/`, the generator, the terrain edges, the power plants, lines, and grid, the budget, the stations and their coverage, parks, hospitals and churches, the map, the
   calendar, the clock, the simulation, the settings, the tile rules, the
   build actions, the road network, the treasury, the scenario loader and
@@ -580,9 +582,10 @@ A city builder lives or dies on its simulation, not its art. The rules:
 - **New state goes in the save.** A field that lasts from one step to the
   next, in any part of the simulation, is captured and restored by that
   part's `Capture` and `Restore`, with a field in `CitySave` (which both
-  formats write, so a binary save's format version goes up with it) and a
-  line in `docs/saving.md`; otherwise a loaded city drifts from the one that was
-  saved. `FlatCityFormatTests` runs a saved and a loaded town in step and
+  formats write) and a line in `docs/saving.md`, and the save format's
+  minor version goes up with an upgrade step from the one before (see
+  File formats below); otherwise a loaded city drifts from the one that
+  was saved. `FlatCityFormatTests` runs a saved and a loaded town in step and
   compares them, which catches state left out as long as it changes what
   the city does.
 
@@ -641,6 +644,42 @@ A city builder lives or dies on its simulation, not its art. The rules:
   art. The flat colours in `Theme` are only for a missing sheet.
 - New dependencies need the owner's approval, and they must work with the
   pinned Raylib-cs and on both Linux and Windows.
+
+### File formats
+
+Saves, scenarios, and mod definitions are files people, agents, and older
+versions of the game write, so they are versioned, described, and read
+without reflection.
+
+- **Versions are major.minor.** A minor version only adds; a reader of 1.1
+  reads 1.0 too, starting what 1.0 lacked empty, and refuses 1.2 or 2.0
+  with a message (`FormatVersion.ProblemReadingWith`). Each new edition of
+  the Micropolis baseline that adds state takes the next minor version, as
+  Tony Bark set out. JSON writes the version as a string, `"1.1"`; a whole
+  number from before, `1`, reads as `1.0`. A binary save keeps its major
+  version in the header and its minor in the `VERS` chunk, and new state
+  goes in new chunks, never new fields in old ones. The scenario report's
+  `format` stays a whole number, since scripts read it.
+- **Older saves climb one minor version at a time,** each step a small
+  function with a test from a fixture; Bridgeport's fixtures in
+  `CityLimits.Tests/Assets/` stay at 1.0 for that.
+- **JSON goes through generated code.** Each JSON format reads and writes
+  through a System.Text.Json source-generated context, set as its
+  options' `TypeInfoResolver` and used through `GetTypeInfo`, so it
+  survives trimming. Reflection-based JSON is off in the game and the
+  tests (`JsonSerializerIsReflectionEnabledByDefault`), so a path that
+  still needs it fails at once, and `CityLimits.Core` is trim-analysed
+  (`IsTrimmable`), so new reflection is a build warning. The binary
+  codec's reflection is allowed because the save model's classes are
+  marked `[DynamicallyAccessedMembers(SectionCodec.ModelMembers)]`; a new
+  model class gets the mark too.
+- **Schemas are generated, not written.** `FormatSchemas` makes a JSON
+  Schema for each format from the readers' own code, and
+  `docs/schemas/` holds them, one a version. When a format changes,
+  `FormatSchemaTests` fails and writes the new schema beside the tests,
+  to look at and copy in. Every loader accepts `"$schema"` and ignores it;
+  the game writes it into `.fcl` saves. The game's checks, not the
+  schemas, decide what loads.
 
 ### Definitions and mods
 

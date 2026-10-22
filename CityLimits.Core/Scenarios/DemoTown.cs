@@ -14,7 +14,8 @@ public static class DemoTown
     /// <summary>The demo town as a scenario file.</summary>
     public const string Json = """
         {
-          "format": 1,
+          "$schema": "https://raw.githubusercontent.com/tonytins/citylimits/main/docs/schemas/scenario.v1.0.schema.json",
+          "format": "1.0",
           "name": "Demo town",
           "description": "A road with a residential, a commercial, and an industrial zone, powered by a coal plant; the industry is knocked down after a year.",
           "seed": 2000,

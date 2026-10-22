@@ -1,5 +1,6 @@
 {
-  "format": 1,
+  "$schema": "https://raw.githubusercontent.com/tonytins/citylimits/main/docs/schemas/scenario.v1.0.schema.json",
+  "format": "1.0",
   "name": "Small town",
   "description": "Twelve zones along two roads, powered by a coal plant across the north road, grow for ten years: houses first, then buildings where the houses cluster, with commerce and industry alongside.",
   "seed": 2000,

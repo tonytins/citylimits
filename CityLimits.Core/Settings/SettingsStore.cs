@@ -1,11 +1,16 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 
 namespace CityLimits.Core.Settings;
 
 /// <summary>Reads and writes the settings file.</summary>
 public static class SettingsStore
 {
-    private static readonly JsonSerializerOptions SerializerOptions = new() { WriteIndented = true };
+    // The settings' code is generated at build time, so reading them needs no reflection and survives trimming.
+    private static readonly JsonSerializerOptions SerializerOptions = new() { WriteIndented = true, TypeInfoResolver = SettingsJson.Default };
+
+    private static JsonTypeInfo<GameSettings> SettingsInfo => (JsonTypeInfo<GameSettings>)SerializerOptions.GetTypeInfo(typeof(GameSettings));
 
     /// <summary>
     /// Reads the settings, falling back to the defaults when the file is missing,
@@ -25,7 +30,7 @@ public static class SettingsStore
             }
 
             var json = File.ReadAllText(path);
-            var settings = JsonSerializer.Deserialize<GameSettings>(json, SerializerOptions);
+            var settings = JsonSerializer.Deserialize(json, SettingsInfo);
             if (settings is null)
             {
                 warning = $"The settings file '{path}' is empty, so the defaults are in use.";
@@ -56,7 +61,7 @@ public static class SettingsStore
                 Directory.CreateDirectory(directory);
             }
 
-            File.WriteAllText(path, JsonSerializer.Serialize(settings, SerializerOptions));
+            File.WriteAllText(path, JsonSerializer.Serialize(settings, SettingsInfo));
             return true;
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
@@ -66,3 +71,6 @@ public static class SettingsStore
         }
     }
 }
+
+[JsonSerializable(typeof(GameSettings))]
+internal sealed partial class SettingsJson : JsonSerializerContext;

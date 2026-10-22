@@ -95,11 +95,12 @@ Phase 1 counts time in ticks only, because a tick is the unit the
 simulation is deterministic in. Phase 2 adds goals by date, such as
 "5 000 people by 1910".
 
-## The file, version 1
+## The file, version 1.0
 
 ```json
 {
-  "format": 1,
+  "$schema": "https://raw.githubusercontent.com/tonytins/citylimits/main/docs/schemas/scenario.v1.0.schema.json",
+  "format": "1.0",
   "name": "Demo town",
   "description": "A road with a residential, a commercial, and an industrial zone, powered by a coal plant; the industry is knocked down after a year.",
   "seed": 2000,
@@ -130,7 +131,8 @@ simulation is deterministic in. Phase 2 adds goals by date, such as
 
 | Field | Required | Meaning |
 |---|---|---|
-| `format` | yes | The file format version. Phase 1 reads `1` and refuses anything else |
+| `$schema` | no | The scenario's schema, `docs/schemas/scenario.v1.0.schema.json`, for editors to check the file against; the game ignores it |
+| `format` | yes | The file format version, `"1.0"`. A whole number, such as `1`, reads as `1.0`. A newer minor version, or another major one, is refused with a message saying which this version reads |
 | `name` | yes | A display name, 1 to 80 characters |
 | `description` | no | One or two sentences, up to 500 characters |
 | `seed` | yes | The seed the map and the simulation are built from: any 32-bit integer |
@@ -254,11 +256,22 @@ first problem is reported with its location, as in
 `System.Text.Json` ships with .NET, so this needs no new package, and
 `CityLimits.Core` keeps its rule of no package references.
 
+## The schema
+
+`docs/schemas/scenario.v1.0.schema.json` describes the file: its fields
+and their types, with no others. Name it in `"$schema"`, as the built-in
+scenarios do, and an editor such as VS Code checks the file and suggests
+its fields as you write. The schema is generated from the loader's own
+code and checked by a test, so it stays current; the loader's checks go
+further, to ranges and the rules between fields, and decide what runs.
+
 ## The report, version 1
 
 The report is a stable interface: agents, scripts, and later a server may
 read it. Adding a field is allowed within a version. Renaming, removing,
-or changing the meaning of a field means bumping `format`.
+or changing the meaning of a field means bumping `format`. Unlike the
+files people write, the report's `format` stays a whole number, so
+scripts already reading it keep working.
 
 ```json
 {

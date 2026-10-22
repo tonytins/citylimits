@@ -1,6 +1,6 @@
 # CityLimits roadmap
 
-> **Last reviewed:** 2026-10-21 · **Last updated:** 2026-10-21 · **Change:** major (0.3, the alpha) · **Stage:** alpha
+> **Last reviewed:** 2026-10-21 · **Last updated:** 2026-10-22 · **Change:** minor (Radial R0: versioned, described file formats that survive trimming) · **Stage:** alpha
 
 Forward-looking: where CityLimits stands, what blocks the next milestone,
 and what comes next. Verified status and evidence are in the
@@ -62,17 +62,17 @@ Next, in order:
 | Line City: Roads and zoning | 100% | 0 | Meets the baseline: strokes with a preview, straight roads and bridges, 3 by 3 zones laid as a grid and served from their edges, and the $1 bulldozer, at Micropolis' prices |
 | Kowloon: Simulation core | 100% | 0 | Time runs as in Micropolis: the 16-phase cycle, the 48ths-of-a-year calendar, and its pace. Scenarios run from files and from the command line. Zones grow and decline one by one, with population, demand, and trips. The heart of the game |
 | Joffburg: Services and economy | 100% | 0 | Meets the baseline: power, taxes and the budget, services (stations, coverage, parks, hospitals, and churches), and the overview map with its power, coverage, land value, and density modes, as in Micropolis |
-| Radial: Traffic and commuting | 0% | 12–20 | Nothing yet |
+| Radial: Traffic and commuting | 25% | 13–22 | R0 is in: the file formats are versioned, described by schemas, and read without reflection. Traffic, its effects, and rail are left, built to the baseline |
 | Deadwood: Land value, pollution, disasters | 0% | 12–20 | Nothing yet |
 | Happy Isle: Player-facing game | 50% | 6–10 | The palette, laid out as Micropolis', and the HUD, with its top bar after the owner's mock-up, are in; the budget, demand, and city panels and the overview's power mode are too, and cities save, load, autosave, and import from Micropolis. The city score and map size on the start screen are left |
 | Yokohama: Polish and release | 0% | 10–20 | Nothing yet |
-| | **Total** | **≈ 40–70** | |
+| | **Total** | **≈ 41–72** | |
 
 ## Upcoming work, ranked
 
 | Rank | Work | Milestone | Estimate (h) |
 |---|---|---|---|
-| 1 | Traffic: congestion on the roads trips already use | Radial | 12–20 |
+| 1 | Radial R1 to R3: traffic, what it shows and costs, and rail | Radial | 13–22 |
 
 Every row of the alpha gate passes, and CityLimits is an alpha since 0.3.100.
 
@@ -200,12 +200,26 @@ Every row of the alpha gate passes, and CityLimits is an alpha since 0.3.100.
 
 ### Radial: Traffic and commuting
 
-- [ ] A road graph built from the tile map, rebuilt only when the roads
-  change.
-- [ ] Traffic volumes per road tile, from commuting trips.
-- [ ] Congestion above a road's capacity, feeding back into demand and
-  land value.
-- [ ] A traffic overlay, and a test on a small hand-made map.
+Built to the Micropolis baseline, in the phases Tony Bark settled. The
+earlier plan's congestion feeding back into demand and land value isn't
+Micropolis, and Tony Bark dropped it; traffic reaches land value through
+pollution, in Deadwood.
+
+- [x] R0: files that say their version and survive trimming. Saves,
+  scenarios, and mod files carry major.minor format versions, every JSON
+  format reads through generated code with reflection-based JSON off, the
+  binary codec's model is kept for the trimmer, and `docs/schemas/` holds
+  schemas generated from the readers (`docs/saving.md`).
+- [ ] R1: the traffic map. A trip that arrives leaves traffic on every
+  other road tile it passed, on 2 by 2 blocks, fading each cycle, capped
+  at 240 (where Micropolis caps it only one time in six, Tony Bark chose
+  always). Saved from format 1.1, with 1.0 saves upgraded.
+- [ ] R2: what traffic shows and costs. Animated light and heavy traffic
+  on roads, heavy traffic counting twice toward road upkeep, the yearly
+  traffic average and its message, and a traffic mode on the overview
+  map.
+- [ ] R3: rail, as in Micropolis: a rail tool, rail crossing roads and
+  power lines, and trips along rail as well as roads.
 
 ### Deadwood: Land value, pollution, disasters
 
@@ -313,7 +327,8 @@ baseline's growth depends on.
 
 | Date | Change | Summary |
 |---|---|---|
-| 2026-10-21 | major | The owner marked CityLimits an alpha: the version's base is 0.3.100, and the changelog sums up everything since 0.2.100. Every row of the alpha gate passes. Traffic, Deadwood, the city score, and polish are left; 40–70 h in total. |
+| 2026-10-22 | minor | Radial begins, phase R0, settled with Tony Bark: saves, scenarios, and mod files carry major.minor format versions (a minor version only adds; each new Micropolis edition takes the next), every JSON format reads through source-generated code with reflection-based JSON off in the game and tests, Core is trim-analysed, and `docs/schemas/` holds JSON Schemas generated from the readers and checked by a test. Radial's checklist becomes R0 to R3, rail included, and the congestion item is dropped. Radial is at 25%; 41–72 h left in total, 618 tests. |
+| 2026-10-21 | major | Tony Bark marked CityLimits an alpha: the version's base is 0.3.100, and the changelog sums up everything since 0.2.100. Every row of the alpha gate passes. Traffic, Deadwood, the city score, and polish are left; 40–70 h in total. |
 | 2026-10-21 | minor | Saving, S5, and with it saving, is complete: Micropolis' and SimCity Classic's `.cty` files in the Cities folder are listed and imported, never written. Tiles come in by Micropolis' tile numbers, with the owner's approval, and buildings whole from their centres; what CityLimits doesn't have yet becomes bare ground, as the owner chose, and is listed. The date, money, tax, funding, populations, demand, and history come across, the seed is made from the file, and power is traced at once. Bridgeport is a fixture in `.cty` too, made by a writer that lives only in the tests. 40–70 h left in total, 599 tests. |
 | 2026-10-21 | minor | Saving, S4: autosave every 15 minutes of play, counted only while the city runs, to `Joffburg (autosave).cl` beside the city's own file, skipped when the city is as it was last saved. `AutosaveSlots` in the settings keeps one or two, the newer replacing the older. Load Game marks autosaves, and saving a city opened from one goes to its own file without asking. 43–76 h left in total, 571 tests. |
 | 2026-10-21 | minor | Saving, S3: the binary city format, `.cl`, after Micropolis' city files: a header, then tagged chunks with CRC-32 checksums, the map as a 16-bit word a tile, column by column, and the other sections written field by field from the same model as `.fcl`. An unknown chunk is skipped and noted; a damaged one refuses the file. Ctrl+S writes `.cl` unless a city came from `.fcl`, and Load Game lists both. Bridgeport, a city the owner built, is a test fixture in both formats. 45–79 h left in total, 566 tests. |

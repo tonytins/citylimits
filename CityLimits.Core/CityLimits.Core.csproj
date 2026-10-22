@@ -5,6 +5,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <RollForward>LatestMajor</RollForward>
+    <!-- Trim analysis flags reflection a trimmed build would break; saves, scenarios, and mods must survive one. -->
+    <IsTrimmable>true</IsTrimmable>
   </PropertyGroup>
 
 </Project>

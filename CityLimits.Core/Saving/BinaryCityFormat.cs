@@ -18,8 +18,12 @@ public static class BinaryCityFormat
     /// <summary>The extension of a binary city file.</summary>
     public const string Extension = ".cl";
 
-    /// <summary>The version of the format this game writes and reads.</summary>
-    public const int Format = 1;
+    /// <summary>
+    /// The version of the format this game writes, and the newest it reads. The header holds the
+    /// major version, so files from before minor versions stay valid; the minor version is in a
+    /// small <c>VERS</c> chunk, and a file without one is a .0.
+    /// </summary>
+    public static readonly FormatVersion Format = new(1, 0);
 
     /// <summary>The largest file read, so a damaged or wrong one can't run away with memory.</summary>
     public const long MaxBytes = 16 * 1024 * 1024;
@@ -29,7 +33,9 @@ public static class BinaryCityFormat
 
     private static readonly byte[] Magic = "CLCITY"u8.ToArray();
 
-    // The chunks, in the order they are written; each holds a section of the save model.
+    // The chunks, in the order they are written; each holds a section of the save model, apart from
+    // the minor version's.
+    private const string VersionTag = "VERS";
     private const string CityTag = "CITY";
     private const string DefinitionsTag = "DEFS";
     private const string MapTag = "MAP ";
@@ -52,7 +58,10 @@ public static class BinaryCityFormat
 
         using var stream = new MemoryStream();
         stream.Write(Magic);
-        WriteUInt16(stream, Format);
+        WriteUInt16(stream, Format.Major);
+        var minor = new byte[2];
+        BinaryPrimitives.WriteUInt16BigEndian(minor, (ushort)Format.Minor);
+        WriteChunk(stream, VersionTag, minor);
         WriteChunk(stream, CityTag, SectionCodec.Write(new CityChunk
         {
             Name = save.Name,
@@ -151,12 +160,13 @@ public static class BinaryCityFormat
             throw new InvalidSave("The file isn't a binary CityLimits city: it doesn't start with CLCITY.");
         }
 
-        var format = BinaryPrimitives.ReadUInt16BigEndian(bytes[Magic.Length..]);
-        if (format != Format)
+        var major = BinaryPrimitives.ReadUInt16BigEndian(bytes[Magic.Length..]);
+        if (major != Format.Major)
         {
-            throw new InvalidSave($"format: this version reads format {Format}, not {format}.");
+            throw new InvalidSave($"format: {new FormatVersion(major, 0).ProblemReadingWith(Format)}");
         }
 
+        var minor = 0;
         var chunks = new Dictionary<string, byte[]>();
         var position = Magic.Length + 2;
         while (position < bytes.Length)
@@ -182,6 +192,12 @@ public static class BinaryCityFormat
             }
 
             position += ChunkOverhead + (int)length;
+            if (tag == VersionTag)
+            {
+                minor = payload.Length == 2 ? BinaryPrimitives.ReadUInt16BigEndian(payload) : throw new InvalidSave("VERS: needs the minor version as one 16-bit number.");
+                continue;
+            }
+
             if (!Required.Contains(tag))
             {
                 skipped.Add($"Skipped a chunk this version doesn't know: '{tag}'.");
@@ -194,6 +210,12 @@ public static class BinaryCityFormat
             }
         }
 
+        var version = new FormatVersion(major, minor);
+        if (version.ProblemReadingWith(Format) is { } tooNew)
+        {
+            throw new InvalidSave($"format: {tooNew}");
+        }
+
         var missing = Required.FirstOrDefault(tag => !chunks.ContainsKey(tag));
         if (missing is not null)
         {
@@ -204,7 +226,7 @@ public static class BinaryCityFormat
         var definitions = SectionCodec.Read<DefinitionsChunk>(chunks[DefinitionsTag], DefinitionsTag);
         return new CitySave
         {
-            Format = FlatCityFormat.Format,
+            Format = version,
             Name = head.Name,
             Seed = head.Seed,
             Random = head.Random,
@@ -287,6 +309,7 @@ public static class BinaryCityFormat
     }
 
     // The city's own fields, the first chunk.
+    [DynamicallyAccessedMembers(SectionCodec.ModelMembers)]
     private sealed class CityChunk
     {
         public string Name { get; set; } = string.Empty;
@@ -302,6 +325,7 @@ public static class BinaryCityFormat
         public int Funds { get; set; }
     }
 
+    [DynamicallyAccessedMembers(SectionCodec.ModelMembers)]
     private sealed class DefinitionsChunk
     {
         public System.Text.Json.JsonElement Definitions { get; set; }

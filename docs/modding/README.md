@@ -58,7 +58,8 @@ This mod makes commercial zones cost $40 and calls them markets.
 
    ```json
    {
-     "format": 1,
+     "$schema": "https://raw.githubusercontent.com/tonytins/citylimits/main/docs/schemas/mod.v1.0.schema.json",
+     "format": "1.0",
      "id": "cheap-commerce",
      "name": "Cheap commerce",
      "version": "1.0",
@@ -70,7 +71,8 @@ This mod makes commercial zones cost $40 and calls them markets.
 
    ```json
    {
-     "format": 1,
+     "$schema": "https://raw.githubusercontent.com/tonytins/citylimits/main/docs/schemas/zones.v1.0.schema.json",
+     "format": "1.0",
      "zones": [
        { "id": "commercial", "name": "Market", "price": 40 }
      ]
@@ -89,7 +91,8 @@ Every mod needs one. It names the mod; the changes go in the other files.
 
 | Field | Required | Meaning |
 |---|---|---|
-| `format` | yes | The version of the mod format. This version of the game reads `1` |
+| `$schema` | no | Where the file's description is, so an editor such as VS Code can check your file and suggest what can go in it. The game ignores it |
+| `format` | yes | The version of the mod format, `"1.0"`. Mods written with `1` still work |
 | `id` | yes | The mod's id: lowercase letters, digits, and single hyphens, such as `cheap-commerce`. The mod's folder must have the same name |
 | `name` | yes | The mod's name, 1 to 80 characters |
 | `version` | no | Your own version number for the mod, up to 32 characters |

@@ -5,6 +5,9 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <!-- Every JSON format reads through generated code; reflection-based JSON is off, so a path that
+         still needs it fails loudly here instead of in a trimmed build. -->
+    <JsonSerializerIsReflectionEnabledByDefault>false</JsonSerializerIsReflectionEnabledByDefault>
     <RollForward>LatestMajor</RollForward>
   </PropertyGroup>
 

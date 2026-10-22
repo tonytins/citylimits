@@ -18,14 +18,22 @@ Mods/
     services.json  police and fire stations (optional)
 ```
 
-Every file starts with `"format": 1` and lists only what it changes. A
-value you leave out keeps the base game's, which are Micropolis'.
+Every file starts with `"format": "1.0"` and lists only what it changes.
+A value you leave out keeps the base game's, which are Micropolis'. Mods
+written with `"format": 1` still work.
+
+Each file can also name its schema in a `"$schema"` line, as the examples
+below do. A schema describes what can go in the file, so an editor such
+as VS Code can check it and suggest field names as you type. The game
+ignores the line. The schemas are in `docs/schemas/`: `mod`, `zones`,
+`plants`, and `services`.
 
 ## `zones.json`
 
 ```json
 {
-  "format": 1,
+  "$schema": "https://raw.githubusercontent.com/tonytins/citylimits/main/docs/schemas/zones.v1.0.schema.json",
+  "format": "1.0",
   "zones": [
     { "id": "commercial", "name": "Market", "price": 40 },
     { "id": "residential", "houses": 4 }
@@ -53,7 +61,8 @@ drawings in the tile sheet.
 
 ```json
 {
-  "format": 1,
+  "$schema": "https://raw.githubusercontent.com/tonytins/citylimits/main/docs/schemas/plants.v1.0.schema.json",
+  "format": "1.0",
   "plants": [
     { "id": "coal", "name": "Coal works", "price": 2000, "capacity": 900 }
   ]
@@ -73,7 +82,8 @@ Each entry names a plant by its id, `coal` or `nuclear`.
 
 ```json
 {
-  "format": 1,
+  "$schema": "https://raw.githubusercontent.com/tonytins/citylimits/main/docs/schemas/services.v1.0.schema.json",
+  "format": "1.0",
   "services": [
     { "id": "police", "name": "Sheriff", "price": 300, "upkeep": 40 }
   ]

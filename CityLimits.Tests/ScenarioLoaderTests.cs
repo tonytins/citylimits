@@ -89,7 +89,8 @@ public class ScenarioLoaderTests
 
     [Theory]
     [InlineData("""{ "name": "A", "seed": 1, "ticks": 1 }""", "format: is required.")]
-    [InlineData("""{ "format": 2, "name": "A", "seed": 1, "ticks": 1 }""", "format: this version reads format 1, not 2.")]
+    [InlineData("""{ "format": 2, "name": "A", "seed": 1, "ticks": 1 }""", "format: this is format 2.0; this version of CityLimits reads up to 1.0.")]
+    [InlineData("""{ "format": "1.5", "name": "A", "seed": 1, "ticks": 1 }""", "format: this is format 1.5; this version of CityLimits reads up to 1.0.")]
     [InlineData("""{ "format": 1, "name": " ", "seed": 1, "ticks": 1 }""", "name: needs 1 to 80 characters, not 0.")]
     [InlineData("""{ "format": 1, "name": "A", "ticks": 1 }""", "seed: is required.")]
     [InlineData("""{ "format": 1, "name": "A", "seed": 1, "ticks": 100001 }""", "ticks: needs a number from 0 to 100000, not 100001.")]

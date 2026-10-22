@@ -1,6 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 using CityLimits.Core.Scenarios;
 
 namespace CityLimits.Core.Definitions;
@@ -9,13 +10,16 @@ namespace CityLimits.Core.Definitions;
 /// Reads definitions files, the base game's and a mod's, and checks every part of them, reporting
 /// the first problem with where it is, as in <c>zones[1].price: needs a number from 0 to 1000000, not -5.</c>
 /// </summary>
-public static class DefinitionLoader
+public static partial class DefinitionLoader
 {
     /// <summary>The largest definitions or manifest file read.</summary>
     public const long MaxFileBytes = 1024 * 1024;
 
-    /// <summary>The only definitions format this version reads.</summary>
-    public const int Format = 1;
+    /// <summary>
+    /// The newest definitions format this version reads, and the one it writes. A file of an older
+    /// minor version reads too; one written as a whole number, such as <c>1</c>, is 1.0.
+    /// </summary>
+    public static readonly FormatVersion Format = new(1, 0);
 
     /// <summary>The most a zone may cost.</summary>
     public const int MaxPrice = 1_000_000;
@@ -52,10 +56,13 @@ public static class DefinitionLoader
         ["nuclear"] = TileUse.NuclearPowerPlant,
     };
 
+    // The documents' code is generated at build time, so reading them needs no reflection and
+    // survives trimming.
     private static readonly JsonSerializerOptions Options = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
+        TypeInfoResolver = DefinitionJson.Default,
     };
 
     /// <summary>Reads the base game's definitions, which must define every zone, plant, and service, and every field.</summary>
@@ -286,7 +293,7 @@ public static class DefinitionLoader
 
         try
         {
-            document = JsonSerializer.Deserialize<T>(json, Options);
+            document = JsonSerializer.Deserialize(json, (JsonTypeInfo<T>)Options.GetTypeInfo(typeof(T)));
         }
         catch (JsonException ex)
         {
@@ -306,14 +313,24 @@ public static class DefinitionLoader
         return true;
     }
 
-    private static void CheckFormat(int? format, string at)
+    private static void CheckFormat(FormatVersion? format, string at)
     {
         var value = format ?? throw new InvalidDefinitions($"{at}: is required.");
-        if (value != Format)
+        if (value.ProblemReadingWith(Format) is { } problem)
         {
-            throw new InvalidDefinitions($"{at}: this version reads format {Format}, not {value}.");
+            throw new InvalidDefinitions($"{at}: {problem}");
         }
     }
+
+    /// <summary>The documents a definitions file can be, by the name its schema goes by, for the schemas.</summary>
+    internal static IEnumerable<(string Name, JsonTypeInfo Info)> SchemaDocuments() =>
+    [
+        ("definitions", Options.GetTypeInfo(typeof(DefinitionsDocument))),
+        ("mod", Options.GetTypeInfo(typeof(ManifestDocument))),
+        ("zones", Options.GetTypeInfo(typeof(ZonesDocument))),
+        ("plants", Options.GetTypeInfo(typeof(PlantsDocument))),
+        ("services", Options.GetTypeInfo(typeof(ServicesDocument))),
+    ];
 
     private static TileUse ZoneUse(string? id, string at, IEnumerable<TileUse> seen) => Id(ZoneIds, id, at, seen);
 
@@ -429,13 +446,23 @@ public static class DefinitionLoader
         return price;
     }
 
+    [JsonSerializable(typeof(DefinitionsDocument))]
+    [JsonSerializable(typeof(ManifestDocument))]
+    [JsonSerializable(typeof(ZonesDocument))]
+    [JsonSerializable(typeof(PlantsDocument))]
+    [JsonSerializable(typeof(ServicesDocument))]
+    private sealed partial class DefinitionJson : JsonSerializerContext;
+
     // Reading stops at the first problem. The exception never leaves this class.
     private sealed class InvalidDefinitions(string message) : Exception(message);
 
     // The base game's definitions hold both lists; a mod keeps each in its own file.
     private sealed class DefinitionsDocument
     {
-        public int? Format { get; set; }
+        [JsonPropertyName("$schema")]
+        public string? Schema { get; set; }
+
+        public FormatVersion? Format { get; set; }
 
         public List<ZoneDocument?>? Zones { get; set; }
 
@@ -446,7 +473,10 @@ public static class DefinitionLoader
 
     private sealed class ServicesDocument
     {
-        public int? Format { get; set; }
+        [JsonPropertyName("$schema")]
+        public string? Schema { get; set; }
+
+        public FormatVersion? Format { get; set; }
 
         public List<ServiceDocument?>? Services { get; set; }
     }
@@ -464,14 +494,20 @@ public static class DefinitionLoader
 
     private sealed class ZonesDocument
     {
-        public int? Format { get; set; }
+        [JsonPropertyName("$schema")]
+        public string? Schema { get; set; }
+
+        public FormatVersion? Format { get; set; }
 
         public List<ZoneDocument?>? Zones { get; set; }
     }
 
     private sealed class PlantsDocument
     {
-        public int? Format { get; set; }
+        [JsonPropertyName("$schema")]
+        public string? Schema { get; set; }
+
+        public FormatVersion? Format { get; set; }
 
         public List<PlantDocument?>? Plants { get; set; }
     }
@@ -506,7 +542,10 @@ public static class DefinitionLoader
 
     private sealed class ManifestDocument
     {
-        public int? Format { get; set; }
+        [JsonPropertyName("$schema")]
+        public string? Schema { get; set; }
+
+        public FormatVersion? Format { get; set; }
 
         public string? Id { get; set; }
 

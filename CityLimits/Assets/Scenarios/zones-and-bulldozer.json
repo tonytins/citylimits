@@ -1,5 +1,6 @@
 {
-  "format": 1,
+  "$schema": "https://raw.githubusercontent.com/tonytins/citylimits/main/docs/schemas/scenario.v1.0.schema.json",
+  "format": "1.0",
   "name": "Zones and the bulldozer",
   "description": "A grid of zones along a road, powered by a coal plant beside them, a zone with no road or power, and the bulldozer's rules for zones.",
   "seed": 2000,
