@@ -246,21 +246,21 @@ public static class BinaryCityFormat
             }
         }
 
-        // A newer minor version's unknown chunks are kept when its parts list lets them be left out; in
-        // a file this version can read whole, an unknown chunk is skipped and noted, as it always was.
+        // A newer minor version's unknown chunks are kept when its parts list lets them be left out, and
+        // so are those a save this version wrote from one names in its parts list. In a file this
+        // version can read whole, any other unknown chunk is skipped and noted, as it always was.
         var version = new FormatVersion(major, minor);
-        if (version.Minor > Format.Minor)
+        var named = version.Minor > Format.Minor ? [.. unknown.Keys] : unknown.Keys.Where(tag => parts?.Any(part => part.Chunk == tag) == true).ToList();
+        if (version.Minor > Format.Minor || named.Count > 0)
         {
-            kept = SaveParts.Keep(version, Extension, parts, unknown.Keys, part => part.Chunk);
+            kept = SaveParts.Keep(version, Extension, parts, named, part => part.Chunk);
             foreach (var part in kept.Parts)
             {
                 kept.Chunks[part.Chunk] = unknown[part.Chunk];
             }
         }
-        else
-        {
-            skipped.AddRange(unknown.Keys.Select(tag => $"Skipped a chunk this version doesn't know: '{tag}'."));
-        }
+
+        skipped.AddRange(unknown.Keys.Except(named).Select(tag => $"Skipped a chunk this version doesn't know: '{tag}'."));
 
         var missing = Required.Concat(Added.Where(added => version >= added.Since).Select(added => added.Tag)).FirstOrDefault(tag => !chunks.ContainsKey(tag));
         if (missing is not null)

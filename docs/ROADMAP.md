@@ -1,6 +1,6 @@
 # CityLimits roadmap
 
-> **Last reviewed:** 2026-10-21 · **Last updated:** 2026-10-22 · **Change:** minor (Radial R3: rail and the train; Radial is complete) · **Stage:** alpha
+> **Last reviewed:** 2026-10-21 · **Last updated:** 2026-10-22 · **Change:** patch (reopening a save's kept parts; backports of opening newer saves to 0.3.100–0.3.102) · **Stage:** alpha
 
 Forward-looking: where CityLimits stands, what blocks the next milestone,
 and what comes next. Verified status and evidence are in the
@@ -334,6 +334,7 @@ baseline's growth depends on.
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-22 | patch | A save that kept a newer save's parts but fell back to this version opens again with them; before, the flat format refused it and the binary one dropped them. 0.3.100 to 0.3.102 got backports that open saves from 0.3.103 on, 0.3.100.1 to 0.3.102.1, on release branches, and a save from each is a fixture. 705 tests. |
 | 2026-10-22 | minor | Radial, R3, and with it Radial, is complete, as in Micropolis: rail at $20 a tile, tunnels at $100, crossings with roads and lines, trips on road and rail alike with traffic only on roads, rail serving zones, each rail tile two road tiles of upkeep, crumbling underfunded rail, and the inadequate-rail message past 50 zones; the commuter train wanders the track, drawn by the game alone with its own generator, as Tony Bark chose. Saves move to format 1.4, with rail a part an older version can leave out, and scenarios to 1.1 for the Rail tool and count; a built-in `rail` scenario. Imports bring rail in as rail. The palette's buttons became switches and the number keys were dropped. Radial is at 100%; 28–50 h left in total, 697 tests. |
 | 2026-10-22 | minor | An interface update of its own before Radial's R3, after Tony Bark's revised mock-up and SimCity 3000's ticker: the bar moves to the bottom, over a news ticker that never stops (white headlines, some reacting to the city and some flavour; yellow notices and the city's messages; red for disasters to come), replacing the notice line; the key hints become a movable help window behind a green question mark or F1; build results and refusals, and the Inspect tool's tile readout in place of its old panel, show beside the pointer in black on yellow; the ticker stands still while the city is paused; the palette and the overview move to the top corners; and the loading screen's phrases scroll like the ticker. 673 tests. |
 | 2026-10-22 | minor | Radial, R2, as in Micropolis: the scan shows each road light traffic from 64 and heavy from 192, drawn over the map from the sheet's four-frame animations at Micropolis' pace; a road that showed heavy traffic counts twice toward upkeep, which leaves the demo town $6 poorer after two years; the year's traffic average reports jams above 60; and the overview gains a Traffic mode, its buttons in two rows. Saves move to format 1.3. Radial is at 75%; 34–60 h left in total, 657 tests. |

@@ -575,7 +575,7 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   and no project. It holds the parser, the dispatcher, the default
   command, the strict option reader, and the exit codes.
 - **The tests.** `CityLimits.Tests` uses xUnit 2 with the VSTest runner
-  and coverlet, and holds 697 tests over rail and the train, the news ticker's queue, its headlines, and the loading phrases, opening newer saves, traffic and its animation, saving, loading, autosave, importing Micropolis cities, format versions and schemas, with a city
+  and coverlet, and holds 705 tests over rail and the train, the news ticker's queue, its headlines, and the loading phrases, opening newer saves and the backports' saves, traffic and its animation, saving, loading, autosave, importing Micropolis cities, format versions and schemas, with a city
   the owner built in both formats in `CityLimits.Tests/Assets/`, the generator, the terrain edges, the power plants, lines, and grid, the budget, the stations and their coverage, parks, hospitals and churches, the map, the
   calendar, the clock, the simulation, the settings, the tile rules, the
   build actions, the road network, the treasury, the scenario loader and
@@ -607,6 +607,14 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   versions with user-facing and developer changes, so its latest entry is
   expected to lag behind the version the game reports. Developer changes
   include any public APIs, tools, debugging, and modding support.
+  GitInfo is told to ignore tags and branch names
+  (`GitIgnoreTagVersion`, `GitIgnoreBranchVersion`), so release tags such
+  as `v0.3.106` don't take the version over from `GitInfo.txt`. A
+  backport branch, such as `release/0.3.100`, is the one exception to
+  working on `main`: its `GitInfo.txt` names the release with a fourth
+  number, `0.3.100.1`, which its project file reads as the patch and a
+  revision, and its commits don't count, so it can't run into the next
+  release. A later fix there raises the fourth number by hand.
 
 Everything else in this file describes the rules the code must follow as it
 grows. Do not describe planned behavior as if it exists.
@@ -764,8 +772,13 @@ without reflection.
   doesn't know is checked against that list: one that isn't ignorable
   refuses the file. The city carries the parts it kept (`KeptParts`) and
   writes back the keepable ones in their own format, at the newer version
-  only when it kept them all. A new part is a whole new section or chunk,
-  with an entry in `SaveParts.Known` saying its two flags.
+  only when it kept them all; otherwise at its own, with the keepable
+  parts named in its parts list, so the save opens again with them. A new
+  part is a whole new section or chunk, with an entry in `SaveParts.Known`
+  saying its two flags. 0.3.100 to 0.3.102 have backports of this on
+  `release/0.3.100` to `release/0.3.102`; `CityLimits.Tests/Assets/`
+  holds a save from each (`Bridgeport.from-0.3.10x.1`), which must keep
+  opening.
 - **JSON goes through generated code.** Each JSON format reads and writes
   through a System.Text.Json source-generated context, set as its
   options' `TypeInfoResolver` and used through `GetTypeInfo`, so it

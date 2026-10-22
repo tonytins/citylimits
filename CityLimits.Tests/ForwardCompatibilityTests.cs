@@ -22,16 +22,17 @@ public class ForwardCompatibilityTests
         return city;
     }
 
-    private static JsonObject Part(bool ignorable, bool keepable) => new()
+    private static JsonObject Part(bool ignorable, bool keepable, string name = "pollution", string chunk = "POLL") => new()
     {
-        ["name"] = "pollution",
-        ["chunk"] = "POLL",
+        ["name"] = name,
+        ["chunk"] = chunk,
         ["since"] = "1.5",
         ["ignorable"] = ignorable,
         ["keepable"] = keepable,
     };
 
-    private static string FutureFlat(bool ignorable, bool keepable, bool listed = true)
+    // With noise, the save has a second part, which can be left out but not kept.
+    private static string FutureFlat(bool ignorable, bool keepable, bool listed = true, bool noise = false)
     {
         var save = JsonNode.Parse(FlatCityFormat.Write(City()))!.AsObject();
         save["format"] = "1.5";
@@ -39,6 +40,12 @@ public class ForwardCompatibilityTests
         if (listed)
         {
             save["parts"]!.AsArray().Add(Part(ignorable, keepable));
+        }
+
+        if (noise)
+        {
+            save["noise"] = new JsonObject { ["levels"] = new JsonArray(4) };
+            save["parts"]!.AsArray().Add(Part(ignorable: true, keepable: false, "noise", "NOIS"));
         }
 
         return save.ToJsonString();
@@ -95,14 +102,32 @@ public class ForwardCompatibilityTests
     }
 
     [Fact]
-    public void AnUnknownPartInASaveOfThisVersionIsRefused()
+    public void AnUnknownPartInASaveOfThisVersionIsRefusedUnlessItsPartsListNamesIt()
     {
-        var save = JsonNode.Parse(FutureFlat(ignorable: true, keepable: true))!.AsObject();
+        var save = JsonNode.Parse(FutureFlat(ignorable: true, keepable: true, listed: false))!.AsObject();
         save["format"] = "1.4";
 
         Assert.False(FlatCityFormat.TryRead(save.ToJsonString(), out _, out var problem));
 
-        Assert.Equal("pollution: is not a part a save has.", problem);
+        Assert.Equal("pollution: is not a part a save has, and the file's parts list doesn't name it.", problem);
+    }
+
+    [Fact]
+    public void AKeptPartGoesIntoASaveOfThisVersionAndOpensAgain()
+    {
+        // Noise can't be kept, so the save falls back to 1.4, but pollution still goes in, named in
+        // the parts list, so the newer game gets it back and this one opens its own save again.
+        Assert.True(FlatCityFormat.TryRead(FutureFlat(ignorable: true, keepable: true, noise: true), out var city, out var problem, out _), problem);
+
+        var written = JsonNode.Parse(FlatCityFormat.Write(city))!.AsObject();
+        Assert.Equal("1.4", written["format"]!.GetValue<string>());
+        Assert.Null(written["noise"]);
+        Assert.Equal("[1,2,3]", written["pollution"]!["levels"]!.ToJsonString());
+        Assert.Contains(written["parts"]!.AsArray(), part => part!["name"]!.GetValue<string>() == "pollution");
+
+        Assert.True(FlatCityFormat.TryRead(written.ToJsonString(), out var reopened, out problem, out var notes), problem);
+        Assert.Equal("This city carries parts a newer CityLimits saved, which this version doesn't read.", notes[0]);
+        Assert.Equal("[1,2,3]", JsonNode.Parse(FlatCityFormat.Write(reopened))!["pollution"]!["levels"]!.ToJsonString());
     }
 
     [Fact]
@@ -152,6 +177,42 @@ public class ForwardCompatibilityTests
     }
 
     [Fact]
+    public void ABinarySavesKeptPartGoesIntoASaveOfThisVersionAndOpensAgain()
+    {
+        Assert.True(BinaryCityFormat.TryRead(FutureBinary(ignorable: true, keepable: true, noise: true), out var city, out var problem, out _), problem);
+
+        var written = BinaryCityFormat.Write(city);
+        var chunks = Chunks(written);
+        Assert.Equal([0, 4], chunks.Single(chunk => chunk.Tag == "VERS").Payload);
+        Assert.Equal([7, 8, 9], chunks.Single(chunk => chunk.Tag == "POLL").Payload);
+        Assert.DoesNotContain(chunks, chunk => chunk.Tag == "NOIS");
+
+        // Before, the reopened save skipped the chunk, and the next save lost it.
+        Assert.True(BinaryCityFormat.TryRead(written, out var reopened, out problem, out var notes), problem);
+        Assert.Equal("This city carries parts a newer CityLimits saved, which this version doesn't read.", notes[0]);
+        Assert.Equal([7, 8, 9], Chunks(BinaryCityFormat.Write(reopened)).Single(chunk => chunk.Tag == "POLL").Payload);
+    }
+
+    // Bridgeport with rail, opened from 0.3.106's save in each backport (0.3.100.1, 0.3.101.1, and
+    // 0.3.102.1), run for 64 steps, and saved: older versions, with the traffic they kept and their
+    // parts list, and without the rail they left out.
+    [Theory]
+    [InlineData("Bridgeport.from-0.3.100.1.fcl")]
+    [InlineData("Bridgeport.from-0.3.100.1.cl")]
+    [InlineData("Bridgeport.from-0.3.101.1.fcl")]
+    [InlineData("Bridgeport.from-0.3.101.1.cl")]
+    [InlineData("Bridgeport.from-0.3.102.1.fcl")]
+    [InlineData("Bridgeport.from-0.3.102.1.cl")]
+    public void ASaveABackportWroteOpensAsAnOlderOne(string file)
+    {
+        Assert.True(CityFiles.TryRead(Path.Combine(AppContext.BaseDirectory, "Assets", file), out var city, out var problem, out var notes), problem);
+
+        Assert.Empty(notes);
+        Assert.Equal(0, city.RailTiles);
+        Assert.Equal("1.4", JsonNode.Parse(FlatCityFormat.Write(city))!["format"]!.GetValue<string>());
+    }
+
+    [Fact]
     public void AnAutosaveFollowsItsCitysFormat()
     {
         Assert.Equal("Joffburg (autosave).fcl", Autosave.FileNameFor("Joffburg", 1, FlatCityFormat.Extension));
@@ -159,8 +220,8 @@ public class ForwardCompatibilityTests
     }
 
     // The binary save as docs/saving.md lays it out: the header, then chunks, with the minor version
-    // made 5, the parts list given the pollution part, and the part's own chunk added.
-    private static byte[] FutureBinary(bool ignorable, bool keepable)
+    // made 5, the parts list given the pollution part (and noise, when asked), and the parts' own chunks added.
+    private static byte[] FutureBinary(bool ignorable, bool keepable, bool noise = false)
     {
         var bytes = BinaryCityFormat.Write(City());
         var rebuilt = new List<byte>(bytes[..8]);
@@ -169,34 +230,38 @@ public class ForwardCompatibilityTests
             var changed = tag switch
             {
                 "VERS" => [0, 5],
-                "PART" => [.. AddPart(payload, ignorable, keepable)],
+                "PART" => [.. AddParts(payload, ignorable, keepable, noise)],
                 _ => payload,
             };
             rebuilt.AddRange(Chunk(tag, changed));
         }
 
         rebuilt.AddRange(Chunk("POLL", [7, 8, 9]));
+        if (noise)
+        {
+            rebuilt.AddRange(Chunk("NOIS", [4]));
+        }
+
         return [.. rebuilt];
     }
 
     // The parts list is a count, then each part: a byte saying it is there, and its fields in order,
     // three texts and two yes-or-no bytes. A whole number is a zigzag varint, and a text its length
     // as one, then its bytes.
-    private static IEnumerable<byte> AddPart(byte[] payload, bool ignorable, bool keepable)
+    private static IEnumerable<byte> AddParts(byte[] payload, bool ignorable, bool keepable, bool noise)
     {
         var count = payload[0] >> 1;
-        return
-        [
-            .. Varint(count + 1),
-            .. payload[1..],
-            1,
-            .. Text("pollution"),
-            .. Text("POLL"),
-            .. Text("1.5"),
-            (byte)(ignorable ? 1 : 0),
-            (byte)(keepable ? 1 : 0),
-        ];
+        List<byte> parts = [.. Varint(count + (noise ? 2 : 1)), .. payload[1..], .. PartBytes("pollution", "POLL", ignorable, keepable)];
+        if (noise)
+        {
+            parts.AddRange(PartBytes("noise", "NOIS", ignorable: true, keepable: false));
+        }
+
+        return parts;
     }
+
+    private static byte[] PartBytes(string name, string chunk, bool ignorable, bool keepable) =>
+        [1, .. Text(name), .. Text(chunk), .. Text("1.5"), (byte)(ignorable ? 1 : 0), (byte)(keepable ? 1 : 0)];
 
     private static byte[] Varint(long value)
     {

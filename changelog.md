@@ -1,5 +1,24 @@
 # CityLimits Changelog
 
+## 0.3.107
+
+Older versions can now open your newer cities too. 0.3.100, 0.3.101, and
+0.3.102 each have a backport, 0.3.100.1, 0.3.101.1, and 0.3.102.1, that
+opens cities saved by 0.3.103 and later, as 0.3.103 does. They leave out
+what they don't have, such as rail, and keep what they can, such as
+traffic, so it comes back when you open the city here again. CityLimits
+already opened older cities well, and it had been bothering me that the
+older versions couldn't open newer ones. The backports also read each
+setting on its own, as 0.3.103 does.
+
+For developers and agents: a save that kept a newer save's parts but had
+to fall back to this version, because one part couldn't be kept, now
+opens again with them: before, a `.fcl` save was refused, and a `.cl`
+save dropped them. The backports live on `release/0.3.100` to
+`release/0.3.102`, and a save from each is a test fixture. The version
+now comes from `GitInfo.txt` alone, even with release tags in the
+repository.
+
 ## 0.3.106
 
 Rail is here, as in Micropolis. Lay it like a road with the new rail tool

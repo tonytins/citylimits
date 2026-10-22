@@ -83,7 +83,9 @@ internal static class SaveParts
 
         var notes = new List<string>
         {
-            $"A newer CityLimits saved this city, in format {kept.FileVersion}; this version reads up to {SaveUpgrades.Current}.",
+            kept.FileVersion > SaveUpgrades.Current
+                ? $"A newer CityLimits saved this city, in format {kept.FileVersion}; this version reads up to {SaveUpgrades.Current}."
+                : "This city carries parts a newer CityLimits saved, which this version doesn't read.",
         };
         foreach (var part in kept.Parts)
         {

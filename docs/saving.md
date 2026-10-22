@@ -278,7 +278,7 @@ or a crossing on clear ground, and says where.
 ## Opening a newer save
 
 From 0.3.103, CityLimits can open a city a newer version saved, as PNG
-readers handle chunks they don't know. Each save lists the parts every
+readers handle chunks they don't know.[^backports] Each save lists the parts every
 version after 1.0 added (`"parts"` in `.fcl`, the `PART` chunk in `.cl`),
 each with two flags that say what a game that doesn't know the part may
 do with it:
@@ -296,10 +296,24 @@ Saving such a city writes back the keepable parts it kept, in the same
 format they came in (a binary chunk can't become JSON without being
 understood). When it kept them all, the save keeps the newer version;
 when it left one out, it is this version's, so the newer game knows to
-rebuild. A city opened this way says so on the news ticker, and the log
+rebuild, and the keepable parts still go in, named in its parts list, so
+the save opens here again with them and the newer game gets them back.
+A city opened this way says so on the news ticker, and the log
 lists each part and what will happen to it. A part a newer version adds
 is always a whole new section or chunk, never a new field in an existing
 one, so it can be kept or left out whole.
+
+[^backports]: 0.3.100, 0.3.101, and 0.3.102 have backports of this, 0.3.100.1,
+    0.3.101.1, and 0.3.102.1, on the branches `release/0.3.100` to
+    `release/0.3.102`. Each opens saves from 0.3.103 on (format 1.2 and
+    later, which list their parts) as described here, and writes back the
+    parts it kept; a save newer than its own without a parts list, such as
+    0.3.102's 1.1 in 0.3.100.1 or 0.3.101.1, is still refused. A city a
+    backport makes saves as its version always did, with no parts list, and
+    0.3.100.1 writes its saves byte for byte as 0.3.100 did, so the original
+    versions open them. A backport's `GitInfo.txt` names its version with a
+    fourth number, such as `0.3.100.1`, so it can't run into the next
+    release's.
 
 ## Schemas
 

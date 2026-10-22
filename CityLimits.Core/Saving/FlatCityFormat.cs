@@ -162,29 +162,32 @@ public static class FlatCityFormat
         }
     }
 
-    // A newer minor version's unknown sections are kept when its parts list lets them be left out; in a
-    // save this version can read whole, an unknown section is refused like any unknown field.
+    // A newer minor version's unknown sections are kept when its parts list lets them be left out, and
+    // so are those of a save this version wrote from one, which its parts list names too: a newer save
+    // with a part that can't be kept saves as this version, with the keepable parts beside it. In any
+    // other save this version can read whole, an unknown section is refused like any unknown field.
     private static KeptParts? KeepUnknown(CitySave save)
     {
         var unknown = save.Unknown ?? [];
         save.Unknown = null;
-        if (save.Format.Major == Format.Major && save.Format.Minor > Format.Minor)
-        {
-            var kept = SaveParts.Keep(save.Format, Extension, save.Parts, unknown.Keys, part => part.Name);
-            foreach (var part in kept.Parts)
-            {
-                kept.Sections[part.Name] = unknown[part.Name].Clone();
-            }
-
-            return kept;
-        }
-
-        if (save.Format.ProblemReadingWith(Format) is { } problem)
+        var newer = save.Format.Major == Format.Major && save.Format.Minor > Format.Minor;
+        if (!newer && save.Format.ProblemReadingWith(Format) is { } problem)
         {
             throw new InvalidSave($"format: {problem}");
         }
 
-        return unknown.Count == 0 ? null : throw new InvalidSave($"{unknown.Keys.First()}: is not a part a save has.");
+        if (!newer && (unknown.Count == 0 || save.Parts is null))
+        {
+            return unknown.Count == 0 ? null : throw new InvalidSave($"{unknown.Keys.First()}: is not a part a save has.");
+        }
+
+        var kept = SaveParts.Keep(save.Format, Extension, save.Parts, unknown.Keys, part => part.Name);
+        foreach (var part in kept.Parts)
+        {
+            kept.Sections[part.Name] = unknown[part.Name].Clone();
+        }
+
+        return kept;
     }
 
     /// <summary>The save model, for its schema.</summary>
