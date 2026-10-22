@@ -61,7 +61,7 @@ public class FormatVersionTests
     }
 
     [Fact]
-    public void ABinarySaveCarriesItsMinorVersionAndATooNewOneIsRefused()
+    public void ABinarySaveCarriesItsMinorVersionAndANewerOneWithoutAPartsListIsRefused()
     {
         var city = new CitySimulation(TileMap.FromTerrain(6, 6, new TileKind[36]), 3);
         var bytes = BinaryCityFormat.Write(city);
@@ -74,6 +74,7 @@ public class FormatVersionTests
         var crc = Crc(newer[8..12].Concat(newer[16..18]).ToArray());
         System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(newer.AsSpan(18), crc);
 
+        // With no parts list, it is from before 1.2, which a backport doesn't open.
         Assert.False(BinaryCityFormat.TryRead(newer, out _, out var problem, out _));
         Assert.Equal("format: this is format 1.7; this version of CityLimits reads up to 1.0.", problem);
     }

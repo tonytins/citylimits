@@ -69,7 +69,7 @@ public sealed class GameLoop : IDisposable
     /// back to without asking; a Micropolis city it was imported from is never written. The mods
     /// skipped when a new city was made are shown, if any, or what an import replaced.
     /// </summary>
-    public GameLoop(GameSettings settings, CitySimulation city, string? cityFile, GameFolders folders, GameAssets assets, IReadOnlyList<string>? modProblems = null, IReadOnlyList<string>? importNotes = null)
+    public GameLoop(GameSettings settings, CitySimulation city, string? cityFile, GameFolders folders, GameAssets assets, IReadOnlyList<string>? modProblems = null, IReadOnlyList<string>? openNotes = null)
     {
         ArgumentNullException.ThrowIfNull(city);
         ArgumentNullException.ThrowIfNull(folders);
@@ -91,10 +91,12 @@ public sealed class GameLoop : IDisposable
             _noticeIsError = true;
         }
 
-        importNotes ??= [];
-        if (importNotes.Count > 0)
+        // What opening the city came to, such as what an import replaced or a newer save's parts: the
+        // first on the notice line, and the rest in the log, where the load list wrote them all.
+        openNotes ??= [];
+        if (openNotes.Count > 0)
         {
-            _notice = importNotes.Count == 1 ? importNotes[0] : $"{importNotes.Count} kinds of things CityLimits doesn't have yet became bare ground; the log lists them";
+            _notice = openNotes.Count == 1 ? openNotes[0] : $"{openNotes[0]} ({openNotes.Count - 1} more in the log)";
             _noticeIsError = false;
         }
 
@@ -602,8 +604,9 @@ public sealed class GameLoop : IDisposable
             return;
         }
 
-        var path = Autosave.NextPath(_folders.CitiesFolder, _simulation.Name, _settings.AutosaveSlots);
-        if (!BinaryCityFormat.TryWriteFile(_simulation, path, out var problem))
+        // An autosave follows the city's own format, so a flat city's autosave keeps a newer save's parts too.
+        var path = Autosave.NextPath(_folders.CitiesFolder, _simulation.Name, _settings.AutosaveSlots, SaveExtension());
+        if (!CityFiles.TryWrite(_simulation, path, out var problem))
         {
             Logger.Error("Autosave failed: {Problem}", problem);
             (_notice, _noticeIsError) = ($"Autosave failed: {problem}", true);
@@ -615,6 +618,13 @@ public sealed class GameLoop : IDisposable
         (_notice, _noticeIsError) = ($"Autosaved {_simulation.Name}", false);
     }
 
+    // A city saves in its own format: flat when it came from a flat file, and otherwise binary, a
+    // Micropolis city included.
+    private string SaveExtension() =>
+        _cityFile is not null && Path.GetExtension(_cityFile).Equals(FlatCityFormat.Extension, StringComparison.OrdinalIgnoreCase)
+            ? FlatCityFormat.Extension
+            : BinaryCityFormat.Extension;
+
     private bool HasUnsavedChanges() => _savedText is null || FlatCityFormat.Write(_simulation) != _savedText;
 
     // A city is saved under its name, in the binary format unless it came from a flat file. Saving
@@ -623,8 +633,7 @@ public sealed class GameLoop : IDisposable
     private void Save(bool confirmed)
     {
         // A city imported from Micropolis is saved as CityLimits' own, never back to its file.
-        var flat = _cityFile is not null && Path.GetExtension(_cityFile).Equals(FlatCityFormat.Extension, StringComparison.OrdinalIgnoreCase);
-        var file = CityFiles.FileNameFor(_simulation.Name, flat ? FlatCityFormat.Extension : BinaryCityFormat.Extension);
+        var file = CityFiles.FileNameFor(_simulation.Name, SaveExtension());
         var path = Path.Combine(_folders.CitiesFolder, file);
         var ownFile = _cityFile is null || CityFiles.IsImport(_cityFile) ? null
             : Autosave.IsAutosave(_cityFile) ? Autosave.CityFileFor(_cityFile)

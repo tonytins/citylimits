@@ -10,9 +10,10 @@ internal struct VersionInfo
     public const string Name = "CityLimits";
 
     /// <summary>
-    /// The version of the operating system using the ThisAssembly.Git.SemVer object.
+    /// The version, frozen on this backport branch as 0.3.101 with a revision, since GitInfo would count
+    /// the backport's commits into the patch and collide with 0.3.102. Keep it in step with the project file.
     /// </summary>
-    public const string Version = $"{ThisAssembly.Git.SemVer.Major}.{ThisAssembly.Git.SemVer.Minor}.{ThisAssembly.Git.SemVer.Patch}";
+    public const string Version = "0.3.101.1";
 
     /// <summary>
     /// The name, version, and build number as shown to the user, such as <c>CityLimits 0.1.116 (Build 123456)</c>.

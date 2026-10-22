@@ -9,6 +9,12 @@
          still needs it fails loudly here instead of in a trimmed build. -->
     <JsonSerializerIsReflectionEnabledByDefault>false</JsonSerializerIsReflectionEnabledByDefault>
     <RollForward>LatestMajor</RollForward>
+    <!-- A backport is frozen at its own version: GitInfo would count its commits into the patch and
+         collide with the next real release, so it keeps only the commit for the build number. -->
+    <GitVersion>false</GitVersion>
+    <Version>0.3.101.1</Version>
+    <AssemblyVersion>0.3.101.1</AssemblyVersion>
+    <FileVersion>0.3.101.1</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>

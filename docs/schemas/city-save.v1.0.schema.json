@@ -21,6 +21,40 @@
         }
       ]
     },
+    "parts": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "chunk": {
+            "type": "string"
+          },
+          "since": {
+            "type": "string"
+          },
+          "ignorable": {
+            "type": "boolean"
+          },
+          "keepable": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "chunk",
+          "since",
+          "ignorable",
+          "keepable"
+        ],
+        "additionalProperties": false
+      }
+    },
     "name": {
       "type": "string"
     },
