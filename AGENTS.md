@@ -653,7 +653,7 @@ A city builder lives or dies on its simulation, not its art. The rules:
 - Match the surrounding code when it disagrees with this file, and mention
   the disagreement.
 
-## 4. Legal
+## 4. Legal, and Micropolis
 
 Micropolis, the open source version of SimCity, and the reimplementations
 of it are under the GNU GPL, and their art, sounds, and city files belong to
@@ -665,69 +665,92 @@ under the same licence: `Assets/tiles.png` and the tool icons come from the
 Micropolis core's images, and `Assets/README.md` records where they came
 from.
 
+This section has two parts: what the law and the licences require, and
+how the owner chooses to use Micropolis. Only the first is a legal
+matter. It is the project's guidance, not legal advice; when something is
+unclear, say so and ask the owner.
+
+### What the law and the licences require
+
+- **Copyright protects expression, not ideas.** Code, art, sound, and
+  written text are protected. Game mechanics, how a game is played, and
+  names, titles, short phrases, and slogans are not, however well known.
+  So in-jokes and nods, such as SimCity 2000's "Reticulating splines",
+  and saying what inspired CityLimits are fine.
+- **The GPL is copyleft.** CityLimits is under the GPL version 3, so it may
+  use Micropolis' code, art, and numbers, as long as CityLimits stays
+  under the GPL. Code taken from Micropolis keeps its copyright notice and
+  says where it came from and that it was changed.
+- **CityLimits is not a SimCity product.** Micropolis' GPL release comes
+  with Electronic Arts' additional terms: no use of the SimCity trademark,
+  no claim of any link to Electronic Arts, and modified versions marked as
+  modified. "Micropolis" is itself claimed as a trademark by another
+  owner. Neither name, nor any other game's logo or branding, may name
+  CityLimits or anything in it, or suggest that its owners made or
+  endorse it.
 - **New art has to be the owner's own work, or come with a licence that is
   compatible with the GPL version 3.** Credit it in `Assets/README.md`.
-- **Don't copy source, assets, or data files from another project.**
-  Mechanics are not copyrightable, but a close reimplementation of someone
-  else's code or assets is. If you are unsure whether something is an idea
-  or a copy, say so and ask.
-- **CityLimits is not a SimCity product.** The SimCity and Micropolis name
-  and trademarks belong to their owners, and neither the code nor the art may
-  claim them.
-- **Micropolis is the reference implementation.** It is the yardstick for
-  what the game does, not a source to copy from.
 
-  **The baseline comes first.** CityLimits will take creative liberties
-  later, but the first goal is an engine that plays like Micropolis. Until
-  it does, match the Java port's behaviour when a rule is in question,
-  rather than inventing a better one, and leave deviations to the owner.
-  The refactor that brought the early engine to the baseline is done; new
-  systems are built to the baseline from the start, and the liberties the
-  owner has chosen so far (the always-automatic budget) are recorded where
-  they apply.
+### Micropolis is the reference, and CityLimits goes its own way
 
-  **Which tree to read.** Read the ports that ship the whole game, because
-  they show the behaviour and not only the engine behind it:
-  [`micropolis-java`](https://github.com/SimHacker/micropolis/tree/master/micropolis-java)
-  is the main reference (MicropolisJ, the complete game in Java, with its
-  GUI and its gameplay; it is forked and maintained at
-  [dheid/micropolis](https://github.com/dheid/micropolis)), and
-  [`micropolis-activity`](https://github.com/SimHacker/micropolis/tree/master/micropolis-activity),
-  the same game packaged as an OLPC activity, with the classic Tk GUI, the
-  editor, and the original C simulation in `src/sim/`, is the second
-  reference for the same questions. The core,
-  [`MicropolisCore`](https://github.com/SimHacker/MicropolisCore), is the
-  engine with no GUI: read it only to cross-reference a detail the GUI
-  does not show, such as a constant, a formula, or a data table.
+The owner likes SimCity and wants CityLimits to start from what made it
+work, but to take it in their own direction. That, not the law, is why
+Micropolis is the reference rather than the source: code written fresh,
+in CityLimits' own structure and idiom, is the owner's to change, and a
+liberty taken later changes CityLimits' own design instead of unpicking
+an inherited one.
 
-  **What it settles.** When a rule is in question (how a zoned tile
-  develops, how demand and power will behave, what a road network has to
-  serve, how a city grows over time), Micropolis is the behaviour
-  CityLimits aims to match. Watch it in the Java port to see the rule
-  work, and read the core only to pin the numbers down. Its scenarios are
-  the names the roadmap's milestones borrow.
+**The baseline comes first.** CityLimits will take creative liberties
+later, but the first goal is an engine that plays like Micropolis. Until
+it does, match the Java port's behaviour when a rule is in question,
+rather than inventing a better one, and leave deviations to the owner.
+The refactor that brought the early engine to the baseline is done; new
+systems are built to the baseline from the start, and the liberties the
+owner has chosen so far (the always-automatic budget) are recorded where
+they apply.
 
-  **What it does not license.** Both projects are under the GPL version 3,
-  so copying Micropolis source into CityLimits would be legal. The rule
-  above forbids it anyway: the licences line up, the originality rule does
-  not bend. Write the behaviour down in CityLimits' own terms first,
-  implement it in C# in this codebase's idiom, and prove it with a test.
+**Write our own; copy when it serves.** Read Micropolis to learn what a
+rule does, write the behaviour down in CityLimits' own terms, implement
+it in C# in this codebase's idiom, and prove it with a test. That is the
+default. Copying or porting a piece of Micropolis' code is allowed when
+it serves CityLimits better than writing it fresh, such as an intricate
+algorithm where a faithful copy is the point; keep its notice, say where
+it came from, and call it out in the summary and the commit so the owner
+can review it.
 
-  **Where the line is.** Don't port, translate, transliterate, or
-  transcribe Micropolis' source in any language, the C, C++, and Java
-  alike, and don't take its data tables or its city files. Don't rename
-  identifiers to disguise a transcription. Reading Micropolis to learn
-  what a rule does is fine; lifting it into the tree is not. When a
-  mechanic is unclear, ask the owner.
+**Numbers are generally welcome; their fit is the owner's call.**
+Micropolis' numbers (prices, thresholds, factors, and tables such as the
+tax table) may be used, but whether each one fits the owner's direction
+is the owner's decision, so ask before relying on one. Mark each with a
+comment where it is used, saying where it came from.
 
-  **What is borrowed, and it is only this.** The tile sheet and the tool
-  icons, with their highlighted versions, from the Micropolis core's
-  images, credited in `Assets/README.md`; and, with the owner's approval,
-  some of Micropolis' numbers for its rules, such as the tax table and the
-  Easy difficulty factors in `CityDemand` and `CityBudget`, each marked
-  where it is used. Anything else taken from Micropolis needs the owner's
-  approval, and it has to be recorded: art in `Assets/README.md`, numbers
-  in a comment where they are used.
+**Which tree to read.** Read the ports that ship the whole game, because
+they show the behaviour and not only the engine behind it:
+[`micropolis-java`](https://github.com/SimHacker/micropolis/tree/master/micropolis-java)
+is the main reference (MicropolisJ, the complete game in Java, with its
+GUI and its gameplay; it is forked and maintained at
+[dheid/micropolis](https://github.com/dheid/micropolis)), and
+[`micropolis-activity`](https://github.com/SimHacker/micropolis/tree/master/micropolis-activity),
+the same game packaged as an OLPC activity, with the classic Tk GUI, the
+editor, and the original C simulation in `src/sim/`, is the second
+reference for the same questions. The core,
+[`MicropolisCore`](https://github.com/SimHacker/MicropolisCore), is the
+engine with no GUI: read it only to cross-reference a detail the GUI
+does not show, such as a constant, a formula, or a data table.
+
+**What it settles.** When a rule is in question (how a zoned tile
+develops, how demand and power will behave, what a road network has to
+serve, how a city grows over time), Micropolis is the behaviour
+CityLimits aims to match. Watch it in the Java port to see the rule
+work, and read the core only to pin the numbers down. Its scenarios are
+the names the roadmap's milestones borrow.
+
+**What is borrowed so far.** The tile sheet and the tool icons, with their
+highlighted versions, from the Micropolis core's images, credited in
+`Assets/README.md`; and, with the owner's approval, Micropolis' numbers
+for its rules, such as the tax table and the Easy difficulty factors in
+`CityDemand` and `CityBudget`, each marked where it is used. Code copied
+from Micropolis, if any is, carries its notice where it is.
 
 ## 5. Before you finish a task
 
