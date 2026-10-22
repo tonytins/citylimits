@@ -9,7 +9,7 @@ public sealed class Hud
     private const int FontSize = 14;
     private const int Padding = 10;
     private const int ReadoutHeight = 46;
-    private const string Hints = "WASD pan   wheel zoom   space pause   , . speed   1-9 tools   drag to build   B budget   esc cancel or quit";
+    private const string Hints = "WASD pan   wheel zoom   space pause   , . speed   1-9 tools   drag to build   B budget   esc cancel or menu";
 
     // The pieces of the top bar, from left to right, as wide as each needs.
     private const int ButtonSize = 22;
@@ -23,6 +23,7 @@ public sealed class Hud
     // Where each button was last drawn, so a click can be matched to it in the next frame.
     private Rectangle _pauseBounds;
     private readonly Rectangle[] _speedBounds = new Rectangle[3];
+    private Rectangle _nameBounds;
     private Rectangle _demandBounds;
     private Rectangle _fundsBounds;
 
@@ -43,6 +44,9 @@ public sealed class Hud
 
         /// <summary>Plays at Super fast speed.</summary>
         SuperFast,
+
+        /// <summary>The city's name, which opens the panel to rename it.</summary>
+        CityName,
 
         /// <summary>The demand meter, which opens the demand panel.</summary>
         Demand,
@@ -65,6 +69,11 @@ public sealed class Hud
             {
                 return BarButton.Normal + i;
             }
+        }
+
+        if (Raylib.CheckCollisionPointRec(point, _nameBounds))
+        {
+            return BarButton.CityName;
         }
 
         if (Raylib.CheckCollisionPointRec(point, _demandBounds))
@@ -117,8 +126,10 @@ public sealed class Hud
         }
 
         x += Gap;
+        var nameWidth = Raylib.MeasureText(cityName, FontSize);
+        _nameBounds = new Rectangle { X = x - 4, Y = 0, Width = nameWidth + 8, Height = BarHeight };
         Raylib.DrawText(cityName, x, textY, FontSize, Theme.Text);
-        x += Raylib.MeasureText(cityName, FontSize) + Gap;
+        x += nameWidth + Gap;
 
         _demandBounds = new Rectangle { X = x - 3, Y = (BarHeight - MeterHeight) / 2, Width = (MeterBarWidth * 3) + 4 + 6, Height = MeterHeight };
         DrawDemandMeter(demand, x, (BarHeight - MeterHeight) / 2);
@@ -143,6 +154,7 @@ public sealed class Hud
     /// <summary>Writes a count with its thousands separated, such as 12,340, whatever the machine's language.</summary>
     public static string Count(long count) => count.ToString("N0", CultureInfo.InvariantCulture);
 
+    // Blue, as a lit speed is, so the button doubles as a sign the city is running.
     private static void DrawPausePlay(Rectangle bounds, bool paused)
     {
         var cx = bounds.X + (bounds.Width / 2);
@@ -150,12 +162,12 @@ public sealed class Hud
         if (paused)
         {
             // Play: a triangle pointing right.
-            Raylib.DrawTriangle(new Vector2(cx - 5, cy - 7), new Vector2(cx - 5, cy + 7), new Vector2(cx + 7, cy), Theme.Text);
+            Raylib.DrawTriangle(new Vector2(cx - 5, cy - 7), new Vector2(cx - 5, cy + 7), new Vector2(cx + 7, cy), Theme.SpeedLit);
             return;
         }
 
-        Raylib.DrawRectangleRec(new Rectangle { X = cx - 6, Y = cy - 7, Width = 4, Height = 14 }, Theme.Text);
-        Raylib.DrawRectangleRec(new Rectangle { X = cx + 2, Y = cy - 7, Width = 4, Height = 14 }, Theme.Text);
+        Raylib.DrawRectangleRec(new Rectangle { X = cx - 6, Y = cy - 7, Width = 4, Height = 14 }, Theme.SpeedLit);
+        Raylib.DrawRectangleRec(new Rectangle { X = cx + 2, Y = cy - 7, Width = 4, Height = 14 }, Theme.SpeedLit);
     }
 
     // A triangle pointing right, as the speed buttons are drawn; raylib wants its corners anticlockwise.

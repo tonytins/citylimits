@@ -1,5 +1,27 @@
 # CityLimits Changelog
 
+## 0.2.114
+
+CityLimits now opens with a loading screen and a start menu, after a
+mock-up by the owner. The loading screen shows the logo and a line in the
+corner while it reticulates its splines; press a key or click to move on,
+and the logo glides up into the start menu.
+
+- **New Game** asks for your city's name and, if you like, a seed, the
+  number its map grows from. Leave the seed blank for a new map each
+  time. `--seed` on the command line fills it in.
+- **Load Game** is dimmed for now; it lights up once cities can be saved.
+- **Quit** leaves the game.
+
+In a city, Escape (when there's no stroke or panel to close) opens a
+menu: Resume, Main menu, and Quit. Click the city's name in the top bar
+to rename it. The play and pause button is blue, so you can tell at a
+glance the city is running.
+
+For developers: `NewCity.TryRead` checks the new-city form, and a city
+started in the window no longer always uses seed 2000; the log names the
+seed it used.
+
 ## 0.2.113
 
 CityLimits now keeps its files where your computer expects them, so

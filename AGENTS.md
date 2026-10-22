@@ -24,7 +24,7 @@ CityLimits/                  the game project (Raylib-cs, NLog, net10.0)
   Game/                         namespace CityLimits.Game: the game command, the window, the loop, the tools, the city's messages, the mods folder, the headless run, the log
     Commands/                   namespace CityLimits.Game.Commands: the subcommands, one class each
   Rendering/                    namespace CityLimits.Rendering: the camera, the tile drawing, the chunk cache, the tile sheet, the theme
-  UI/                           namespace CityLimits.UI: the HUD and its top bar, the tool palette, the budget and demand panels and how windows are moved, the overview map
+  UI/                           namespace CityLimits.UI: the loading screen, the start menu and its new-city panel, the HUD and its top bar, the tool palette, the budget and demand panels and how windows are moved, the in-game menu, renaming, the overview map
   Assets/                       the tile sheet, the tool icons, the logo, and the built-in scenarios (Scenarios/*.json), copied to the output folder
 CityLimits.Core/              engine-free library: the world and the simulation, no Raylib
   CityLimits.Core.csproj        the project file; it must never reference Raylib-cs
@@ -83,12 +83,27 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   malformed value, a value out of range, an option given twice, or a stray
   argument is reported on stderr with exit code 2, and nothing runs.
 - **The game.** `GameCommand.Run` reads `--seed`, and with `--headless`
-  hands the city to `HeadlessRun`. Otherwise `WindowedGame.Play` opens a resizable window
-  titled "CityLimits" at the saved size, runs the frame loop until the
-  window is closed, saves the settings, and closes the window. Every frame is
-  guarded: a failure is reported on the screen and the game keeps running.
-- **The map.** `GameLoop` builds a 120 by 100 map, Micropolis' size, at
-  startup from the seed `--seed` gives, 2000 by default. `TileMapGenerator` lays it out as Micropolis
+  hands the city to `HeadlessRun`. Otherwise `WindowedGame.Play` opens a
+  resizable window titled "CityLimits" at the saved size, and runs the
+  owner's flow from `docs/design/`: the loading screen
+  (`UI/LoadingScreen.cs`), then the start menu (`UI/StartMenu.cs`), then
+  the cities started from it, until the player quits or closes the
+  window; then it saves the settings and closes the window. Every frame,
+  the menu's and the city's, is guarded: a failure is logged, shown in a
+  city, and the game keeps running.
+- **The loading screen and the start menu.** The loading screen shows
+  the logo and a line of text ("Reticulating splines", a nod to SimCity
+  2000) on the blue background for 2.5 seconds, or until a key or a
+  click; it is for show, since the game loads in well under a second.
+  The start menu glides the logo up from the middle to a sixth of the way
+  down, with New Game, Load Game (dimmed until cities can be saved), and
+  Quit under it and the version in the bottom right. New Game opens a
+  panel (`UI/NewCityPanel.cs`) with the city's name, "CityLimits" to
+  start, and a seed, blank for any, read by `NewCity.TryRead`; `--seed`
+  fills the seed in. Start, or Enter, begins the city; a blank seed is
+  picked by `Random.Shared`, outside the simulation, and logged.
+- **The map.** `GameLoop` builds a 120 by 100 map, Micropolis' size, when
+  a city starts, from its seed (2000 by default with `--headless`). `TileMapGenerator` lays it out as Micropolis
   does: one map in ten is an island, and the rest have two wide rivers, a
   narrow one, and a few lakes; then woods are scattered and thinned. The
   ground is grass, water, trees, or rubble. The renderer
@@ -293,9 +308,10 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   and its x, the meter, or Escape closes it. It draws over the rest of
   the interface and takes presses before it. Micropolis has only the meter; the
   panel is a liberty the owner chose. A press anywhere on the bar never
-  reaches the map. The city's name is `CitySimulation.Name`,
-  "CityLimits" until `Rename` gives it another: 1 to 32 characters once
-  trimmed, with no control characters.
+  reaches the map. The city's name is `CitySimulation.Name`, set from the
+  new-city panel and renamed by clicking it in the bar
+  (`UI/RenamePanel.cs`): 1 to 32 characters once trimmed, with no control
+  characters. The play and pause button is blue, as a lit speed is.
 - **Moving windows.** The budget and demand panels are windows the
   player moves by dragging their title strip (`UI/WindowPlacement.cs`).
   Each opens where its panel puts it at first (the budget in the middle
@@ -329,7 +345,11 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   and its total cost while the button is held. Releasing applies the
   stroke all at once: the tiles that can't be built on are skipped, and
   the whole stroke is refused when it runs off the map or the city can't
-  pay for all of it. Escape cancels a stroke, or quits when there is none.
+  pay for all of it. Escape cancels a stroke, closes the demand panel, or
+  else opens the in-game menu (`UI/GameMenu.cs`): Resume, Main menu,
+  which leaves the city for the start menu, and Quit. The menu, the
+  budget, and the rename panel each pause the city and take every key
+  and click while open.
 - **The money.** The city starts with a treasury, and the prices are
   Micropolis' (`Economy/TileCosts.cs`, and the zones' in their
   `ZoneSpec`, `PlantSpec`, and `ServiceSpec`): $10 a road tile, $50 a bridge tile, $5 a power line tile,
@@ -418,7 +438,7 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   and no project. It holds the parser, the dispatcher, the default
   command, the strict option reader, and the exit codes.
 - **The tests.** `CityLimits.Tests` uses xUnit 2 with the VSTest runner
-  and coverlet, and holds 500 tests over the generator, the terrain edges, the power plants, lines, and grid, the budget, the stations and their coverage, parks, hospitals and churches, the map, the
+  and coverlet, and holds 513 tests over the generator, the terrain edges, the power plants, lines, and grid, the budget, the stations and their coverage, parks, hospitals and churches, the map, the
   calendar, the clock, the simulation, the settings, the tile rules, the
   build actions, the road network, the treasury, the scenario loader and
   runner, every built-in scenario, the definitions and the mod loader, zone growth, the census and demand, trips, growth and the city maps,
@@ -429,7 +449,7 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   package for `linux-x64`, `win-x64`, and `win-x86`, so no system install
   is needed on Linux or Windows.
 - **The assets.** `CityLimits/Assets/` holds the tile sheet, the tool
-  icons and their highlighted versions, the splash-screen logo, and the
+  icons and their highlighted versions, the logo, and the
   built-in scenarios. The project file copies them to the output folder,
   and the game loads the images once, after the window is open.
 - **Version.** `VersionInfo` reports the version from GitInfo, which works
@@ -767,7 +787,8 @@ dotnet run   --project CityLimits                             # open the window 
 ```
 
 - **The command line is the way in.** With no command, CityLimits opens
-  the window, and `--headless` runs the same city with no window.
+  the window at its start menu, and `--headless` runs a city with no
+  window.
   `scenario` runs a scenario (`docs/scenarios.md`). `--help` lists the
   options and commands, and `<command> --help` describes one. Use these to
   run the game; don't wrap it in another launcher, and don't reach for an

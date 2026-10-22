@@ -7,6 +7,33 @@ The files here were made by Tony Bark, the project's owner, not by Claude.
 Claude, the AI assistant that helps with the code, only committed and
 pushed them.
 
+## The loading screen, the start menu, and the game
+
+`citylimits.figcraft` shows the game's three stages in order, as frames
+linked like a prototype: **Loading**, then the **Start Menu**, then the
+**Game**. It shows where things go; sizes come from the game and its
+art.
+
+- **Loading:** the logo in the middle of the blue screen, and a line of
+  text in the bottom right. Clicking moves on, and the logo glides up to
+  its place on the start menu.
+- **Start Menu:** the logo near the top, New Game and Load Game under it,
+  and the version in the bottom right.
+- **Game:** the city under the top bar, for completeness; it adds
+  the play and pause button the toolbar mock-up lacked, and corrects the
+  date to `MM/YYYY`.
+
+### Where the game differs
+
+- **The loading screen is for show:** the game loads in well under a
+  second, so it stays 2.5 seconds, or until a key or a click.
+- **Quit** joins the start menu, and **Load Game** is dimmed until cities
+  can be saved.
+- **New Game** opens a panel for the city's name and a seed, which the
+  mock-up doesn't show.
+- **The play and pause button** is blue, as the mock-up has it, in both
+  states, so it doubles as a sign the city is running.
+
 ## The top bar
 
 `citylimits-toolbar.figcraft` is the source, made in FigCraft, a

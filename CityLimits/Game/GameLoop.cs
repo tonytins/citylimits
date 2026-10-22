@@ -20,7 +20,6 @@ public sealed class GameLoop : IDisposable
     private readonly OverviewMap _overview;
     private readonly BudgetPanel _budgetPanel = new();
     private readonly DemandPanel _demandPanel = new();
-    private readonly GameFolders _folders;
     private GameSettings _settings;
 
     // Whether the press that is held began on the overview, so dragging there moves the view.
@@ -34,24 +33,27 @@ public sealed class GameLoop : IDisposable
     private bool _noticeIsError;
     private readonly CityMessageFilter _messages = new();
 
-    // The budget panel holds the game while it is open, and gives the speed back when it closes.
-    private bool _budgetOpen;
+    // The budget, the menu, and the rename panel each hold the game while open, taking every key
+    // and click, and give the speed back when they close.
+    private Modal _modal;
     private string? _budgetReason;
-    private int _speedBeforeBudget;
+    private int _speedBeforeModal;
+    private readonly RenamePanel _renamePanel = new();
     private readonly BuildPlan _preview = new();
     private BuildStroke? _stroke;
 
     /// <summary>Creates the game with the settings it was started with.</summary>
-    public GameLoop(GameSettings settings, GameFolders folders, GameAssets assets, int seed = DefaultSeed)
+    /// <exception cref="ArgumentException">The name isn't one a city can have.</exception>
+    public GameLoop(GameSettings settings, GameFolders folders, GameAssets assets, int seed = DefaultSeed, string name = CitySimulation.DefaultName)
     {
         _settings = settings;
         _lastSpeed = settings.Speed == 0 ? 1 : settings.Speed;
         ArgumentNullException.ThrowIfNull(folders);
-        _folders = folders;
 
         var map = TileMapGenerator.Generate(seed, MapSize.DefaultWidth, MapSize.DefaultHeight);
         var definitions = GameMods.Load(folders.ModsFolder, out var modProblems);
         _simulation = new CitySimulation(map, seed, definitions: definitions);
+        _simulation.Rename(name);
         if (modProblems.Count > 0)
         {
             // The log holds every skipped mod; the screen says how many, so the player knows to look.
@@ -77,8 +79,45 @@ public sealed class GameLoop : IDisposable
     /// <summary>The speed the game is running at, where zero is paused.</summary>
     public int Speed => _settings.Speed;
 
-    /// <summary>Tells whether the player asked to leave the game.</summary>
-    public bool ShouldClose { get; private set; }
+    /// <summary>What leaving the city was for, once the player has asked to.</summary>
+    public enum Leave
+    {
+        /// <summary>The city carries on.</summary>
+        None,
+
+        /// <summary>Back to the start menu.</summary>
+        ToMenu,
+
+        /// <summary>Out of the game.</summary>
+        Quit,
+    }
+
+    // What holds the game while it is open.
+    private enum Modal
+    {
+        None,
+        Budget,
+        Menu,
+        Rename,
+    }
+
+    /// <summary>Whether, and where, the player asked to leave the city.</summary>
+    public Leave Leaving { get; private set; }
+
+    /// <summary>
+    /// The settings as the game stands: the window's size, and the speed the city was running at,
+    /// even while a panel holds it paused.
+    /// </summary>
+    public GameSettings Settings
+    {
+        get
+        {
+            var width = Math.Clamp(Raylib.GetScreenWidth(), GameSettings.MinWindowWidth, GameSettings.MaxWindowWidth);
+            var height = Math.Clamp(Raylib.GetScreenHeight(), GameSettings.MinWindowHeight, GameSettings.MaxWindowHeight);
+            var speed = _modal == Modal.None ? _settings.Speed : _speedBeforeModal;
+            return _settings with { WindowWidth = width, WindowHeight = height, Speed = speed };
+        }
+    }
 
     /// <summary>Reads the input and advances the city.</summary>
     public void Update()
@@ -92,7 +131,7 @@ public sealed class GameLoop : IDisposable
         {
             var due = _clock.Advance(elapsed * GameSpeed.Multiplier(_settings.Speed));
             // A year that opens the budget stops the city at once, even partway through a frame's steps.
-            for (var i = 0; i < due && !_budgetOpen; i++)
+            for (var i = 0; i < due && _modal == Modal.None; i++)
             {
                 _simulation.Tick();
             }
@@ -165,9 +204,17 @@ public sealed class GameLoop : IDisposable
             _hud.DrawStrokeCost(mouse, _preview);
         }
 
-        if (_budgetOpen)
+        switch (_modal)
         {
-            _budgetPanel.Draw(_simulation, _budgetReason);
+            case Modal.Budget:
+                _budgetPanel.Draw(_simulation, _budgetReason);
+                break;
+            case Modal.Menu:
+                GameMenu.Draw();
+                break;
+            case Modal.Rename:
+                _renamePanel.Draw();
+                break;
         }
 
         Raylib.EndDrawing();
@@ -187,23 +234,6 @@ public sealed class GameLoop : IDisposable
         Logger.Error(exception, "The frame failed");
     }
 
-    /// <summary>Writes the settings the game is ending with.</summary>
-    public bool SaveSettings()
-    {
-        var width = Math.Clamp(Raylib.GetScreenWidth(), GameSettings.MinWindowWidth, GameSettings.MaxWindowWidth);
-        var height = Math.Clamp(Raylib.GetScreenHeight(), GameSettings.MinWindowHeight, GameSettings.MaxWindowHeight);
-        _settings = _settings with { WindowWidth = width, WindowHeight = height };
-        var saved = _budgetOpen ? _settings with { Speed = _speedBeforeBudget } : _settings;
-
-        if (!SettingsStore.TrySave(_folders.SettingsFile, saved, out var error))
-        {
-            Logger.Error("{Error}", error);
-            return false;
-        }
-
-        return true;
-    }
-
     private void HandleInput(float elapsed)
     {
         var mouse = Raylib.GetMousePosition();
@@ -212,16 +242,23 @@ public sealed class GameLoop : IDisposable
             _settings = _settings with { WindowWidth = Raylib.GetScreenWidth(), WindowHeight = Raylib.GetScreenHeight() };
         }
 
-        // While the budget is open, it takes every key and click, and the map takes none.
-        if (_budgetOpen)
+        // While a panel holds the game, it takes every key and click, and the map takes none.
+        switch (_modal)
         {
-            HandleBudgetInput(mouse);
-            return;
+            case Modal.Budget:
+                HandleBudgetInput(mouse);
+                return;
+            case Modal.Menu:
+                HandleMenuInput();
+                return;
+            case Modal.Rename:
+                HandleRenameInput();
+                return;
         }
 
         if (Raylib.IsKeyPressed(KeyboardKey.B))
         {
-            OpenBudget(null);
+            OpenModal(Modal.Budget);
             return;
         }
 
@@ -285,7 +322,7 @@ public sealed class GameLoop : IDisposable
             }
             else
             {
-                ShouldClose = true;
+                OpenModal(Modal.Menu);
             }
         }
 
@@ -311,7 +348,7 @@ public sealed class GameLoop : IDisposable
     {
         if (Raylib.IsKeyPressed(KeyboardKey.Escape) || Raylib.IsKeyPressed(KeyboardKey.Enter) || Raylib.IsKeyPressed(KeyboardKey.B))
         {
-            CloseBudget();
+            CloseModal();
             return;
         }
 
@@ -328,7 +365,7 @@ public sealed class GameLoop : IDisposable
 
         if (_budgetPanel.HandleClick(mouse, _simulation.Budget) == BudgetPanel.Click.Close)
         {
-            CloseBudget();
+            CloseModal();
         }
     }
 
@@ -345,28 +382,62 @@ public sealed class GameLoop : IDisposable
             ? "The money ran out, so funding was cut"
             : $"Upkeep came to ${year.Expenses}, more than the ${year.TaxIncome} in taxes";
         Logger.Warn("The budget needs attention: {Reason}", reason);
-        OpenBudget(reason);
+        OpenModal(Modal.Budget, reason);
     }
 
-    private void OpenBudget(string? reason)
+    private void HandleMenuInput()
     {
-        if (_budgetOpen)
+        switch (GameMenu.Update())
+        {
+            case GameMenu.Choice.Resume:
+                CloseModal();
+                break;
+            case GameMenu.Choice.MainMenu:
+                CloseModal();
+                Leaving = Leave.ToMenu;
+                break;
+            case GameMenu.Choice.Quit:
+                CloseModal();
+                Leaving = Leave.Quit;
+                break;
+        }
+    }
+
+    private void HandleRenameInput()
+    {
+        switch (_renamePanel.Update())
+        {
+            case RenamePanel.Outcome.Renamed:
+                _simulation.Rename(_renamePanel.Name);
+                Logger.Info("The city is now called {Name}", _simulation.Name);
+                CloseModal();
+                break;
+            case RenamePanel.Outcome.Cancelled:
+                CloseModal();
+                break;
+        }
+    }
+
+    // The reason is why the budget opened by itself, or null when the player opened it.
+    private void OpenModal(Modal modal, string? budgetReason = null)
+    {
+        if (_modal != Modal.None)
         {
             return;
         }
 
-        _budgetOpen = true;
-        _budgetReason = reason;
-        _speedBeforeBudget = _settings.Speed;
+        _modal = modal;
+        _budgetReason = budgetReason;
+        _speedBeforeModal = _settings.Speed;
         _settings = _settings with { Speed = 0 };
         _stroke = null;
     }
 
-    private void CloseBudget()
+    private void CloseModal()
     {
-        _budgetOpen = false;
+        _modal = Modal.None;
         _budgetReason = null;
-        _settings = _settings with { Speed = _speedBeforeBudget };
+        _settings = _settings with { Speed = _speedBeforeModal };
     }
 
     // A stroke starts where the button goes down, stretches while it is held, and is applied
@@ -516,7 +587,11 @@ public sealed class GameLoop : IDisposable
                 _demandOpen = !_demandOpen;
                 break;
             case Hud.BarButton.Funds:
-                OpenBudget(null);
+                OpenModal(Modal.Budget);
+                break;
+            case Hud.BarButton.CityName:
+                _renamePanel.Reset(_simulation.Name);
+                OpenModal(Modal.Rename);
                 break;
             default:
                 // A speed button sets that speed, and plays the game if it was paused.

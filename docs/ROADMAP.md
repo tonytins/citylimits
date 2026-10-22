@@ -1,6 +1,6 @@
 # CityLimits roadmap
 
-> **Last reviewed:** 2026-10-21 · **Last updated:** 2026-10-21 · **Change:** minor (saving's plan, and S1: per-user folders) · **Stage:** pre-alpha
+> **Last reviewed:** 2026-10-21 · **Last updated:** 2026-10-21 · **Change:** minor (saving S2a: the loading screen, the start menu, and naming a city) · **Stage:** pre-alpha
 
 Forward-looking: where CityLimits stands, what blocks the next milestone,
 and what comes next. Verified status and evidence are in the
@@ -45,8 +45,9 @@ quirk fixed.
 Next, in order:
 
 1. **Saving and loading a city** (Happy Isle), the last thing between
-   CityLimits and alpha. The plan is settled and S1, the per-user
-   folders, is done; S2, the save model and `.fcl`, is next.
+   CityLimits and alpha. The plan is settled; S1, the per-user folders,
+   and S2a, the start menu that names a city, are done; S2b, the save
+   model and `.fcl`, is next.
 2. **Radial: traffic**, built to the baseline: trips already remember
    their routes for it.
 3. **Deadwood: crime, pollution, fire, and disasters**, which give the
@@ -66,15 +67,15 @@ Next, in order:
 | Joffburg: Services and economy | 100% | 0 | Meets the baseline: power, taxes and the budget, services (stations, coverage, parks, hospitals, and churches), and the overview map with its power, coverage, land value, and density modes, as in Micropolis |
 | Radial: Traffic and commuting | 0% | 12–20 | Nothing yet |
 | Deadwood: Land value, pollution, disasters | 0% | 12–20 | Nothing yet |
-| Happy Isle: Player-facing game | 33% | 20–36 | The palette, laid out as Micropolis', and the HUD, with its top bar after the owner's mock-up, are in; the budget and demand panels and the overview's power mode are too. Saving, the city score, and a start screen are left |
+| Happy Isle: Player-facing game | 33% | 18–32 | The palette, laid out as Micropolis', and the HUD, with its top bar after the owner's mock-up, are in; the budget and demand panels and the overview's power mode are too. Saving, the city score, and a start screen are left |
 | Yokohama: Polish and release | 0% | 10–20 | Nothing yet |
-| | **Total** | **≈ 54–96** | |
+| | **Total** | **≈ 52–92** | |
 
 ## Upcoming work, ranked
 
 | Rank | Work | Milestone | Estimate (h) |
 |---|---|---|---|
-| 1 | Saving and loading a city, phases S2 to S5 | Happy Isle | 14–26 |
+| 1 | Saving and loading a city, phases S2b to S5 | Happy Isle | 12–22 |
 | 2 | Traffic: congestion on the roads trips already use | Radial | 12–20 |
 
 Alpha needs a city that can be saved (UI-5); everything else on the alpha
@@ -241,10 +242,13 @@ gate is in or partial.
   - [x] S1: per-user folders. Settings in the config folder, mods and
     saves under `Documents/CityLimits`, so a packaged game such as the
     AppImage can write them (`GameFolders`).
-  - [ ] S2: the save model and `.fcl`, its flat JSON form, checked
+  - [x] S2a: the loading screen and the start menu, after the owner's
+    mock-up, with New Game naming the city and the in-game menu leading
+    back. Load Game is dimmed until S2b.
+  - [ ] S2b: the save model and `.fcl`, its flat JSON form, checked
     strictly; Ctrl+S to save and Ctrl+O to open, asking before
-    overwriting; and a test that a loaded city runs on tick for tick
-    like one never saved.
+    overwriting; Load Game's list; and a test that a loaded city runs on
+    tick for tick like one never saved.
   - [ ] S3: `.cl`, the binary form: Micropolis' city layout with tagged,
     checksummed chunks for CityLimits' own state.
   - [ ] S4: autosave every 15 minutes of play, skipped when nothing
@@ -254,8 +258,9 @@ gate is in or partial.
     CityLimits doesn't have yet. Import only.
 - [ ] A city score, rating the city the way the classic games do.
 - [ ] A start screen and a new-city flow: name, seed, and map size. The
-  first save needs it, since that's where a city is named; clicking the
-  name in the top bar renames it.
+  loading screen, the start menu, and New Game's name and seed are in
+  (S2a), and clicking the name in the top bar renames the city; map size
+  waits for a second size to choose.
 
 ### Yokohama: Polish and release
 
@@ -307,6 +312,7 @@ baseline's growth depends on.
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-21 | minor | Saving, S2a, with the start menu folded in at the owner's request: after the owner's mock-up of loading, start, and game, the window opens on a loading screen and a start menu (New Game, Load Game dimmed until S2b, Quit). New Game names the city and takes a seed, Escape in a city opens a menu that leads back, and clicking the name in the bar renames the city. The play button turns blue. The legal section of AGENTS.md was reframed with the owner beforehand. 52–92 h left in total, 513 tests. |
 | 2026-10-21 | minor | The owner settled how cities are saved: one save model and three formats (`.cl`, CityLimits' binary form after Micropolis' layout with its own chunks; `.fcl`, the same as flat JSON; and `.cty` import only), saves under Documents with no file dialog, the cycle's half-done figures saved so a city saves at any moment, and autosave every 15 minutes, skipped when nothing changed. S1 is done: `GameFolders` puts the settings in the per-user config folder and mods and saves under `Documents/CityLimits`, keeping a writable copy with settings beside it portable. Before, an AppImage could never save its settings. Mods move, which the modding guide now says. Saving grows to 14–26 h; 54–96 h left in total, 500 tests. |
 | 2026-10-21 | patch | At the owner's request, the budget and demand panels are windows the player drags by their titles, which remember where they were left and stay on the screen, and the demand panel leads with a chart of plain lines for R, C, and I over the ten years of demand history the city now keeps. No milestone moves; 491 tests. |
 | 2026-10-21 | minor | Happy Isle, ahead of saving, as the owner chose, since it is cosmetic: the top bar follows the owner's mock-up in `docs/design/`. It has a pause and play button, the month, speed buttons that fill up like a meter, the city's name (`CitySimulation.Name`, "CityLimits" until saves can name it), an R, C, I meter, the funds, and the population, with the steps and the frame rate on the right. The meter opens a demand panel, a liberty the owner chose since Micropolis has only the meter: each demand against its limit, what moved it, and the census behind it. The held tool's name and the mouse position leave the bar; the palette's header still names the tool. The panels item notes power as the overview's mode. 489 tests. |

@@ -19,9 +19,9 @@ change. Statuses are `done`, `partial`, and `missing`.
 | [Economy](#economy-and-services) | 4 | 1 | 0 | $20 000 in the treasury, 7% tax, 700 and 2 000 tile plants, the budget panel, the overview map's six modes |
 | [Traffic](#traffic-and-commuting) | 0 | 2 | 2 | 1 road network, trips of up to 30 tiles |
 | [Environment](#land-value-pollution-and-disasters) | 0 | 1 | 4 | land value from distance and terrain, 0 disasters |
-| [Interface](#player-interface) | 2 | 1 | 3 | 12 tools with icons, the top bar, the demand panel, the budget panel, the overview map |
+| [Interface](#player-interface) | 2 | 2 | 2 | 12 tools with icons, the top bar, the demand panel, the budget panel, the overview map, a loading screen and start menu |
 | [Platform](#platform) | 7 | 0 | 2 | Raylib-cs 8.1.0, NLog 6.2.2, .NET 10, data mods |
-| [Reliability](#reliability) | 6 | 0 | 0 | 500 tests, all passing, CI green |
+| [Reliability](#reliability) | 6 | 0 | 0 | 513 tests, all passing, CI green |
 | [Documentation](#documentation) | 3 | 0 | 2 | 3 of 5 documents exist |
 | [Known issues](#known-issues) | | | | 1 open, 3 resolved |
 
@@ -142,7 +142,7 @@ there is something to grow.
 | UI-3 | Panels for the budget, power, and the city score | partial | The budget panel, the demand panel, and the overview map, with its power mode, are in (ECON-5, UI-2); there is no city score panel (UI-4) |
 | UI-4 | A city score that rates the city the way the classic games do | missing | No scoring |
 | UI-5 | A city saves to disk and reloads exactly, and a corrupt file is reported, not fatal | missing | No save format |
-| UI-6 | A start screen and a new-city flow: name, seed, and map size | missing | No screen flow |
+| UI-6 | A start screen and a new-city flow: name, seed, and map size | partial | After the owner's mock-up in `docs/design/`: `CityLimits/UI/LoadingScreen.cs`, `StartMenu.cs` (New Game, Load Game dimmed until saving, Quit), and `NewCityPanel.cs` for the name and the seed, read by `NewCity.TryRead` (`NewCityTests`); `GameMenu.cs` leaves a city for the menu, and `RenamePanel.cs` renames it from the bar. On a private display on 2026-10-21 the loading line and the menu drew as mocked, an empty name was refused and its message cleared on typing, Joffburg with seed 2000 started and logged its seed, a rename took letters that would otherwise pan the map, Main menu returned to the menu, Escape backed out of the panel, and Quit exited with 0. The logo's glide wasn't caught mid-way in a screenshot. Map size has one choice, so there is no field for it |
 
 ## Platform
 
