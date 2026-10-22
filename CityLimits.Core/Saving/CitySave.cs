@@ -10,7 +10,24 @@ namespace CityLimits.Core.Saving;
 /// <summary>A saved city, as the flat format holds it.</summary>
 internal sealed class CitySave
 {
-    public required int Format { get; set; }
+    /// <summary>The schema a newer save names, for editors; this version neither writes nor checks it.</summary>
+    [System.Text.Json.Serialization.JsonPropertyName("$schema")]
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public string? Schema { get; set; }
+
+    /// <summary>
+    /// The save's version. This version writes 1.0 as the whole number <c>1</c>, as 0.3.100 always
+    /// did, so 0.3.100 itself still opens its saves; a newer save's version reads as "1.2" and on.
+    /// </summary>
+    public required FormatVersion Format { get; set; }
+
+    /// <summary>
+    /// The parts each version after 1.0 added, and what an older game may do with each, from format
+    /// 1.2; a game that meets a part it doesn't know looks it up here. This version writes it only for
+    /// a city that kept a newer save's parts, so its other saves stay as 0.3.100 wrote them.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public PartSave[]? Parts { get; set; }
 
     public required string Name { get; set; }
 
@@ -47,6 +64,13 @@ internal sealed class CitySave
     public required CityMapsSave CityMaps { get; set; }
 
     public required CycleSave Cycle { get; set; }
+
+    /// <summary>
+    /// A newer save's sections this version doesn't know, caught as they are so they can be checked
+    /// against the parts list and written back. Unknown fields inside a known section are still refused.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public Dictionary<string, JsonElement>? Unknown { get; set; }
 }
 
 internal sealed class ModSave

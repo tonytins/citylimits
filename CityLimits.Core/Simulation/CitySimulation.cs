@@ -117,6 +117,12 @@ public sealed class CitySimulation
     /// <summary>The seed the city was created with.</summary>
     public int Seed { get; }
 
+    /// <summary>
+    /// The parts of a newer save the city was opened from that this version doesn't know, to write
+    /// back when it is saved in the same format; null for a city that came from no such save.
+    /// </summary>
+    internal KeptParts? Kept { get; set; }
+
     /// <summary>The city's name; <see cref="DefaultName"/> until it is renamed.</summary>
     public string Name { get; private set; } = DefaultName;
 

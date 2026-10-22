@@ -306,12 +306,14 @@ public static class DefinitionLoader
         return true;
     }
 
-    private static void CheckFormat(int? format, string at)
+    // From 0.3.101 on, the format is written "1.0", as a newer save's definitions are, so it reads
+    // either way; anything past 1.0 is refused, as before.
+    private static void CheckFormat(FormatVersion? format, string at)
     {
         var value = format ?? throw new InvalidDefinitions($"{at}: is required.");
-        if (value != Format)
+        if (value.ProblemReadingWith(new FormatVersion(Format, 0)) is { } problem)
         {
-            throw new InvalidDefinitions($"{at}: this version reads format {Format}, not {value}.");
+            throw new InvalidDefinitions($"{at}: {problem}");
         }
     }
 
@@ -435,7 +437,7 @@ public static class DefinitionLoader
     // The base game's definitions hold both lists; a mod keeps each in its own file.
     private sealed class DefinitionsDocument
     {
-        public int? Format { get; set; }
+        public FormatVersion? Format { get; set; }
 
         public List<ZoneDocument?>? Zones { get; set; }
 
@@ -446,7 +448,7 @@ public static class DefinitionLoader
 
     private sealed class ServicesDocument
     {
-        public int? Format { get; set; }
+        public FormatVersion? Format { get; set; }
 
         public List<ServiceDocument?>? Services { get; set; }
     }
@@ -464,14 +466,14 @@ public static class DefinitionLoader
 
     private sealed class ZonesDocument
     {
-        public int? Format { get; set; }
+        public FormatVersion? Format { get; set; }
 
         public List<ZoneDocument?>? Zones { get; set; }
     }
 
     private sealed class PlantsDocument
     {
-        public int? Format { get; set; }
+        public FormatVersion? Format { get; set; }
 
         public List<PlantDocument?>? Plants { get; set; }
     }
@@ -506,7 +508,7 @@ public static class DefinitionLoader
 
     private sealed class ManifestDocument
     {
-        public int? Format { get; set; }
+        public FormatVersion? Format { get; set; }
 
         public string? Id { get; set; }
 

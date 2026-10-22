@@ -45,29 +45,33 @@ public sealed class Autosave
         return true;
     }
 
-    /// <summary>The name of a city's autosave file in a slot, from 1: "Joffburg (autosave).cl", or "Joffburg (autosave 2).cl" for the second.</summary>
-    /// <exception cref="ArgumentException">The name isn't one a city can have.</exception>
+    /// <summary>
+    /// The name of a city's autosave file in a slot, from 1, in its own format: "Joffburg (autosave).cl",
+    /// or "Joffburg (autosave 2).cl" for the second; a city saved as <c>.fcl</c> autosaves as <c>.fcl</c>,
+    /// so the parts of a newer save it keeps go into its autosaves too.
+    /// </summary>
+    /// <exception cref="ArgumentException">The name isn't one a city can have, or the extension isn't a city format's.</exception>
     /// <exception cref="ArgumentOutOfRangeException">The slot is outside 1 to the most there are.</exception>
-    public static string FileNameFor(string cityName, int slot)
+    public static string FileNameFor(string cityName, int slot, string extension = BinaryCityFormat.Extension)
     {
         ArgumentOutOfRangeException.ThrowIfLessThan(slot, 1);
         ArgumentOutOfRangeException.ThrowIfGreaterThan(slot, Settings.GameSettings.MaxAutosaveSlots);
 
-        var stem = Path.GetFileNameWithoutExtension(CityFiles.FileNameFor(cityName));
+        var stem = Path.GetFileNameWithoutExtension(CityFiles.FileNameFor(cityName, extension));
         var suffix = slot == 1 ? ")" : $" {slot.ToString(CultureInfo.InvariantCulture)})";
-        return $"{stem}{Marker}{suffix}{BinaryCityFormat.Extension}";
+        return $"{stem}{Marker}{suffix}{extension}";
     }
 
     /// <summary>
     /// The file the next autosave goes to: the first slot when there is one, or, with two, the
     /// slot not yet written, or else the older.
     /// </summary>
-    public static string NextPath(string folder, string cityName, int slots)
+    public static string NextPath(string folder, string cityName, int slots, string extension = BinaryCityFormat.Extension)
     {
         ArgumentOutOfRangeException.ThrowIfLessThan(slots, 1);
         ArgumentOutOfRangeException.ThrowIfGreaterThan(slots, Settings.GameSettings.MaxAutosaveSlots);
 
-        var paths = Enumerable.Range(1, slots).Select(slot => Path.Combine(folder, FileNameFor(cityName, slot))).ToList();
+        var paths = Enumerable.Range(1, slots).Select(slot => Path.Combine(folder, FileNameFor(cityName, slot, extension))).ToList();
         return paths.FirstOrDefault(path => !File.Exists(path))
             ?? paths.OrderBy(File.GetLastWriteTimeUtc).First();
     }
@@ -75,12 +79,12 @@ public sealed class Autosave
     /// <summary>Tells whether a file is an autosave, from its name.</summary>
     public static bool IsAutosave(string path) => Path.GetFileNameWithoutExtension(path).Contains(Marker, StringComparison.Ordinal);
 
-    /// <summary>The file the city an autosave belongs to is saved to: "Joffburg.cl" for "Joffburg (autosave 2).cl".</summary>
+    /// <summary>The file the city an autosave belongs to is saved to, in the same format: "Joffburg.cl" for "Joffburg (autosave 2).cl".</summary>
     public static string CityFileFor(string autosavePath)
     {
         var name = Path.GetFileNameWithoutExtension(autosavePath);
         var marker = name.LastIndexOf(Marker, StringComparison.Ordinal);
         var stem = marker > 0 ? name[..marker] : name;
-        return Path.Combine(Path.GetDirectoryName(autosavePath) ?? string.Empty, stem + BinaryCityFormat.Extension);
+        return Path.Combine(Path.GetDirectoryName(autosavePath) ?? string.Empty, stem + Path.GetExtension(autosavePath));
     }
 }

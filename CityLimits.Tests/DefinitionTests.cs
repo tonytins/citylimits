@@ -36,7 +36,7 @@ public class DefinitionTests
     [InlineData("""{ "format": 1, "zones": [ { "id": "commercial", "name": "C", "price": 1, "populations": [1], "valueClasses": 1, "houses": 2, "trips": ["residential"] } ] }""", "zones[0].houses: only a residential zone grows single houses.")]
     [InlineData("""{ "format": 1, "zones": [ { "id": "residential", "name": "R", "price": 1, "populations": [1, 2, 3, 4, 5, 6], "valueClasses": 1, "houses": 0 } ] }""", "zones[0].populations: needs 1 to 5 levels, not 6.")]
     [InlineData("""{ "format": 1, "zones": [ { "id": "hotel", "name": "H", "price": 1 } ] }""", "zones[0].id: 'hotel' is not one of residential, commercial, industrial.")]
-    [InlineData("""{ "format": 2, "zones": [] }""", "format: this version reads format 1, not 2.")]
+    [InlineData("""{ "format": 2, "zones": [] }""", "format: this is format 2.0; this version of CityLimits reads up to 1.0.")]
     public void TheBaseGameMustDefineEveryZoneAndField(string json, string expected)
     {
         Assert.False(DefinitionLoader.TryParseBase(json, out _, out var error));

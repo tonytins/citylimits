@@ -63,7 +63,7 @@ public static class CityFiles
             case BinaryCityFormat.Extension:
                 return BinaryCityFormat.TryReadFile(path, out city, out problem, out notes);
             case FlatCityFormat.Extension:
-                return FlatCityFormat.TryReadFile(path, out city, out problem);
+                return FlatCityFormat.TryReadFile(path, out city, out problem, out notes);
             case MicropolisCityImport.Extension:
                 return MicropolisCityImport.TryImportFile(path, out city, out problem, out notes);
             default:

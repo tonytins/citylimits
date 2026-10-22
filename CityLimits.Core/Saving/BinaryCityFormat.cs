@@ -18,8 +18,12 @@ public static class BinaryCityFormat
     /// <summary>The extension of a binary city file.</summary>
     public const string Extension = ".cl";
 
-    /// <summary>The version of the format this game writes and reads.</summary>
-    public const int Format = 1;
+    /// <summary>
+    /// The version of the format this game writes, and the newest it reads. The header holds the
+    /// major version, so files from before minor versions stay valid; the minor version is in a
+    /// small <c>VERS</c> chunk, and a file without one is a .0.
+    /// </summary>
+    public static readonly FormatVersion Format = SaveParts.Current;
 
     /// <summary>The largest file read, so a damaged or wrong one can't run away with memory.</summary>
     public const long MaxBytes = 16 * 1024 * 1024;
@@ -29,7 +33,10 @@ public static class BinaryCityFormat
 
     private static readonly byte[] Magic = "CLCITY"u8.ToArray();
 
-    // The chunks, in the order they are written; each holds a section of the save model.
+    // The chunks, in the order they are written; each holds a section of the save model, apart from
+    // the minor version's.
+    private const string VersionTag = "VERS";
+    private const string PartsTag = "PART";
     private const string CityTag = "CITY";
     private const string DefinitionsTag = "DEFS";
     private const string MapTag = "MAP ";
@@ -50,9 +57,26 @@ public static class BinaryCityFormat
         ArgumentNullException.ThrowIfNull(city);
         var save = city.Capture();
 
+        // A city from a newer save writes back the chunks it kept of it, and that save's version when
+        // it kept them all.
+        var (kept, version) = city.Kept?.ForSaving(Extension) ?? ([], SaveParts.Current);
+
         using var stream = new MemoryStream();
         stream.Write(Magic);
-        WriteUInt16(stream, Format);
+        WriteUInt16(stream, version.Major);
+
+        // 0.3.100 wrote no minor version, so a 1.0 save goes without one, as it always did.
+        if (version.Minor > 0)
+        {
+            var minor = new byte[2];
+            BinaryPrimitives.WriteUInt16BigEndian(minor, (ushort)version.Minor);
+            WriteChunk(stream, VersionTag, minor);
+        }
+        if (kept.Count > 0)
+        {
+            WriteChunk(stream, PartsTag, SectionCodec.Write(new PartsChunk { Parts = [.. SaveParts.Known, .. kept] }));
+        }
+
         WriteChunk(stream, CityTag, SectionCodec.Write(new CityChunk
         {
             Name = save.Name,
@@ -72,6 +96,11 @@ public static class BinaryCityFormat
         WriteChunk(stream, CommunityTag, SectionCodec.Write(save.Community));
         WriteChunk(stream, CityMapsTag, SectionCodec.Write(save.CityMaps));
         WriteChunk(stream, CycleTag, SectionCodec.Write(save.Cycle));
+        foreach (var part in kept)
+        {
+            WriteChunk(stream, part.Chunk, city.Kept!.Chunks[part.Chunk]);
+        }
+
         return stream.ToArray();
     }
 
@@ -86,7 +115,10 @@ public static class BinaryCityFormat
         notes = skipped;
         try
         {
-            city = CitySimulation.Restore(ReadSave(bytes, skipped));
+            var save = ReadSave(bytes, skipped, out var kept);
+            city = CitySimulation.Restore(save);
+            city.Kept = kept;
+            notes = [.. SaveParts.NotesFor(kept), .. skipped];
             problem = null;
             return true;
         }
@@ -128,7 +160,7 @@ public static class BinaryCityFormat
 
         try
         {
-            var save = ReadSave(bytes, []);
+            var save = ReadSave(bytes, [], out _);
             summary = SaveFiles.Summarize(path, save);
             return summary is not null;
         }
@@ -139,8 +171,9 @@ public static class BinaryCityFormat
     }
 
     // Reads the chunks into the save model without restoring the city, refusing damage.
-    internal static CitySave ReadSave(ReadOnlySpan<byte> bytes, List<string> skipped)
+    internal static CitySave ReadSave(ReadOnlySpan<byte> bytes, List<string> skipped, out KeptParts? kept)
     {
+        kept = null;
         if (bytes.Length > MaxBytes)
         {
             throw new InvalidSave($"The file is bigger than {MaxBytes / (1024 * 1024)} MB, so it isn't a city CityLimits saved.");
@@ -151,13 +184,16 @@ public static class BinaryCityFormat
             throw new InvalidSave("The file isn't a binary CityLimits city: it doesn't start with CLCITY.");
         }
 
-        var format = BinaryPrimitives.ReadUInt16BigEndian(bytes[Magic.Length..]);
-        if (format != Format)
+        var major = BinaryPrimitives.ReadUInt16BigEndian(bytes[Magic.Length..]);
+        if (major != Format.Major)
         {
-            throw new InvalidSave($"format: this version reads format {Format}, not {format}.");
+            throw new InvalidSave($"format: {new FormatVersion(major, 0).ProblemReadingWith(Format)}");
         }
 
+        var minor = 0;
+        PartSave[]? parts = null;
         var chunks = new Dictionary<string, byte[]>();
+        var unknown = new Dictionary<string, byte[]>();
         var position = Magic.Length + 2;
         while (position < bytes.Length)
         {
@@ -182,9 +218,25 @@ public static class BinaryCityFormat
             }
 
             position += ChunkOverhead + (int)length;
+            if (tag == VersionTag)
+            {
+                minor = payload.Length == 2 ? BinaryPrimitives.ReadUInt16BigEndian(payload) : throw new InvalidSave("VERS: needs the minor version as one 16-bit number.");
+                continue;
+            }
+
+            if (tag == PartsTag)
+            {
+                parts = SectionCodec.Read<PartsChunk>(payload, PartsTag).Parts;
+                continue;
+            }
+
             if (!Required.Contains(tag))
             {
-                skipped.Add($"Skipped a chunk this version doesn't know: '{tag}'.");
+                if (!unknown.TryAdd(tag, payload.ToArray()))
+                {
+                    throw new InvalidSave($"{tag.Trim()}: the file holds it twice.");
+                }
+
                 continue;
             }
 
@@ -193,6 +245,30 @@ public static class BinaryCityFormat
                 throw new InvalidSave($"{tag.Trim()}: the file holds it twice.");
             }
         }
+
+        // A newer minor version's unknown chunks are kept when its parts list lets them be left out, and
+        // so are those a save this version wrote from one names in its parts list. In a file this
+        // version can read whole, any other unknown chunk is skipped and noted, as it always was.
+        var version = new FormatVersion(major, minor);
+
+        // Only a save from 1.2 on, which lists its parts, can open here: an older newer one, such as
+        // 0.3.102's 1.1, has nothing to say what it may leave out, so it is refused as it always was.
+        if (parts is null && version.ProblemReadingWith(Format) is { } tooNew)
+        {
+            throw new InvalidSave($"format: {tooNew}");
+        }
+
+        var named = version.Minor > Format.Minor ? [.. unknown.Keys] : unknown.Keys.Where(tag => parts?.Any(part => part.Chunk == tag) == true).ToList();
+        if (version.Minor > Format.Minor || named.Count > 0)
+        {
+            kept = SaveParts.Keep(version, Extension, parts, named, part => part.Chunk);
+            foreach (var part in kept.Parts)
+            {
+                kept.Chunks[part.Chunk] = unknown[part.Chunk];
+            }
+        }
+
+        skipped.AddRange(unknown.Keys.Except(named).Select(tag => $"Skipped a chunk this version doesn't know: '{tag}'."));
 
         var missing = Required.FirstOrDefault(tag => !chunks.ContainsKey(tag));
         if (missing is not null)
@@ -204,7 +280,7 @@ public static class BinaryCityFormat
         var definitions = SectionCodec.Read<DefinitionsChunk>(chunks[DefinitionsTag], DefinitionsTag);
         return new CitySave
         {
-            Format = FlatCityFormat.Format,
+            Format = version,
             Name = head.Name,
             Seed = head.Seed,
             Random = head.Random,
@@ -300,6 +376,11 @@ public static class BinaryCityFormat
         public long CityTime { get; set; }
 
         public int Funds { get; set; }
+    }
+
+    private sealed class PartsChunk
+    {
+        public PartSave[] Parts { get; set; } = [];
     }
 
     private sealed class DefinitionsChunk

@@ -80,3 +80,51 @@ public class SettingsStoreTests : IDisposable
         }
     }
 }
+
+public class SettingsFallbackTests
+{
+    private static GameSettings Load(string json, out string? warning)
+    {
+        var folder = Directory.CreateTempSubdirectory().FullName;
+        try
+        {
+            var path = Path.Combine(folder, "settings.json");
+            File.WriteAllText(path, json);
+            return SettingsStore.Load(path, out warning);
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void OneBadSettingFallsBackAloneAndSaysWhich()
+    {
+        var settings = Load("""{ "WindowWidth": 10, "WindowHeight": 900, "Speed": "fast", "AutosaveSlots": 2 }""", out var warning);
+
+        Assert.Equal((GameSettings.Default.WindowWidth, 900, GameSettings.Default.Speed, 2), (settings.WindowWidth, settings.WindowHeight, settings.Speed, settings.AutosaveSlots));
+        Assert.Contains("WindowWidth 10, outside 640 to 3840", warning);
+        Assert.Contains("Speed that isn't a whole number", warning);
+    }
+
+    [Fact]
+    public void ASettingFromANewerVersionIsIgnoredAndAMissingOneQuietlyDefaults()
+    {
+        var settings = Load("""{ "WindowWidth": 1600, "Theme": "dark" }""", out var warning);
+
+        Assert.Equal(1600, settings.WindowWidth);
+        Assert.Equal(GameSettings.Default.WindowHeight, settings.WindowHeight);
+        Assert.Null(warning);
+    }
+
+    [Theory]
+    [InlineData("not json")]
+    [InlineData("[1, 2]")]
+    [InlineData("null")]
+    public void AFileWithNoSettingsInItGivesTheDefaults(string json)
+    {
+        Assert.Equal(GameSettings.Default, Load(json, out var warning));
+        Assert.NotNull(warning);
+    }
+}
