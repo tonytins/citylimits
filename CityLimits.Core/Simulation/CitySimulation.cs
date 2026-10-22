@@ -23,6 +23,7 @@ public sealed class CitySimulation
 
     // The messages are checked at set counts in a 64-count round, as in Micropolis.
     private const int MessageRound = 64;
+    private const int NeedRailCount = 18;
     private const int NeedPowerCount = 22;
     private const int BlackoutsCount = 32;
     private const int NeedFireStationCount = 45;
@@ -51,6 +52,11 @@ public sealed class CitySimulation
 
     // A bridge counts as five road tiles toward the roads' upkeep.
     private const int BridgeRoadTiles = 5;
+
+    // Micropolis counts each tile of rail as two of road toward the roads' upkeep, and asks for
+    // more rail once a city has more than 50 zones and fewer rail tiles than zones.
+    private const int RoadTilesPerRail = 2;
+    private const int ZonesBeforeRailIsNeeded = 50;
 
     // A city needs power once it has more zones than this, and has blackouts below this share powered.
     private const int ZonesBeforePowerIsNeeded = 10;
@@ -180,8 +186,12 @@ public sealed class CitySimulation
     /// </summary>
     public int RoadTiles { get; private set; }
 
-    // The road tiles and stations as of the last count's budget, which a fresh estimate works from.
+    /// <summary>The rail tiles the scan counted this cycle, tunnels and crossings included; each counts as two road tiles toward the roads' upkeep.</summary>
+    public int RailTiles { get; private set; }
+
+    // The road tiles, rail tiles, and stations as of the last count's budget, which a fresh estimate works from.
     private int _budgetedRoadTiles;
+    private int _budgetedRailTiles;
     private int _budgetedFireStations;
     private int _budgetedPoliceStations;
 
@@ -220,6 +230,7 @@ public sealed class CitySimulation
             Services.StartCount();
             Community.StartCount();
             RoadTiles = 0;
+            RailTiles = 0;
         }
         else if (phase <= CityCalendar.ScanBands)
         {
@@ -271,7 +282,7 @@ public sealed class CitySimulation
     // settled when the count comes round to a whole year, the first time at the very start.
     private void CollectTaxes()
     {
-        (_budgetedRoadTiles, _budgetedFireStations, _budgetedPoliceStations) = (RoadTiles, Services.FireStations, Services.PoliceStations);
+        (_budgetedRoadTiles, _budgetedRailTiles, _budgetedFireStations, _budgetedPoliceStations) = (RoadTiles, RailTiles, Services.FireStations, Services.PoliceStations);
         Budget.Accrue(EstimateBudget());
         if (CityTime % CityBudget.CountsPerYear == 0)
         {
@@ -293,11 +304,16 @@ public sealed class CitySimulation
     /// the city as the last count saw it. The budget panel shows it as the player changes them.
     /// </summary>
     public BudgetYear EstimateBudget() =>
-        Budget.Estimate(Demand.TaxablePopulation, Maps.LandValueAverage, _budgetedRoadTiles, _budgetedFireStations, _budgetedPoliceStations, Treasury.Funds);
+        Budget.Estimate(Demand.TaxablePopulation, Maps.LandValueAverage, _budgetedRoadTiles + (_budgetedRailTiles * RoadTilesPerRail), _budgetedFireStations, _budgetedPoliceStations, Treasury.Funds);
 
     private void SendMessages()
     {
         var count = CityTime % MessageRound;
+        if (count == NeedRailCount && Power.Zones > ZonesBeforeRailIsNeeded && Power.Zones > RailTiles)
+        {
+            MessageSent?.Invoke(CityMessage.NeedRail);
+        }
+
         if (count == NeedPowerCount && Power.Zones > ZonesBeforePowerIsNeeded && Power.CoalPlants + Power.NuclearPlants == 0)
         {
             MessageSent?.Invoke(CityMessage.NeedPower);
@@ -364,6 +380,12 @@ public sealed class CitySimulation
                     continue;
                 }
 
+                if (state.IsRail)
+                {
+                    VisitRail(x, y, state);
+                    continue;
+                }
+
                 if (!state.IsBuildingCenter)
                 {
                     continue;
@@ -422,6 +444,23 @@ public sealed class CitySimulation
         }
     }
 
+    // As in Micropolis, the scan counts each rail tile, and underfunded rail crumbles as roads
+    // do: to rubble on land, back to water in a tunnel, never where it crosses a power line.
+    // Micropolis also rolls here for a train to set out; CityLimits' train is drawn by the game
+    // alone, so the city's own rolls stay the city's.
+    private void VisitRail(int x, int y, TileState state)
+    {
+        RailTiles++;
+        if (Budget.RoadEffect < RoadEffectBeforeDecay
+            && Random.NextInt(0, DecayChance) == 0
+            && !state.HasPowerLine
+            && Budget.RoadEffect < Random.NextInt(0, CityBudget.FullRoadEffect))
+        {
+            Map.SetState(x, y, new TileState(state.IsTunnel ? TileKind.Water : TileKind.Rubble));
+            Roads.MarkDirty();
+        }
+    }
+
     /// <summary>Captures everything the city needs to carry on exactly where it is, for a save.</summary>
     internal CitySave Capture() => new()
     {
@@ -451,6 +490,7 @@ public sealed class CitySimulation
         },
         Traffic = Traffic.Capture(),
         RoadTraffic = Traffic.CaptureRoads(),
+        Rail = RailCodec.Capture(Map, RailTiles, _budgetedRailTiles),
     };
 
     /// <summary>Makes a city from a save, checking each part as it goes.</summary>
@@ -478,6 +518,8 @@ public sealed class CitySimulation
 
         var definitions = RestoreDefinitions(save);
         var map = MapCodec.Decode(save.Map);
+        var rail = save.Rail ?? throw new InvalidSave("rail: missing.");
+        RailCodec.Apply(map, rail);
         CheckZones(map, definitions);
 
         var city = new CitySimulation(map, save.Seed, funds: 0, definitions);
@@ -500,6 +542,8 @@ public sealed class CitySimulation
         city._budgetedPoliceStations = SaveChecks.InRange(cycle.BudgetedPoliceStations, 0, int.MaxValue, "cycle.budgetedPoliceStations");
         city.Traffic.Restore(save.Traffic ?? throw new InvalidSave("traffic: missing."));
         city.Traffic.RestoreRoads(save.RoadTraffic ?? throw new InvalidSave("roadTraffic: missing."));
+        city.RailTiles = SaveChecks.InRange(rail.Tiles, 0, int.MaxValue, "rail.tiles");
+        city._budgetedRailTiles = SaveChecks.InRange(rail.BudgetedTiles, 0, int.MaxValue, "rail.budgetedTiles");
         return city;
     }
 

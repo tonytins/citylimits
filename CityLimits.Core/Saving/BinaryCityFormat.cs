@@ -50,11 +50,12 @@ public static class BinaryCityFormat
     private const string CycleTag = "CYCL";
     private const string TrafficTag = "TRAF";
     private const string RoadTrafficTag = "RTRF";
+    private const string RailTag = "RAIL";
 
     private static readonly string[] Required = [CityTag, DefinitionsTag, MapTag, BudgetTag, CensusTag, DemandTag, PowerTag, ServicesTag, CommunityTag, CityMapsTag, CycleTag];
 
     // The chunks each minor version added, required from that version on; an older file goes without.
-    private static readonly (string Tag, FormatVersion Since)[] Added = [(TrafficTag, new FormatVersion(1, 1)), (RoadTrafficTag, new FormatVersion(1, 3))];
+    private static readonly (string Tag, FormatVersion Since)[] Added = [(TrafficTag, new FormatVersion(1, 1)), (RoadTrafficTag, new FormatVersion(1, 3)), (RailTag, new FormatVersion(1, 4))];
 
     /// <summary>Writes a city as the format's bytes.</summary>
     public static byte[] Write(CitySimulation city)
@@ -94,6 +95,7 @@ public static class BinaryCityFormat
         WriteChunk(stream, CycleTag, SectionCodec.Write(save.Cycle));
         WriteChunk(stream, TrafficTag, SectionCodec.Write(save.Traffic!));
         WriteChunk(stream, RoadTrafficTag, SectionCodec.Write(save.RoadTraffic!));
+        WriteChunk(stream, RailTag, SectionCodec.Write(save.Rail!));
         foreach (var part in kept)
         {
             WriteChunk(stream, part.Chunk, city.Kept!.Chunks[part.Chunk]);
@@ -290,6 +292,7 @@ public static class BinaryCityFormat
             Cycle = SectionCodec.Read<CycleSave>(chunks[CycleTag], CycleTag),
             Traffic = chunks.TryGetValue(TrafficTag, out var traffic) ? SectionCodec.Read<TrafficSave>(traffic, TrafficTag) : null,
             RoadTraffic = chunks.TryGetValue(RoadTrafficTag, out var roadTraffic) ? SectionCodec.Read<RoadTrafficSave>(roadTraffic, RoadTrafficTag) : null,
+            Rail = chunks.TryGetValue(RailTag, out var rail) ? SectionCodec.Read<RailSave>(rail, RailTag) : null,
         };
     }
 

@@ -76,7 +76,7 @@ public sealed class BuildStroke
                 return new TileRect(x, y, width, height);
             }
 
-            if (Action is not (BuildAction.Road or BuildAction.PowerLine))
+            if (Action is not (BuildAction.Road or BuildAction.PowerLine or BuildAction.Rail))
             {
                 return TileRect.Spanning(StartX, StartY, EndX, EndY);
             }

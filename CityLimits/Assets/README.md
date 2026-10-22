@@ -19,6 +19,9 @@ tools/icwire.png     power line
 tools/icfire.png     fire station
 tools/icpol.png      police station
 tools/icpark.png     park
+tools/icrail.png     rail
+sprites/obj1-0.png   the train running north or south; obj1-1 east or west, obj1-2 turning
+                     between north and west, obj1-3 between north and east, obj1-4 in a tunnel
 Scenarios/           the built-in scenarios, one JSON file each, named for its id
 ```
 
@@ -134,6 +137,28 @@ looking at the drawings in this copy of the sheet:
 | north, south, and west         | 219        | a junction, branching west          |
 | all four sides                 | 220        | a crossing                          |
 
+Rail is drawn from the sides of it that join other rail, which
+`Rails.ConnectionsAt` reads from the map, in the same order as a road's:
+
+| Rail joins                     | Tile index | What it looks like                  |
+| ------------------------------ | ---------- | ----------------------------------- |
+| nothing, east, west, or both   | 226        | straight track, east to west        |
+| north, south, or both          | 227        | straight track, north to south      |
+| north and east                 | 228        | a corner                            |
+| east and south                 | 229        | a corner                            |
+| south and west                 | 230        | a corner                            |
+| north and west                 | 231        | a corner                            |
+| east, west, and north          | 232        | a junction, branching north         |
+| north, south, and east         | 233        | a junction, branching east          |
+| east, west, and south          | 234        | a junction, branching south         |
+| north, south, and west         | 235        | a junction, branching west          |
+| all four sides                 | 236        | a crossing                          |
+
+A tunnel is tile 224 running across and 225 running down, used when it
+joins nothing across. Rail crossing a power line is tile 221 for rail
+running across and 222 for rail running down; rail crossing a road is
+tile 237 for rail running across and 238 for rail running down.
+
 A line under water is tile 208 running down, used when it joins nothing
 across, and 209 running across. A road crossing a line is tile 77 for a
 road running across over a line running down, and 78 for a road running
@@ -170,7 +195,10 @@ art can be used and redistributed here. The tile sheet is the core's
 `MicropolisCore/src/images/micropolisEngine/tiles.png`, byte for byte. The
 tool icons are the same drawings, converted to PNG in the same way as the
 others, with their highlighted versions, the core's `*hi.png`; the
-bulldozer icons are the Micropolis dozer icons, `icdozr` and `icdozrhi`. The art
+bulldozer icons are the Micropolis dozer icons, `icdozr` and `icdozrhi`. The
+rail icons are the core's `icrail.png` and `icrailhi.png`, and the train's drawings
+in `sprites/` are the core's `obj1-0.png` to `obj1-4.png`, converted to 8-bit RGBA
+in the same way as the icons, added for Radial with Tony Bark's approval. The art
 is the property of its authors, and CityLimits is not a SimCity product and
 does not use the SimCity name or trademarks.
 

@@ -60,7 +60,8 @@ internal static class MapCodec
         {
             for (var x = 0; x < map.Width; x++)
             {
-                var state = map.StateAt(x, y);
+                // Rail is written in a part of its own, so the map holds what lies beneath it.
+                var state = RailCodec.Beneath(map.StateAt(x, y));
                 groundRow[x] = GroundChars[state.Kind];
                 useRow[x] = UseChars[state.Use];
                 partRow[x] = state.HasFootprint ? char.ToLowerInvariant(Convert.ToString(state.ZonePart, 16)[0]) : NoPart;
@@ -159,7 +160,8 @@ internal static class MapCodec
     public static ushort[] EncodeWords(TileMap map)
     {
         ArgumentNullException.ThrowIfNull(map);
-        if (Enum.GetValues<TileUse>().Length > 16)
+        // Rail, from TileUse.Rail on, is written in a part of its own, so only the uses before it go in a word.
+        if ((int)TileUse.Rail > 16)
         {
             throw new InvalidOperationException("A tile word holds 16 uses; the binary format needs another bit for more.");
         }
@@ -170,7 +172,7 @@ internal static class MapCodec
         {
             for (var y = 0; y < map.Height; y++)
             {
-                var state = map.StateAt(x, y);
+                var state = RailCodec.Beneath(map.StateAt(x, y));
                 var extra = state.IsBuildingCenter
                     ? state.Development | (state.ValueClass << (ClassShift - ExtraShift))
                     : state.House;

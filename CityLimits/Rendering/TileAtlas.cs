@@ -45,6 +45,15 @@ public static class TileAtlas
     /// <summary>A road running down over a power line running across.</summary>
     private const int RoadDownPowerLineTile = 78;
 
+    // Rail, from the sheet: tunnels running across and down, the crossings with a power line and
+    // with a road, each named for the way the rail runs, and the track drawn by its joins.
+    private const int TunnelAcrossTile = 224;
+    private const int TunnelDownTile = 225;
+    private const int RailAcrossPowerLineTile = 221;
+    private const int RailDownPowerLineTile = 222;
+    private const int RailAcrossRoadTile = 237;
+    private const int RailDownRoadTile = 238;
+
     /// <summary>The first of the four wooded park drawings; the look a tile's place picks is added to it.</summary>
     private const int FirstWoodedParkTile = 40;
 
@@ -229,14 +238,54 @@ public static class TileAtlas
     }
 
     /// <summary>
-    /// The sheet index that draws a tile, given the sides of it that join a road, the sides that
-    /// join something carrying power, the sides with the same ground beside them, and, for a
-    /// zone, the state of its centre, which holds the zone's building.
+    /// The rail drawing for each set of joined sides, indexed by <see cref="RoadConnections"/>, as
+    /// Micropolis lays its rail out. Rail that joins nothing, or only one side, is drawn straight
+    /// along that side.
     /// </summary>
-    public static int IndexFor(TileState state, RoadConnections roads, RoadConnections lines, TerrainSides ground, TileState zoneCenter, int tileX, int tileY)
+    private static readonly int[] RailTiles =
+    [
+        226, // none: east-west
+        227, // north: north-south
+        226, // east: east-west
+        228, // north and east: a corner
+        227, // south: north-south
+        227, // north and south: north-south
+        229, // east and south: a corner
+        233, // north, east, and south: a junction branching east
+        226, // west: east-west
+        231, // north and west: a corner
+        226, // east and west: east-west
+        232, // north, east, and west: a junction branching north
+        230, // south and west: a corner
+        235, // north, south, and west: a junction branching west
+        234, // east, south, and west: a junction branching south
+        236, // all four: a crossing
+    ];
+
+    /// <summary>
+    /// The sheet index that draws a tile, given the sides of it that join a road, the sides that
+    /// join something carrying power, the sides that join rail, the sides with the same ground
+    /// beside them, and, for a zone, the state of its centre, which holds the zone's building.
+    /// </summary>
+    public static int IndexFor(TileState state, RoadConnections roads, RoadConnections lines, RoadConnections rails, TerrainSides ground, TileState zoneCenter, int tileX, int tileY)
     {
         switch (state.Use)
         {
+            case TileUse.RailAcrossRoad:
+                return RailAcrossRoadTile;
+            case TileUse.RailDownRoad:
+                return RailDownRoadTile;
+            case TileUse.RailAcrossPowerLine:
+                return RailAcrossPowerLineTile;
+            case TileUse.RailDownPowerLine:
+                return RailDownPowerLineTile;
+            case TileUse.Rail when state.Kind == TileKind.Water:
+                // A tunnel runs down only when it joins nothing across, as a bridge does.
+                var tunnelAcross = (rails & (RoadConnections.East | RoadConnections.West)) != 0;
+                var tunnelDown = (rails & (RoadConnections.North | RoadConnections.South)) != 0;
+                return tunnelDown && !tunnelAcross ? TunnelDownTile : TunnelAcrossTile;
+            case TileUse.Rail:
+                return RailTiles[(int)rails & 0b1111];
             case TileUse.RoadAcrossPowerLine:
                 return RoadAcrossPowerLineTile;
             case TileUse.RoadDownPowerLine:

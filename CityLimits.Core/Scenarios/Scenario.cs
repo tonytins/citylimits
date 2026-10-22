@@ -99,6 +99,9 @@ public enum CountSubject
 
     /// <summary>Churches, by their centres.</summary>
     Church,
+
+    /// <summary>Rail tiles, tunnels and crossings included; from scenario format 1.1.</summary>
+    Rail,
 }
 
 /// <summary>

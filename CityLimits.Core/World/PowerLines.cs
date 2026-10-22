@@ -2,7 +2,7 @@ namespace CityLimits.Core.World;
 
 /// <summary>
 /// Which sides of a tile carry power to the tile beside them, as in Micropolis: a power line on
-/// every side, a road-and-line crossing only along its line, and every tile of a zone or a plant.
+/// every side, a crossing with a road or rail only along its line, and every tile of a zone or a plant.
 /// </summary>
 public static class PowerLines
 {
@@ -10,8 +10,8 @@ public static class PowerLines
     public static bool RunsToward(TileState state, RoadConnections side) => state.Use switch
     {
         TileUse.PowerLine => true,
-        TileUse.RoadAcrossPowerLine => side is RoadConnections.North or RoadConnections.South,
-        TileUse.RoadDownPowerLine => side is RoadConnections.East or RoadConnections.West,
+        TileUse.RoadAcrossPowerLine or TileUse.RailAcrossPowerLine => side is RoadConnections.North or RoadConnections.South,
+        TileUse.RoadDownPowerLine or TileUse.RailDownPowerLine => side is RoadConnections.East or RoadConnections.West,
         _ => state.HasFootprint,
     };
 

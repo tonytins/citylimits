@@ -1,7 +1,7 @@
 namespace CityLimits.Core.Economy;
 
 /// <summary>
-/// What the player pays for roads, bridges, power lines, parks, clearing, and the bulldozer; the prices are Micropolis'.
+/// What the player pays for roads, bridges, rail, tunnels, power lines, parks, clearing, and the bulldozer; the prices are Micropolis'.
 /// A zone's price is in its <see cref="Definitions.ZoneSpec"/> and a plant's in its
 /// <see cref="Definitions.PlantSpec"/>, where a mod can change them.
 /// </summary>
@@ -27,4 +27,10 @@ public static class TileCosts
 
     /// <summary>What one tile of park costs.</summary>
     public const int Park = 10;
+
+    /// <summary>What one tile of rail costs; Micropolis' price, approved by Tony Bark for Radial.</summary>
+    public const int Rail = 20;
+
+    /// <summary>What one tile of rail under water, a tunnel, costs; Micropolis' price, approved by Tony Bark for Radial.</summary>
+    public const int Tunnel = 100;
 }

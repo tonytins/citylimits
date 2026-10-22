@@ -44,6 +44,10 @@ internal static class SaveParts
         // Each road's traffic is set again by the scan within a cycle, and a level left on a tile
         // that is no longer a road is dropped when it is read, so it may be left out or kept stale.
         new() { Name = "roadTraffic", Chunk = "RTRF", Since = "1.3", Ignorable = true, Keepable = true },
+
+        // The map holds what lies beneath the rail, so a game that doesn't know rail opens the city
+        // as if it had none, as Tony Bark chose. It can't keep the rail, since it may build where it was.
+        new() { Name = "rail", Chunk = "RAIL", Since = "1.4", Ignorable = true, Keepable = false },
     ];
 
     /// <summary>

@@ -16,9 +16,9 @@ public static class ScenarioLoader
 
     /// <summary>
     /// The newest scenario format this version reads. A file of an older minor version reads too;
-    /// one written as a whole number, such as <c>1</c>, is 1.0.
+    /// one written as a whole number, such as <c>1</c>, is 1.0. 1.1 added the Rail tool and the Rail count.
     /// </summary>
-    public static readonly FormatVersion Format = new(1, 0);
+    public static readonly FormatVersion Format = new(1, 1);
 
     /// <summary>The most actions, and the most checks, a scenario may hold.</summary>
     public const int MaxEntries = 10_000;

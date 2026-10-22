@@ -15,7 +15,7 @@ public static class TileInfo
     /// <summary>What the player can do with a kind of ground.</summary>
     public static string BuildAdvice(TileKind kind) => kind switch
     {
-        TileKind.Water => "only a bridge or a power line can cross it",
+        TileKind.Water => "only a bridge, a tunnel, or a power line can cross it",
         TileKind.Trees or TileKind.Rubble => "cleared for $1 a tile when built on",
         _ => "ready to build on",
     };
@@ -39,6 +39,9 @@ public static class TileInfo
         TileUse.Park => "Park",
         TileUse.Hospital => "Hospital",
         TileUse.Church => "Church",
+        TileUse.Rail => "Rail",
+        TileUse.RailAcrossRoad or TileUse.RailDownRoad => "Rail and road",
+        TileUse.RailAcrossPowerLine or TileUse.RailDownPowerLine => "Rail and power line",
         _ => "Empty",
     };
 
@@ -58,6 +61,9 @@ public static class TileInfo
         TileUse.Park => "park",
         TileUse.Hospital => "hospital",
         TileUse.Church => "church",
+        TileUse.Rail => "rail",
+        TileUse.RailAcrossRoad or TileUse.RailDownRoad => "rail and road",
+        TileUse.RailAcrossPowerLine or TileUse.RailDownPowerLine => "rail and line",
         _ => "empty",
     };
 
@@ -77,6 +83,10 @@ public static class TileInfo
         TileUse.PowerLine when state.Kind == TileKind.Water => "laid under water",
         TileUse.PowerLine => "strung on poles",
         TileUse.RoadAcrossPowerLine or TileUse.RoadDownPowerLine => "carries traffic across the line",
+        TileUse.Rail when state.IsTunnel => "a tunnel, carries trips under water",
+        TileUse.Rail => "carries trips",
+        TileUse.RailAcrossRoad or TileUse.RailDownRoad => "a level crossing, carries trips both ways",
+        TileUse.RailAcrossPowerLine or TileUse.RailDownPowerLine => "carries trips under the line",
         _ => BuildAdvice(state.Kind),
     };
 

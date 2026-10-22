@@ -63,6 +63,7 @@ public sealed class CityDefinitions
         BuildAction.NuclearPowerPlant => Plant(TileUse.NuclearPowerPlant).Price,
         BuildAction.PowerLine => TileCosts.PowerLine,
         BuildAction.Park => TileCosts.Park,
+        BuildAction.Rail => TileCosts.Rail,
         BuildAction.FireStation => Service(TileUse.FireStation).Price,
         BuildAction.PoliceStation => Service(TileUse.PoliceStation).Price,
         _ => 0,

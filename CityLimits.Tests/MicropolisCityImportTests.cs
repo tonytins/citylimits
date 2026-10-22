@@ -100,13 +100,16 @@ public class MicropolisCityImportTests
     }
 
     [Fact]
-    public void WhatCityLimitsDoesntHaveYetBecomesBareGroundAndIsListed()
+    public void RailComesInAsRailAndWhatCityLimitsDoesntHaveYetBecomesBareGroundAndIsListed()
     {
         var bytes = MicropolisCityWriter.Write(new CitySimulation(TileMap.FromTerrain(Width, Height, new TileKind[Width * Height]), 1));
         SetTile(bytes, 5, 5, 226);        // rail
         SetTile(bytes, 6, 5, 227);        // rail
         SetTile(bytes, 7, 5, 237);        // rail across a road
         SetTile(bytes, 8, 5, 221);        // rail across a power line
+        SetTile(bytes, 12, 5, 238);       // rail down a road
+        SetTile(bytes, 13, 5, 222);       // rail down a power line
+        SetTile(bytes, 14, 5, 224);       // a tunnel
         SetTile(bytes, 9, 5, 48);         // flood
         SetTile(bytes, 10, 5, 56);        // fire
         SetTile(bytes, 11, 5, 52);        // radiation
@@ -117,9 +120,13 @@ public class MicropolisCityImportTests
 
         var city = Import(bytes, out var notes);
 
-        Assert.Equal(TileUse.None, city.Map.StateAt(5, 5).Use);
-        Assert.Equal(TileUse.Road, city.Map.StateAt(7, 5).Use);
-        Assert.Equal(TileUse.PowerLine, city.Map.StateAt(8, 5).Use);
+        Assert.Equal(new TileState(TileKind.Grass, TileUse.Rail), city.Map.StateAt(5, 5));
+        Assert.Equal(new TileState(TileKind.Grass, TileUse.Rail), city.Map.StateAt(6, 5));
+        Assert.Equal(TileUse.RailAcrossRoad, city.Map.StateAt(7, 5).Use);
+        Assert.Equal(TileUse.RailAcrossPowerLine, city.Map.StateAt(8, 5).Use);
+        Assert.Equal(TileUse.RailDownRoad, city.Map.StateAt(12, 5).Use);
+        Assert.Equal(TileUse.RailDownPowerLine, city.Map.StateAt(13, 5).Use);
+        Assert.Equal(new TileState(TileKind.Water, TileUse.Rail), city.Map.StateAt(14, 5));
         Assert.Equal(new TileState(TileKind.Grass), city.Map.StateAt(21, 21));
         Assert.Equal(new TileState(TileKind.Grass), city.Map.StateAt(60, 60));
         Assert.Equal(
@@ -129,9 +136,6 @@ public class MicropolisCityImportTests
                 "1 flooded tile became bare ground: CityLimits doesn't have them yet.",
                 "1 part of a building with no centre became bare ground: CityLimits doesn't have them yet.",
                 "1 radioactive tile became bare ground: CityLimits doesn't have them yet.",
-                "1 rail crossing, kept as a power line, became bare ground: CityLimits doesn't have them yet.",
-                "1 rail crossing, kept as a road, became bare ground: CityLimits doesn't have them yet.",
-                "2 rail tiles became bare ground: CityLimits doesn't have them yet.",
                 "1 seaport became bare ground: CityLimits doesn't have them yet.",
                 "1 stadium became bare ground: CityLimits doesn't have them yet.",
             ],

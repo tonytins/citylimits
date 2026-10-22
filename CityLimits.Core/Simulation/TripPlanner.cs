@@ -5,7 +5,7 @@ namespace CityLimits.Core.Simulation;
 /// <summary>What came of a zone's trip.</summary>
 public enum TripOutcome
 {
-    /// <summary>No road runs along the zone's edge, so nobody could set out; the worst outcome.</summary>
+    /// <summary>No road or rail runs along the zone's edge, so nobody could set out; the worst outcome.</summary>
     NoRoad,
 
     /// <summary>The trip set out but found nowhere to go within its reach.</summary>
@@ -16,8 +16,8 @@ public enum TripOutcome
 }
 
 /// <summary>
-/// A zone's trip, as in Micropolis: from the first road along the zone's edge, a drive of up to
-/// <see cref="MaxDistance"/> road tiles, each step in a direction picked at random from the city's
+/// A zone's trip, as in Micropolis: from the first road or rail along the zone's edge, a drive of up to
+/// <see cref="MaxDistance"/> road and rail tiles, each step in a direction picked at random from the city's
 /// own generator, looking for a zone of a kind the zone's spec lists in <see cref="ZoneSpec.TripsTo"/>.
 /// </summary>
 /// <remarks>
@@ -28,7 +28,7 @@ public enum TripOutcome
 /// </remarks>
 public sealed class TripPlanner(TrafficMap? traffic = null)
 {
-    /// <summary>The most road tiles a trip drives.</summary>
+    /// <summary>The most road and rail tiles a trip travels.</summary>
     public const int MaxDistance = 30;
 
     // The 12 tiles along a zone's edges, just outside it, in the order a trip looks for a road:
@@ -48,7 +48,7 @@ public sealed class TripPlanner(TrafficMap? traffic = null)
 
     private readonly List<(int X, int Y)> _route = [];
 
-    /// <summary>The road tiles the last trip passed, every other step, in the order it passed them.</summary>
+    /// <summary>The road and rail tiles the last trip passed, every other step, in the order it passed them; only the road tiles take traffic.</summary>
     public IReadOnlyList<(int X, int Y)> Route => _route;
 
     /// <summary>Sends a trip out from the zone centred on a tile, and says what came of it.</summary>
@@ -95,7 +95,7 @@ public sealed class TripPlanner(TrafficMap? traffic = null)
     {
         foreach (var (dx, dy) in Edge)
         {
-            if (map.StateAtOrDefault(centerX + dx, centerY + dy).IsRoad)
+            if (map.StateAtOrDefault(centerX + dx, centerY + dy).CarriesTrips)
             {
                 (x, y) = (centerX + dx, centerY + dy);
                 return true;
@@ -106,7 +106,8 @@ public sealed class TripPlanner(TrafficMap? traffic = null)
         return false;
     }
 
-    // One step along the road: the directions are tried from a random one round, never straight back.
+    // One step along the road or rail, which trips use alike: the directions are tried from a
+    // random one round, never straight back.
     private bool TryStep(TileMap map, DeterministicRandom random, ref int x, ref int y, ref int cameFrom, int step)
     {
         var first = random.NextInt(0, Directions.Length);
@@ -119,7 +120,7 @@ public sealed class TripPlanner(TrafficMap? traffic = null)
             }
 
             var (dx, dy) = Directions[direction];
-            if (!map.StateAtOrDefault(x + dx, y + dy).IsRoad)
+            if (!map.StateAtOrDefault(x + dx, y + dy).CarriesTrips)
             {
                 continue;
             }

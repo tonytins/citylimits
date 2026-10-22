@@ -13,6 +13,10 @@ public sealed class GameAssets : IDisposable
     public const string LogoFileName = "logo.png";
 
     private const string ToolFolderName = "tools";
+    private const string SpriteFolderName = "sprites";
+
+    // The train's drawings, one a frame in TrainFrame's order: Micropolis' obj1-0 to obj1-4.
+    private const string TrainFramePrefix = "obj1-";
 
     private static readonly (Tool Tool, string FileName)[] ToolIconFiles =
     [
@@ -28,6 +32,7 @@ public sealed class GameAssets : IDisposable
         (Tool.FireStation, "icfire.png"),
         (Tool.PoliceStation, "icpol.png"),
         (Tool.Park, "icpark.png"),
+        (Tool.Rail, "icrail.png"),
     ];
 
     // Each icon's highlighted version, drawn while its tool is held, is beside it with "hi" on its name.
@@ -35,6 +40,7 @@ public sealed class GameAssets : IDisposable
 
     private readonly Dictionary<Tool, Texture2D> _icons = new();
     private readonly Dictionary<Tool, Texture2D> _selectedIcons = new();
+    private readonly Texture2D?[] _trainFrames = new Texture2D?[Enum.GetValues<TrainFrame>().Length];
     private readonly List<Texture2D> _textures = [];
 
     /// <summary>The sheet that holds every tile of ground, or null when it is missing.</summary>
@@ -45,6 +51,9 @@ public sealed class GameAssets : IDisposable
 
     /// <summary>The icon for a tool, or null when the tool has none.</summary>
     public Texture2D? IconFor(Tool tool) => _icons.TryGetValue(tool, out var icon) ? icon : null;
+
+    /// <summary>The train's drawing for a frame, or null when it is missing.</summary>
+    public Texture2D? TrainFrameFor(TrainFrame frame) => _trainFrames[(int)frame];
 
     /// <summary>The highlighted icon drawn while a tool is held, or null when it has none.</summary>
     public Texture2D? SelectedIconFor(Tool tool) => _selectedIcons.TryGetValue(tool, out var icon) ? icon : null;
@@ -105,6 +114,21 @@ public sealed class GameAssets : IDisposable
             assets._textures.Add(selected.Value);
         }
 
+        var spriteDirectory = Path.Combine(directory, SpriteFolderName);
+        foreach (var frame in Enum.GetValues<TrainFrame>())
+        {
+            var path = Path.Combine(spriteDirectory, $"{TrainFramePrefix}{(int)frame}.png");
+            var texture = LoadTexture(path);
+            if (!texture.HasValue)
+            {
+                missing.Add($"The train's {frame} drawing is missing: {path}");
+                continue;
+            }
+
+            assets._trainFrames[(int)frame] = texture.Value;
+            assets._textures.Add(texture.Value);
+        }
+
         problems = missing;
         return assets;
     }
@@ -120,6 +144,7 @@ public sealed class GameAssets : IDisposable
         _textures.Clear();
         _icons.Clear();
         _selectedIcons.Clear();
+        Array.Clear(_trainFrames);
         TileSheet = null;
     }
 

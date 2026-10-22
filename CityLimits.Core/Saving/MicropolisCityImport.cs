@@ -11,9 +11,9 @@ namespace CityLimits.Core.Saving;
 /// numbers (some editions add a 128-byte header first): six histories of 240, a block of 120 for the
 /// city's settings, and the 120 by 100 map, a number a tile, column by column, each a Micropolis
 /// tile number with flags above it. Tiles are read with Micropolis' numbering, which the owner
-/// approved for this, and buildings from their centres, so each comes in whole. Anything CityLimits
-/// doesn't have yet (rail, seaports, airports, stadiums, fire, flood, and radiation) becomes bare
-/// ground, as the owner chose, and the import lists it. <c>docs/saving.md</c> describes it.
+/// approved for this, and buildings from their centres, so each comes in whole. Rail comes in as
+/// rail, tunnels and crossings included. Anything CityLimits doesn't have yet (seaports, airports,
+/// stadiums, fire, flood, and radiation) becomes bare ground, as the owner chose, and the import lists it. <c>docs/saving.md</c> describes it.
 /// </summary>
 public static class MicropolisCityImport
 {
@@ -84,6 +84,7 @@ public static class MicropolisCityImport
     private const int RailAcrossPowerLine = 221;
     private const int RailDownPowerLine = 222;
     private const int FirstRail = 224;
+    private const int LastTunnel = 225;
     private const int RailAcrossRoad = 237;
     private const int RailDownRoad = 238;
     private const int LastRail = 238;
@@ -266,14 +267,18 @@ public static class MicropolisCityImport
                 return new TileState(TileKind.Water, TileUse.PowerLine);
             case >= FirstPowerLine and <= LastPowerLine:
                 return new TileState(TileKind.Grass, TileUse.PowerLine);
-            case RailAcrossPowerLine or RailDownPowerLine:
-                Count(replaced, "rail crossing, kept as a power line,");
-                return new TileState(TileKind.Grass, TileUse.PowerLine);
-            case RailAcrossRoad or RailDownRoad:
-                Count(replaced, "rail crossing, kept as a road,");
-                return new TileState(TileKind.Grass, TileUse.Road);
-            case >= FirstRail and <= LastRail:
-                return Replaced(replaced, "rail tile");
+            case RailAcrossPowerLine:
+                return new TileState(TileKind.Grass, TileUse.RailAcrossPowerLine);
+            case RailDownPowerLine:
+                return new TileState(TileKind.Grass, TileUse.RailDownPowerLine);
+            case RailAcrossRoad:
+                return new TileState(TileKind.Grass, TileUse.RailAcrossRoad);
+            case RailDownRoad:
+                return new TileState(TileKind.Grass, TileUse.RailDownRoad);
+            case >= FirstRail and <= LastTunnel:
+                return new TileState(TileKind.Water, TileUse.Rail);
+            case > LastTunnel and <= LastRail:
+                return new TileState(TileKind.Grass, TileUse.Rail);
             case >= FirstDrawbridge and <= LastDrawbridge:
             case >= FirstDownDrawbridge and <= LastDownDrawbridge:
                 return new TileState(TileKind.Water, TileUse.Road);
@@ -438,19 +443,9 @@ public static class MicropolisCityImport
     private static void Count(SortedDictionary<string, int> replaced, string what) =>
         replaced[what] = replaced.GetValueOrDefault(what) + 1;
 
-    private static string Plural(int count, string what)
-    {
-        // "1 airport", "3 rail tiles", "2 rail crossings, kept as roads,".
-        var comma = what.IndexOf(',', StringComparison.Ordinal);
-        var (noun, rest) = comma < 0 ? (what, string.Empty) : (what[..comma], what[comma..]);
-        if (count != 1)
-        {
-            noun += "s";
-            rest = rest.Replace("a power line", "power lines", StringComparison.Ordinal).Replace("a road", "roads", StringComparison.Ordinal);
-        }
-
-        return $"{count.ToString(CultureInfo.InvariantCulture)} {noun}{rest}";
-    }
+    // "1 airport", "3 burning tiles".
+    private static string Plural(int count, string what) =>
+        $"{count.ToString(CultureInfo.InvariantCulture)} {what}{(count == 1 ? string.Empty : "s")}";
 
     private sealed record Building(int First, int Size, TileUse Use, int Levels, int ValueClasses, string? Missing = null);
 }

@@ -10,7 +10,7 @@ namespace CityLimits.Core.Saving;
 internal static class SaveUpgrades
 {
     /// <summary>The save model's version, which both save formats write.</summary>
-    public static readonly FormatVersion Current = new(1, 3);
+    public static readonly FormatVersion Current = new(1, 4);
 
     /// <summary>Upgrades a save in place, from whatever older 1.x version it is.</summary>
     public static void ToCurrent(CitySave save)
@@ -27,6 +27,11 @@ internal static class SaveUpgrades
             AddRoadTraffic(save);
         }
 
+        if (save.Format < new FormatVersion(1, 4))
+        {
+            AddRail(save);
+        }
+
         save.Format = Current;
     }
 
@@ -37,6 +42,15 @@ internal static class SaveUpgrades
         if (save.Map is { Width: >= 1 and <= MapCodec.MaxSide, Height: >= 1 and <= MapCodec.MaxSide } map)
         {
             save.Traffic ??= new TrafficSave { Density = new int[TrafficMap.BlocksFor(map.Width, map.Height)] };
+        }
+    }
+
+    // 1.4 added rail. A city from before has none, and the scan counts none until it is laid.
+    private static void AddRail(CitySave save)
+    {
+        if (save.Map is { Width: >= 1 and <= MapCodec.MaxSide, Height: >= 1 and <= MapCodec.MaxSide } map)
+        {
+            save.Rail ??= new RailSave { Track = [.. Enumerable.Repeat(new string('.', map.Width), map.Height)], Tiles = 0, BudgetedTiles = 0 };
         }
     }
 

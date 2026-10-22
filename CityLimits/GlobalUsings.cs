@@ -7,6 +7,7 @@ global using CityLimits.Core.Randomness;
 global using CityLimits.Core.Saving;
 global using CityLimits.Core.Settings;
 global using CityLimits.Core.Simulation;
+global using CityLimits.Core.Sprites;
 global using CityLimits.Core.World;
 global using CityLimits.Game;
 global using CityLimits.Rendering;

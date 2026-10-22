@@ -106,6 +106,7 @@ size of the same city as `.fcl`.
 | `TRAF` | The traffic on each 2 by 2 block; from format 1.1 |
 | `PART` | The parts list (see Opening a newer save); from format 1.2, written after `VERS` |
 | `RTRF` | The traffic each road shows, and the year's average; from format 1.3 |
+| `RAIL` | The rail on the map, and the scan's count of it; from format 1.4 |
 
 Each tile's word holds, from its lowest bit: the ground (2 bits), the use
 (4 bits), the footprint part (4 bits), power (1 bit), and 5 bits more: a
@@ -155,10 +156,12 @@ in from their centres, so each is whole: zones at the level and land-value
 class their drawing says, with an empty residential zone's houses, and
 plants, stations, hospitals, and churches.
 
-**What CityLimits doesn't have yet becomes bare ground:** rail, seaports,
+**Rail comes in as rail,** its tunnels and its crossings with roads and
+power lines included.
+
+**What CityLimits doesn't have yet becomes bare ground:** seaports,
 airports, stadiums, and burning, flooded, or radioactive tiles, as does
-what's left of a building with no centre. Where rail crosses a road or a
-power line, the road or the line stays. The import lists what it
+what's left of a building with no centre. The import lists what it
 replaced; the game logs it, and the news ticker says so.
 
 Also carried over: the date, the money, the tax rate (back to 7% when it
@@ -248,12 +251,29 @@ baseline that adds to the city takes the next minor version.
 | 1.1 | Traffic: `"traffic"`, and the `TRAF` chunk | The roads start quiet, and the city's trips fill them again |
 | 1.2 | The parts list: `"parts"`, and the `PART` chunk, so a newer save can open in an older game | Nothing: a save without a list has no newer parts |
 | 1.3 | The traffic each road shows and the year's traffic average: `"roadTraffic"`, and the `RTRF` chunk | The roads show no traffic until the scan passes them, within a cycle, and the average is 0 until the year ends |
+| 1.4 | Rail: `"rail"`, and the `RAIL` chunk | A city from before has no rail |
 - **Growing the binary format.** New state goes in new chunks, not new
   fields in old ones, so a minor version stays an addition.
 - **The flat format** writes its version as a string, `"1.0"`, so 1.10
   can't read as 1.1; a whole number, as saves before minor versions
   wrote, reads as that major version's .0. Scenarios and mod definitions
   are versioned the same way.
+
+## Rail
+
+From format 1.4, rail is saved as a part of its own, `"rail"` in `.fcl`
+and the `RAIL` chunk in `.cl` (`Saving/RailCodec.cs`), apart from the
+map. The map holds what lies beneath the rail: clear ground or water
+under track or a tunnel, and the road or the power line at a crossing.
+The rail part holds, for each row of the map, a character a tile: `.`
+for none, `r` for track or a tunnel, and `a` or `d` for rail running
+across or down over the road or the line there; and the rail tiles the
+scan has counted and the budget last used. A version that doesn't know
+rail leaves the part out, as the parts list allows, and opens the city
+as if it had no rail, with its roads and lines whole. It can't keep the
+part, since it may build where the rail was, so the city it saves has no
+rail. Reading refuses rail where it can't be, such as track on a road
+or a crossing on clear ground, and says where.
 
 ## Opening a newer save
 

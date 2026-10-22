@@ -112,8 +112,23 @@ public readonly struct TileState : IEquatable<TileState>
     /// <summary>Tells whether the tile is a road over water.</summary>
     public bool IsBridge => Use == TileUse.Road && Kind == TileKind.Water;
 
-    /// <summary>Tells whether the tile carries a power line, on its own or under a road.</summary>
-    public bool HasPowerLine => Use is TileUse.PowerLine or TileUse.RoadAcrossPowerLine or TileUse.RoadDownPowerLine;
+    /// <summary>
+    /// Tells whether the tile carries a road anywhere on it: a road tile, or a crossing with a
+    /// power line or with rail. A rail crossing is a rail tile, as in Micropolis, so it isn't <see cref="IsRoad"/>.
+    /// </summary>
+    public bool HasRoad => IsRoad || Use is TileUse.RailAcrossRoad or TileUse.RailDownRoad;
+
+    /// <summary>Tells whether the tile carries rail: track, a tunnel, or a crossing with a road or a power line.</summary>
+    public bool IsRail => Use is TileUse.Rail or TileUse.RailAcrossRoad or TileUse.RailDownRoad or TileUse.RailAcrossPowerLine or TileUse.RailDownPowerLine;
+
+    /// <summary>Tells whether the tile is rail under water.</summary>
+    public bool IsTunnel => Use == TileUse.Rail && Kind == TileKind.Water;
+
+    /// <summary>Tells whether a trip can travel on the tile, as Micropolis' traffic does: any road or rail.</summary>
+    public bool CarriesTrips => IsRoad || IsRail;
+
+    /// <summary>Tells whether the tile carries a power line, on its own or under a road or rail.</summary>
+    public bool HasPowerLine => Use is TileUse.PowerLine or TileUse.RoadAcrossPowerLine or TileUse.RoadDownPowerLine or TileUse.RailAcrossPowerLine or TileUse.RailDownPowerLine;
 
     /// <summary>Tells whether two states are the same.</summary>
     public static bool operator ==(TileState left, TileState right) => left.Equals(right);

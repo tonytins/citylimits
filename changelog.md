@@ -1,5 +1,35 @@
 # CityLimits Changelog
 
+## 0.3.106
+
+Rail is here, as in Micropolis. Lay it like a road with the new rail tool
+beside the road in the palette, at $20 a tile; under water it becomes a
+tunnel at $100, starting from rail on the bank. Rail crosses straight
+roads and power lines, and they cross it.
+
+Your city's trips use rail and roads alike, so rail along a zone's edge
+serves it, and rail never gets traffic jams. Each tile of rail costs as
+much upkeep as two tiles of road, and like roads, rail crumbles when
+it's underfunded. A city of more than 50 zones with little rail will hear
+that its rail system is inadequate.
+
+Once your city has more than 20 people, a commuter train now and then
+sets out and wanders the track, disappearing into tunnels.
+
+Micropolis and SimCity Classic cities now import with their rail, instead
+of losing it.
+
+The tool palette's buttons are now switches: click a tool to pick it up,
+and click it again to put it down. The game starts with no tool held, so
+the Inspect tool's hint only shows when you choose it. The number keys
+no longer pick tools.
+
+For developers and agents: saves are format 1.4, with rail in a part of
+its own (`"rail"`, and the `RAIL` chunk) over the map's ground, roads, and
+lines, so a version that doesn't know rail opens the city without it.
+Scenarios are format 1.1, adding the `Rail` tool and the `Rail` count,
+and a built-in `rail` scenario.
+
 ## 0.3.105
 
 The bar is now at the bottom of the screen, with a news ticker running

@@ -3,30 +3,16 @@ namespace CityLimits.UI;
 /// <summary>
 /// Draws the palette of tools as Micropolis lays it out: the tool's name and price at the top,
 /// then rows of icon buttons, each row centred. The rows keep Micropolis' order, leaving out the
-/// tools CityLimits doesn't have yet. The number keys pick tools too.
+/// tools CityLimits doesn't have yet. A button is a switch: a click picks its tool up, and another
+/// puts it down.
 /// </summary>
 public sealed class ToolPaletteView
 {
-    /// <summary>The keys that pick a tool.</summary>
-    public static readonly KeyboardKey[] ToolKeys =
-    [
-        KeyboardKey.One,
-        KeyboardKey.Two,
-        KeyboardKey.Three,
-        KeyboardKey.Four,
-        KeyboardKey.Five,
-        KeyboardKey.Six,
-        KeyboardKey.Seven,
-        KeyboardKey.Eight,
-        KeyboardKey.Nine,
-    ];
-
-    // Micropolis' rows, with its rail, stadium, seaport, and airport left out until CityLimits
-    // has them.
+    // Micropolis' rows, with its stadium, seaport, and airport left out until CityLimits has them.
     private static readonly Tool[][] Rows =
     [
         [Tool.Bulldozer, Tool.PowerLine, Tool.Park],
-        [Tool.Road],
+        [Tool.Road, Tool.Rail],
         [Tool.Residential, Tool.Commercial, Tool.Industrial],
         [Tool.FireStation, Tool.Inspect, Tool.PoliceStation],
         [Tool.CoalPowerPlant, Tool.NuclearPowerPlant],
@@ -39,6 +25,8 @@ public sealed class ToolPaletteView
     private const int Top = 8;
     private const int MissingIconSize = 34;
     private const int MissingIconFontSize = 10;
+    private const string NoToolName = "No tool";
+    private const string NoToolHint = "pick one below";
 
     private readonly GameAssets? _assets;
     private readonly CityDefinitions _definitions;
@@ -67,6 +55,8 @@ public sealed class ToolPaletteView
             }
         }
 
+        widest = Math.Max(widest, Raylib.MeasureText(NoToolHint, FontSize));
+
         var buttons = new List<(Tool, Rectangle)>();
         var y = Top + Padding + (2 * LineHeight) + Padding;
         foreach (var row in Rows)
@@ -87,21 +77,6 @@ public sealed class ToolPaletteView
         _buttons = [.. buttons];
         _bounds = new Rectangle { X = Padding, Y = Top, Width = widest + (Padding * 2), Height = y - Top + Padding - Gap };
     }
-
-    /// <summary>Returns the tool a key picks, or null when the key is not a tool key.</summary>
-    public static Tool? ToolForKey(KeyboardKey key) => key switch
-    {
-        KeyboardKey.One => Tool.Inspect,
-        KeyboardKey.Two => Tool.Road,
-        KeyboardKey.Three => Tool.Residential,
-        KeyboardKey.Four => Tool.Commercial,
-        KeyboardKey.Five => Tool.Industrial,
-        KeyboardKey.Six => Tool.Bulldozer,
-        KeyboardKey.Seven => Tool.CoalPowerPlant,
-        KeyboardKey.Eight => Tool.NuclearPowerPlant,
-        KeyboardKey.Nine => Tool.PowerLine,
-        _ => null,
-    };
 
     /// <summary>Tells whether a point on the screen is over the palette, so a click there isn't a click on the map.</summary>
     public bool Contains(Vector2 point) => Raylib.CheckCollisionPointRec(point, _bounds);
@@ -125,18 +100,26 @@ public sealed class ToolPaletteView
 
     /// <summary>
     /// Draws the palette down the left edge of the screen. The header names the tool under the
-    /// pointer, as Micropolis' tooltip does, or the held tool when the pointer is elsewhere.
+    /// pointer, as Micropolis' tooltip does, or the held tool when the pointer is elsewhere, or
+    /// says that none is held.
     /// </summary>
     public void Draw(ToolPalette palette, Vector2 mouse)
     {
         Raylib.DrawRectangleRec(_bounds, Theme.Panel);
         Raylib.DrawRectangleLinesEx(_bounds, 1f, Theme.PanelBorder);
 
-        var shown = ToolAt(mouse) ?? palette.Selected;
         var headerX = (int)_bounds.X + Padding;
         var headerY = (int)_bounds.Y + Padding;
-        Raylib.DrawText(Name(shown), headerX, headerY, FontSize, Theme.Text);
-        Raylib.DrawText(PriceText(shown), headerX, headerY + LineHeight, FontSize, Theme.TextDim);
+        if ((ToolAt(mouse) ?? palette.Selected) is { } shown)
+        {
+            Raylib.DrawText(Name(shown), headerX, headerY, FontSize, Theme.Text);
+            Raylib.DrawText(PriceText(shown), headerX, headerY + LineHeight, FontSize, Theme.TextDim);
+        }
+        else
+        {
+            Raylib.DrawText(NoToolName, headerX, headerY, FontSize, Theme.Text);
+            Raylib.DrawText(NoToolHint, headerX, headerY + LineHeight, FontSize, Theme.TextDim);
+        }
 
         foreach (var (tool, bounds) in _buttons)
         {
@@ -194,6 +177,7 @@ public sealed class ToolPaletteView
         Tool.FireStation => "Fire station",
         Tool.PoliceStation => "Police station",
         Tool.Park => "Park",
+        Tool.Rail => "Rail",
         _ => "Inspect",
     };
 
@@ -210,6 +194,7 @@ public sealed class ToolPaletteView
         Tool.FireStation => "Fire",
         Tool.PoliceStation => "Pol",
         Tool.Park => "Park",
+        Tool.Rail => "Rail",
         _ => "?",
     };
 }

@@ -115,7 +115,7 @@ public sealed class CityBudget
     /// </summary>
     /// <param name="population">The city's population as Micropolis taxes it: residents in eighths, plus commerce and industry.</param>
     /// <param name="landValueAverage">The average land value of the blocks with something built on them.</param>
-    /// <param name="roadTiles">The road tiles the scan counted, a bridge counting five.</param>
+    /// <param name="roadTiles">The road tiles the scan counted, a bridge counting five, a road in heavy traffic one more, and each rail tile two.</param>
     /// <param name="fireStations">The fire stations the scan counted.</param>
     /// <param name="policeStations">The police stations the scan counted.</param>
     /// <param name="funds">The money the city has now, which caps what upkeep can be paid.</param>

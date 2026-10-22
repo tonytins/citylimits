@@ -65,6 +65,9 @@ internal sealed class CitySave
     /// <summary>The traffic each road shows, and the year's average; from format 1.3, and quiet for a city upgraded from before.</summary>
     public RoadTrafficSave? RoadTraffic { get; set; }
 
+    /// <summary>The rail on the map, and the scan's count of it; from format 1.4, and none for a city upgraded from before.</summary>
+    public RailSave? Rail { get; set; }
+
     /// <summary>
     /// A newer save's sections this version doesn't know, caught as they are so they can be checked
     /// against the parts list and written back. Unknown fields inside a known section are still refused.
@@ -330,6 +333,19 @@ internal sealed class TrafficSave
 {
     /// <summary>Each 2 by 2 block's traffic, row by row.</summary>
     public required int[] Density { get; set; }
+}
+
+[System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(SectionCodec.ModelMembers)]
+internal sealed class RailSave
+{
+    /// <summary>Each row of the map, a character a tile: '.' for none, 'r' for track or a tunnel, and 'a' or 'd' for rail running across or down over a road or a power line.</summary>
+    public required string[] Track { get; set; }
+
+    /// <summary>The rail tiles the scan has counted this cycle.</summary>
+    public required int Tiles { get; set; }
+
+    /// <summary>The rail tiles the budget last counted.</summary>
+    public required int BudgetedTiles { get; set; }
 }
 
 [System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(SectionCodec.ModelMembers)]

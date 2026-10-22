@@ -1,0 +1,28 @@
+{
+  "$schema": "https://raw.githubusercontent.com/tonytins/citylimits/main/docs/schemas/scenario.v1.1.schema.json",
+  "format": "1.1",
+  "name": "Rail",
+  "description": "Rail crosses a straight road and a power line, serves a zone along its edge, and tunnels under a lake from one bank; water with no rail beside it can't be tunnelled.",
+  "seed": 2000,
+  "ticks": 0,
+  "actions": [
+    { "tick": 0, "tool": "Road", "from": { "x": 30, "y": 57 }, "to": { "x": 30, "y": 63 }, "expect": "Built" },
+    { "tick": 0, "tool": "PowerLine", "from": { "x": 40, "y": 57 }, "to": { "x": 40, "y": 63 }, "expect": "Built" },
+    { "tick": 0, "tool": "Rail", "from": { "x": 28, "y": 60 }, "to": { "x": 45, "y": 60 }, "expect": "Built" },
+    { "tick": 0, "tool": "ZoneResidential", "from": { "x": 34, "y": 58 }, "expect": "Built" },
+    { "tick": 0, "tool": "Rail", "from": { "x": 55, "y": 51 }, "to": { "x": 70, "y": 51 }, "expect": "Built" },
+    { "tick": 0, "tool": "Rail", "from": { "x": 62, "y": 48 }, "expect": "Refused:CannotBuildHere" }
+  ],
+  "checks": [
+    { "tick": 0, "tile": { "x": 30, "y": 60 }, "kind": "Grass", "use": "RailAcrossRoad" },
+    { "tick": 0, "tile": { "x": 40, "y": 60 }, "kind": "Grass", "use": "RailAcrossPowerLine" },
+    { "tick": 0, "tile": { "x": 33, "y": 60 }, "kind": "Grass", "use": "Rail" },
+    { "tick": 0, "tile": { "x": 62, "y": 51 }, "kind": "Water", "use": "Rail" },
+    { "tick": 0, "tile": { "x": 62, "y": 48 }, "kind": "Water", "use": "None" },
+    { "tick": 0, "tile": { "x": 34, "y": 58 }, "served": true },
+    { "tick": 0, "count": "Rail", "equals": 34 },
+    { "tick": 0, "count": "Road", "equals": 7 },
+    { "tick": 0, "count": "PowerLine", "equals": 7 },
+    { "tick": 0, "fundsEquals": 18131 }
+  ]
+}

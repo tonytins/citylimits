@@ -47,4 +47,19 @@ public enum TileUse
 
     /// <summary>The tile is part of a church, 3 by 3, which a residential zone became.</summary>
     Church,
+
+    /// <summary>The tile is rail: track over land, or a tunnel under water.</summary>
+    Rail,
+
+    /// <summary>The tile is rail running across, east to west, over a road running down.</summary>
+    RailAcrossRoad,
+
+    /// <summary>The tile is rail running down, north to south, over a road running across.</summary>
+    RailDownRoad,
+
+    /// <summary>The tile is rail running across over a power line running down.</summary>
+    RailAcrossPowerLine,
+
+    /// <summary>The tile is rail running down over a power line running across.</summary>
+    RailDownPowerLine,
 }

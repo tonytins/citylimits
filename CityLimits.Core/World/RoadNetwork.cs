@@ -1,6 +1,9 @@
 namespace CityLimits.Core.World;
 
-/// <summary>The roads on the map, and the tiles they serve.</summary>
+/// <summary>
+/// The roads and rail on the map, and the zones they serve. As in Micropolis, trips travel on both,
+/// so rail along a zone's edge serves it as a road does.
+/// </summary>
 public sealed class RoadNetwork
 {
     private bool[] _roads = [];
@@ -8,7 +11,7 @@ public sealed class RoadNetwork
     private int _height;
     private bool _dirty = true;
 
-    /// <summary>The number of road tiles the network holds.</summary>
+    /// <summary>The number of road and rail tiles the network holds.</summary>
     public int RoadCount { get; private set; }
 
     /// <summary>Tells whether the network is out of date with the map.</summary>
@@ -50,7 +53,7 @@ public sealed class RoadNetwork
         {
             for (var x = 0; x < map.Width; x++)
             {
-                if (map.StateAt(x, y).IsRoad)
+                if (map.StateAt(x, y).CarriesTrips)
                 {
                     _roads[(y * map.Width) + x] = true;
                     RoadCount++;
@@ -64,14 +67,14 @@ public sealed class RoadNetwork
     /// <summary>
     /// Tells which sides of a road tile join another road, read straight from the map so it
     /// is never out of date. A tile with no road has no connections, and the map edge joins nothing.
-    /// A road crossing a power line joins only along its road, as in Micropolis.
+    /// A road crossing a power line or rail joins only along its road, as in Micropolis.
     /// </summary>
     public static RoadConnections ConnectionsAt(TileMap map, int x, int y)
     {
         ArgumentNullException.ThrowIfNull(map);
 
         var state = map.StateAtOrDefault(x, y);
-        if (!state.IsRoad)
+        if (!state.HasRoad)
         {
             return RoadConnections.None;
         }
@@ -92,18 +95,18 @@ public sealed class RoadNetwork
     public static bool RunsToward(TileState state, RoadConnections side) => state.Use switch
     {
         TileUse.Road => true,
-        TileUse.RoadAcrossPowerLine => side is RoadConnections.East or RoadConnections.West,
-        TileUse.RoadDownPowerLine => side is RoadConnections.North or RoadConnections.South,
+        TileUse.RoadAcrossPowerLine or TileUse.RailDownRoad => side is RoadConnections.East or RoadConnections.West,
+        TileUse.RoadDownPowerLine or TileUse.RailAcrossRoad => side is RoadConnections.North or RoadConnections.South,
         _ => false,
     };
 
-    /// <summary>Tells whether there is a road on the given tile.</summary>
+    /// <summary>Tells whether there is a road or rail on the given tile.</summary>
     public bool HasRoad(int x, int y) =>
         (uint)x < (uint)_width && (uint)y < (uint)_height && _roads[(y * _width) + x];
 
     /// <summary>
-    /// Tells whether a zone reaches the road network, as in Micropolis: a road must lie on one
-    /// of the 12 tiles along the zone's edges, just outside it. A road at a corner doesn't count.
+    /// Tells whether a zone reaches the road network, as in Micropolis: a road or rail must lie on
+    /// one of the 12 tiles along the zone's edges, just outside it. One at a corner doesn't count.
     /// </summary>
     public bool IsZoneServed(int centerX, int centerY)
     {

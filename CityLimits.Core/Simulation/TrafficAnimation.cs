@@ -27,13 +27,16 @@ public sealed class TrafficAnimation
         _ => 0,
     };
 
-    /// <summary>Moves the animation on by the time a frame of the game took, at the speed the city runs.</summary>
-    public void Advance(double elapsedSeconds, int speed)
+    /// <summary>
+    /// Moves the animation on by the time a frame of the game took, at the speed the city runs, and
+    /// tells how many animation steps that was, for anything else that moves at the same pace, such as the train.
+    /// </summary>
+    public int Advance(double elapsedSeconds, int speed)
     {
         var perFrame = SecondsPerFrame(speed);
         if (perFrame <= 0 || double.IsNaN(elapsedSeconds) || elapsedSeconds <= 0)
         {
-            return;
+            return 0;
         }
 
         // A long stall moves the cars on a few frames at most, not one for every frame it missed.
@@ -41,5 +44,6 @@ public sealed class TrafficAnimation
         var due = (int)(_carried / perFrame);
         _carried -= due * perFrame;
         Frame = (Frame + due) % Frames;
+        return due;
     }
 }

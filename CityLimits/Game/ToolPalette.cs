@@ -17,33 +17,27 @@ public sealed class ToolPalette
         Tool.FireStation,
         Tool.PoliceStation,
         Tool.Park,
+        Tool.Rail,
     ];
 
-    /// <summary>The tool that is held when the game starts.</summary>
-    public Tool Selected { get; private set; } = Tool.Inspect;
+    /// <summary>The tool that is held, or null when none is, as when the game starts.</summary>
+    public Tool? Selected { get; private set; }
 
     /// <summary>The tools in the palette, in the order they are shown.</summary>
     public IReadOnlyList<Tool> Tools => AllTools;
 
-    /// <summary>Selects a tool and tells whether it is one the player holds.</summary>
-    public bool Select(Tool tool)
+    /// <summary>
+    /// Works a tool's button as a switch, as Tony Bark chose: picks the tool up, or puts it down when
+    /// it is already held, leaving no tool held. Tells whether the tool is one the palette has.
+    /// </summary>
+    public bool Toggle(Tool tool)
     {
         if (!AllTools.Contains(tool))
         {
             return false;
         }
 
-        Selected = tool;
+        Selected = Selected == tool ? null : tool;
         return true;
-    }
-
-    /// <summary>Selects the next tool in the palette.</summary>
-    public void SelectNext() => Selected = AllTools[(Array.IndexOf(AllTools, Selected) + 1) % AllTools.Length];
-
-    /// <summary>Selects the previous tool in the palette.</summary>
-    public void SelectPrevious()
-    {
-        var index = Array.IndexOf(AllTools, Selected) - 1;
-        Selected = AllTools[(index + AllTools.Length) % AllTools.Length];
     }
 }

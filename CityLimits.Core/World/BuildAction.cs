@@ -35,4 +35,7 @@ public enum BuildAction
 
     /// <summary>Lay a park on each tile.</summary>
     Park,
+
+    /// <summary>Lay rail.</summary>
+    Rail,
 }

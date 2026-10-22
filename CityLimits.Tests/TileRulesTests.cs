@@ -49,14 +49,14 @@ public class TileRulesTests
         Assert.Equal("ready to build on", TileInfo.BuildAdvice(TileKind.Grass));
         Assert.Equal("cleared for $1 a tile when built on", TileInfo.BuildAdvice(TileKind.Trees));
         Assert.Equal("cleared for $1 a tile when built on", TileInfo.BuildAdvice(TileKind.Rubble));
-        Assert.Equal("only a bridge or a power line can cross it", TileInfo.BuildAdvice(TileKind.Water));
+        Assert.Equal("only a bridge, a tunnel, or a power line can cross it", TileInfo.BuildAdvice(TileKind.Water));
     }
 
     [Fact]
     public void TheDescriptionNamesTheGroundAndTheAdvice()
     {
         Assert.Equal("Trees - cleared for $1 a tile when built on", TileInfo.Describe(TileKind.Trees));
-        Assert.Equal("Water - only a bridge or a power line can cross it", TileInfo.Describe(TileKind.Water));
+        Assert.Equal("Water - only a bridge, a tunnel, or a power line can cross it", TileInfo.Describe(TileKind.Water));
     }
 
     [Theory]

@@ -32,4 +32,7 @@ public enum CityMessage
 
     /// <summary>The year's traffic average is above 60.</summary>
     TrafficJams,
+
+    /// <summary>The city has more than 50 zones and fewer rail tiles than zones.</summary>
+    NeedRail,
 }

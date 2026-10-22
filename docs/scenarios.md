@@ -132,7 +132,7 @@ simulation is deterministic in. Phase 2 adds goals by date, such as
 | Field | Required | Meaning |
 |---|---|---|
 | `$schema` | no | The scenario's schema, `docs/schemas/scenario.v1.0.schema.json`, for editors to check the file against; the game ignores it |
-| `format` | yes | The file format version, `"1.0"`. A whole number, such as `1`, reads as `1.0`. A newer minor version, or another major one, is refused with a message saying which this version reads |
+| `format` | yes | The file format version, `"1.0"`, or `"1.1"` for a file that lays or counts rail. A whole number, such as `1`, reads as `1.0`. A newer minor version, or another major one, is refused with a message saying which this version reads |
 | `name` | yes | A display name, 1 to 80 characters |
 | `description` | no | One or two sentences, up to 500 characters |
 | `seed` | yes | The seed the map and the simulation are built from: any 32-bit integer |
@@ -150,7 +150,7 @@ tool pressed on `from` and dragged to `to`.
 | Field | Required | Meaning |
 |---|---|---|
 | `tick` | yes | The stroke is made after this many ticks, before the next one. `0` is the start |
-| `tool` | yes | A `BuildAction` name: `Road`, `ZoneResidential`, `ZoneCommercial`, `ZoneIndustrial`, `Bulldoze`, `CoalPowerPlant`, `NuclearPowerPlant`, `PowerLine`, `FireStation`, `PoliceStation`, `Park` |
+| `tool` | yes | A `BuildAction` name: `Road`, `ZoneResidential`, `ZoneCommercial`, `ZoneIndustrial`, `Bulldoze`, `CoalPowerPlant`, `NuclearPowerPlant`, `PowerLine`, `FireStation`, `PoliceStation`, `Park`, and from format 1.1 `Rail` |
 | `from` | yes | `{ "x", "y" }`: the tile the stroke starts on |
 | `to` | no | `{ "x", "y" }`: the tile the stroke is dragged to. Default: `from`, a stroke that doesn't move |
 | `expect` | no | A `BuildStatus` (`Built`, `Unchanged`, `Refused`), or a status and a `BuildRefusal`, as in `Refused:NotEnoughFunds`, `Refused:PartOfAZone`, or `Unchanged:AlreadyDone` |
@@ -179,7 +179,7 @@ game:
 
 Every action goes through `CityBuilder.Apply`, so it is priced, refused,
 and skipped exactly as the tools are: $10 a road tile, $50 a bridge
-tile, $5 a power line tile, $25 under water, $10 a park tile, $100 a zone, $500 a fire or police station, $3,000 a coal power plant, $5,000 a nuclear power
+tile, $20 a rail tile, $100 a tunnel, $5 a power line tile, $25 under water, $10 a park tile, $100 a zone, $500 a fire or police station, $3,000 a coal power plant, $5,000 a nuclear power
 plant, $1 more for each tile of trees or rubble cleared, $1 for each tile
 bulldozed or zone or plant knocked down, and nothing refunded. A
 stroke the city can't pay for, or that runs off the map, changes
@@ -215,7 +215,7 @@ zone, `development` is the zone's building level, which its centre holds:
 0 while it has no building (a residential zone may have houses), then 1
 up to its spec's levels, 4 for residential, 5 for commercial, and 4 for
 industrial (`TileMap.ZoneStateAt`); a file may give it from 0 to 5.
-`served` is whether a road lies along the zone's edge (`RoadNetwork.IsZoneServed`). `served` on a tile that isn't
+`served` is whether a road or rail lies along the zone's edge (`RoadNetwork.IsZoneServed`). `served` on a tile that isn't
 part of a zone fails, with the reason that the tile has no zone.
 `powered` is whether the tile's zone or plant had power when the scan
 last reached its centre (`TileState.Powered`); a zone is first given
@@ -234,6 +234,7 @@ plant it fails, with the reason that the tile has no zone or plant.
 | `FireStation`, `PoliceStation` | Stations of that kind, by their centres, not tiles |
 | `Park` | Park tiles |
 | `Hospital`, `Church` | Hospitals and churches, by their centres; a residential zone becomes one when the city needs it |
+| `Rail` | Rail tiles, tunnels and crossings included; from format 1.1 |
 
 Phase 2 adds `population` and the demand values as subjects.
 
@@ -258,7 +259,7 @@ first problem is reported with its location, as in
 
 ## The schema
 
-`docs/schemas/scenario.v1.0.schema.json` describes the file: its fields
+`docs/schemas/scenario.v1.1.schema.json` describes the file, and `scenario.v1.0.schema.json` the version before it: its fields
 and their types, with no others. Name it in `"$schema"`, as the built-in
 scenarios do, and an editor such as VS Code checks the file and suggests
 its fields as you write. The schema is generated from the loader's own
@@ -283,7 +284,7 @@ scripts already reading it keep working.
     "cityTime": 96,
     "date": "1902-01",
     "funds": 16603,
-    "counts": { "road": 9, "bridge": 0, "residential": 1, "commercial": 1, "industrial": 0, "developed": 1, "coalPowerPlant": 1, "nuclearPowerPlant": 0, "powerLine": 0, "fireStation": 0, "policeStation": 0, "park": 0, "hospital": 0, "church": 0 }
+    "counts": { "road": 9, "bridge": 0, "residential": 1, "commercial": 1, "industrial": 0, "developed": 1, "coalPowerPlant": 1, "nuclearPowerPlant": 0, "powerLine": 0, "fireStation": 0, "policeStation": 0, "park": 0, "hospital": 0, "church": 0, "rail": 0 }
   },
   "actions": [
     { "index": 0, "tick": 0, "tool": "Road", "status": "Built", "tiles": 9, "skipped": {}, "cost": 90, "met": true },

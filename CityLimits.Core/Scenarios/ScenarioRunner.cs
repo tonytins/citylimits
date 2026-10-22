@@ -101,24 +101,27 @@ public sealed class ScenarioRunner
     /// <summary>
     /// What stands on a map: road tiles, bridges among them, zones of each kind, developed zones,
     /// which are those with any population, houses included, power plants of each kind, power
-    /// line tiles, those under water or under a road included, stations of each kind, park tiles, hospitals, and churches.
+    /// line tiles, those under water or under a road or rail included, stations of each kind, park tiles, hospitals, churches,
+    /// and rail tiles, tunnels and crossings included; a road tile is any tile with a road on it, a rail crossing too.
     /// </summary>
     public static CityCounts Count(TileMap map, CityDefinitions definitions)
     {
         ArgumentNullException.ThrowIfNull(map);
         ArgumentNullException.ThrowIfNull(definitions);
 
-        int road = 0, bridge = 0, residential = 0, commercial = 0, industrial = 0, developed = 0, coal = 0, nuclear = 0, lines = 0, fire = 0, police = 0, parks = 0, hospitals = 0, churches = 0;
+        int road = 0, bridge = 0, residential = 0, commercial = 0, industrial = 0, developed = 0, coal = 0, nuclear = 0, lines = 0, fire = 0, police = 0, parks = 0, hospitals = 0, churches = 0, rail = 0;
         for (var y = 0; y < map.Height; y++)
         {
             for (var x = 0; x < map.Width; x++)
             {
                 var state = map.StateAt(x, y);
-                if (state.IsRoad)
+                if (state.HasRoad)
                 {
                     road++;
                     bridge += state.IsBridge ? 1 : 0;
                 }
+
+                rail += state.IsRail ? 1 : 0;
 
                 lines += state.HasPowerLine ? 1 : 0;
                 parks += state.Use == TileUse.Park ? 1 : 0;
@@ -144,7 +147,7 @@ public sealed class ScenarioRunner
             }
         }
 
-        return new CityCounts(road, bridge, residential, commercial, industrial, developed, coal, nuclear, lines, fire, police, parks, hospitals, churches);
+        return new CityCounts(road, bridge, residential, commercial, industrial, developed, coal, nuclear, lines, fire, police, parks, hospitals, churches, rail);
     }
 
     // The stroke is planned first, for what it would skip and why, then applied as the tool

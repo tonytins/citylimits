@@ -56,7 +56,7 @@ public sealed class BuildPlan
     public RoadConnections RoadConnectionsAt(int x, int y)
     {
         var state = StateAt(x, y);
-        if (!state.IsRoad)
+        if (!state.HasRoad)
         {
             return RoadConnections.None;
         }
@@ -87,6 +87,28 @@ public sealed class BuildPlan
         foreach (var (side, dx, dy) in Sides.All)
         {
             if (PowerLines.RunsToward(state, side) && PowerLines.RunsToward(StateAt(x + dx, y + dy), Sides.Opposite(side)))
+            {
+                connections |= side;
+            }
+        }
+
+        return connections;
+    }
+
+    /// <summary>Tells which sides of a rail tile would join other rail once the stroke is applied.</summary>
+    /// <exception cref="InvalidOperationException">The plan has not been filled in.</exception>
+    public RoadConnections RailConnectionsAt(int x, int y)
+    {
+        var state = StateAt(x, y);
+        if (!state.IsRail)
+        {
+            return RoadConnections.None;
+        }
+
+        var connections = RoadConnections.None;
+        foreach (var (side, dx, dy) in Sides.All)
+        {
+            if (Rails.RunsToward(state, side) && Rails.RunsToward(StateAt(x + dx, y + dy), Sides.Opposite(side)))
             {
                 connections |= side;
             }

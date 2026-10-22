@@ -15,6 +15,11 @@ public sealed class GameLoop : IDisposable
 
     private readonly GameClock _clock = new();
     private readonly TrafficAnimation _trafficAnimation = new();
+
+    // The train runs at the traffic's pace, with a generator of its own, so it never changes the city.
+    private readonly Train _train = new();
+    private readonly Random _trainRandom = new();
+    private readonly GameAssets _assets;
     private readonly CitySimulation _simulation;
     private readonly Camera _camera = new();
     private readonly ToolPalette _tools = new();
@@ -87,6 +92,7 @@ public sealed class GameLoop : IDisposable
         _settings = settings;
         _lastSpeed = settings.Speed == 0 ? 1 : settings.Speed;
         _folders = folders;
+        _assets = assets;
         _simulation = city;
         _cityFile = cityFile;
 
@@ -216,7 +222,12 @@ public sealed class GameLoop : IDisposable
         }
 
         _simulation.Roads.EnsureCurrent(_simulation.Map);
-        _trafficAnimation.Advance(elapsed, _modal == Modal.None ? _settings.Speed : GameSpeed.Paused);
+        var steps = _trafficAnimation.Advance(elapsed, _modal == Modal.None ? _settings.Speed : GameSpeed.Paused);
+        for (var i = 0; i < steps; i++)
+        {
+            _train.Step(_simulation.Map, _simulation.Demand.TaxablePopulation, _trainRandom);
+        }
+
         // The news stands still while the city does, a panel holding it included. Its first line
         // starts a third of the way across, so a city opened paused still shows the news.
         _ticker.Update(_settings.Speed > 0 && _modal == Modal.None ? elapsed : 0f, Raylib.GetScreenWidth(), 1f / 3f);
@@ -249,6 +260,7 @@ public sealed class GameLoop : IDisposable
 
         Raylib.BeginMode2D(_camera.ToRaylib());
         _mapRenderer.Draw(_camera, _trafficAnimation.Frame);
+        DrawTrain();
         _mapRenderer.DrawUnpowered(_camera, Raylib.GetTime());
         if (_stroke is not null)
         {
@@ -479,21 +491,6 @@ public sealed class GameLoop : IDisposable
             else
             {
                 OpenModal(Modal.Menu);
-            }
-        }
-
-        foreach (var key in ToolPaletteView.ToolKeys)
-        {
-            if (!Raylib.IsKeyPressed(key))
-            {
-                continue;
-            }
-
-            var tool = ToolPaletteView.ToolForKey(key);
-            if (tool is not null)
-            {
-                _tools.Select(tool.Value);
-                _stroke = null;
             }
         }
 
@@ -833,13 +830,14 @@ public sealed class GameLoop : IDisposable
                 var picked = _toolPaletteView.ToolAt(mouse);
                 if (picked is not null)
                 {
-                    _tools.Select(picked.Value);
+                    _tools.Toggle(picked.Value);
+                    _stroke = null;
                 }
 
                 return;
             }
 
-            var tool = ToolActions.ActionFor(_tools.Selected);
+            var tool = _tools.Selected is { } held ? ToolActions.ActionFor(held) : null;
             if (tool is not null && onMap)
             {
                 _stroke = new BuildStroke(tool.Value, tileX, tileY);
@@ -871,6 +869,7 @@ public sealed class GameLoop : IDisposable
     {
         BuildStatus.Built when action == BuildAction.Bulldoze => $"Cleared {Count(result.TilesChanged, "tile")} for ${result.Cost}",
         BuildStatus.Built when action == BuildAction.Road => $"Built {Count(result.TilesChanged, "tile")} of road for ${result.Cost}",
+        BuildStatus.Built when action == BuildAction.Rail => $"Laid {Count(result.TilesChanged, "tile")} of rail for ${result.Cost}",
         BuildStatus.Built when action == BuildAction.Park => $"Laid {Count(result.TilesChanged, "tile")} of park for ${result.Cost}",
         BuildStatus.Built when action == BuildAction.PowerLine => $"Strung {Count(result.TilesChanged, "tile")} of power line for ${result.Cost}",
         BuildStatus.Built when action == BuildAction.CoalPowerPlant => $"Built a coal power plant for ${result.Cost}",
@@ -935,6 +934,15 @@ public sealed class GameLoop : IDisposable
     }
 
     private int DemandPanelTop() => _toolPaletteView.Bottom() + 8;
+
+    // The train is drawn over the map, centred on where it is, 32 pixels square as Micropolis' is.
+    private void DrawTrain()
+    {
+        if (_train.IsRunning && _assets.TrainFrameFor(_train.Frame) is { } frame)
+        {
+            Raylib.DrawTexture(frame, _train.X - (frame.Width / 2), _train.Y - (frame.Height / 2), Color.White);
+        }
+    }
 
     // Whether the pointer is over the palette, the overview, the bar, the ticker, or an open window, rather than the map.
     private bool IsOverInterface(Vector2 mouse) =>

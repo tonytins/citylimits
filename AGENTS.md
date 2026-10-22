@@ -25,12 +25,13 @@ CityLimits/                  the game project (Raylib-cs, NLog, net10.0)
     Commands/                   namespace CityLimits.Game.Commands: the subcommands, one class each
   Rendering/                    namespace CityLimits.Rendering: the camera, the tile drawing, the chunk cache, the tile sheet, the theme
   UI/                           namespace CityLimits.UI: the loading screen, the start menu and its new-city panel, the HUD and its bar along the bottom, the news ticker, the pointer's hints, the tool palette, the budget, demand, city, and help panels and how windows are moved, the in-game menu, the overview map
-  Assets/                       the tile sheet, the tool icons, the logo, and the built-in scenarios (Scenarios/*.json), copied to the output folder
+  Assets/                       the tile sheet, the tool icons, the train's drawings (sprites/), the logo, and the built-in scenarios (Scenarios/*.json), copied to the output folder
 CityLimits.Core/              engine-free library: the world and the simulation, no Raylib
   CityLimits.Core.csproj        the project file; it must never reference Raylib-cs
   GlobalUsings.cs               global usings shared by the project
   Randomness/                   namespace CityLimits.Core.Randomness: the seeded generator the simulation owns
-  World/                        namespace CityLimits.Core.World: the map and its default size, the tiles and their footprints, the terrain and its edges, the tile rules, the build actions, roads, power lines
+  World/                        namespace CityLimits.Core.World: the map and its default size, the tiles and their footprints, the terrain and its edges, the tile rules, the build actions, roads, rail, power lines
+  Sprites/                      namespace CityLimits.Core.Sprites: the things that move over the map without being part of it, such as the train
   Simulation/                   namespace CityLimits.Core.Simulation: the clock, the calendar, the tick and its cycle, the census, demand, growth, trips, traffic and its animation, the city maps, the power grid, service coverage, the city's messages
   Economy/                      namespace CityLimits.Core.Economy: the treasury, the costs, the budget
   News/                         namespace CityLimits.Core.News: the news ticker's queue, its headlines and the desk that picks them, and the loading screen's phrases
@@ -211,6 +212,35 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   the sheet's lightning bolt over each unpowered zone, the readout says
   "no power", and the game and the headless log pass a repeated message
   on at most once a year (`CityMessageFilter`).
+- **Rail.** As in Micropolis, rail (`TileUse.Rail`) is laid like a road,
+  in one straight line, at $20 a tile, and under water as a tunnel at
+  $100, which needs rail beside it to start from. It crosses a straight
+  road or a straight power line, and they cross straight rail, making a
+  tile that is both (`RailAcrossRoad`, `RailDownRoad`,
+  `RailAcrossPowerLine`, `RailDownPowerLine`, named for the way the rail
+  runs), which joins rail only along its rail (`Rails.RunsToward`,
+  `Rails.ConnectionsAt`). A rail tile is `TileState.IsRail`, not
+  `IsRoad`, as Micropolis counts its crossings as rail; `HasRoad` covers
+  every tile with a road on it, and `CarriesTrips` road and rail
+  together. Trips travel on both, so rail along a zone's edge serves it
+  (`RoadNetwork.IsZoneServed`) and a trip can step between road and rail
+  wherever they meet, but traffic is laid only on roads. The scan counts
+  rail (`CitySimulation.RailTiles`), each tile two road tiles toward the
+  roads' upkeep, and underfunded rail crumbles as roads do, to rubble or
+  back to water, never at a line crossing. The city says the rail system
+  is inadequate when it has more than 50 zones and fewer rail tiles than
+  zones. Micropolis' numbers here were approved by Tony Bark for Radial.
+- **The train.** As in Micropolis, once a city has more than 20 people
+  and some rail, a commuter train now and then sets out from a rail tile
+  (`Sprites/Train.cs`) and wanders the track, a quarter of a tile each
+  step of the traffic's animation clock (`TrafficAnimation.Advance`
+  returns the steps), picking its way at random at each tile and never
+  turning straight back until it is stuck, and retiring with nowhere to
+  go. It is drawn over the map from Micropolis' five train drawings, and
+  hides in tunnels. It only reads the map and uses the game's own
+  generator, never the city's, so it can't change what the city does and
+  isn't saved; in Micropolis the city's generator decides when it sets
+  out, which is the only difference, as Tony Bark chose.
 - **Power lines.** A line (`TileUse.PowerLine`) is strung like a road, in
   one straight line, and under water when something beside it carries
   power. Over a straight road it makes one tile that is both
@@ -396,18 +426,18 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   drawn into its own texture, redrawn when a tile changes, the mode
   changes, or a count begins; without the texture it is drawn straight to
   the screen. Clicks on it never reach the map.
-- **The tools.** Twelve tools sit in the palette down the left, laid out as
+- **The tools.** Thirteen tools sit in the palette down the left, laid out as
   Micropolis' is (`UI/ToolPaletteView.cs`): the name and price of the tool
   under the pointer, or of the held one, then centred rows of icon
-  buttons in Micropolis' order, leaving out the tools CityLimits doesn't
-  have yet. The held tool shows its highlighted icon, and a missing icon
-  falls back to a box with a short label. The number keys pick tools too:
-  inspect, road, residential, commercial, industrial, bulldozer, coal
-  plant, nuclear plant, and power line, 1 to 9; the park, beside the
-  bulldozer and the power line, and the fire and police stations, either
-  side of inspect, are picked from the palette. A tool is used in a stroke, as
+  buttons in Micropolis' order, rail beside the road, leaving out the
+  tools CityLimits doesn't have yet. A button is a switch, as Tony Bark
+  chose (`ToolPalette.Toggle`): a click picks its tool up and another
+  puts it down, the game starts with no tool held, and the header says so.
+  Tools are picked only from the palette; the number keys were dropped.
+  The held tool shows its highlighted icon, and a missing icon
+  falls back to a box with a short label. A tool is used in a stroke, as
   in Micropolis: pressing on the map starts a `BuildStroke`, dragging
-  stretches it (a road or a power line runs in one straight line, a plant or a station is one building
+  stretches it (a road, rail, or a power line runs in one straight line, a plant or a station is one building
   that follows the pointer, and the other tools cover a rectangle), and the map shows a preview of the tiles it would change
   and its total cost while the button is held. Releasing applies the
   stroke all at once: the tiles that can't be built on are skipped, and
@@ -472,10 +502,10 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   still asks. Micropolis' and SimCity Classic's `.cty` files in the Cities
   folder are listed too, and opening one imports it
   (`Saving/MicropolisCityImport.cs`), never writing it back: tiles by
-  Micropolis' numbers, buildings whole from their centres, and what
-  CityLimits doesn't have yet (rail, seaports, airports, stadiums, fire,
-  flood, radiation) as bare ground, listed in the log and on the news
-  ticker.
+  Micropolis' numbers, rail as rail, buildings whole from their centres,
+  and what CityLimits doesn't have yet (seaports, airports, stadiums,
+  fire, flood, radiation) as bare ground, listed in the log and on the
+  news ticker.
 - **The settings and the game's folders.** `GameFolders` works out where
   the game keeps its files, because a packaged game, such as the
   AppImage, runs from a read-only folder. The settings go in the hidden
@@ -513,7 +543,7 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   event per action and check instead of logging. `citylimits scenario
   <id> --headless` runs a built-in one (`demo-town`, defined in code, and
   the files in `Assets/Scenarios/`), `--file <path>` runs any file, and
-  `scenario list` lists them. `--json` writes the report to stdout and the
+  `scenario list` lists them; `rail` lays rail across a road, a line, and a lake. `--json` writes the report to stdout and the
   log to stderr. A scenario that can't be loaded falls back to the demo
   town, logged and recorded in the report. Exit codes: 0 passed, 1 could
   not run, 2 a bad command line, 3 a check or expectation failed. A run
@@ -538,14 +568,14 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   the map and its generator, the clock, the calendar, the simulation and
   everything it runs (growth, trips, the census, demand, the city maps,
   the power grid, the budget), the seeded generator, the tile rules, the
-  build actions, the road network and power lines, the treasury, the
+  build actions, the road network, rail, and power lines, the train, the treasury, the
   settings, saving, the scenarios, and the definitions and mods.
 - **The command line library.** `CityLimits.CommandLine` targets `net10.0`
   with nullable and implicit usings enabled, and references no package
   and no project. It holds the parser, the dispatcher, the default
   command, the strict option reader, and the exit codes.
 - **The tests.** `CityLimits.Tests` uses xUnit 2 with the VSTest runner
-  and coverlet, and holds 673 tests over the news ticker's queue, its headlines, and the loading phrases, opening newer saves, traffic and its animation, saving, loading, autosave, importing Micropolis cities, format versions and schemas, with a city
+  and coverlet, and holds 697 tests over rail and the train, the news ticker's queue, its headlines, and the loading phrases, opening newer saves, traffic and its animation, saving, loading, autosave, importing Micropolis cities, format versions and schemas, with a city
   the owner built in both formats in `CityLimits.Tests/Assets/`, the generator, the terrain edges, the power plants, lines, and grid, the budget, the stations and their coverage, parks, hospitals and churches, the map, the
   calendar, the clock, the simulation, the settings, the tile rules, the
   build actions, the road network, the treasury, the scenario loader and
@@ -718,9 +748,12 @@ without reflection.
   number from before, `1`, reads as `1.0`. A binary save keeps its major
   version in the header and its minor in the `VERS` chunk, and new state
   goes in new chunks, never new fields in old ones. The scenario report's
-  `format` stays a whole number, since scripts read it. Saves are at 1.3:
-  1.1 added traffic, 1.2 the parts list, and 1.3 the traffic each road
-  shows and the year's average.
+  `format` stays a whole number, since scripts read it. Saves are at 1.4:
+  1.1 added traffic, 1.2 the parts list, 1.3 the traffic each road
+  shows and the year's average, and 1.4 rail, in a part of its own
+  (`RailCodec`) with the map holding what lies beneath it, so a version
+  that doesn't know rail opens the city as if it had none. Scenarios are
+  at 1.1, which added the Rail tool and the Rail count.
 - **Older saves climb one minor version at a time,** each step a small
   function in `SaveUpgrades`, with a test from a fixture; Bridgeport's
   fixtures in `CityLimits.Tests/Assets/` stay at 1.0 for that.
