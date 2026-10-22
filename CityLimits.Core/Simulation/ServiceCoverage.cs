@@ -126,4 +126,24 @@ public sealed class ServiceCoverage
 
     private int At(int[] map, int x, int y) =>
         x >= 0 && y >= 0 && x / BlockSize < _width && y / BlockSize < _height ? map[Block(x, y)] : 0;
+
+    internal ServicesSave Capture() => new()
+    {
+        FireStations = FireStations,
+        PoliceStations = PoliceStations,
+        FireRaw = [.. _fireRaw],
+        PoliceRaw = [.. _policeRaw],
+        Fire = [.. _fire],
+        Police = [.. _police],
+    };
+
+    internal void Restore(ServicesSave save)
+    {
+        FireStations = SaveChecks.InRange(save.FireStations, 0, int.MaxValue, "services.fireStations");
+        PoliceStations = SaveChecks.InRange(save.PoliceStations, 0, int.MaxValue, "services.policeStations");
+        SaveChecks.CopyInto(save.FireRaw, _fireRaw, "services.fireRaw");
+        SaveChecks.CopyInto(save.PoliceRaw, _policeRaw, "services.policeRaw");
+        SaveChecks.CopyInto(save.Fire, _fire, "services.fire");
+        SaveChecks.CopyInto(save.Police, _police, "services.police");
+    }
 }

@@ -1,6 +1,6 @@
 # CityLimits roadmap
 
-> **Last reviewed:** 2026-10-21 · **Last updated:** 2026-10-21 · **Change:** minor (saving S2b: the city panel) · **Stage:** pre-alpha
+> **Last reviewed:** 2026-10-21 · **Last updated:** 2026-10-21 · **Change:** minor (saving S2c: cities save and load, as `.fcl`) · **Stage:** pre-alpha
 
 Forward-looking: where CityLimits stands, what blocks the next milestone,
 and what comes next. Verified status and evidence are in the
@@ -27,11 +27,11 @@ it a later milestone.
 | Start a game and look at a map | yes | A resizable "CityLimits" window opens on a 120 by 100 seeded map of rivers, lakes, and woods, drawn from a tile sheet, with a camera that pans, zooms, and clamps, and a readout of the tile under the mouse (CORE-1, MAP-1, MAP-2, MAP-3, MAP-4, CORE-6) | 0 |
 | Lay roads, zone land, and see the city grow | yes | The player lays roads and bridges, zones 3 by 3 land, and bulldozes, as in Micropolis and at its prices, and the city grows on its own: zones take trips, follow residential, commercial, and industrial demand, grow houses and then buildings where they cluster, and decline when demand turns (ZONE-1 to ZONE-5, SIM-1 to SIM-7) | 0 |
 | Read the city's state: money, power, demand, and problems | yes | The HUD shows the date, the tick, the speed, the funds, and what the held tool costs, and the tile readout names what is on the tile. The status bar shows the population and a panel shows demand; unpowered zones blink a lightning bolt, the readout says when a zone has no power, and brownouts and blackouts show as messages. The budget panel shows the year's taxes and upkeep and opens by itself on a deficit. The overview map shows the whole city, and power, coverage, land value, and population density over it (UI-2, ECON-1, ECON-3, ECON-5) | 0 |
-| Keep the city running for a long session without a crash | partial | The frame loop catches and reports, the tick loop runs, and the settings survive a session (REL-1, CORE-8). The city itself cannot be saved yet (UI-5); the settings now survive a packaged game too | 15–28 |
+| Keep the city running for a long session without a crash | yes | The frame loop catches and reports, the tick loop runs, and the settings survive a session, a packaged game's too (REL-1, CORE-8). A city saves with Ctrl+S and loads from the start menu or Ctrl+O, running on exactly as it would have, and a damaged save is refused with the reason (UI-5) | 0 |
 
-**Result: pre-alpha.** Three rows pass and one is partial.
-Alpha is roughly 15–28 hours away, and the critical path runs through
-saving a city (UI-5).
+**Result: every row passes.** With saving in, each core workflow works
+end to end. Whether that makes CityLimits alpha is the owner's call, so
+the stage stays pre-alpha until the owner says so.
 
 ## Current focus
 
@@ -44,10 +44,9 @@ quirk fixed.
 
 Next, in order:
 
-1. **Saving and loading a city** (Happy Isle), the last thing between
-   CityLimits and alpha. The plan is settled; S1, the per-user folders,
-   S2a, the start menu that names a city, and S2b, the city panel, are
-   done; S2c, the save model and `.fcl`, is next.
+1. **Saving's later phases** (Happy Isle). Cities save and load since
+   S2c; S3, the binary `.cl`, S4, autosave, and S5, importing
+   Micropolis' `.cty`, are left.
 2. **Radial: traffic**, built to the baseline: trips already remember
    their routes for it.
 3. **Deadwood: crime, pollution, fire, and disasters**, which give the
@@ -67,19 +66,18 @@ Next, in order:
 | Joffburg: Services and economy | 100% | 0 | Meets the baseline: power, taxes and the budget, services (stations, coverage, parks, hospitals, and churches), and the overview map with its power, coverage, land value, and density modes, as in Micropolis |
 | Radial: Traffic and commuting | 0% | 12–20 | Nothing yet |
 | Deadwood: Land value, pollution, disasters | 0% | 12–20 | Nothing yet |
-| Happy Isle: Player-facing game | 33% | 17–30 | The palette, laid out as Micropolis', and the HUD, with its top bar after the owner's mock-up, are in; the budget and demand panels and the overview's power mode are too. Saving, the city score, and a start screen are left |
+| Happy Isle: Player-facing game | 50% | 13–23 | The palette, laid out as Micropolis', and the HUD, with its top bar after the owner's mock-up, are in; the budget, demand, and city panels and the overview's power mode are too, and cities save and load. Saving's later phases, the city score, and map size on the start screen are left |
 | Yokohama: Polish and release | 0% | 10–20 | Nothing yet |
-| | **Total** | **≈ 51–90** | |
+| | **Total** | **≈ 47–83** | |
 
 ## Upcoming work, ranked
 
 | Rank | Work | Milestone | Estimate (h) |
 |---|---|---|---|
-| 1 | Saving and loading a city, phases S2c to S5 | Happy Isle | 11–20 |
+| 1 | Saving's later phases: `.cl`, autosave, and `.cty` import (S3 to S5) | Happy Isle | 7–13 |
 | 2 | Traffic: congestion on the roads trips already use | Radial | 12–20 |
 
-Alpha needs a city that can be saved (UI-5); everything else on the alpha
-gate is in or partial.
+Every row of the alpha gate passes; calling it alpha is the owner's call.
 
 ## Milestone checklists
 
@@ -233,8 +231,9 @@ gate is in or partial.
 - [ ] Panels for the budget, power, and the city score. The budget panel
   (`UI/BudgetPanel.cs`) and power, as the overview map's power mode
   (`UI/OverviewMap.cs`), are in; the score is not.
-- [ ] Save and load: a city serializes to disk and reloads exactly, and a
-  corrupt file is reported, not fatal. The owner settled the plan: one
+- [x] Save and load: a city serializes to disk and reloads exactly, and a
+  corrupt file is reported, not fatal, since S2c (`docs/saving.md`). The
+  phases after it add formats and autosave. The owner settled the plan: one
   save model in `CityLimits.Core`, holding everything, the cycle's
   half-done figures included, so a city saves at any moment and loads
   back exactly; three formats over it; saves in
@@ -249,7 +248,7 @@ gate is in or partial.
     shows the city at a glance, its mods, and its seed, which a click
     copies, and renames the city on Enter. The windows share
     `IMovableWindow`.
-  - [ ] S2c: the save model and `.fcl`, its flat JSON form, checked
+  - [x] S2c: the save model and `.fcl`, its flat JSON form, checked
     strictly; Ctrl+S to save and Ctrl+O to open, asking before
     overwriting; Load Game's list; and a test that a loaded city runs on
     tick for tick like one never saved.
@@ -316,6 +315,7 @@ baseline's growth depends on.
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-21 | minor | Saving, S2c: cities save and load. A save holds everything that affects the steps to come, the cycle's half-done figures included, so a city saves at any step, even paused, and runs on exactly as it would have; a test runs a saved and a loaded town in step for two years. The flat city format, `.fcl`, is one JSON file with the map as rows of characters, read strictly. Ctrl+S saves under the city's name, asking before replacing another city's file; Load Game and Ctrl+O list the saved cities; leaving a city with unsaved changes asks first. The save-and-load checklist item is done, Happy Isle is at 50%, and every row of the alpha gate passes; calling it alpha is the owner's call. 47–83 h left in total, 551 tests. |
 | 2026-10-21 | minor | Saving, S2b, a phase the owner added: a click on the city's name opens the city panel, paused and movable, with the name to rename on Enter, the city at a glance (date and age, population, demand, funds and tax, this year's and last year's cash flow), the mods in the order applied, and the seed, which a click copies. The owner swapped the new phase in ahead of the save model, which becomes S2c; the rows below use the new letters. The budget, demand, and city panels share `IMovableWindow`. 51–90 h left in total, 513 tests. |
 | 2026-10-21 | minor | Saving, S2a, with the start menu folded in at the owner's request: after the owner's mock-up of loading, start, and game, the window opens on a loading screen and a start menu (New Game, Load Game dimmed until S2c, Quit). New Game names the city and takes a seed, Escape in a city opens a menu that leads back, and clicking the name in the bar renames the city. The play button turns blue. The legal section of AGENTS.md was reframed with the owner beforehand. 52–92 h left in total, 513 tests. |
 | 2026-10-21 | minor | The owner settled how cities are saved: one save model and three formats (`.cl`, CityLimits' binary form after Micropolis' layout with its own chunks; `.fcl`, the same as flat JSON; and `.cty` import only), saves under Documents with no file dialog, the cycle's half-done figures saved so a city saves at any moment, and autosave every 15 minutes, skipped when nothing changed. S1 is done: `GameFolders` puts the settings in the per-user config folder and mods and saves under `Documents/CityLimits`, keeping a writable copy with settings beside it portable. Before, an AppImage could never save its settings. Mods move, which the modding guide now says. Saving grows to 14–26 h; 54–96 h left in total, 500 tests. |

@@ -40,4 +40,11 @@ public sealed class DeterministicRandom
 
     /// <summary>Returns a value in the range [0, 1).</summary>
     public float NextFloat() => (float)NextDouble();
+
+    /// <summary>The generator's whole state, which a save keeps so a loaded city draws the same numbers.</summary>
+    internal ulong State
+    {
+        get => _state;
+        set => _state = value;
+    }
 }

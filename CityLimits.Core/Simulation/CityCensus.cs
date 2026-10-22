@@ -86,4 +86,31 @@ public sealed class CityCensus
         IndustrialPopulation = Industrial * 8 * 20;
         CityPopulation = ResidentPopulation + CommercialPopulation + IndustrialPopulation;
     }
+
+    internal CensusSave Capture() => new()
+    {
+        Residential = Residential,
+        Commercial = Commercial,
+        Industrial = Industrial,
+        ResidentPopulation = ResidentPopulation,
+        CommercialPopulation = CommercialPopulation,
+        IndustrialPopulation = IndustrialPopulation,
+        ResidentialHistory = [.. _residentialHistory],
+        CommercialHistory = [.. _commercialHistory],
+        IndustrialHistory = [.. _industrialHistory],
+    };
+
+    internal void Restore(CensusSave save)
+    {
+        Residential = SaveChecks.InRange(save.Residential, 0, int.MaxValue, "census.residential");
+        Commercial = SaveChecks.InRange(save.Commercial, 0, int.MaxValue, "census.commercial");
+        Industrial = SaveChecks.InRange(save.Industrial, 0, int.MaxValue, "census.industrial");
+        ResidentPopulation = SaveChecks.InRange(save.ResidentPopulation, 0, int.MaxValue, "census.residentPopulation");
+        CommercialPopulation = SaveChecks.InRange(save.CommercialPopulation, 0, int.MaxValue, "census.commercialPopulation");
+        IndustrialPopulation = SaveChecks.InRange(save.IndustrialPopulation, 0, int.MaxValue, "census.industrialPopulation");
+        CityPopulation = (int)Math.Min(int.MaxValue, (long)ResidentPopulation + CommercialPopulation + IndustrialPopulation);
+        SaveChecks.CopyInto(save.ResidentialHistory, _residentialHistory, "census.residentialHistory");
+        SaveChecks.CopyInto(save.CommercialHistory, _commercialHistory, "census.commercialHistory");
+        SaveChecks.CopyInto(save.IndustrialHistory, _industrialHistory, "census.industrialHistory");
+    }
 }

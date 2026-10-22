@@ -187,6 +187,68 @@ public sealed class CityBudget
         return year;
     }
 
+    internal BudgetSave Capture() => new()
+    {
+        TaxRate = TaxRate,
+        RoadFunding = RoadFunding,
+        FireFunding = FireFunding,
+        PoliceFunding = PoliceFunding,
+        TaxEffect = TaxEffect,
+        RoadEffect = RoadEffect,
+        FireEffect = FireEffect,
+        PoliceEffect = PoliceEffect,
+        TaxFund = _taxFund,
+        RoadFund = _roadFund,
+        FireFund = _fireFund,
+        PoliceFund = _policeFund,
+        Cut = _cut,
+        LastYear = SaveOf(LastYear),
+        Estimated = SaveOf(Estimated),
+    };
+
+    internal void Restore(BudgetSave save)
+    {
+        TaxRate = SaveChecks.InRange(save.TaxRate, 0, MaxTaxRate, "budget.taxRate");
+        RoadFunding = SaveChecks.InRange(save.RoadFunding, 0, FullFunding, "budget.roadFunding");
+        FireFunding = SaveChecks.InRange(save.FireFunding, 0, FullFunding, "budget.fireFunding");
+        PoliceFunding = SaveChecks.InRange(save.PoliceFunding, 0, FullFunding, "budget.policeFunding");
+        TaxEffect = SaveChecks.InRange(save.TaxEffect, 0, MaxTaxRate, "budget.taxEffect");
+        RoadEffect = SaveChecks.InRange(save.RoadEffect, 0, FullRoadEffect, "budget.roadEffect");
+        FireEffect = SaveChecks.InRange(save.FireEffect, 0, FullServiceEffect, "budget.fireEffect");
+        PoliceEffect = SaveChecks.InRange(save.PoliceEffect, 0, FullServiceEffect, "budget.policeEffect");
+        _taxFund = SaveChecks.InRange(save.TaxFund, 0, long.MaxValue, "budget.taxFund");
+        _roadFund = SaveChecks.InRange(save.RoadFund, 0, long.MaxValue, "budget.roadFund");
+        _fireFund = SaveChecks.InRange(save.FireFund, 0, long.MaxValue, "budget.fireFund");
+        _policeFund = SaveChecks.InRange(save.PoliceFund, 0, long.MaxValue, "budget.policeFund");
+        _cut = save.Cut;
+        LastYear = YearOf(save.LastYear);
+        Estimated = YearOf(save.Estimated);
+    }
+
+    private static BudgetYearSave? SaveOf(BudgetYear? year) => year is null ? null : new()
+    {
+        TaxRate = year.TaxRate,
+        TaxIncome = year.TaxIncome,
+        RoadRequest = year.RoadRequest,
+        RoadFunded = year.RoadFunded,
+        FireRequest = year.FireRequest,
+        FireFunded = year.FireFunded,
+        PoliceRequest = year.PoliceRequest,
+        PoliceFunded = year.PoliceFunded,
+        Cut = year.Cut,
+    };
+
+    private static BudgetYear? YearOf(BudgetYearSave? save) => save is null ? null : new(
+        SaveChecks.InRange(save.TaxRate, 0, MaxTaxRate, "budget year: taxRate"),
+        save.TaxIncome,
+        save.RoadRequest,
+        save.RoadFunded,
+        save.FireRequest,
+        save.FireFunded,
+        save.PoliceRequest,
+        save.PoliceFunded,
+        save.Cut);
+
     private static (int Paid, long Left, bool Cut) Pay(int wanted, long available, bool cut) =>
         cut ? (0, 0, true) : wanted <= available ? (wanted, available - wanted, false) : ((int)available, 0, true);
 

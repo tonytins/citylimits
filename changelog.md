@@ -1,5 +1,29 @@
 # CityLimits Changelog
 
+## 0.2.116
+
+You can save your city. Press **Ctrl+S** and it's saved under its name in
+`Documents/CityLimits/Cities`; **Load Game** on the start menu, or
+**Ctrl+O** in a city, lists your saved cities with their date,
+population, and money, newest first. A loaded city picks up exactly
+where it left off, down to the step, even if you saved partway through a
+month or while paused.
+
+- Saving over the same city's file just saves. If another city has the
+  same name, the game asks before replacing its file.
+- Leaving a city for the menu, for another city, or to quit asks first
+  when it has changes you haven't saved.
+- A save is written in full before it replaces the old one, so a failure
+  can't spoil your last save.
+- A city keeps the mods it was made with, so it loads the same even if
+  you change your mods afterwards.
+
+For developers and agents: saves use the flat city format, `.fcl`, one
+JSON file with the map as rows of characters, described in
+`docs/saving.md`. Reading one is strict and says exactly what is wrong
+and where. `FlatCityFormat` and `CityFiles` (`CityLimits.Core/Saving`)
+read and write them.
+
 ## 0.2.115
 
 Click your city's name in the top bar for the city panel: the city at a

@@ -187,4 +187,95 @@ public sealed class PowerGrid
         _stack[depth++] = index;
         return true;
     }
+
+    internal PowerSave Capture() => new()
+    {
+        Plants = [.. _plants.SelectMany(plant => new[] { plant.X, plant.Y })],
+        Powered = PoweredRows(),
+        CoalPlants = CoalPlants,
+        NuclearPlants = NuclearPlants,
+        Zones = Zones,
+        PoweredBuildings = PoweredBuildings,
+        UnpoweredBuildings = UnpoweredBuildings,
+        Capacity = Capacity,
+        PoweredTiles = PoweredTiles,
+        BrownedOut = IsBrownedOut,
+    };
+
+    // A map that hasn't been traced yet has no rows.
+    internal void Restore(PowerSave save, TileMap map)
+    {
+        if (save.Plants is null || save.Plants.Length % 2 != 0)
+        {
+            throw new InvalidSave("power.plants: needs x and y pairs.");
+        }
+
+        _plants.Clear();
+        for (var i = 0; i < save.Plants.Length; i += 2)
+        {
+            var (x, y) = (save.Plants[i], save.Plants[i + 1]);
+            _plants.Add(map.Contains(x, y) ? (x, y) : throw new InvalidSave($"power.plants: {x}, {y} is off the map."));
+        }
+
+        var rows = save.Powered ?? [];
+        if (rows.Length == 0)
+        {
+            (_powered, _width) = ([], 0);
+        }
+        else
+        {
+            if (rows.Length != map.Height)
+            {
+                throw new InvalidSave($"power.powered: needs {map.Height} rows, not {rows.Length}.");
+            }
+
+            _width = map.Width;
+            _powered = new bool[map.Width * map.Height];
+            _stack = new int[map.Width * map.Height];
+            for (var y = 0; y < rows.Length; y++)
+            {
+                var row = rows[y];
+                if (row is null || row.Length != map.Width || row.Any(c => c is not ('0' or '1')))
+                {
+                    throw new InvalidSave($"power.powered[{y}]: needs {map.Width} characters, each 0 or 1.");
+                }
+
+                for (var x = 0; x < row.Length; x++)
+                {
+                    _powered[(y * _width) + x] = row[x] == '1';
+                }
+            }
+        }
+
+        CoalPlants = SaveChecks.InRange(save.CoalPlants, 0, int.MaxValue, "power.coalPlants");
+        NuclearPlants = SaveChecks.InRange(save.NuclearPlants, 0, int.MaxValue, "power.nuclearPlants");
+        Zones = SaveChecks.InRange(save.Zones, 0, int.MaxValue, "power.zones");
+        PoweredBuildings = SaveChecks.InRange(save.PoweredBuildings, 0, int.MaxValue, "power.poweredBuildings");
+        UnpoweredBuildings = SaveChecks.InRange(save.UnpoweredBuildings, 0, int.MaxValue, "power.unpoweredBuildings");
+        Capacity = SaveChecks.InRange(save.Capacity, 0, int.MaxValue, "power.capacity");
+        PoweredTiles = SaveChecks.InRange(save.PoweredTiles, 0, int.MaxValue, "power.poweredTiles");
+        IsBrownedOut = save.BrownedOut;
+    }
+
+    private string[] PoweredRows()
+    {
+        if (_width == 0)
+        {
+            return [];
+        }
+
+        var rows = new string[_powered.Length / _width];
+        for (var y = 0; y < rows.Length; y++)
+        {
+            rows[y] = string.Create(_width, (this, y), static (span, state) =>
+            {
+                for (var x = 0; x < span.Length; x++)
+                {
+                    span[x] = state.Item1._powered[(state.y * state.Item1._width) + x] ? '1' : '0';
+                }
+            });
+        }
+
+        return rows;
+    }
 }

@@ -68,6 +68,18 @@ public sealed class CityDefinitions
         _ => 0,
     };
 
+    /// <summary>The zone specs, in the order of their uses.</summary>
+    internal IEnumerable<ZoneSpec> Zones => _zones.Values.OrderBy(zone => zone.Use);
+
+    /// <summary>The plant specs, in the order of their uses.</summary>
+    internal IEnumerable<PlantSpec> Plants => _plants.Values.OrderBy(plant => plant.Use);
+
+    /// <summary>The service specs, in the order of their uses.</summary>
+    internal IEnumerable<ServiceSpec> Services => _services.Values.OrderBy(service => service.Use);
+
+    // A saved city's definitions are read as a whole and then told which mods made them.
+    internal CityDefinitions WithAppliedMods(IReadOnlyList<AppliedMod> mods) => new(_zones.Values, _plants.Values, _services.Values, mods);
+
     // A mod's zone, plant, or service entry changes only the fields it sets.
     internal CityDefinitions With(ModDefinitions mod)
     {

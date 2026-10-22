@@ -211,4 +211,26 @@ public sealed class CityMaps
             }
         }
     }
+
+    internal CityMapsSave Capture() => new()
+    {
+        CenterX = CenterX,
+        CenterY = CenterY,
+        LandValueAverage = LandValueAverage,
+        LandValue = [.. _landValue],
+        Density = [.. _density],
+        Terrain = [.. _terrain],
+        CommercialRate = [.. _commercialRate],
+    };
+
+    internal void Restore(CityMapsSave save)
+    {
+        CenterX = SaveChecks.InRange(save.CenterX, 0, _map.Width, "cityMaps.centerX");
+        CenterY = SaveChecks.InRange(save.CenterY, 0, _map.Height, "cityMaps.centerY");
+        LandValueAverage = SaveChecks.InRange(save.LandValueAverage, 0, MaxLandValue, "cityMaps.landValueAverage");
+        SaveChecks.CopyInto(save.LandValue, _landValue, "cityMaps.landValue");
+        SaveChecks.CopyInto(save.Density, _density, "cityMaps.density");
+        SaveChecks.CopyInto(save.Terrain, _terrain, "cityMaps.terrain");
+        SaveChecks.CopyInto(save.CommercialRate, _commercialRate, "cityMaps.commercialRate");
+    }
 }

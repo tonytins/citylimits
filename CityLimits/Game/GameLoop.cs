@@ -39,6 +39,19 @@ public sealed class GameLoop : IDisposable
     private string? _budgetReason;
     private int _speedBeforeModal;
     private readonly CityPanel _cityPanel = new();
+    private readonly LoadPanel _loadPanel = new();
+    private readonly ConfirmPanel _confirm = new();
+    private readonly GameFolders _folders;
+
+    // The file the city was opened from or last saved to, and the save it was then; a city whose
+    // save reads differently has changes a save would keep.
+    private string? _cityFile;
+    private string? _savedText;
+
+    // What the question on screen is about, and the city to open once it is answered.
+    private Pending _pending;
+    private CitySimulation? _cityToOpen;
+    private string? _fileToOpen;
 
     // The window the player is dragging by its title, if any; it follows the pointer until the
     // button is let go, and nothing else takes the pointer meanwhile.
@@ -46,18 +59,25 @@ public sealed class GameLoop : IDisposable
     private readonly BuildPlan _preview = new();
     private BuildStroke? _stroke;
 
-    /// <summary>Creates the game with the settings it was started with.</summary>
-    /// <exception cref="ArgumentException">The name isn't one a city can have.</exception>
-    public GameLoop(GameSettings settings, GameFolders folders, GameAssets assets, int seed = DefaultSeed, string name = CitySimulation.DefaultName)
+    /// <summary>
+    /// Plays a city: a new one, or one opened from a file, which is then the file Ctrl+S saves it
+    /// back to without asking. The mods skipped when a new city was made are shown, if any.
+    /// </summary>
+    public GameLoop(GameSettings settings, CitySimulation city, string? cityFile, GameFolders folders, GameAssets assets, IReadOnlyList<string>? modProblems = null)
     {
+        ArgumentNullException.ThrowIfNull(city);
+        ArgumentNullException.ThrowIfNull(folders);
         _settings = settings;
         _lastSpeed = settings.Speed == 0 ? 1 : settings.Speed;
-        ArgumentNullException.ThrowIfNull(folders);
+        _folders = folders;
+        _simulation = city;
+        _cityFile = cityFile;
 
-        var map = TileMapGenerator.Generate(seed, MapSize.DefaultWidth, MapSize.DefaultHeight);
-        var definitions = GameMods.Load(folders.ModsFolder, out var modProblems);
-        _simulation = new CitySimulation(map, seed, definitions: definitions);
-        _simulation.Rename(name);
+        // An opened city starts saved; a new one has nothing saved yet.
+        _savedText = cityFile is null ? null : FlatCityFormat.Write(city);
+        var map = city.Map;
+        var definitions = city.Definitions;
+        modProblems ??= [];
         if (modProblems.Count > 0)
         {
             // The log holds every skipped mod; the screen says how many, so the player knows to look.
@@ -94,7 +114,16 @@ public sealed class GameLoop : IDisposable
 
         /// <summary>Out of the game.</summary>
         Quit,
+
+        /// <summary>To another city, in <see cref="OpenedCity"/>.</summary>
+        Open,
     }
+
+    /// <summary>The city the player opened, once leaving is <see cref="Leave.Open"/>.</summary>
+    public CitySimulation? OpenedCity { get; private set; }
+
+    /// <summary>The file the opened city came from.</summary>
+    public string? OpenedFile { get; private set; }
 
     // What holds the game while it is open.
     private enum Modal
@@ -103,6 +132,18 @@ public sealed class GameLoop : IDisposable
         Budget,
         Menu,
         City,
+        Load,
+        Confirm,
+    }
+
+    // What a question asks before it goes ahead.
+    private enum Pending
+    {
+        None,
+        Overwrite,
+        LeaveToMenu,
+        LeaveToQuit,
+        OpenCity,
     }
 
     /// <summary>Whether, and where, the player asked to leave the city.</summary>
@@ -149,7 +190,7 @@ public sealed class GameLoop : IDisposable
         {
             _simulation.Builder.Plan(_stroke, _preview);
         }
-        _camera.ClampTo(MapSize.DefaultWidth * MapRenderer.TileSize, MapSize.DefaultHeight * MapRenderer.TileSize);
+        _camera.ClampTo(_simulation.Map.Width * MapRenderer.TileSize, _simulation.Map.Height * MapRenderer.TileSize);
     }
 
     /// <summary>Draws the game.</summary>
@@ -220,6 +261,12 @@ public sealed class GameLoop : IDisposable
             case Modal.City:
                 _cityPanel.Draw(_simulation);
                 break;
+            case Modal.Load:
+                _loadPanel.Draw();
+                break;
+            case Modal.Confirm:
+                _confirm.Draw();
+                break;
         }
 
         Raylib.EndDrawing();
@@ -270,6 +317,27 @@ public sealed class GameLoop : IDisposable
             case Modal.City:
                 HandleCityInput(mouse);
                 return;
+            case Modal.Load:
+                HandleLoadInput();
+                return;
+            case Modal.Confirm:
+                HandleConfirmInput();
+                return;
+        }
+
+        // Ctrl+S and Ctrl+O save and open; held Control keeps the letters from panning the map.
+        var control = Raylib.IsKeyDown(KeyboardKey.LeftControl) || Raylib.IsKeyDown(KeyboardKey.RightControl);
+        if (control && Raylib.IsKeyPressed(KeyboardKey.S))
+        {
+            Save(confirmed: false);
+            return;
+        }
+
+        if (control && Raylib.IsKeyPressed(KeyboardKey.O))
+        {
+            _loadPanel.Reset(_folders.CitiesFolder);
+            OpenModal(Modal.Load);
+            return;
         }
 
         if (Raylib.IsKeyPressed(KeyboardKey.B))
@@ -285,7 +353,11 @@ public sealed class GameLoop : IDisposable
         }
 
         var pan = Vector2.Zero;
-        if (Raylib.IsKeyDown(KeyboardKey.A) || Raylib.IsKeyDown(KeyboardKey.Left))
+        if (control)
+        {
+            // No panning while Control is held.
+        }
+        else if (Raylib.IsKeyDown(KeyboardKey.A) || Raylib.IsKeyDown(KeyboardKey.Left))
         {
             pan.X -= 1f;
         }
@@ -404,13 +476,125 @@ public sealed class GameLoop : IDisposable
                 break;
             case GameMenu.Choice.MainMenu:
                 CloseModal();
-                Leaving = Leave.ToMenu;
+                LeaveOrAsk(Pending.LeaveToMenu);
                 break;
             case GameMenu.Choice.Quit:
                 CloseModal();
-                Leaving = Leave.Quit;
+                LeaveOrAsk(Pending.LeaveToQuit);
                 break;
         }
+    }
+
+    private void HandleLoadInput()
+    {
+        switch (_loadPanel.Update())
+        {
+            case LoadPanel.Outcome.Opened:
+                CloseModal();
+                (_cityToOpen, _fileToOpen) = (_loadPanel.City, _loadPanel.Path);
+                LeaveOrAsk(Pending.OpenCity);
+                break;
+            case LoadPanel.Outcome.Back:
+                CloseModal();
+                break;
+        }
+    }
+
+    private void HandleConfirmInput()
+    {
+        var answer = _confirm.Update();
+        if (answer == ConfirmPanel.Answer.None)
+        {
+            return;
+        }
+
+        var pending = _pending;
+        _pending = Pending.None;
+        CloseModal();
+        if (answer == ConfirmPanel.Answer.No)
+        {
+            _cityToOpen = null;
+            return;
+        }
+
+        switch (pending)
+        {
+            case Pending.Overwrite:
+                Save(confirmed: true);
+                break;
+            default:
+                Go(pending);
+                break;
+        }
+    }
+
+    // Leaving a city with changes since its last save asks first, so a city isn't lost by a click.
+    private void LeaveOrAsk(Pending leaving)
+    {
+        if (!HasUnsavedChanges())
+        {
+            Go(leaving);
+            return;
+        }
+
+        var where = leaving switch
+        {
+            Pending.LeaveToMenu => "for the menu",
+            Pending.LeaveToQuit => "and quit",
+            _ => $"for {_cityToOpen?.Name}",
+        };
+        Ask(leaving, $"Leave {_simulation.Name} {where}?", "It has changes since it was last saved. Ctrl+S saves it first.", "Leave", "Stay");
+    }
+
+    private void Go(Pending leaving)
+    {
+        switch (leaving)
+        {
+            case Pending.LeaveToMenu:
+                Leaving = Leave.ToMenu;
+                break;
+            case Pending.LeaveToQuit:
+                Leaving = Leave.Quit;
+                break;
+            case Pending.OpenCity when _cityToOpen is not null:
+                (OpenedCity, OpenedFile) = (_cityToOpen, _fileToOpen);
+                Leaving = Leave.Open;
+                break;
+        }
+    }
+
+    private void Ask(Pending pending, string title, string message, string yes, string no)
+    {
+        _pending = pending;
+        _confirm.Ask(title, message, yes, no);
+        OpenModal(Modal.Confirm);
+    }
+
+    private bool HasUnsavedChanges() => _savedText is null || FlatCityFormat.Write(_simulation) != _savedText;
+
+    // A city is saved under its name. Saving over its own file is plain saving; replacing another
+    // city's file of the same name asks first.
+    private void Save(bool confirmed)
+    {
+        var file = CityFiles.FileNameFor(_simulation.Name);
+        var path = Path.Combine(_folders.CitiesFolder, file);
+        if (!confirmed && File.Exists(path) && !string.Equals(Path.GetFullPath(path), _cityFile is null ? null : Path.GetFullPath(_cityFile), StringComparison.Ordinal))
+        {
+            Ask(Pending.Overwrite, "Replace a saved city?", $"{file} already holds a saved city, and saving would replace it.", "Replace", "Cancel");
+            return;
+        }
+
+        var text = FlatCityFormat.Write(_simulation);
+        if (!FlatCityFormat.TryWriteFile(text, path, out var problem))
+        {
+            Logger.Error("{Problem}", problem);
+            (_notice, _noticeIsError) = (problem, true);
+            return;
+        }
+
+        (_cityFile, _savedText) = (path, text);
+        Logger.Info("Saved {Name} to {Path}", _simulation.Name, path);
+        (_notice, _noticeIsError) = ($"Saved {_simulation.Name} to {file}", false);
     }
 
     // The panel's x closes it before its title can start a drag, since the x sits in the title.

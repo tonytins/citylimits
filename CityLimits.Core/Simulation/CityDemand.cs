@@ -183,4 +183,40 @@ public sealed class CityDemand
     // For showing the player; the move itself adds the tax before it rounds, so the two together
     // can differ from it by one.
     private static int PullOf(double ratio) => (int)Math.Round(Economy(ratio));
+
+    internal DemandSave Capture() => new()
+    {
+        Residential = Residential,
+        Commercial = Commercial,
+        Industrial = Industrial,
+        TaxablePopulation = TaxablePopulation,
+        ResidentialPull = ResidentialPull,
+        CommercialPull = CommercialPull,
+        IndustrialPull = IndustrialPull,
+        TaxPushApplied = TaxPushApplied,
+        JobsPerResident = JobsPerResident,
+        WorkersPerJob = WorkersPerJob,
+        HistoryCount = HistoryCount,
+        ResidentialHistory = [.. _residentialHistory],
+        CommercialHistory = [.. _commercialHistory],
+        IndustrialHistory = [.. _industrialHistory],
+    };
+
+    internal void Restore(DemandSave save)
+    {
+        Residential = SaveChecks.InRange(save.Residential, -ResidentialLimit, ResidentialLimit, "demand.residential");
+        Commercial = SaveChecks.InRange(save.Commercial, -BusinessLimit, BusinessLimit, "demand.commercial");
+        Industrial = SaveChecks.InRange(save.Industrial, -BusinessLimit, BusinessLimit, "demand.industrial");
+        TaxablePopulation = SaveChecks.InRange(save.TaxablePopulation, 0, int.MaxValue, "demand.taxablePopulation");
+        ResidentialPull = save.ResidentialPull;
+        CommercialPull = save.CommercialPull;
+        IndustrialPull = save.IndustrialPull;
+        TaxPushApplied = save.TaxPushApplied;
+        JobsPerResident = double.IsFinite(save.JobsPerResident) ? save.JobsPerResident : throw new InvalidSave("demand.jobsPerResident: needs a number.");
+        WorkersPerJob = double.IsFinite(save.WorkersPerJob) ? save.WorkersPerJob : throw new InvalidSave("demand.workersPerJob: needs a number.");
+        HistoryCount = SaveChecks.InRange(save.HistoryCount, 0, HistoryLength, "demand.historyCount");
+        SaveChecks.CopyInto(save.ResidentialHistory, _residentialHistory, "demand.residentialHistory");
+        SaveChecks.CopyInto(save.CommercialHistory, _commercialHistory, "demand.commercialHistory");
+        SaveChecks.CopyInto(save.IndustrialHistory, _industrialHistory, "demand.industrialHistory");
+    }
 }

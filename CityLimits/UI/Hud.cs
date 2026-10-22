@@ -9,7 +9,7 @@ public sealed class Hud
     private const int FontSize = 14;
     private const int Padding = 10;
     private const int ReadoutHeight = 46;
-    private const string Hints = "WASD pan   wheel zoom   space pause   , . speed   1-9 tools   drag to build   B budget   esc cancel or menu";
+    private const string Hints = "WASD pan   wheel zoom   space pause   , . speed   1-9 tools   drag to build   B budget   ctrl+S save   ctrl+O open   esc cancel or menu";
 
     // The pieces of the top bar, from left to right, as wide as each needs.
     private const int ButtonSize = 22;

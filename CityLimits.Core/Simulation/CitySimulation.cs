@@ -1,3 +1,4 @@
+using System.Globalization;
 using CityLimits.Core.Economy;
 
 namespace CityLimits.Core.Simulation;
@@ -378,6 +379,132 @@ public sealed class CitySimulation
         if (state.IsBridge)
         {
             RoadTiles += BridgeRoadTiles - 1;
+        }
+    }
+
+    /// <summary>Captures everything the city needs to carry on exactly where it is, for a save.</summary>
+    internal CitySave Capture() => new()
+    {
+        Format = FlatCityFormat.Format,
+        Name = Name,
+        Seed = Seed,
+        Random = Random.State.ToString("x16", CultureInfo.InvariantCulture),
+        Tick = TickCount,
+        CityTime = CityTime,
+        Funds = Treasury.Funds,
+        Definitions = DefinitionWriter.Write(Definitions),
+        Mods = [.. Definitions.AppliedMods.Select(mod => new ModSave { Id = mod.Id, Name = mod.Name, Version = mod.Version })],
+        Map = MapCodec.Encode(Map),
+        Budget = Budget.Capture(),
+        Census = Census.Capture(),
+        Demand = Demand.Capture(),
+        Power = Power.Capture(),
+        Services = Services.Capture(),
+        Community = Community.Capture(),
+        CityMaps = Maps.Capture(),
+        Cycle = new CycleSave
+        {
+            RoadTiles = RoadTiles,
+            BudgetedRoadTiles = _budgetedRoadTiles,
+            BudgetedFireStations = _budgetedFireStations,
+            BudgetedPoliceStations = _budgetedPoliceStations,
+        },
+    };
+
+    /// <summary>Makes a city from a save, checking each part as it goes.</summary>
+    /// <exception cref="InvalidSave">Something in the save is wrong; the message says what and where.</exception>
+    internal static CitySimulation Restore(CitySave save)
+    {
+        ArgumentNullException.ThrowIfNull(save);
+
+        if (!IsValidName(save.Name))
+        {
+            throw new InvalidSave($"name: needs 1 to {MaxNameLength} characters and no control characters.");
+        }
+
+        if (save.Random is not { Length: 16 } || !ulong.TryParse(save.Random, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var random))
+        {
+            throw new InvalidSave("random: needs 16 hexadecimal digits.");
+        }
+
+        var tick = SaveChecks.InRange(save.Tick, 0, long.MaxValue, "tick");
+        if (save.CityTime != tick / CityCalendar.StepsPerCount)
+        {
+            throw new InvalidSave($"cityTime: a city {tick} steps old is at count {tick / CityCalendar.StepsPerCount}, not {save.CityTime}.");
+        }
+
+        var definitions = RestoreDefinitions(save);
+        var map = MapCodec.Decode(save.Map);
+        CheckZones(map, definitions);
+
+        var city = new CitySimulation(map, save.Seed, funds: 0, definitions);
+        city.Name = save.Name.Trim();
+        city.Random.State = random;
+        city.TickCount = tick;
+        city.CityTime = save.CityTime;
+        city.Treasury.Restore(save.Funds);
+        city.Budget.Restore(save.Budget ?? throw new InvalidSave("budget: missing."));
+        city.Census.Restore(save.Census ?? throw new InvalidSave("census: missing."));
+        city.Demand.Restore(save.Demand ?? throw new InvalidSave("demand: missing."));
+        city.Power.Restore(save.Power ?? throw new InvalidSave("power: missing."), map);
+        city.Services.Restore(save.Services ?? throw new InvalidSave("services: missing."));
+        city.Community.Restore(save.Community ?? throw new InvalidSave("community: missing."));
+        city.Maps.Restore(save.CityMaps ?? throw new InvalidSave("cityMaps: missing."));
+        var cycle = save.Cycle ?? throw new InvalidSave("cycle: missing.");
+        city.RoadTiles = SaveChecks.InRange(cycle.RoadTiles, 0, int.MaxValue, "cycle.roadTiles");
+        city._budgetedRoadTiles = SaveChecks.InRange(cycle.BudgetedRoadTiles, 0, int.MaxValue, "cycle.budgetedRoadTiles");
+        city._budgetedFireStations = SaveChecks.InRange(cycle.BudgetedFireStations, 0, int.MaxValue, "cycle.budgetedFireStations");
+        city._budgetedPoliceStations = SaveChecks.InRange(cycle.BudgetedPoliceStations, 0, int.MaxValue, "cycle.budgetedPoliceStations");
+        return city;
+    }
+
+    // The definitions are read by the same loader as the base game's, so a save can't hold a spec a
+    // mod couldn't.
+    private static CityDefinitions RestoreDefinitions(CitySave save)
+    {
+        if (save.Definitions.ValueKind != System.Text.Json.JsonValueKind.Object)
+        {
+            throw new InvalidSave("definitions: needs the definitions as an object.");
+        }
+
+        if (!DefinitionLoader.TryParseBase(save.Definitions.GetRawText(), out var definitions, out var error))
+        {
+            throw new InvalidSave($"definitions: {error}");
+        }
+
+        var mods = new List<AppliedMod>();
+        foreach (var mod in save.Mods ?? [])
+        {
+            if (string.IsNullOrWhiteSpace(mod.Id) || string.IsNullOrWhiteSpace(mod.Name))
+            {
+                throw new InvalidSave("mods: each needs an id and a name.");
+            }
+
+            mods.Add(new AppliedMod(mod.Id, mod.Name, mod.Version));
+        }
+
+        return definitions.WithAppliedMods(mods);
+    }
+
+    // A zone's building can't be a level or a land-value class its spec doesn't have.
+    private static void CheckZones(TileMap map, CityDefinitions definitions)
+    {
+        for (var y = 0; y < map.Height; y++)
+        {
+            for (var x = 0; x < map.Width; x++)
+            {
+                var state = map.StateAt(x, y);
+                if (!state.IsZoneCenter)
+                {
+                    continue;
+                }
+
+                var spec = definitions.Zone(state.Use);
+                if (state.Development > spec.Levels || state.ValueClass >= Math.Max(spec.ValueClasses, 1))
+                {
+                    throw new InvalidSave($"map.buildings: the {spec.Name} at {x}, {y} is level {state.Development}, class {state.ValueClass}; its spec has {spec.Levels} levels and {spec.ValueClasses} classes.");
+                }
+            }
         }
     }
 }

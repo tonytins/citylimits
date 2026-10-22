@@ -48,4 +48,7 @@ public sealed class Treasury
         ArgumentOutOfRangeException.ThrowIfNegative(amount);
         Funds += amount;
     }
+
+    // A saved city's money, which may be below zero.
+    internal void Restore(int funds) => Funds = funds;
 }

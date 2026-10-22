@@ -112,4 +112,20 @@ public sealed class CommunityBuildings
             map.SetState(x + dx, y + dy, new TileState(state.Kind, use, zonePart: part, powered: part == ZoneLayout.CenterPart && powered));
         }
     }
+
+    internal CommunitySave Capture() => new()
+    {
+        Hospitals = Hospitals,
+        Churches = Churches,
+        HospitalNeed = HospitalNeed,
+        ChurchNeed = ChurchNeed,
+    };
+
+    internal void Restore(CommunitySave save)
+    {
+        Hospitals = SaveChecks.InRange(save.Hospitals, 0, int.MaxValue, "community.hospitals");
+        Churches = SaveChecks.InRange(save.Churches, 0, int.MaxValue, "community.churches");
+        HospitalNeed = SaveChecks.InRange(save.HospitalNeed, -1, 1, "community.hospitalNeed");
+        ChurchNeed = SaveChecks.InRange(save.ChurchNeed, -1, 1, "community.churchNeed");
+    }
 }

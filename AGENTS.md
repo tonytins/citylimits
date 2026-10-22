@@ -34,6 +34,7 @@ CityLimits.Core/              engine-free library: the world and the simulation,
   Simulation/                   namespace CityLimits.Core.Simulation: the clock, the calendar, the tick and its cycle, the census, demand, growth, trips, the city maps, the power grid, service coverage, the city's messages
   Economy/                      namespace CityLimits.Core.Economy: the treasury, the costs, the budget
   Settings/                     namespace CityLimits.Core.Settings: the settings that survive a session, and the folders the game keeps its files in
+  Saving/                       namespace CityLimits.Core.Saving: the save model, the flat city format (.fcl), the map's layers, and the saved cities' files
   Scenarios/                    namespace CityLimits.Core.Scenarios: the scenario loader, the runner, the report, the demo town
   Definitions/                  namespace CityLimits.Core.Definitions: the definitions as data, the base game's, and the mod loader
 CityLimits.CommandLine/       engine-free library: the command line, no Raylib
@@ -49,6 +50,7 @@ docs/
   ROADMAP.md                    milestones, current focus, estimates, revision history
   scorecard.md                  verified status per area, with evidence
   scenarios.md                  the scenario file and report formats
+  saving.md                     where saves go, saving and loading in the game, and the flat city format
   design/                       the owner's mock-ups of the interface, with a README on their intent
   modding/
     README.md                   what a mod is, installing one, writing one, how mods are applied, and the code behind them
@@ -96,7 +98,7 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   2000) on the blue background for 2.5 seconds, or until a key or a
   click; it is for show, since the game loads in well under a second.
   The start menu glides the logo up from the middle to a sixth of the way
-  down, with New Game, Load Game (dimmed until cities can be saved), and
+  down, with New Game, Load Game (dimmed while no city is saved), and
   Quit under it and the version in the bottom right. New Game opens a
   panel (`UI/NewCityPanel.cs`) with the city's name, "CityLimits" to
   start, and a seed, blank for any, read by `NewCity.TryRead`; `--seed`
@@ -387,6 +389,21 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   names it and says what can be done with it. A zone is described as a
   whole, from its centre: its houses or its level, its population, and
   "no power" when the scan last found it without (`TileInfo.Describe`).
+- **Saving cities.** As `docs/saving.md` describes, a city saves to
+  `Documents/CityLimits/Cities` under its own name (`CityFiles`) in the
+  flat city format, `.fcl` (`Saving/FlatCityFormat.cs`): one JSON file
+  holding everything that affects the steps to come, the cycle's half-done
+  figures included, so a city saves at any step, even paused, and loads
+  back running on exactly as it would have. Each part of the simulation
+  captures and restores its own section, checking it; the map is written
+  as rows of characters per layer (`MapCodec`), and the definitions in the
+  mods' format, read back by `DefinitionLoader`. Reading refuses a file
+  over 16 MB, an unknown or missing field, or anything out of range, and
+  says where. In the game, Ctrl+S saves, asking before replacing another
+  city's file; Ctrl+O and Load Game list the saved cities (`UI/LoadPanel.cs`);
+  and leaving a city with changes since its last save asks first
+  (`UI/ConfirmPanel.cs`). A save goes through a temporary file, so a failure
+  leaves the last one whole. A loaded city resumes at the last speed.
 - **The settings and the game's folders.** `GameFolders` works out where
   the game keeps its files, because a packaged game, such as the
   AppImage, runs from a read-only folder. The settings go in the hidden
@@ -444,13 +461,13 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   everything it runs (growth, trips, the census, demand, the city maps,
   the power grid, the budget), the seeded generator, the tile rules, the
   build actions, the road network and power lines, the treasury, the
-  settings, the scenarios, and the definitions and mods.
+  settings, saving, the scenarios, and the definitions and mods.
 - **The command line library.** `CityLimits.CommandLine` targets `net10.0`
   with nullable and implicit usings enabled, and references no package
   and no project. It holds the parser, the dispatcher, the default
   command, the strict option reader, and the exit codes.
 - **The tests.** `CityLimits.Tests` uses xUnit 2 with the VSTest runner
-  and coverlet, and holds 513 tests over the generator, the terrain edges, the power plants, lines, and grid, the budget, the stations and their coverage, parks, hospitals and churches, the map, the
+  and coverlet, and holds 551 tests over saving and loading, the generator, the terrain edges, the power plants, lines, and grid, the budget, the stations and their coverage, parks, hospitals and churches, the map, the
   calendar, the clock, the simulation, the settings, the tile rules, the
   build actions, the road network, the treasury, the scenario loader and
   runner, every built-in scenario, the definitions and the mod loader, zone growth, the census and demand, trips, growth and the city maps,
@@ -542,6 +559,13 @@ A city builder lives or dies on its simulation, not its art. The rules:
   live in the map's own tile state, and the renderer reads them from
   there. There is no second list of buildings or zones beside the map to
   keep in step, because two lists drift.
+- **New state goes in the save.** A field that lasts from one step to the
+  next, in any part of the simulation, is captured and restored by that
+  part's `Capture` and `Restore`, with a field in `CitySave` and a line in
+  `docs/saving.md`; otherwise a loaded city drifts from the one that was
+  saved. `FlatCityFormatTests` runs a saved and a loaded town in step and
+  compares them, which catches state left out as long as it changes what
+  the city does.
 
 ### Raylib rules
 

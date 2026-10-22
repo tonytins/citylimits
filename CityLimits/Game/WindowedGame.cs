@@ -61,16 +61,29 @@ public static class WindowedGame
             }
 
             var menu = new StartMenu(assets);
-            menu.Show(fromLoading: true, seed);
-            while (RunMenu(menu) == StartMenu.Choice.NewCity && menu.City is { } city)
+            menu.Show(fromLoading: true, seed, folders.CitiesFolder);
+            while (true)
             {
-                var leaving = PlayCity(city, ref settings, folders, assets);
-                if (leaving != GameLoop.Leave.ToMenu)
+                var choice = RunMenu(menu);
+                IReadOnlyList<string> modProblems = [];
+                CitySimulation? city = choice switch
+                {
+                    StartMenu.Choice.NewCity when menu.City is { } wanted => CreateCity(wanted, folders, out modProblems),
+                    StartMenu.Choice.LoadCity => menu.LoadedCity,
+                    _ => null,
+                };
+                if (city is null)
                 {
                     break;
                 }
 
-                menu.Show(fromLoading: false, seed);
+                var file = choice == StartMenu.Choice.LoadCity ? menu.LoadedFile : null;
+                if (PlayCities(city, file, modProblems, ref settings, folders, assets) != GameLoop.Leave.ToMenu)
+                {
+                    break;
+                }
+
+                menu.Show(fromLoading: false, seed, folders.CitiesFolder);
             }
 
             SaveSettings(folders, settings);
@@ -113,30 +126,56 @@ public static class WindowedGame
         return StartMenu.Choice.Quit;
     }
 
-    // Plays a city until the player leaves it, keeping the settings it ends with.
-    private static GameLoop.Leave PlayCity(NewCity city, ref GameSettings settings, GameFolders folders, GameAssets assets)
+    // Makes the city New Game asked for: a map from its seed, and the mods installed now.
+    private static CitySimulation CreateCity(NewCity wanted, GameFolders folders, out IReadOnlyList<string> modProblems)
     {
         // Picking a seed is outside the simulation, so the shared generator may choose it; the log
         // keeps it, so the city can be grown again with --seed.
-        var seed = city.Seed ?? Random.Shared.Next();
-        Logger.Info("A new city, {Name}, from seed {Seed}", city.Name, seed);
+        var seed = wanted.Seed ?? Random.Shared.Next();
+        Logger.Info("A new city, {Name}, from seed {Seed}", wanted.Name, seed);
 
-        using var game = new GameLoop(settings, folders, assets, seed, city.Name);
-        while (!Raylib.WindowShouldClose() && game.Leaving == GameLoop.Leave.None)
+        var map = TileMapGenerator.Generate(seed, MapSize.DefaultWidth, MapSize.DefaultHeight);
+        var city = new CitySimulation(map, seed, definitions: GameMods.Load(folders.ModsFolder, out modProblems));
+        city.Rename(wanted.Name);
+        return city;
+    }
+
+    // Plays a city until the player leaves it, and then any city they open from it, keeping the
+    // settings each ends with. Returns how the last one was left.
+    private static GameLoop.Leave PlayCities(CitySimulation city, string? file, IReadOnlyList<string> modProblems, ref GameSettings settings, GameFolders folders, GameAssets assets)
+    {
+        while (true)
         {
-            try
+            Logger.Info("Playing {Name}{From}", city.Name, file is null ? string.Empty : $" from {file}");
+            GameLoop.Leave leaving;
+            using (var game = new GameLoop(settings, city, file, folders, assets, modProblems))
             {
-                game.Update();
-                game.Draw();
+                while (!Raylib.WindowShouldClose() && game.Leaving == GameLoop.Leave.None)
+                {
+                    try
+                    {
+                        game.Update();
+                        game.Draw();
+                    }
+                    catch (Exception ex)
+                    {
+                        game.ReportError(ex);
+                    }
+                }
+
+                settings = game.Settings;
+                leaving = Raylib.WindowShouldClose() ? GameLoop.Leave.Quit : game.Leaving;
+                if (leaving == GameLoop.Leave.Open && game.OpenedCity is { } opened)
+                {
+                    (city, file, modProblems) = (opened, game.OpenedFile, []);
+                }
             }
-            catch (Exception ex)
+
+            if (leaving != GameLoop.Leave.Open)
             {
-                game.ReportError(ex);
+                return leaving;
             }
         }
-
-        settings = game.Settings;
-        return Raylib.WindowShouldClose() ? GameLoop.Leave.Quit : game.Leaving;
     }
 
     private static void SaveSettings(GameFolders folders, GameSettings settings)
