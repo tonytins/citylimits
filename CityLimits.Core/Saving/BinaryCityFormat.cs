@@ -36,6 +36,7 @@ public static class BinaryCityFormat
     // The chunks, in the order they are written; each holds a section of the save model, apart from
     // the minor version's.
     private const string VersionTag = "VERS";
+    private const string PartsTag = "PART";
     private const string CityTag = "CITY";
     private const string DefinitionsTag = "DEFS";
     private const string MapTag = "MAP ";
@@ -60,12 +61,17 @@ public static class BinaryCityFormat
         ArgumentNullException.ThrowIfNull(city);
         var save = city.Capture();
 
+        // A city from a newer save writes back the chunks it kept of it, and that save's version when
+        // it kept them all.
+        var (kept, version) = city.Kept?.ForSaving(Extension) ?? ([], SaveUpgrades.Current);
+
         using var stream = new MemoryStream();
         stream.Write(Magic);
-        WriteUInt16(stream, Format.Major);
+        WriteUInt16(stream, version.Major);
         var minor = new byte[2];
-        BinaryPrimitives.WriteUInt16BigEndian(minor, (ushort)Format.Minor);
+        BinaryPrimitives.WriteUInt16BigEndian(minor, (ushort)version.Minor);
         WriteChunk(stream, VersionTag, minor);
+        WriteChunk(stream, PartsTag, SectionCodec.Write(new PartsChunk { Parts = [.. SaveParts.Known, .. kept] }));
         WriteChunk(stream, CityTag, SectionCodec.Write(new CityChunk
         {
             Name = save.Name,
@@ -86,6 +92,11 @@ public static class BinaryCityFormat
         WriteChunk(stream, CityMapsTag, SectionCodec.Write(save.CityMaps));
         WriteChunk(stream, CycleTag, SectionCodec.Write(save.Cycle));
         WriteChunk(stream, TrafficTag, SectionCodec.Write(save.Traffic!));
+        foreach (var part in kept)
+        {
+            WriteChunk(stream, part.Chunk, city.Kept!.Chunks[part.Chunk]);
+        }
+
         return stream.ToArray();
     }
 
@@ -100,7 +111,10 @@ public static class BinaryCityFormat
         notes = skipped;
         try
         {
-            city = CitySimulation.Restore(ReadSave(bytes, skipped));
+            var save = ReadSave(bytes, skipped, out var kept);
+            city = CitySimulation.Restore(save);
+            city.Kept = kept;
+            notes = [.. SaveParts.NotesFor(kept), .. skipped];
             problem = null;
             return true;
         }
@@ -142,7 +156,7 @@ public static class BinaryCityFormat
 
         try
         {
-            var save = ReadSave(bytes, []);
+            var save = ReadSave(bytes, [], out _);
             summary = SaveFiles.Summarize(path, save);
             return summary is not null;
         }
@@ -153,8 +167,9 @@ public static class BinaryCityFormat
     }
 
     // Reads the chunks into the save model without restoring the city, refusing damage.
-    internal static CitySave ReadSave(ReadOnlySpan<byte> bytes, List<string> skipped)
+    internal static CitySave ReadSave(ReadOnlySpan<byte> bytes, List<string> skipped, out KeptParts? kept)
     {
+        kept = null;
         if (bytes.Length > MaxBytes)
         {
             throw new InvalidSave($"The file is bigger than {MaxBytes / (1024 * 1024)} MB, so it isn't a city CityLimits saved.");
@@ -172,7 +187,9 @@ public static class BinaryCityFormat
         }
 
         var minor = 0;
+        PartSave[]? parts = null;
         var chunks = new Dictionary<string, byte[]>();
+        var unknown = new Dictionary<string, byte[]>();
         var position = Magic.Length + 2;
         while (position < bytes.Length)
         {
@@ -203,9 +220,19 @@ public static class BinaryCityFormat
                 continue;
             }
 
+            if (tag == PartsTag)
+            {
+                parts = SectionCodec.Read<PartsChunk>(payload, PartsTag).Parts;
+                continue;
+            }
+
             if (!Required.Contains(tag) && !Added.Any(added => added.Tag == tag))
             {
-                skipped.Add($"Skipped a chunk this version doesn't know: '{tag}'.");
+                if (!unknown.TryAdd(tag, payload.ToArray()))
+                {
+                    throw new InvalidSave($"{tag.Trim()}: the file holds it twice.");
+                }
+
                 continue;
             }
 
@@ -215,10 +242,20 @@ public static class BinaryCityFormat
             }
         }
 
+        // A newer minor version's unknown chunks are kept when its parts list lets them be left out; in
+        // a file this version can read whole, an unknown chunk is skipped and noted, as it always was.
         var version = new FormatVersion(major, minor);
-        if (version.ProblemReadingWith(Format) is { } tooNew)
+        if (version.Minor > Format.Minor)
         {
-            throw new InvalidSave($"format: {tooNew}");
+            kept = SaveParts.Keep(version, Extension, parts, unknown.Keys, part => part.Chunk);
+            foreach (var part in kept.Parts)
+            {
+                kept.Chunks[part.Chunk] = unknown[part.Chunk];
+            }
+        }
+        else
+        {
+            skipped.AddRange(unknown.Keys.Select(tag => $"Skipped a chunk this version doesn't know: '{tag}'."));
         }
 
         var missing = Required.Concat(Added.Where(added => version >= added.Since).Select(added => added.Tag)).FirstOrDefault(tag => !chunks.ContainsKey(tag));
@@ -329,6 +366,12 @@ public static class BinaryCityFormat
         public long CityTime { get; set; }
 
         public int Funds { get; set; }
+    }
+
+    [DynamicallyAccessedMembers(SectionCodec.ModelMembers)]
+    private sealed class PartsChunk
+    {
+        public PartSave[] Parts { get; set; } = [];
     }
 
     [DynamicallyAccessedMembers(SectionCodec.ModelMembers)]

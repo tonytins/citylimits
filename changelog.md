@@ -1,5 +1,25 @@
 # CityLimits Changelog
 
+## 0.3.103
+
+From this version on, CityLimits can open a city saved by a newer
+version, as long as the newer version says it's safe to. Parts it
+doesn't understand yet are kept as they were when you save, where that's
+safe, or left out for the newer version to rebuild. The game tells you
+when a city came from a newer version, and the log says what happens to
+each part. Before, a newer save simply wouldn't open.
+
+Autosaves now use the same format as your city: a city saved as `.fcl`
+autosaves as `.fcl`.
+
+If one setting in `settings.json` is wrong, only that setting goes back
+to its default now; the rest are kept.
+
+For developers and agents: saves are format 1.2, adding a parts list
+(`"parts"`, and the `PART` chunk) that names what each version added and
+whether an older game may ignore it or keep it. `docs/saving.md`
+explains how a newer save opens.
+
 ## 0.3.102
 
 The roads now keep track of traffic. Every time someone in your city

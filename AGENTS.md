@@ -418,7 +418,8 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   (`UI/ConfirmPanel.cs`). A save goes through a temporary file, so a failure
   leaves the last one whole. A loaded city resumes at the last speed.
   Every 15 minutes of play (only while the city runs), `GameLoop` writes
-  an autosave beside the city's own file, `Joffburg (autosave).cl`, unless
+  an autosave beside the city's own file, in its format, such as
+  `Joffburg (autosave).cl` or `.fcl`, unless
   the city is as it was last saved; `Saving/Autosave.cs` decides when and
   where, and `AutosaveSlots` in the settings keeps one or two, the newer
   replacing the older. An autosave isn't the player saving, so leaving
@@ -442,7 +443,10 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   place. Without a config or Documents folder, the game falls back to
   the executable's folder and logs why. The window size and the speed
   are written when the game ends and read back when it starts; a damaged
-  file is reported and the defaults are used. `AutosaveSlots`, 1 or 2,
+  file is reported and the defaults are used. Each setting is read on
+  its own: one that is the wrong type or out of range falls back to its
+  default with a warning, and the rest are kept, so a value a newer
+  version wrote can't reset them all. `AutosaveSlots`, 1 or 2,
   says how many autosaves a city keeps; a settings file without it keeps
   one.
 - **The headless run.** `citylimits --headless` runs the city with no
@@ -495,7 +499,7 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   and no project. It holds the parser, the dispatcher, the default
   command, the strict option reader, and the exit codes.
 - **The tests.** `CityLimits.Tests` uses xUnit 2 with the VSTest runner
-  and coverlet, and holds 626 tests over traffic, saving, loading, autosave, importing Micropolis cities, format versions and schemas, with a city
+  and coverlet, and holds 640 tests over opening newer saves, traffic, saving, loading, autosave, importing Micropolis cities, format versions and schemas, with a city
   the owner built in both formats in `CityLimits.Tests/Assets/`, the generator, the terrain edges, the power plants, lines, and grid, the budget, the stations and their coverage, parks, hospitals and churches, the map, the
   calendar, the clock, the simulation, the settings, the tile rules, the
   build actions, the road network, the treasury, the scenario loader and
@@ -668,10 +672,20 @@ without reflection.
   number from before, `1`, reads as `1.0`. A binary save keeps its major
   version in the header and its minor in the `VERS` chunk, and new state
   goes in new chunks, never new fields in old ones. The scenario report's
-  `format` stays a whole number, since scripts read it.
+  `format` stays a whole number, since scripts read it. Saves are at 1.2:
+  1.1 added traffic and 1.2 the parts list.
 - **Older saves climb one minor version at a time,** each step a small
-  function with a test from a fixture; Bridgeport's fixtures in
-  `CityLimits.Tests/Assets/` stay at 1.0 for that.
+  function in `SaveUpgrades`, with a test from a fixture; Bridgeport's
+  fixtures in `CityLimits.Tests/Assets/` stay at 1.0 for that.
+- **Newer saves open when they can, as PNG does** (`SaveParts`). Each save
+  lists the parts added after 1.0, each ignorable (an older game may open
+  the file without it) and keepable (an older game that changed the city
+  may write it back as it was), as Tony Bark settled. A part this version
+  doesn't know is checked against that list: one that isn't ignorable
+  refuses the file. The city carries the parts it kept (`KeptParts`) and
+  writes back the keepable ones in their own format, at the newer version
+  only when it kept them all. A new part is a whole new section or chunk,
+  with an entry in `SaveParts.Known` saying its two flags.
 - **JSON goes through generated code.** Each JSON format reads and writes
   through a System.Text.Json source-generated context, set as its
   options' `TypeInfoResolver` and used through `GetTypeInfo`, so it

@@ -10,7 +10,7 @@ namespace CityLimits.Core.Saving;
 internal static class SaveUpgrades
 {
     /// <summary>The save model's version, which both save formats write.</summary>
-    public static readonly FormatVersion Current = new(1, 1);
+    public static readonly FormatVersion Current = new(1, 2);
 
     /// <summary>Upgrades a save in place, from whatever older 1.x version it is.</summary>
     public static void ToCurrent(CitySave save)
@@ -21,6 +21,7 @@ internal static class SaveUpgrades
             AddTraffic(save);
         }
 
+        // 1.2 added the parts list, which a save from before simply has no newer parts in.
         save.Format = Current;
     }
 

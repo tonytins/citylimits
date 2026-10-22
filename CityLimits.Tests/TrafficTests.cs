@@ -130,7 +130,7 @@ public class TrafficTests
     }
 
     [Fact]
-    public void ASaveFromBeforeTrafficLoadsWithQuietRoadsAndSavesAs11()
+    public void ASaveFromBeforeTrafficLoadsWithQuietRoadsAndSavesAsTheCurrentVersion()
     {
         var city = Street();
         for (var i = 0; i < 300; i++)
@@ -145,7 +145,7 @@ public class TrafficTests
         Assert.True(FlatCityFormat.TryRead(save.ToJsonString(), out var upgraded, out var problem), problem);
 
         Assert.All(Enumerable.Range(0, 20), x => Assert.Equal(0, upgraded.Traffic.DensityAt(x, 6)));
-        Assert.Equal("1.1", JsonNode.Parse(FlatCityFormat.Write(upgraded))!["format"]!.GetValue<string>());
+        Assert.Equal("1.2", JsonNode.Parse(FlatCityFormat.Write(upgraded))!["format"]!.GetValue<string>());
     }
 
     [Fact]

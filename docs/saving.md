@@ -36,10 +36,12 @@ the game lists the folder's cities itself, newest first.
 ## Autosave
 
 A city saves itself every 15 minutes of play, counting only time it runs:
-paused, or with a panel holding it, the clock stops. An autosave is a
-`.cl` file beside the city's own, such as `Joffburg (autosave).cl`, and
-is skipped when the city is as it was last saved, by the player or by an
-autosave. The notice line says when one is written.
+paused, or with a panel holding it, the clock stops. An autosave sits
+beside the city's own file, in the same format, such as
+`Joffburg (autosave).cl`, or `Joffburg (autosave).fcl` for a city saved
+as `.fcl`, so a newer save's parts it keeps go into its autosaves too.
+It is skipped when the city is as it was last saved, by the player or by
+an autosave. The notice line says when one is written.
 
 - **One slot or two.** `AutosaveSlots` in `settings.json` is `1` by
   default, or `2`: with two, `Joffburg (autosave 2).cl` joins the first,
@@ -101,6 +103,7 @@ size of the same city as `.fcl`.
 | `MAP ` | The width and the height, then a word a tile |
 | `BUDG`, `CENS`, `DEMD`, `POWR`, `SERV`, `COMM`, `CMAP`, `CYCL` | The budget, the census, demand, power, services, hospitals and churches, the city maps, and the cycle's counts |
 | `TRAF` | The traffic on each 2 by 2 block; from format 1.1 |
+| `PART` | The parts list (see Opening a newer save); from format 1.2, written after `VERS` |
 
 Each tile's word holds, from its lowest bit: the ground (2 bits), the use
 (4 bits), the footprint part (4 bits), power (1 bit), and 5 bits more: a
@@ -111,8 +114,10 @@ The other chunks hold their section of the save model field by field, in
 the order the model declares them, which is the order the flat format
 writes them in: whole numbers as variable-length zigzag integers (seven
 bits a byte), yes-or-no as a byte, text as UTF-8 after its length, and a
-list after its count. Since both formats write the same model, a field
-added to it is in both.
+list after its count. A section, whether a field of its own or an item in
+a list, starts with a byte that says whether it is there (1) or missing
+(0), and then holds its fields. Since both formats write the same model,
+a field added to it is in both.
 
 A chunk this version doesn't know is skipped, and the game notes it in
 the log, so a later version can add one. A known chunk that is damaged,
@@ -239,12 +244,39 @@ baseline that adds to the city takes the next minor version.
 |---|---|---|
 | 1.0 | The first versioned saves | |
 | 1.1 | Traffic: `"traffic"`, and the `TRAF` chunk | The roads start quiet, and the city's trips fill them again |
+| 1.2 | The parts list: `"parts"`, and the `PART` chunk, so a newer save can open in an older game | Nothing: a save without a list has no newer parts |
 - **Growing the binary format.** New state goes in new chunks, not new
   fields in old ones, so a minor version stays an addition.
 - **The flat format** writes its version as a string, `"1.0"`, so 1.10
   can't read as 1.1; a whole number, as saves before minor versions
   wrote, reads as that major version's .0. Scenarios and mod definitions
   are versioned the same way.
+
+## Opening a newer save
+
+From 0.3.103, CityLimits can open a city a newer version saved, as PNG
+readers handle chunks they don't know. Each save lists the parts every
+version after 1.0 added (`"parts"` in `.fcl`, the `PART` chunk in `.cl`),
+each with two flags that say what a game that doesn't know the part may
+do with it:
+
+- **Ignorable:** the game may open the file without it. If any part the
+  game doesn't know isn't ignorable, such as one that puts new kinds of
+  tiles on the map, the file is refused with a message naming it.
+- **Keepable:** a game that has changed the city may write the part back
+  exactly as it found it, because nothing in it goes wrong when the rest
+  of the city moves on. Traffic is: any amount on any road is valid, and
+  it fades. A part that isn't keepable is left out, and the newer game
+  rebuilds it, as an upgrade does.
+
+Saving such a city writes back the keepable parts it kept, in the same
+format they came in (a binary chunk can't become JSON without being
+understood). When it kept them all, the save keeps the newer version;
+when it left one out, it is this version's, so the newer game knows to
+rebuild. A city opened this way says so on the notice line, and the log
+lists each part and what will happen to it. A part a newer version adds
+is always a whole new section or chunk, never a new field in an existing
+one, so it can be kept or left out whole.
 
 ## Schemas
 

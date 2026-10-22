@@ -1,6 +1,6 @@
 # CityLimits roadmap
 
-> **Last reviewed:** 2026-10-21 · **Last updated:** 2026-10-22 · **Change:** minor (Radial R1: the traffic map, and save format 1.1) · **Stage:** alpha
+> **Last reviewed:** 2026-10-21 · **Last updated:** 2026-10-22 · **Change:** minor (newer saves open in older versions, and settings fall back one by one) · **Stage:** alpha
 
 Forward-looking: where CityLimits stands, what blocks the next milestone,
 and what comes next. Verified status and evidence are in the
@@ -327,6 +327,7 @@ baseline's growth depends on.
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-22 | minor | An update of its own before Radial's R2, settled with Tony Bark: from 0.3.103 a newer save opens in an older version when every part it doesn't know is ignorable, by a parts list each save carries with two flags a part, as PNG does, and the keepable parts are written back in their own format; saves move to format 1.2 for the list. Autosaves follow their city's format. Each setting falls back on its own, so one bad value keeps the rest. 640 tests. |
 | 2026-10-22 | minor | Radial, R1: the traffic map, as in Micropolis. A trip that arrives lays 50 on each road tile it remembered, on 2 by 2 blocks, capped at 240 always (Micropolis caps only one time in six; Tony Bark chose always), and phase 10 fades it. Saves move to format 1.1 with a `traffic` section and a `TRAF` chunk; 1.0 saves upgrade to quiet roads. The headless run logs the busiest road. Traffic has no effect until R2. Radial is at 50%; 38–67 h left in total, 626 tests. |
 | 2026-10-22 | minor | Radial begins, phase R0, settled with Tony Bark: saves, scenarios, and mod files carry major.minor format versions (a minor version only adds; each new Micropolis edition takes the next), every JSON format reads through source-generated code with reflection-based JSON off in the game and tests, Core is trim-analysed, and `docs/schemas/` holds JSON Schemas generated from the readers and checked by a test. Radial's checklist becomes R0 to R3, rail included, and the congestion item is dropped. Radial is at 25%; 41–72 h left in total, 618 tests. |
 | 2026-10-21 | major | Tony Bark marked CityLimits an alpha: the version's base is 0.3.100, and the changelog sums up everything since 0.2.100. Every row of the alpha gate passes. Traffic, Deadwood, the city score, and polish are left; 40–70 h in total. |
