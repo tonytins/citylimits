@@ -146,6 +146,107 @@ internal static class MapCodec
         return map;
     }
 
+    // A tile as one 16-bit word, as Micropolis' city files hold their tiles: bits 0 and 1 the
+    // ground, 2 to 5 the use, 6 to 9 the footprint part, 10 power, and 11 to 15 a building
+    // centre's level (11 to 13) and land-value class (14 and 15), or a house tile's house.
+    private const int UseShift = 2;
+    private const int PartShift = 6;
+    private const int PoweredBit = 1 << 10;
+    private const int ExtraShift = 11;
+    private const int ClassShift = 14;
+
+    /// <summary>Writes a map as one word a tile, column by column, as Micropolis' city files lay theirs out.</summary>
+    public static ushort[] EncodeWords(TileMap map)
+    {
+        ArgumentNullException.ThrowIfNull(map);
+        if (Enum.GetValues<TileUse>().Length > 16)
+        {
+            throw new InvalidOperationException("A tile word holds 16 uses; the binary format needs another bit for more.");
+        }
+
+        var words = new ushort[map.Width * map.Height];
+        var i = 0;
+        for (var x = 0; x < map.Width; x++)
+        {
+            for (var y = 0; y < map.Height; y++)
+            {
+                var state = map.StateAt(x, y);
+                var extra = state.IsBuildingCenter
+                    ? state.Development | (state.ValueClass << (ClassShift - ExtraShift))
+                    : state.House;
+                words[i++] = (ushort)((int)state.Kind
+                    | ((int)state.Use << UseShift)
+                    | ((state.HasFootprint ? state.ZonePart : 0) << PartShift)
+                    | (state.Powered ? PoweredBit : 0)
+                    | (extra << ExtraShift));
+            }
+        }
+
+        return words;
+    }
+
+    /// <summary>Reads words written by <see cref="EncodeWords"/> back into layers, for <see cref="Decode"/> to check.</summary>
+    /// <exception cref="InvalidSave">A word holds a ground or a use there isn't.</exception>
+    public static MapSave DecodeWords(int width, int height, ReadOnlySpan<ushort> words)
+    {
+        SaveChecks.InRange(width, 1, MaxSide, "map.width");
+        SaveChecks.InRange(height, 1, MaxSide, "map.height");
+        if (words.Length != width * height)
+        {
+            throw new InvalidSave($"map: needs {width * height} tiles, not {words.Length}.");
+        }
+
+        var ground = new char[height][];
+        var use = new char[height][];
+        var part = new char[height][];
+        for (var y = 0; y < height; y++)
+        {
+            (ground[y], use[y], part[y]) = (new char[width], new char[width], new char[width]);
+        }
+
+        var buildings = new List<BuildingSave>();
+        var houses = new List<HouseSave>();
+        var i = 0;
+        for (var x = 0; x < width; x++)
+        {
+            for (var y = 0; y < height; y++)
+            {
+                int word = words[i++];
+                var kind = (TileKind)(word & 0b11);
+                var tileUse = (TileUse)((word >> UseShift) & 0b1111);
+                if (!GroundChars.TryGetValue(kind, out var groundChar) || !UseChars.TryGetValue(tileUse, out var useChar))
+                {
+                    throw new InvalidSave($"map at {x}, {y}: the tile's word, {word}, holds a ground or a use there isn't.");
+                }
+
+                var size = Footprint.SizeOf(tileUse);
+                var tilePart = (word >> PartShift) & 0b1111;
+                var extra = word >> ExtraShift;
+                (ground[y][x], use[y][x]) = (groundChar, useChar);
+                part[y][x] = size > 1 ? char.ToLowerInvariant(Convert.ToString(tilePart, 16)[0]) : NoPart;
+                if (size > 1 && tilePart == Footprint.CenterPart(size))
+                {
+                    buildings.Add(new BuildingSave { X = x, Y = y, Development = extra & 0b111, ValueClass = extra >> (ClassShift - ExtraShift), Powered = (word & PoweredBit) != 0 });
+                }
+                else if (extra != 0)
+                {
+                    houses.Add(new HouseSave { X = x, Y = y, House = extra });
+                }
+            }
+        }
+
+        return new MapSave
+        {
+            Width = width,
+            Height = height,
+            Ground = [.. ground.Select(row => new string(row))],
+            Use = [.. use.Select(row => new string(row))],
+            Part = [.. part.Select(row => new string(row))],
+            Buildings = [.. buildings],
+            Houses = [.. houses],
+        };
+    }
+
     private static TileState Tile(MapSave save, int x, int y, Dictionary<(int X, int Y), BuildingSave> centres, Dictionary<(int X, int Y), int> houses)
     {
         var where = $"map at {x}, {y}";

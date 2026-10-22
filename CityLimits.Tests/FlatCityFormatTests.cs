@@ -294,12 +294,12 @@ public class FlatCityFormatTests
 public class CityFilesTests
 {
     [Theory]
-    [InlineData("Joffburg", "Joffburg.fcl")]
-    [InlineData("  New Dullsville ", "New Dullsville.fcl")]
-    [InlineData("A/B:C*D?", "A_B_C_D_.fcl")]
-    [InlineData("Ends with dot.", "Ends with dot.fcl")]
-    [InlineData("CON", "_CON.fcl")]
-    [InlineData("com1", "_com1.fcl")]
+    [InlineData("Joffburg", "Joffburg.cl")]
+    [InlineData("  New Dullsville ", "New Dullsville.cl")]
+    [InlineData("A/B:C*D?", "A_B_C_D_.cl")]
+    [InlineData("Ends with dot.", "Ends with dot.cl")]
+    [InlineData("CON", "_CON.cl")]
+    [InlineData("com1", "_com1.cl")]
     public void ACityIsSavedUnderAFileNameItsNameCanMake(string name, string expected)
     {
         Assert.Equal(expected, CityFiles.FileNameFor(name));

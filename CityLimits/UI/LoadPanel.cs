@@ -7,6 +7,8 @@ namespace CityLimits.UI;
 /// </summary>
 public sealed class LoadPanel
 {
+    private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
+
     private const int FontSize = 20;
     private const int RowSize = 14;
     private const int SmallSize = 10;
@@ -87,10 +89,16 @@ public sealed class LoadPanel
             }
 
             var chosen = _cities[_first + row];
-            if (!FlatCityFormat.TryReadFile(chosen.Path, out var city, out var problem))
+            if (!CityFiles.TryRead(chosen.Path, out var city, out var problem, out var notes))
             {
+                Logger.Warn("{File} couldn't be opened: {Problem}", chosen.Path, problem);
                 _problem = $"{System.IO.Path.GetFileName(chosen.Path)}: {problem}";
                 return Outcome.Open;
+            }
+
+            foreach (var note in notes)
+            {
+                Logger.Info("{File}: {Note}", chosen.Path, note);
             }
 
             (City, Path) = (city, chosen.Path);
@@ -127,7 +135,8 @@ public sealed class LoadPanel
             }
 
             Raylib.DrawText(city.Name, x + 6, (int)rowBounds.Y + 4, RowSize, hovered ? Theme.Accent : Theme.Text);
-            var details = $"{city.Date.Month:00}/{city.Date.Year:0000}   {Hud.Count(city.Population)} Pop   {Hud.Money(city.Funds)}   saved {city.SavedUtc.ToLocalTime():yyyy-MM-dd HH:mm}";
+            var flat = System.IO.Path.GetExtension(city.Path).Equals(FlatCityFormat.Extension, StringComparison.OrdinalIgnoreCase) ? "   flat file" : string.Empty;
+            var details = $"{city.Date.Month:00}/{city.Date.Year:0000}   {Hud.Count(city.Population)} Pop   {Hud.Money(city.Funds)}   saved {city.SavedUtc.ToLocalTime():yyyy-MM-dd HH:mm}{flat}";
             Raylib.DrawText(details, x + 6, (int)rowBounds.Y + 4 + RowSize + 2, SmallSize, Theme.TextDim);
         }
 

@@ -1,5 +1,18 @@
 # CityLimits Changelog
 
+## 0.2.117
+
+Cities now save in CityLimits' own binary format, `.cl`: about 40% smaller
+than before, and quick to read and write. Each part of the file carries a
+checksum, so a damaged save is caught and named rather than loading
+wrong. Cities you saved as `.fcl` still load, and save back as `.fcl`;
+Load Game lists both, marking the flat ones.
+
+For developers and agents: `BinaryCityFormat` reads and writes `.cl`, and
+`CityFiles.TryRead` and `TryWrite` handle either format by its
+extension. `docs/saving.md` describes the binary layout. The flat format
+stays the one to read and compare.
+
 ## 0.2.116
 
 You can save your city. Press **Ctrl+S** and it's saved under its name in

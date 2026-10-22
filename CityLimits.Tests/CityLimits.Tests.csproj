@@ -22,6 +22,8 @@
   <ItemGroup>
     <!-- The built-in scenarios, so each one runs as a test; the game project itself stays unreferenced. -->
     <None Include="..\CityLimits\Assets\Scenarios\*.json" LinkBase="Scenarios" CopyToOutputDirectory="PreserveNewest" />
+    <!-- Cities the owner made in the game, saved in each format, to read as fixtures. -->
+    <None Include="Assets\*" LinkBase="Assets" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

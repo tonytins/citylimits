@@ -1,11 +1,13 @@
+using System.Diagnostics.CodeAnalysis;
 using CityLimits.Core.Simulation;
 
 namespace CityLimits.Core.Saving;
 
 /// <summary>
-/// The saved cities in a folder: each city is saved under its own name, and the list a player picks
-/// from is the folder's flat city files, newest first. There is no file dialog; the folder is
-/// <c>Documents/CityLimits/Cities</c>, or <c>Cities</c> beside a portable game.
+/// The saved cities in a folder: each city is saved under its own name, in the binary format unless
+/// it came from a flat file, and the list a player picks from is the folder's city files of either
+/// format, newest first. There is no file dialog; the folder is <c>Documents/CityLimits/Cities</c>,
+/// or <c>Cities</c> beside a portable game.
 /// </summary>
 public static class CityFiles
 {
@@ -14,11 +16,17 @@ public static class CityFiles
 
     /// <summary>
     /// The file a city of the given name is saved to: its name, with any character a file name
-    /// can't hold on Windows or Linux made an underscore, and the format's extension.
+    /// can't hold on Windows or Linux made an underscore, and the format's extension, the binary
+    /// format's unless another is given.
     /// </summary>
-    /// <exception cref="ArgumentException">The name isn't one a city can have.</exception>
-    public static string FileNameFor(string cityName)
+    /// <exception cref="ArgumentException">The name isn't one a city can have, or the extension isn't a city format's.</exception>
+    public static string FileNameFor(string cityName, string extension = BinaryCityFormat.Extension)
     {
+        if (!IsCityExtension(extension))
+        {
+            throw new ArgumentException($"'{extension}' isn't a city format's extension.", nameof(extension));
+        }
+
         if (!CitySimulation.IsValidName(cityName))
         {
             throw new ArgumentException($"'{cityName}' isn't a name a city can have.", nameof(cityName));
@@ -34,8 +42,47 @@ public static class CityFiles
             safe = $"_{safe}";
         }
 
-        return safe + FlatCityFormat.Extension;
+        return safe + extension;
     }
+
+    /// <summary>Tells whether a file is a city by its extension: binary or flat.</summary>
+    public static bool IsCityFile(string path) => IsCityExtension(Path.GetExtension(path));
+
+    /// <summary>Reads a city from a file of either format, by its extension. The notes say what was read but not used.</summary>
+    public static bool TryRead(string path, [NotNullWhen(true)] out CitySimulation? city, [NotNullWhen(false)] out string? problem, out IReadOnlyList<string> notes)
+    {
+        notes = [];
+        switch (Path.GetExtension(path).ToLowerInvariant())
+        {
+            case BinaryCityFormat.Extension:
+                return BinaryCityFormat.TryReadFile(path, out city, out problem, out notes);
+            case FlatCityFormat.Extension:
+                return FlatCityFormat.TryReadFile(path, out city, out problem);
+            default:
+                city = null;
+                problem = $"{Path.GetFileName(path)} isn't a city file.";
+                return false;
+        }
+    }
+
+    /// <summary>Writes a city to a file in the format its extension names.</summary>
+    /// <exception cref="ArgumentException">The extension isn't a city format's.</exception>
+    public static bool TryWrite(CitySimulation city, string path, [NotNullWhen(false)] out string? problem) =>
+        Path.GetExtension(path).ToLowerInvariant() switch
+        {
+            BinaryCityFormat.Extension => BinaryCityFormat.TryWriteFile(city, path, out problem),
+            FlatCityFormat.Extension => FlatCityFormat.TryWriteFile(city, path, out problem),
+            _ => throw new ArgumentException($"{Path.GetFileName(path)} isn't a city file.", nameof(path)),
+        };
+
+    private static bool IsCityExtension(string extension) =>
+        extension.Equals(BinaryCityFormat.Extension, StringComparison.OrdinalIgnoreCase)
+        || extension.Equals(FlatCityFormat.Extension, StringComparison.OrdinalIgnoreCase);
+
+    private static bool TryReadSummary(FileInfo file, [NotNullWhen(true)] out SavedCitySummary? summary) =>
+        file.Extension.Equals(BinaryCityFormat.Extension, StringComparison.OrdinalIgnoreCase)
+            ? BinaryCityFormat.TryReadSummary(file.FullName, out summary)
+            : FlatCityFormat.TryReadSummary(file.FullName, out summary);
 
     /// <summary>The cities saved in a folder, newest first; files that can't be read are left out. An empty or missing folder has none.</summary>
     public static IReadOnlyList<SavedCitySummary> List(string folder)
@@ -48,13 +95,14 @@ public static class CityFiles
             }
 
             var files = new DirectoryInfo(folder)
-                .EnumerateFiles("*" + FlatCityFormat.Extension)
+                .EnumerateFiles()
+                .Where(file => IsCityExtension(file.Extension))
                 .OrderByDescending(file => file.LastWriteTimeUtc)
                 .Take(MaxListed);
             var cities = new List<SavedCitySummary>();
             foreach (var file in files)
             {
-                if (FlatCityFormat.TryReadSummary(file.FullName, out var summary))
+                if (TryReadSummary(file, out var summary))
                 {
                     cities.Add(summary);
                 }

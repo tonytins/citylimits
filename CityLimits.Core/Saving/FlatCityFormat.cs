@@ -86,28 +86,8 @@ public static class FlatCityFormat
     public static bool TryReadFile(string path, [NotNullWhen(true)] out CitySimulation? city, [NotNullWhen(false)] out string? problem)
     {
         city = null;
-        try
-        {
-            var file = new FileInfo(path);
-            if (!file.Exists)
-            {
-                problem = $"There's no city at {path}.";
-                return false;
-            }
-
-            if (file.Length > MaxBytes)
-            {
-                problem = $"{file.Name} is bigger than {MaxBytes / (1024 * 1024)} MB, so it isn't a city CityLimits saved.";
-                return false;
-            }
-
-            return TryRead(File.ReadAllText(path), out city, out problem);
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
-        {
-            problem = $"{path} couldn't be read: {ex.Message}";
-            return false;
-        }
+        return SaveFiles.TryReadBytes(path, MaxBytes, out var bytes, out problem)
+            && TryRead(Encoding.UTF8.GetString(bytes), out city, out problem);
     }
 
     /// <summary>
@@ -124,61 +104,25 @@ public static class FlatCityFormat
     public static bool TryWriteFile(string text, string path, [NotNullWhen(false)] out string? problem)
     {
         ArgumentNullException.ThrowIfNull(text);
-
-        var temporary = path + ".tmp";
-        try
-        {
-            var directory = Path.GetDirectoryName(path);
-            if (!string.IsNullOrEmpty(directory))
-            {
-                Directory.CreateDirectory(directory);
-            }
-
-            File.WriteAllText(temporary, text);
-            File.Move(temporary, path, overwrite: true);
-            problem = null;
-            return true;
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
-        {
-            problem = $"{Path.GetFileName(path)} couldn't be saved: {ex.Message}";
-            try
-            {
-                File.Delete(temporary);
-            }
-            catch (Exception cleanup) when (cleanup is IOException or UnauthorizedAccessException)
-            {
-                // The temporary file is left behind; the save before it is untouched either way.
-            }
-
-            return false;
-        }
+        return SaveFiles.TryWriteBytes(Encoding.UTF8.GetBytes(text), path, out problem);
     }
 
     /// <summary>Reads what a list of saved cities shows about one, without restoring the whole city.</summary>
     public static bool TryReadSummary(string path, [NotNullWhen(true)] out SavedCitySummary? summary)
     {
         summary = null;
+        if (!SaveFiles.TryReadBytes(path, MaxBytes, out var bytes, out _))
+        {
+            return false;
+        }
+
         try
         {
-            var file = new FileInfo(path);
-            if (!file.Exists || file.Length > MaxBytes)
-            {
-                return false;
-            }
-
-            var save = JsonSerializer.Deserialize<CitySave>(File.ReadAllText(path), Options);
-            if (save is null || save.Format != Format || save.CityTime < 0)
-            {
-                return false;
-            }
-
-            var census = save.Census;
-            long population = census is null ? 0 : (long)census.ResidentPopulation + census.CommercialPopulation + census.IndustrialPopulation;
-            summary = new SavedCitySummary(path, save.Name, CityCalendar.DateAt(save.CityTime), population, save.Funds, file.LastWriteTimeUtc);
-            return true;
+            var save = JsonSerializer.Deserialize<CitySave>(bytes, Options);
+            summary = save is { Format: Format } ? SaveFiles.Summarize(path, save) : null;
+            return summary is not null;
         }
-        catch (Exception ex) when (ex is JsonException or IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
+        catch (JsonException)
         {
             return false;
         }

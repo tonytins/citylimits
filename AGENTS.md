@@ -34,7 +34,7 @@ CityLimits.Core/              engine-free library: the world and the simulation,
   Simulation/                   namespace CityLimits.Core.Simulation: the clock, the calendar, the tick and its cycle, the census, demand, growth, trips, the city maps, the power grid, service coverage, the city's messages
   Economy/                      namespace CityLimits.Core.Economy: the treasury, the costs, the budget
   Settings/                     namespace CityLimits.Core.Settings: the settings that survive a session, and the folders the game keeps its files in
-  Saving/                       namespace CityLimits.Core.Saving: the save model, the flat city format (.fcl), the map's layers, and the saved cities' files
+  Saving/                       namespace CityLimits.Core.Saving: the save model, the binary (.cl) and flat (.fcl) city formats, the map's layers and words, and the saved cities' files
   Scenarios/                    namespace CityLimits.Core.Scenarios: the scenario loader, the runner, the report, the demo town
   Definitions/                  namespace CityLimits.Core.Definitions: the definitions as data, the base game's, and the mod loader
 CityLimits.CommandLine/       engine-free library: the command line, no Raylib
@@ -390,9 +390,12 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   whole, from its centre: its houses or its level, its population, and
   "no power" when the scan last found it without (`TileInfo.Describe`).
 - **Saving cities.** As `docs/saving.md` describes, a city saves to
-  `Documents/CityLimits/Cities` under its own name (`CityFiles`) in the
-  flat city format, `.fcl` (`Saving/FlatCityFormat.cs`): one JSON file
-  holding everything that affects the steps to come, the cycle's half-done
+  `Documents/CityLimits/Cities` under its own name (`CityFiles`), in the
+  binary city format, `.cl` (`Saving/BinaryCityFormat.cs`): a header and
+  checksummed chunks, with the map as a 16-bit word a tile. A city opened
+  from the flat city format, `.fcl` (`Saving/FlatCityFormat.cs`), one
+  readable JSON file, saves back to it. Both hold everything that affects
+  the steps to come, the cycle's half-done
   figures included, so a city saves at any step, even paused, and loads
   back running on exactly as it would have. Each part of the simulation
   captures and restores its own section, checking it; the map is written
@@ -467,7 +470,8 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   and no project. It holds the parser, the dispatcher, the default
   command, the strict option reader, and the exit codes.
 - **The tests.** `CityLimits.Tests` uses xUnit 2 with the VSTest runner
-  and coverlet, and holds 551 tests over saving and loading, the generator, the terrain edges, the power plants, lines, and grid, the budget, the stations and their coverage, parks, hospitals and churches, the map, the
+  and coverlet, and holds 566 tests over saving and loading, with a city
+  the owner built in both formats in `CityLimits.Tests/Assets/`, the generator, the terrain edges, the power plants, lines, and grid, the budget, the stations and their coverage, parks, hospitals and churches, the map, the
   calendar, the clock, the simulation, the settings, the tile rules, the
   build actions, the road network, the treasury, the scenario loader and
   runner, every built-in scenario, the definitions and the mod loader, zone growth, the census and demand, trips, growth and the city maps,
@@ -561,8 +565,9 @@ A city builder lives or dies on its simulation, not its art. The rules:
   keep in step, because two lists drift.
 - **New state goes in the save.** A field that lasts from one step to the
   next, in any part of the simulation, is captured and restored by that
-  part's `Capture` and `Restore`, with a field in `CitySave` and a line in
-  `docs/saving.md`; otherwise a loaded city drifts from the one that was
+  part's `Capture` and `Restore`, with a field in `CitySave` (which both
+  formats write, so a binary save's format version goes up with it) and a
+  line in `docs/saving.md`; otherwise a loaded city drifts from the one that was
   saved. `FlatCityFormatTests` runs a saved and a loaded town in step and
   compares them, which catches state left out as long as it changes what
   the city does.

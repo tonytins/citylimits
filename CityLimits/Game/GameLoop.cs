@@ -572,11 +572,12 @@ public sealed class GameLoop : IDisposable
 
     private bool HasUnsavedChanges() => _savedText is null || FlatCityFormat.Write(_simulation) != _savedText;
 
-    // A city is saved under its name. Saving over its own file is plain saving; replacing another
-    // city's file of the same name asks first.
+    // A city is saved under its name, in the binary format unless it came from a flat file. Saving
+    // over its own file is plain saving; replacing another city's file of the same name asks first.
     private void Save(bool confirmed)
     {
-        var file = CityFiles.FileNameFor(_simulation.Name);
+        var flat = _cityFile is not null && Path.GetExtension(_cityFile).Equals(FlatCityFormat.Extension, StringComparison.OrdinalIgnoreCase);
+        var file = CityFiles.FileNameFor(_simulation.Name, flat ? FlatCityFormat.Extension : BinaryCityFormat.Extension);
         var path = Path.Combine(_folders.CitiesFolder, file);
         if (!confirmed && File.Exists(path) && !string.Equals(Path.GetFullPath(path), _cityFile is null ? null : Path.GetFullPath(_cityFile), StringComparison.Ordinal))
         {
@@ -584,8 +585,9 @@ public sealed class GameLoop : IDisposable
             return;
         }
 
+        // The flat text is what later saves are compared with, whichever format the file is in.
         var text = FlatCityFormat.Write(_simulation);
-        if (!FlatCityFormat.TryWriteFile(text, path, out var problem))
+        if (!CityFiles.TryWrite(_simulation, path, out var problem))
         {
             Logger.Error("{Problem}", problem);
             (_notice, _noticeIsError) = (problem, true);
