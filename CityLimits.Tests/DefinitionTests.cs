@@ -54,6 +54,7 @@ public class DefinitionTests
         Assert.Equal("Commercial zone", definitions.Zone(TileUse.Commercial).Name);
         Assert.Equal(100, definitions.Zone(TileUse.Residential).Price);
         Assert.Equal(["cheap-zones"], definitions.Mods);
+        Assert.Equal([new AppliedMod("cheap-zones", mod!.Name, mod.Version)], definitions.AppliedMods);
     }
 
     [Theory]
@@ -238,7 +239,8 @@ public class DefinitionTests
         {
             var modFolder = Path.Combine(folder, mod.Id);
             Directory.CreateDirectory(modFolder);
-            File.WriteAllText(Path.Combine(modFolder, "mod.json"), $$"""{ "format": 1, "id": "{{mod.Id}}", "name": "{{mod.Name}}" }""");
+            var version = mod.Version is null ? string.Empty : $", \"version\": \"{mod.Version}\"";
+            File.WriteAllText(Path.Combine(modFolder, "mod.json"), $$"""{ "format": 1, "id": "{{mod.Id}}", "name": "{{mod.Name}}"{{version}} }""");
             var zones = mod.Zones.Select(pair =>
                 $$"""{ "id": "{{pair.Key.ToString().ToLowerInvariant()}}"{{(pair.Value.Name is null ? "" : $", \"name\": \"{pair.Value.Name}\"")}}{{(pair.Value.Price is null ? "" : $", \"price\": {pair.Value.Price}")}} }""");
             File.WriteAllText(Path.Combine(modFolder, "zones.json"), $$"""{ "format": 1, "zones": [ {{string.Join(", ", zones)}} ] }""");

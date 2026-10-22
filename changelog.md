@@ -1,5 +1,20 @@
 # CityLimits Changelog
 
+## 0.2.115
+
+Click your city's name in the top bar for the city panel: the city at a
+glance, with its date and age, population, demand, funds and tax rate,
+and this year's and last year's cash flow; the mods it was made with;
+and, at the bottom, its seed. Click the seed to copy it, so you can share
+it or grow the same map again with `--seed`. Type a new name at the top
+and press Enter to rename the city. The game pauses while the panel is
+open, and you can move it by its title, as with the budget and demand
+windows.
+
+For developers: `CityDefinitions.AppliedMods` lists the mods a city was
+made with, with their names and versions, and the movable windows share
+`IMovableWindow`.
+
 ## 0.2.114
 
 CityLimits now opens with a loading screen and a start menu, after a

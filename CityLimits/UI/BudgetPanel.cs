@@ -5,7 +5,7 @@ namespace CityLimits.UI;
 /// and funding levels, each with a button to lower it and one to raise it. The budget is always
 /// automatic; the panel is where the player changes what it works from.
 /// </summary>
-public sealed class BudgetPanel
+public sealed class BudgetPanel : IMovableWindow
 {
     /// <summary>How far one press moves a funding level, in percent.</summary>
     public const int FundingStep = 10;
@@ -48,13 +48,13 @@ public sealed class BudgetPanel
     }
 
     /// <summary>Tells whether a point on the screen is on the panel.</summary>
-    public bool Contains(Vector2 point) => Raylib.CheckCollisionPointRec(point, Bounds());
+    public bool Contains(Vector2 point) => Raylib.CheckCollisionPointRec(point, Bounds);
 
     /// <summary>Tells whether the player is dragging the panel by its title.</summary>
     public bool IsDragging => _placement.IsDragging;
 
     /// <summary>Starts moving the panel when a press lands on its title. Tells whether it did.</summary>
-    public bool BeginDrag(Vector2 point) => _placement.BeginDrag(point, Bounds());
+    public bool BeginDrag(Vector2 point) => _placement.BeginDrag(point, Bounds);
 
     /// <summary>Moves the panel with the pointer while the button is held.</summary>
     public void Drag(Vector2 point, bool held) => _placement.Drag(point, held, new Vector2(Width, Height));
@@ -97,7 +97,7 @@ public sealed class BudgetPanel
         ArgumentNullException.ThrowIfNull(city);
 
         Raylib.DrawRectangle(0, 0, Raylib.GetScreenWidth(), Raylib.GetScreenHeight(), Theme.Dim);
-        var bounds = Bounds();
+        var bounds = Bounds;
         Raylib.DrawRectangleRec(bounds, Theme.Panel);
         Raylib.DrawRectangleLinesEx(bounds, 1f, Theme.PanelBorder);
 
@@ -142,7 +142,7 @@ public sealed class BudgetPanel
 
     private void DrawSetting(int row, string label, string detail)
     {
-        var bounds = Bounds();
+        var bounds = Bounds;
         var top = RowTop(row);
         var x = (int)bounds.X + Padding;
         DrawButton(ButtonBounds(row, raise: false), "-");
@@ -179,17 +179,17 @@ public sealed class BudgetPanel
 
     private static int Step(int level, int direction) => Math.Clamp(level + (direction * FundingStep), 0, CityBudget.FullFunding);
 
-    // The panel opens in the middle of the screen until the player moves it.
-    private Rectangle Bounds() => _placement.Bounds(
+    /// <summary>Where the panel is: in the middle of the screen until the player moves it.</summary>
+    public Rectangle Bounds => _placement.Bounds(
         new Vector2(Width, Height),
         new Vector2((Raylib.GetScreenWidth() - Width) / 2, (Raylib.GetScreenHeight() - Height) / 2));
 
     // The settings start below the title, the reason, and the heading for this year.
-    private int RowTop(int row) => (int)Bounds().Y + Padding + TitleSize + 6 + LineHeight + 4 + LineHeight + (row * (ButtonSize + 8));
+    private int RowTop(int row) => (int)Bounds.Y + Padding + TitleSize + 6 + LineHeight + 4 + LineHeight + (row * (ButtonSize + 8));
 
     private Rectangle ButtonBounds(int row, bool raise) => new()
     {
-        X = Bounds().X + Padding + (raise ? ButtonSize + 4 : 0),
+        X = Bounds.X + Padding + (raise ? ButtonSize + 4 : 0),
         Y = RowTop(row),
         Width = ButtonSize,
         Height = ButtonSize,
@@ -197,8 +197,8 @@ public sealed class BudgetPanel
 
     private Rectangle ContinueBounds() => new()
     {
-        X = Bounds().X + Width - Padding - ContinueWidth,
-        Y = Bounds().Y + Height - Padding - ContinueHeight,
+        X = Bounds.X + Width - Padding - ContinueWidth,
+        Y = Bounds.Y + Height - Padding - ContinueHeight,
         Width = ContinueWidth,
         Height = ContinueHeight,
     };

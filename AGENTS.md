@@ -24,7 +24,7 @@ CityLimits/                  the game project (Raylib-cs, NLog, net10.0)
   Game/                         namespace CityLimits.Game: the game command, the window, the loop, the tools, the city's messages, the mods folder, the headless run, the log
     Commands/                   namespace CityLimits.Game.Commands: the subcommands, one class each
   Rendering/                    namespace CityLimits.Rendering: the camera, the tile drawing, the chunk cache, the tile sheet, the theme
-  UI/                           namespace CityLimits.UI: the loading screen, the start menu and its new-city panel, the HUD and its top bar, the tool palette, the budget and demand panels and how windows are moved, the in-game menu, renaming, the overview map
+  UI/                           namespace CityLimits.UI: the loading screen, the start menu and its new-city panel, the HUD and its top bar, the tool palette, the budget, demand, and city panels and how windows are moved, the in-game menu, the overview map
   Assets/                       the tile sheet, the tool icons, the logo, and the built-in scenarios (Scenarios/*.json), copied to the output folder
 CityLimits.Core/              engine-free library: the world and the simulation, no Raylib
   CityLimits.Core.csproj        the project file; it must never reference Raylib-cs
@@ -309,15 +309,27 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   the interface and takes presses before it. Micropolis has only the meter; the
   panel is a liberty the owner chose. A press anywhere on the bar never
   reaches the map. The city's name is `CitySimulation.Name`, set from the
-  new-city panel and renamed by clicking it in the bar
-  (`UI/RenamePanel.cs`): 1 to 32 characters once trimmed, with no control
+  new-city panel: 1 to 32 characters once trimmed, with no control
   characters. The play and pause button is blue, as a lit speed is.
-- **Moving windows.** The budget and demand panels are windows the
-  player moves by dragging their title strip (`UI/WindowPlacement.cs`).
-  Each opens where its panel puts it at first (the budget in the middle
-  of the screen, the demand panel under the palette), keeps where it was
-  left for the next time it opens, and is held on the screen below the
-  top bar, even when the window is resized.
+- **The city panel.** A click on the city's name in the bar opens
+  `UI/CityPanel.cs`, which pauses the city. At the top, the name, ready
+  to edit: Enter renames the city and says so, and closing with its x or
+  Escape drops an edit that wasn't entered. Under it, two columns: the
+  city (the date and its age since 1900, the population and its parts,
+  demand, the funds and tax rate, this year's cash flow as it stands and
+  last year's) and the mods it was made with, in the order applied,
+  with their versions (`CityDefinitions.AppliedMods`). At the bottom,
+  the seed, which a click copies to the clipboard, saying so.
+- **Moving windows.** The budget, demand, and city panels are windows
+  the player moves by dragging their title strip. Each implements
+  `UI/IMovableWindow.cs` and keeps its place with a
+  `UI/WindowPlacement.cs`, and `GameLoop` drags any of them the same
+  way: the window a press starts dragging follows the pointer until the
+  button is let go. Each opens where its panel puts it at first (the
+  budget and the city panel in the middle of the screen, the demand
+  panel under the palette), keeps where it was left for the next time it
+  opens, and is held on the screen below the top bar, even when the
+  window is resized.
 - **The overview map.** As in Micropolis, `UI/OverviewMap.cs` shows the
   whole city small in the top-right corner, two pixels a tile, scaled
   down for a bigger map, with the main view outlined; a click or a drag
@@ -348,7 +360,7 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   pay for all of it. Escape cancels a stroke, closes the demand panel, or
   else opens the in-game menu (`UI/GameMenu.cs`): Resume, Main menu,
   which leaves the city for the start menu, and Quit. The menu, the
-  budget, and the rename panel each pause the city and take every key
+  budget, and the city panel each pause the city and take every key
   and click while open.
 - **The money.** The city starts with a treasury, and the prices are
   Micropolis' (`Economy/TileCosts.cs`, and the zones' in their

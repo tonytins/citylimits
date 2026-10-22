@@ -8,7 +8,7 @@ namespace CityLimits.UI;
 /// builders. It shows what the simulation already works out, the game keeps running while it is
 /// open, and the player moves it by its title.
 /// </summary>
-public sealed class DemandPanel
+public sealed class DemandPanel : IMovableWindow
 {
     private const int FontSize = 14;
     private const int SmallSize = 10;
@@ -25,24 +25,27 @@ public sealed class DemandPanel
     /// <summary>Tells whether the player is dragging the panel by its title.</summary>
     public bool IsDragging => _placement.IsDragging;
 
-    /// <summary>Where the panel is on the screen; until the player moves it, its top is at the given height.</summary>
-    public Rectangle Bounds(int top) => _placement.Bounds(new Vector2(Width, Height), new Vector2(8, top));
+    /// <summary>Where the panel's top sits until the player moves it: under the palette, as the game lays it out.</summary>
+    public int DefaultTop { get; set; }
+
+    /// <summary>Where the panel is on the screen.</summary>
+    public Rectangle Bounds => _placement.Bounds(new Vector2(Width, Height), new Vector2(8, DefaultTop));
 
     /// <summary>Tells whether a point on the screen is on the panel's close button.</summary>
-    public bool IsOnClose(Vector2 point, int top) => Raylib.CheckCollisionPointRec(point, CloseBounds(Bounds(top)));
+    public bool IsOnClose(Vector2 point) => Raylib.CheckCollisionPointRec(point, CloseBounds(Bounds));
 
     /// <summary>Starts moving the panel when a press lands on its title. Tells whether it did.</summary>
-    public bool BeginDrag(Vector2 point, int top) => _placement.BeginDrag(point, Bounds(top));
+    public bool BeginDrag(Vector2 point) => _placement.BeginDrag(point, Bounds);
 
     /// <summary>Moves the panel with the pointer while the button is held.</summary>
     public void Drag(Vector2 point, bool held) => _placement.Drag(point, held, new Vector2(Width, Height));
 
-    /// <summary>Draws the panel; until the player moves it, its top is at the given height.</summary>
-    public void Draw(CitySimulation city, int top)
+    /// <summary>Draws the panel where it is.</summary>
+    public void Draw(CitySimulation city)
     {
         ArgumentNullException.ThrowIfNull(city);
 
-        var bounds = Bounds(top);
+        var bounds = Bounds;
         Raylib.DrawRectangleRec(bounds, Theme.Panel);
         Raylib.DrawRectangleLinesEx(bounds, 1f, Theme.PanelBorder);
 

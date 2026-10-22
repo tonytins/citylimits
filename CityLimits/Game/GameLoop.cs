@@ -38,7 +38,11 @@ public sealed class GameLoop : IDisposable
     private Modal _modal;
     private string? _budgetReason;
     private int _speedBeforeModal;
-    private readonly RenamePanel _renamePanel = new();
+    private readonly CityPanel _cityPanel = new();
+
+    // The window the player is dragging by its title, if any; it follows the pointer until the
+    // button is let go, and nothing else takes the pointer meanwhile.
+    private IMovableWindow? _dragging;
     private readonly BuildPlan _preview = new();
     private BuildStroke? _stroke;
 
@@ -98,7 +102,7 @@ public sealed class GameLoop : IDisposable
         None,
         Budget,
         Menu,
-        Rename,
+        City,
     }
 
     /// <summary>Whether, and where, the player asked to leave the city.</summary>
@@ -124,6 +128,7 @@ public sealed class GameLoop : IDisposable
     {
         var elapsed = Raylib.GetFrameTime();
         _camera.SetScreenSize(Raylib.GetScreenWidth(), Raylib.GetScreenHeight());
+        _demandPanel.DefaultTop = DemandPanelTop();
 
         HandleInput(elapsed);
 
@@ -196,7 +201,7 @@ public sealed class GameLoop : IDisposable
         // Windows go over the rest of the interface, wherever the player has moved them.
         if (_demandOpen)
         {
-            _demandPanel.Draw(_simulation, DemandPanelTop());
+            _demandPanel.Draw(_simulation);
         }
 
         if (_stroke is not null)
@@ -212,8 +217,8 @@ public sealed class GameLoop : IDisposable
             case Modal.Menu:
                 GameMenu.Draw();
                 break;
-            case Modal.Rename:
-                _renamePanel.Draw();
+            case Modal.City:
+                _cityPanel.Draw(_simulation);
                 break;
         }
 
@@ -242,6 +247,17 @@ public sealed class GameLoop : IDisposable
             _settings = _settings with { WindowWidth = Raylib.GetScreenWidth(), WindowHeight = Raylib.GetScreenHeight() };
         }
 
+        if (_dragging is not null)
+        {
+            _dragging.Drag(mouse, Raylib.IsMouseButtonDown(MouseButton.Left));
+            if (!_dragging.IsDragging)
+            {
+                _dragging = null;
+            }
+
+            return;
+        }
+
         // While a panel holds the game, it takes every key and click, and the map takes none.
         switch (_modal)
         {
@@ -251,8 +267,8 @@ public sealed class GameLoop : IDisposable
             case Modal.Menu:
                 HandleMenuInput();
                 return;
-            case Modal.Rename:
-                HandleRenameInput();
+            case Modal.City:
+                HandleCityInput(mouse);
                 return;
         }
 
@@ -352,13 +368,7 @@ public sealed class GameLoop : IDisposable
             return;
         }
 
-        if (_budgetPanel.IsDragging)
-        {
-            _budgetPanel.Drag(mouse, Raylib.IsMouseButtonDown(MouseButton.Left));
-            return;
-        }
-
-        if (!Raylib.IsMouseButtonPressed(MouseButton.Left) || _budgetPanel.BeginDrag(mouse))
+        if (!Raylib.IsMouseButtonPressed(MouseButton.Left) || TryBeginDrag(_budgetPanel, mouse))
         {
             return;
         }
@@ -403,19 +413,35 @@ public sealed class GameLoop : IDisposable
         }
     }
 
-    private void HandleRenameInput()
+    // The panel's x closes it before its title can start a drag, since the x sits in the title.
+    private void HandleCityInput(Vector2 mouse)
     {
-        switch (_renamePanel.Update())
+        switch (_cityPanel.Update(_simulation))
         {
-            case RenamePanel.Outcome.Renamed:
-                _simulation.Rename(_renamePanel.Name);
+            case CityPanel.Outcome.Renamed:
+                _simulation.Rename(_cityPanel.Name);
                 Logger.Info("The city is now called {Name}", _simulation.Name);
+                return;
+            case CityPanel.Outcome.Closed:
                 CloseModal();
-                break;
-            case RenamePanel.Outcome.Cancelled:
-                CloseModal();
-                break;
+                return;
         }
+
+        if (Raylib.IsMouseButtonPressed(MouseButton.Left))
+        {
+            TryBeginDrag(_cityPanel, mouse);
+        }
+    }
+
+    private bool TryBeginDrag(IMovableWindow window, Vector2 mouse)
+    {
+        if (!window.BeginDrag(mouse))
+        {
+            return false;
+        }
+
+        _dragging = window;
+        return true;
     }
 
     // The reason is why the budget opened by itself, or null when the player opened it.
@@ -446,12 +472,6 @@ public sealed class GameLoop : IDisposable
     {
         var onMap = MapRenderer.TryGetTileAt(_simulation.Map, _camera.ScreenToWorld(mouse), out var tileX, out var tileY, out _);
 
-        if (_demandPanel.IsDragging)
-        {
-            _demandPanel.Drag(mouse, Raylib.IsMouseButtonDown(MouseButton.Left));
-            return;
-        }
-
         if (_draggingOverview)
         {
             _draggingOverview = Raylib.IsMouseButtonDown(MouseButton.Left);
@@ -479,15 +499,15 @@ public sealed class GameLoop : IDisposable
 
             // A press on the demand panel, which sits over everything else, never reaches what is
             // under it: its x closes it, and its title moves it.
-            if (_demandOpen && Raylib.CheckCollisionPointRec(mouse, _demandPanel.Bounds(DemandPanelTop())))
+            if (_demandOpen && Raylib.CheckCollisionPointRec(mouse, _demandPanel.Bounds))
             {
-                if (_demandPanel.IsOnClose(mouse, DemandPanelTop()))
+                if (_demandPanel.IsOnClose(mouse))
                 {
                     _demandOpen = false;
                 }
                 else
                 {
-                    _demandPanel.BeginDrag(mouse, DemandPanelTop());
+                    TryBeginDrag(_demandPanel, mouse);
                 }
 
                 return;
@@ -590,8 +610,8 @@ public sealed class GameLoop : IDisposable
                 OpenModal(Modal.Budget);
                 break;
             case Hud.BarButton.CityName:
-                _renamePanel.Reset(_simulation.Name);
-                OpenModal(Modal.Rename);
+                _cityPanel.Reset(_simulation);
+                OpenModal(Modal.City);
                 break;
             default:
                 // A speed button sets that speed, and plays the game if it was paused.

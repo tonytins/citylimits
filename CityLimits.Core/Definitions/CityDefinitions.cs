@@ -15,12 +15,13 @@ public sealed class CityDefinitions
     private readonly Dictionary<TileUse, PlantSpec> _plants;
     private readonly Dictionary<TileUse, ServiceSpec> _services;
 
-    internal CityDefinitions(IEnumerable<ZoneSpec> zones, IEnumerable<PlantSpec> plants, IEnumerable<ServiceSpec> services, IReadOnlyList<string> mods)
+    internal CityDefinitions(IEnumerable<ZoneSpec> zones, IEnumerable<PlantSpec> plants, IEnumerable<ServiceSpec> services, IReadOnlyList<AppliedMod> mods)
     {
         _zones = zones.ToDictionary(zone => zone.Use);
         _plants = plants.ToDictionary(plant => plant.Use);
         _services = services.ToDictionary(service => service.Use);
-        Mods = mods;
+        AppliedMods = mods;
+        Mods = [.. mods.Select(mod => mod.Id)];
     }
 
     /// <summary>
@@ -31,6 +32,9 @@ public sealed class CityDefinitions
 
     /// <summary>The ids of the mods applied, in the order they were applied; empty for the base game.</summary>
     public IReadOnlyList<string> Mods { get; }
+
+    /// <summary>The mods applied, with their names and versions, in the order they were applied.</summary>
+    public IReadOnlyList<AppliedMod> AppliedMods { get; }
 
     /// <summary>The spec of the zone a use belongs to.</summary>
     /// <exception cref="ArgumentOutOfRangeException">The use isn't a zone.</exception>
@@ -70,6 +74,12 @@ public sealed class CityDefinitions
         var zones = _zones.Values.Select(zone => mod.Zones.TryGetValue(zone.Use, out var patch) ? patch.ApplyTo(zone) : zone);
         var plants = _plants.Values.Select(plant => mod.Plants.TryGetValue(plant.Use, out var patch) ? patch.ApplyTo(plant) : plant);
         var services = _services.Values.Select(service => mod.Services.TryGetValue(service.Use, out var patch) ? patch.ApplyTo(service) : service);
-        return new CityDefinitions(zones, plants, services, [.. Mods, mod.Id]);
+        return new CityDefinitions(zones, plants, services, [.. AppliedMods, new AppliedMod(mod.Id, mod.Name, mod.Version)]);
     }
 }
+
+/// <summary>A mod a city's definitions were made with, as its <c>mod.json</c> names it.</summary>
+/// <param name="Id">The mod's id, which orders the mods.</param>
+/// <param name="Name">The mod's name, for players.</param>
+/// <param name="Version">The mod's own version, as its author writes it, or null.</param>
+public sealed record AppliedMod(string Id, string Name, string? Version);
