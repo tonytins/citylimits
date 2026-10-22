@@ -8,7 +8,7 @@ using CityLimits.Core.World;
 namespace CityLimits.Tests;
 
 // A newer CityLimits's save, made by hand: format 1.3, with a "pollution" part this version doesn't
-// know, listed in its parts list with the flags each test gives it. This is 0.3.102.1, a backport
+// know, listed in its parts list with the flags each test gives it. This is 0.3.101.1, a backport
 // that reads up to 1.0, so the parts list a newer save carries is the only one it meets.
 public class ForwardCompatibilityTests
 {
