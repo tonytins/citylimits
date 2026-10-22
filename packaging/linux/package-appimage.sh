@@ -29,8 +29,9 @@ dotnet restore "$PROJECT" --nologo -v quiet >/dev/null || fail "couldn't restore
 version_part() {
     dotnet msbuild "$PROJECT" -nologo -t:GitVersion -getProperty:"$1"
 }
-VERSION="$(version_part GitSemVerMajor).$(version_part GitSemVerMinor).$(version_part GitSemVerPatch)"
-[[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || fail "couldn't read the version from GitInfo; got '$VERSION'."
+# On a backport branch it is GitInfo.txt's four parts, such as 0.3.102.1, the last read as the label.
+VERSION="$(version_part GitBaseVersionMajor).$(version_part GitBaseVersionMinor).$(version_part GitBaseVersionPatch).$(version_part GitSemVerLabel)"
+[[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]] || fail "couldn't read the version from GitInfo; got '$VERSION'."
 OUTPUT="$HERE/$APP-$VERSION-$ARCH.AppImage"
 echo "Packaging $APP $VERSION"
 
