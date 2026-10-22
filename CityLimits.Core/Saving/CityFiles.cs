@@ -6,7 +6,7 @@ namespace CityLimits.Core.Saving;
 /// <summary>
 /// The saved cities in a folder: each city is saved under its own name, in the binary format unless
 /// it came from a flat file, and the list a player picks from is the folder's city files of either
-/// format, newest first. There is no file dialog; the folder is <c>Documents/CityLimits/Cities</c>,
+/// format, and Micropolis cities to import, newest first. There is no file dialog; the folder is <c>Documents/CityLimits/Cities</c>,
 /// or <c>Cities</c> beside a portable game.
 /// </summary>
 public static class CityFiles
@@ -45,10 +45,16 @@ public static class CityFiles
         return safe + extension;
     }
 
-    /// <summary>Tells whether a file is a city by its extension: binary or flat.</summary>
-    public static bool IsCityFile(string path) => IsCityExtension(Path.GetExtension(path));
+    /// <summary>Tells whether a file is a city by its extension: binary, flat, or a Micropolis city to import.</summary>
+    public static bool IsCityFile(string path) => IsListedExtension(Path.GetExtension(path));
 
-    /// <summary>Reads a city from a file of either format, by its extension. The notes say what was read but not used.</summary>
+    /// <summary>Tells whether a file is a Micropolis city, which is imported rather than opened.</summary>
+    public static bool IsImport(string path) => Path.GetExtension(path).Equals(MicropolisCityImport.Extension, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Reads a city from a file of either format, or imports a Micropolis city, by its extension.
+    /// The notes say what was read but not used, or what an import replaced.
+    /// </summary>
     public static bool TryRead(string path, [NotNullWhen(true)] out CitySimulation? city, [NotNullWhen(false)] out string? problem, out IReadOnlyList<string> notes)
     {
         notes = [];
@@ -58,6 +64,8 @@ public static class CityFiles
                 return BinaryCityFormat.TryReadFile(path, out city, out problem, out notes);
             case FlatCityFormat.Extension:
                 return FlatCityFormat.TryReadFile(path, out city, out problem);
+            case MicropolisCityImport.Extension:
+                return MicropolisCityImport.TryImportFile(path, out city, out problem, out notes);
             default:
                 city = null;
                 problem = $"{Path.GetFileName(path)} isn't a city file.";
@@ -65,8 +73,8 @@ public static class CityFiles
         }
     }
 
-    /// <summary>Writes a city to a file in the format its extension names.</summary>
-    /// <exception cref="ArgumentException">The extension isn't a city format's.</exception>
+    /// <summary>Writes a city to a file in the format its extension names; a Micropolis city is never written.</summary>
+    /// <exception cref="ArgumentException">The extension isn't a format CityLimits writes.</exception>
     public static bool TryWrite(CitySimulation city, string path, [NotNullWhen(false)] out string? problem) =>
         Path.GetExtension(path).ToLowerInvariant() switch
         {
@@ -79,10 +87,16 @@ public static class CityFiles
         extension.Equals(BinaryCityFormat.Extension, StringComparison.OrdinalIgnoreCase)
         || extension.Equals(FlatCityFormat.Extension, StringComparison.OrdinalIgnoreCase);
 
+    private static bool IsListedExtension(string extension) =>
+        IsCityExtension(extension) || extension.Equals(MicropolisCityImport.Extension, StringComparison.OrdinalIgnoreCase);
+
     private static bool TryReadSummary(FileInfo file, [NotNullWhen(true)] out SavedCitySummary? summary) =>
-        file.Extension.Equals(BinaryCityFormat.Extension, StringComparison.OrdinalIgnoreCase)
-            ? BinaryCityFormat.TryReadSummary(file.FullName, out summary)
-            : FlatCityFormat.TryReadSummary(file.FullName, out summary);
+        file.Extension.ToLowerInvariant() switch
+        {
+            BinaryCityFormat.Extension => BinaryCityFormat.TryReadSummary(file.FullName, out summary),
+            MicropolisCityImport.Extension => MicropolisCityImport.TryReadSummary(file.FullName, out summary),
+            _ => FlatCityFormat.TryReadSummary(file.FullName, out summary),
+        };
 
     /// <summary>The cities saved in a folder, newest first; files that can't be read are left out. An empty or missing folder has none.</summary>
     public static IReadOnlyList<SavedCitySummary> List(string folder)
@@ -96,7 +110,7 @@ public static class CityFiles
 
             var files = new DirectoryInfo(folder)
                 .EnumerateFiles()
-                .Where(file => IsCityExtension(file.Extension))
+                .Where(file => IsListedExtension(file.Extension))
                 .OrderByDescending(file => file.LastWriteTimeUtc)
                 .Take(MaxListed);
             var cities = new List<SavedCitySummary>();

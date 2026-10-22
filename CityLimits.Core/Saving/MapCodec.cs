@@ -300,9 +300,12 @@ internal static class MapCodec
         }
     }
 
-    // Every tile of a building has to belong to a whole one, of its use, around a centre on the map;
-    // the simulation finds a building's centre from any of its tiles, and trusts what it finds.
-    private static void CheckFootprints(TileMap map)
+    /// <summary>
+    /// Checks that every tile of a building belongs to a whole one, of its use, around a centre on
+    /// the map; the simulation finds a building's centre from any of its tiles, and trusts what it finds.
+    /// </summary>
+    /// <exception cref="InvalidSave">A building isn't whole; the message says where.</exception>
+    public static void CheckFootprints(TileMap map)
     {
         for (var y = 0; y < map.Height; y++)
         {

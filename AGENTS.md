@@ -34,7 +34,7 @@ CityLimits.Core/              engine-free library: the world and the simulation,
   Simulation/                   namespace CityLimits.Core.Simulation: the clock, the calendar, the tick and its cycle, the census, demand, growth, trips, the city maps, the power grid, service coverage, the city's messages
   Economy/                      namespace CityLimits.Core.Economy: the treasury, the costs, the budget
   Settings/                     namespace CityLimits.Core.Settings: the settings that survive a session, and the folders the game keeps its files in
-  Saving/                       namespace CityLimits.Core.Saving: the save model, the binary (.cl) and flat (.fcl) city formats, the map's layers and words, and the saved cities' files
+  Saving/                       namespace CityLimits.Core.Saving: the save model, the binary (.cl) and flat (.fcl) city formats, importing Micropolis cities (.cty), autosave, the map's layers and words, and the saved cities' files
   Scenarios/                    namespace CityLimits.Core.Scenarios: the scenario loader, the runner, the report, the demo town
   Definitions/                  namespace CityLimits.Core.Definitions: the definitions as data, the base game's, and the mod loader
 CityLimits.CommandLine/       engine-free library: the command line, no Raylib
@@ -412,7 +412,13 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   the city is as it was last saved; `Saving/Autosave.cs` decides when and
   where, and `AutosaveSlots` in the settings keeps one or two, the newer
   replacing the older. An autosave isn't the player saving, so leaving
-  still asks.
+  still asks. Micropolis' and SimCity Classic's `.cty` files in the Cities
+  folder are listed too, and opening one imports it
+  (`Saving/MicropolisCityImport.cs`), never writing it back: tiles by
+  Micropolis' numbers, buildings whole from their centres, and what
+  CityLimits doesn't have yet (rail, seaports, airports, stadiums, fire,
+  flood, radiation) as bare ground, listed in the log and on the notice
+  line.
 - **The settings and the game's folders.** `GameFolders` works out where
   the game keeps its files, because a packaged game, such as the
   AppImage, runs from a read-only folder. The settings go in the hidden
@@ -478,7 +484,7 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   and no project. It holds the parser, the dispatcher, the default
   command, the strict option reader, and the exit codes.
 - **The tests.** `CityLimits.Tests` uses xUnit 2 with the VSTest runner
-  and coverlet, and holds 571 tests over saving, loading, and autosave, with a city
+  and coverlet, and holds 599 tests over saving, loading, autosave, and importing Micropolis cities, with a city
   the owner built in both formats in `CityLimits.Tests/Assets/`, the generator, the terrain edges, the power plants, lines, and grid, the budget, the stations and their coverage, parks, hospitals and churches, the map, the
   calendar, the clock, the simulation, the settings, the tile rules, the
   build actions, the road network, the treasury, the scenario loader and
@@ -818,8 +824,10 @@ the names the roadmap's milestones borrow.
 highlighted versions, from the Micropolis core's images, credited in
 `Assets/README.md`; and, with the owner's approval, Micropolis' numbers
 for its rules, such as the tax table and the Easy difficulty factors in
-`CityDemand` and `CityBudget`, each marked where it is used. Code copied
-from Micropolis, if any is, carries its notice where it is.
+`CityDemand` and `CityBudget`, each marked where it is used; and its tile
+numbers, to read its city files (`MicropolisCityImport`), which the tile
+sheet's drawings use too. Code copied from Micropolis, if any is, carries
+its notice where it is.
 
 ## 5. Before you finish a task
 

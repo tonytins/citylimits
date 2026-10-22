@@ -43,6 +43,9 @@ public sealed class LoadPanel
     /// <summary>The file the city was opened from.</summary>
     public string? Path { get; private set; }
 
+    /// <summary>What was read but not used, or what an import replaced.</summary>
+    public IReadOnlyList<string> Notes { get; private set; } = [];
+
     /// <summary>Lists the cities in a folder afresh.</summary>
     public void Reset(string folder)
     {
@@ -51,6 +54,7 @@ public sealed class LoadPanel
         _problem = null;
         City = null;
         Path = null;
+        Notes = [];
     }
 
     /// <summary>Tells whether the folder last listed holds any city.</summary>
@@ -101,7 +105,7 @@ public sealed class LoadPanel
                 Logger.Info("{File}: {Note}", chosen.Path, note);
             }
 
-            (City, Path) = (city, chosen.Path);
+            (City, Path, Notes) = (city, chosen.Path, notes);
             return Outcome.Opened;
         }
 
@@ -135,7 +139,8 @@ public sealed class LoadPanel
             }
 
             Raylib.DrawText(city.Name, x + 6, (int)rowBounds.Y + 4, RowSize, hovered ? Theme.Accent : Theme.Text);
-            var flat = Autosave.IsAutosave(city.Path) ? "   autosave"
+            var flat = CityFiles.IsImport(city.Path) ? "   Micropolis city, to import"
+                : Autosave.IsAutosave(city.Path) ? "   autosave"
                 : System.IO.Path.GetExtension(city.Path).Equals(FlatCityFormat.Extension, StringComparison.OrdinalIgnoreCase) ? "   flat file"
                 : string.Empty;
             var details = $"{city.Date.Month:00}/{city.Date.Year:0000}   {Hud.Count(city.Population)} Pop   {Hud.Money(city.Funds)}   saved {city.SavedUtc.ToLocalTime():yyyy-MM-dd HH:mm}{flat}";

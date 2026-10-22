@@ -56,6 +56,7 @@ public sealed class GameLoop : IDisposable
     private Pending _pending;
     private CitySimulation? _cityToOpen;
     private string? _fileToOpen;
+    private IReadOnlyList<string> _notesToOpen = [];
 
     // The window the player is dragging by its title, if any; it follows the pointer until the
     // button is let go, and nothing else takes the pointer meanwhile.
@@ -65,9 +66,10 @@ public sealed class GameLoop : IDisposable
 
     /// <summary>
     /// Plays a city: a new one, or one opened from a file, which is then the file Ctrl+S saves it
-    /// back to without asking. The mods skipped when a new city was made are shown, if any.
+    /// back to without asking; a Micropolis city it was imported from is never written. The mods
+    /// skipped when a new city was made are shown, if any, or what an import replaced.
     /// </summary>
-    public GameLoop(GameSettings settings, CitySimulation city, string? cityFile, GameFolders folders, GameAssets assets, IReadOnlyList<string>? modProblems = null)
+    public GameLoop(GameSettings settings, CitySimulation city, string? cityFile, GameFolders folders, GameAssets assets, IReadOnlyList<string>? modProblems = null, IReadOnlyList<string>? importNotes = null)
     {
         ArgumentNullException.ThrowIfNull(city);
         ArgumentNullException.ThrowIfNull(folders);
@@ -77,8 +79,8 @@ public sealed class GameLoop : IDisposable
         _simulation = city;
         _cityFile = cityFile;
 
-        // An opened city starts saved; a new one has nothing saved yet.
-        _savedText = cityFile is null ? null : FlatCityFormat.Write(city);
+        // An opened city starts saved; a new or an imported one has nothing saved yet.
+        _savedText = cityFile is null || CityFiles.IsImport(cityFile) ? null : FlatCityFormat.Write(city);
         var map = city.Map;
         var definitions = city.Definitions;
         modProblems ??= [];
@@ -87,6 +89,13 @@ public sealed class GameLoop : IDisposable
             // The log holds every skipped mod; the screen says how many, so the player knows to look.
             _notice = modProblems.Count == 1 ? modProblems[0] : $"{modProblems.Count} mods were skipped; the log says why";
             _noticeIsError = true;
+        }
+
+        importNotes ??= [];
+        if (importNotes.Count > 0)
+        {
+            _notice = importNotes.Count == 1 ? importNotes[0] : $"{importNotes.Count} kinds of things CityLimits doesn't have yet became bare ground; the log lists them";
+            _noticeIsError = false;
         }
 
         _simulation.MessageSent += ShowMessage;
@@ -128,6 +137,9 @@ public sealed class GameLoop : IDisposable
 
     /// <summary>The file the opened city came from.</summary>
     public string? OpenedFile { get; private set; }
+
+    /// <summary>What importing the opened city replaced, when it came from a Micropolis city.</summary>
+    public IReadOnlyList<string> OpenedNotes { get; private set; } = [];
 
     // What holds the game while it is open.
     private enum Modal
@@ -500,7 +512,7 @@ public sealed class GameLoop : IDisposable
         {
             case LoadPanel.Outcome.Opened:
                 CloseModal();
-                (_cityToOpen, _fileToOpen) = (_loadPanel.City, _loadPanel.Path);
+                (_cityToOpen, _fileToOpen, _notesToOpen) = (_loadPanel.City, _loadPanel.Path, _loadPanel.Notes);
                 LeaveOrAsk(Pending.OpenCity);
                 break;
             case LoadPanel.Outcome.Back:
@@ -566,7 +578,7 @@ public sealed class GameLoop : IDisposable
                 Leaving = Leave.Quit;
                 break;
             case Pending.OpenCity when _cityToOpen is not null:
-                (OpenedCity, OpenedFile) = (_cityToOpen, _fileToOpen);
+                (OpenedCity, OpenedFile, OpenedNotes) = (_cityToOpen, _fileToOpen, _notesToOpen);
                 Leaving = Leave.Open;
                 break;
         }
@@ -610,10 +622,13 @@ public sealed class GameLoop : IDisposable
     // city's file of the same name asks first.
     private void Save(bool confirmed)
     {
+        // A city imported from Micropolis is saved as CityLimits' own, never back to its file.
         var flat = _cityFile is not null && Path.GetExtension(_cityFile).Equals(FlatCityFormat.Extension, StringComparison.OrdinalIgnoreCase);
         var file = CityFiles.FileNameFor(_simulation.Name, flat ? FlatCityFormat.Extension : BinaryCityFormat.Extension);
         var path = Path.Combine(_folders.CitiesFolder, file);
-        var ownFile = _cityFile is not null && Autosave.IsAutosave(_cityFile) ? Autosave.CityFileFor(_cityFile) : _cityFile;
+        var ownFile = _cityFile is null || CityFiles.IsImport(_cityFile) ? null
+            : Autosave.IsAutosave(_cityFile) ? Autosave.CityFileFor(_cityFile)
+            : _cityFile;
         if (!confirmed && File.Exists(path) && !string.Equals(Path.GetFullPath(path), ownFile is null ? null : Path.GetFullPath(ownFile), StringComparison.Ordinal))
         {
             Ask(Pending.Overwrite, "Replace a saved city?", $"{file} already holds a saved city, and saving would replace it.", "Replace", "Cancel");

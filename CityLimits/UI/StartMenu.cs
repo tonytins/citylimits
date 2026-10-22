@@ -57,6 +57,9 @@ public sealed class StartMenu
     /// <summary>The file the opened city came from.</summary>
     public string? LoadedFile => _load.Path;
 
+    /// <summary>What importing the opened city replaced, when it came from a Micropolis city.</summary>
+    public IReadOnlyList<string> LoadedNotes => _load.Notes;
+
     /// <summary>
     /// Shows the menu afresh. Coming from the loading screen, the logo glides up into place; the
     /// seed given on the command line, if any, fills in the new-city panel, and the saved cities

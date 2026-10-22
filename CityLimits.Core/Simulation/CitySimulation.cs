@@ -507,4 +507,35 @@ public sealed class CitySimulation
             }
         }
     }
+
+    /// <summary>
+    /// Traces power at once, as Micropolis does when it loads a city, so a city made from a map has
+    /// the power its plants give from its first step. The counts the scan keeps start again after,
+    /// as they do at the top of a cycle.
+    /// </summary>
+    internal void TracePowerNow()
+    {
+        Power.StartCount();
+        VisitBuildings();
+        Power.Trace(Map, Definitions);
+
+        // The second visit records on each centre the power the trace just gave it.
+        Power.StartCount();
+        VisitBuildings();
+        Power.StartCount();
+    }
+
+    private void VisitBuildings()
+    {
+        for (var y = 0; y < Map.Height; y++)
+        {
+            for (var x = 0; x < Map.Width; x++)
+            {
+                if (Map.StateAt(x, y).IsBuildingCenter)
+                {
+                    Power.Visit(Map, x, y);
+                }
+            }
+        }
+    }
 }

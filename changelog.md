@@ -1,5 +1,22 @@
 # CityLimits Changelog
 
+## 0.2.119
+
+You can bring your old Micropolis and SimCity Classic cities into
+CityLimits. Drop a `.cty` file into `Documents/CityLimits/Cities` and it
+shows up in Load Game as a Micropolis city; open it and it comes in with
+its roads, power lines, zones, and buildings, its money, tax rate, and
+date. Press Ctrl+S to keep it as a CityLimits city. The `.cty` file
+itself is never changed.
+
+Some things CityLimits doesn't have yet, like rail, seaports, airports,
+and stadiums, become bare ground when a city comes in; the game tells
+you how many, and the log lists them. Where rail crossed a road or a
+power line, the road or the line stays.
+
+For developers: `MicropolisCityImport` reads `.cty` files, and
+`docs/saving.md` describes the format and how each tile comes across.
+
 ## 0.2.118
 
 Your city now saves itself every 15 minutes of play, so a crash or a

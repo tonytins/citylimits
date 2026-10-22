@@ -78,7 +78,8 @@ public static class WindowedGame
                 }
 
                 var file = choice == StartMenu.Choice.LoadCity ? menu.LoadedFile : null;
-                if (PlayCities(city, file, modProblems, ref settings, folders, assets) != GameLoop.Leave.ToMenu)
+                var notes = choice == StartMenu.Choice.LoadCity ? menu.LoadedNotes : [];
+                if (PlayCities(city, file, modProblems, notes, ref settings, folders, assets) != GameLoop.Leave.ToMenu)
                 {
                     break;
                 }
@@ -142,13 +143,13 @@ public static class WindowedGame
 
     // Plays a city until the player leaves it, and then any city they open from it, keeping the
     // settings each ends with. Returns how the last one was left.
-    private static GameLoop.Leave PlayCities(CitySimulation city, string? file, IReadOnlyList<string> modProblems, ref GameSettings settings, GameFolders folders, GameAssets assets)
+    private static GameLoop.Leave PlayCities(CitySimulation city, string? file, IReadOnlyList<string> modProblems, IReadOnlyList<string> notes, ref GameSettings settings, GameFolders folders, GameAssets assets)
     {
         while (true)
         {
             Logger.Info("Playing {Name}{From}", city.Name, file is null ? string.Empty : $" from {file}");
             GameLoop.Leave leaving;
-            using (var game = new GameLoop(settings, city, file, folders, assets, modProblems))
+            using (var game = new GameLoop(settings, city, file, folders, assets, modProblems, notes))
             {
                 while (!Raylib.WindowShouldClose() && game.Leaving == GameLoop.Leave.None)
                 {
@@ -167,7 +168,7 @@ public static class WindowedGame
                 leaving = Raylib.WindowShouldClose() ? GameLoop.Leave.Quit : game.Leaving;
                 if (leaving == GameLoop.Leave.Open && game.OpenedCity is { } opened)
                 {
-                    (city, file, modProblems) = (opened, game.OpenedFile, []);
+                    (city, file, modProblems, notes) = (opened, game.OpenedFile, [], game.OpenedNotes);
                 }
             }
 

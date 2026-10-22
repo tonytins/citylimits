@@ -115,6 +115,49 @@ the log, so a later version can add one. A known chunk that is damaged,
 missing, or there twice refuses the whole file, since a city needs all of
 them to run on exactly.
 
+## Importing Micropolis cities
+
+CityLimits imports the city files of Micropolis and SimCity Classic,
+`.cty`, and never writes them. Drop a `.cty` file into the Cities folder
+and Load Game lists it as a Micropolis city; opening it imports it, and
+Ctrl+S then saves it as a CityLimits city, `<name>.cl`, asking first if
+one is already there. Leaving an imported city before saving it asks
+first.
+
+A `.cty` file is 27,120 bytes, or 27,248 with the 128-byte header some
+editions of SimCity add, of big-endian 16-bit numbers:
+
+1. six histories of 240 numbers: residential, commercial, industrial,
+   crime, pollution, and money;
+2. a block of 120 numbers for the city's settings: its populations, its
+   demand, the date, the land value average, the money, the tax rate, and
+   the funding levels;
+3. the 120 by 100 map, a number a tile, column by column: a Micropolis
+   tile number in the low 10 bits and flags above, power the highest.
+
+The import (`MicropolisCityImport` in `CityLimits.Core/Saving/`) reads the
+tiles with Micropolis' tile numbers, which the owner approved for this
+and which the tile sheet uses too. Ground, water, trees, rubble, parks and
+fountains, roads at any level of traffic, bridges and drawbridges, power
+lines, and road-and-line crossings come in a tile at a time. Buildings come
+in from their centres, so each is whole: zones at the level and land-value
+class their drawing says, with an empty residential zone's houses, and
+plants, stations, hospitals, and churches.
+
+**What CityLimits doesn't have yet becomes bare ground:** rail, seaports,
+airports, stadiums, and burning, flooded, or radioactive tiles, as does
+what's left of a building with no centre. Where rail crosses a road or a
+power line, the road or the line stays. The import lists what it
+replaced; the game logs it, and the notice line says so.
+
+Also carried over: the date, the money, the tax rate (back to 7% when it
+is outside 0 to 20, as Micropolis does), the funding levels, the
+populations, demand, the land value average, and the residential,
+commercial, and industrial history. A `.cty` file has no seed, so the
+import makes one from the file's contents: the same file always imports
+as the same city. An imported city runs on the base game's definitions,
+and its power is traced at once, as Micropolis does when it loads a city.
+
 ## The flat city format
 
 A `.fcl` file is one JSON object. Its fields are in `camelCase`, and
@@ -189,5 +232,7 @@ was doing and shows the reason.
   steps, loads it, and runs both in step for two years, comparing their
   saves as they go; it catches state left out of the save, as long as
   the state changes what the city does.
-- Importing Micropolis' `.cty` is a later phase on the
-  [roadmap](./ROADMAP.md).
+- `CityLimits.Tests/Assets/Bridgeport.cty` is Bridgeport in Micropolis'
+  format, made by a writer that lives only in the tests
+  (`MicropolisCityImportTests`); importing it gives back Bridgeport's map
+  tile for tile.
