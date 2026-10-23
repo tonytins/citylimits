@@ -26,6 +26,8 @@ public sealed class CitySimulation
     private const int NeedRailCount = 18;
     private const int NeedPowerCount = 22;
     private const int BlackoutsCount = 32;
+    private const int HighPollutionCount = 35;
+    private const int HighCrimeCount = 42;
     private const int NeedFireStationCount = 45;
     private const int NeedPoliceStationCount = 48;
     private const int HighTaxesCount = 51;
@@ -64,6 +66,10 @@ public sealed class CitySimulation
 
     // Micropolis reports traffic jams when the year's traffic average is above this.
     private const int MostTrafficBeforeJams = 60;
+
+    // Micropolis reports high pollution and crime when their averages are above these.
+    private const int MostPollutionBeforeComplaints = 60;
+    private const int MostCrimeBeforeComplaints = 100;
 
     private readonly ZoneGrowth _growth;
 
@@ -208,9 +214,10 @@ public sealed class CitySimulation
     /// vertical bands, one band each, counting each zone and deciding whether it grows or
     /// declines, and counting each road tile. Phase 9 records the census once a month and sets a
     /// 48th of the year's taxes and upkeep aside, settling the year when it comes round; phase 10 fades the traffic and checks the city's messages,
-    /// phase 11 traces power from the plants, phase 12 works out land value, and phase 14
-    /// population density and the city's centre. Phases 13 and 15 spread the police and the
-    /// fire stations' coverage, and are where crime, and fire and disasters, will run.
+    /// phase 11 traces power from the plants, phase 12 works out land value and pollution, phase 13
+    /// spreads the police stations' coverage and works out crime, and phase 14 population density
+    /// and the city's centre. Phase 15 spreads the fire stations' coverage, and is where fire and
+    /// disasters will run.
     /// </summary>
     public void Tick()
     {
@@ -262,11 +269,12 @@ public sealed class CitySimulation
         }
         else if (phase == LandValuePhase)
         {
-            Maps.UpdateLandValue();
+            Maps.UpdateLandValue(Traffic);
         }
         else if (phase == PolicePhase)
         {
             Services.SpreadPolice();
+            Maps.UpdateCrime(Services);
         }
         else if (phase == FirePhase)
         {
@@ -323,6 +331,16 @@ public sealed class CitySimulation
         if (count == BlackoutsCount && buildings > 0 && (double)Power.PoweredBuildings / buildings < PoweredShareBeforeBlackouts)
         {
             MessageSent?.Invoke(CityMessage.Blackouts);
+        }
+
+        if (count == HighPollutionCount && Maps.PollutionAverage > MostPollutionBeforeComplaints)
+        {
+            MessageSent?.Invoke(CityMessage.HighPollution);
+        }
+
+        if (count == HighCrimeCount && Maps.CrimeAverage > MostCrimeBeforeComplaints)
+        {
+            MessageSent?.Invoke(CityMessage.HighCrime);
         }
 
         if (count == HighTaxesCount && Budget.TaxRate > HighestFairTax)
@@ -491,6 +509,8 @@ public sealed class CitySimulation
         Traffic = Traffic.Capture(),
         RoadTraffic = Traffic.CaptureRoads(),
         Rail = RailCodec.Capture(Map, RailTiles, _budgetedRailTiles),
+        Pollution = Maps.CapturePollution(),
+        Crime = Maps.CaptureCrime(),
     };
 
     /// <summary>Makes a city from a save, checking each part as it goes.</summary>
@@ -535,6 +555,8 @@ public sealed class CitySimulation
         city.Services.Restore(save.Services ?? throw new InvalidSave("services: missing."));
         city.Community.Restore(save.Community ?? throw new InvalidSave("community: missing."));
         city.Maps.Restore(save.CityMaps ?? throw new InvalidSave("cityMaps: missing."));
+        city.Maps.RestorePollution(save.Pollution ?? throw new InvalidSave("pollution: missing."));
+        city.Maps.RestoreCrime(save.Crime ?? throw new InvalidSave("crime: missing."));
         var cycle = save.Cycle ?? throw new InvalidSave("cycle: missing.");
         city.RoadTiles = SaveChecks.InRange(cycle.RoadTiles, 0, int.MaxValue, "cycle.roadTiles");
         city._budgetedRoadTiles = SaveChecks.InRange(cycle.BudgetedRoadTiles, 0, int.MaxValue, "cycle.budgetedRoadTiles");

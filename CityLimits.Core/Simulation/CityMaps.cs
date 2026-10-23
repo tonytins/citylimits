@@ -1,30 +1,52 @@
 namespace CityLimits.Core.Simulation;
 
 /// <summary>
-/// The city's overlay maps, as Micropolis keeps them: land value and population density on a grid
-/// of 2 by 2 tile blocks, the terrain's worth on 4 by 4 blocks, and the commercial rate on 8 by 8
-/// blocks, with the city's centre of mass that land value and the commercial rate measure from.
-/// Land value is worked out in phase 12 and population density in phase 14. Every grid is made
-/// once, with the map, and reused.
+/// The city's overlay maps, as Micropolis keeps them: land value, pollution, crime, and population
+/// density on a grid of 2 by 2 tile blocks, the terrain's worth on 4 by 4 blocks, and the
+/// commercial rate on 8 by 8 blocks, with the city's centre of mass that land value and the
+/// commercial rate measure from. Land value and pollution are worked out in phase 12, crime in
+/// phase 13, and population density in phase 14. Every grid is made once, with the map, and reused.
 /// </summary>
-/// <remarks>
-/// Until the systems they come from exist, pollution and crime are none, so land value is the
-/// distance to the city's centre and the terrain alone.
-/// </remarks>
 public sealed class CityMaps
 {
     /// <summary>The most land value a block can have.</summary>
     public const int MaxLandValue = 250;
+
+    /// <summary>The most pollution a block can have once smoothed.</summary>
+    public const int MostPollution = 255;
+
+    /// <summary>The most crime a block can have.</summary>
+    public const int MostCrime = 250;
 
     // Land value starts from 34 blocks out from the centre, times four, and stops falling at 32.
     private const int LandValueReach = 34;
     private const int FarthestDistance = 32;
     private const int TerrainPerTile = 15;
 
+    // What each tile adds to its block's pollution, as Micropolis' core has it: every tile of an
+    // industrial building and of a coal plant, not only the centre the Java port counts, as Tony
+    // Bark chose, and a road by the traffic it shows. A block holds at most 255.
+    private const int IndustryPollution = 50;
+    private const int CoalPlantPollution = 100;
+    private const int LightTrafficPollution = 50;
+    private const int HeavyTrafficPollution = 75;
+    private const int MostBlockPollution = 255;
+
+    // Micropolis' crime: 128 less land value, plus population density, no more than 300, less
+    // police coverage, from 0 to 250. Land value loses 20 where crime is above 190.
+    private const int CrimeBase = 128;
+    private const int MostCrimeBeforePolice = 300;
+    private const int HighCrime = 190;
+    private const int HighCrimeLandValue = 20;
+
     private readonly TileMap _map;
     private readonly int _halfWidth;
     private readonly int _halfHeight;
     private readonly int[] _landValue;
+    private readonly int[] _pollution;
+    private readonly int[] _pollutionRaw;
+    private readonly int[] _pollutionScratch;
+    private readonly int[] _crime;
     private readonly int[] _density;
     private readonly int[] _densityScratch;
     private readonly int _quarterWidth;
@@ -42,6 +64,10 @@ public sealed class CityMaps
         _halfWidth = (map.Width + 1) / 2;
         _halfHeight = (map.Height + 1) / 2;
         _landValue = new int[_halfWidth * _halfHeight];
+        _pollution = new int[_halfWidth * _halfHeight];
+        _pollutionRaw = new int[_halfWidth * _halfHeight];
+        _pollutionScratch = new int[_halfWidth * _halfHeight];
+        _crime = new int[_halfWidth * _halfHeight];
         _density = new int[_halfWidth * _halfHeight];
         _densityScratch = new int[_halfWidth * _halfHeight];
         _quarterWidth = (map.Width + 3) / 4;
@@ -54,6 +80,9 @@ public sealed class CityMaps
         CenterY = map.Height / 2;
     }
 
+    /// <summary>The number of 2 by 2 blocks the maps hold for a map of a size.</summary>
+    public static int BlocksFor(int mapWidth, int mapHeight) => ((mapWidth + 1) / 2) * ((mapHeight + 1) / 2);
+
     /// <summary>The column of the city's centre of mass: the average of its zones' centres.</summary>
     public int CenterX { get; private set; }
 
@@ -63,8 +92,20 @@ public sealed class CityMaps
     /// <summary>The average land value of the blocks with something built on them, as of the last time it was worked out; 0 when nothing is built.</summary>
     public int LandValueAverage { get; private set; }
 
+    /// <summary>The average pollution of the blocks with any, as of the last time it was worked out; 0 when none has any.</summary>
+    public int PollutionAverage { get; private set; }
+
+    /// <summary>The average crime of the blocks with land value, as of the last time it was worked out; 0 when none has any.</summary>
+    public int CrimeAverage { get; private set; }
+
     /// <summary>The land value under a tile, from 0 for a block with nothing built on it up to <see cref="MaxLandValue"/>.</summary>
     public int LandValueAt(int x, int y) => _map.Contains(x, y) ? _landValue[((y / 2) * _halfWidth) + (x / 2)] : 0;
+
+    /// <summary>The pollution around a tile, from 0 to <see cref="MostPollution"/>.</summary>
+    public int PollutionAt(int x, int y) => _map.Contains(x, y) ? _pollution[((y / 2) * _halfWidth) + (x / 2)] : 0;
+
+    /// <summary>The crime around a tile, from 0 to <see cref="MostCrime"/>; 0 where there is no land value.</summary>
+    public int CrimeAt(int x, int y) => _map.Contains(x, y) ? _crime[((y / 2) * _halfWidth) + (x / 2)] : 0;
 
     /// <summary>The population density around a tile.</summary>
     public int DensityAt(int x, int y) => _map.Contains(x, y) ? _density[((y / 2) * _halfWidth) + (x / 2)] : 0;
@@ -73,14 +114,19 @@ public sealed class CityMaps
     public int CommercialRateAt(int x, int y) => _map.Contains(x, y) ? _commercialRate[((y / 8) * _eighthWidth) + (x / 8)] : 0;
 
     /// <summary>
-    /// Works land value out again: for each 2 by 2 block with something built on it, closeness to
-    /// the city's centre plus the worth of the terrain around it, from 1 to <see cref="MaxLandValue"/>;
-    /// a block with nothing built on it has none. The terrain's worth is the trees, wooded parks, and
-    /// water nearby, as of the last time land value was worked out, as Micropolis has it; a
-    /// wooded park counts as trees, not as something built, and a fountain counts as built.
+    /// Works land value and pollution out again, as Micropolis does in one pass. For each 2 by 2
+    /// block with something built on it, land value is closeness to the city's centre plus the worth
+    /// of the terrain around it, less the pollution there and 20 more where crime is high, from 1 to
+    /// <see cref="MaxLandValue"/>; a block with nothing built on it has none. The terrain's worth,
+    /// the pollution, and the crime it reads are as of the last time each was worked out; a wooded
+    /// park counts as trees, not as something built, and a fountain counts as built. Pollution is
+    /// what the block's industry, coal plants, and busy roads give off, smoothed twice.
     /// </summary>
-    public void UpdateLandValue()
+    /// <param name="traffic">The traffic each road shows, which pollutes.</param>
+    public void UpdateLandValue(TrafficMap traffic)
     {
+        ArgumentNullException.ThrowIfNull(traffic);
+
         Array.Clear(_terrainScratch);
         long total = 0;
         var count = 0;
@@ -89,6 +135,7 @@ public sealed class CityMaps
             for (var blockX = 0; blockX < _halfWidth; blockX++)
             {
                 var built = false;
+                var pollution = 0;
                 for (var y = blockY * 2; y <= (blockY * 2) + 1; y++)
                 {
                     for (var x = blockX * 2; x <= (blockX * 2) + 1; x++)
@@ -100,6 +147,7 @@ public sealed class CityMaps
                         if (state.Use != TileUse.None && !natural)
                         {
                             built = true;
+                            pollution += PollutionOf(x, y, state, traffic);
                         }
                         else if (natural)
                         {
@@ -108,21 +156,102 @@ public sealed class CityMaps
                     }
                 }
 
+                var block = (blockY * _halfWidth) + blockX;
+                _pollutionRaw[block] = Math.Min(pollution, MostBlockPollution);
+
                 var value = 0;
                 if (built)
                 {
                     value = ((LandValueReach - DistanceToCenter(blockX, blockY)) * 4) + _terrain[((blockY / 2) * _quarterWidth) + (blockX / 2)];
+                    value -= _pollution[block];
+                    if (_crime[block] > HighCrime)
+                    {
+                        value -= HighCrimeLandValue;
+                    }
+
                     value = Math.Clamp(value, 1, MaxLandValue);
                     total += value;
                     count++;
                 }
 
-                _landValue[(blockY * _halfWidth) + blockX] = value;
+                _landValue[block] = value;
             }
         }
 
         LandValueAverage = count > 0 ? (int)(total / count) : 0;
+
+        Smooth(_pollutionRaw, _pollutionScratch, _halfWidth, _halfHeight);
+        Smooth(_pollutionScratch, _pollution, _halfWidth, _halfHeight);
+        PollutionAverage = AverageOfNonZero(_pollution);
+
         SmoothTerrain();
+    }
+
+    /// <summary>
+    /// Works crime out again, as Micropolis does once the police coverage has spread: for each block
+    /// with land value, 128 less the land value, plus the population density, no more than 300, less
+    /// the police coverage there, from 0 to <see cref="MostCrime"/>. A block with no land value has none.
+    /// </summary>
+    /// <param name="services">The police coverage, spread this cycle.</param>
+    public void UpdateCrime(ServiceCoverage services)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+
+        long total = 0;
+        var count = 0;
+        for (var blockY = 0; blockY < _halfHeight; blockY++)
+        {
+            for (var blockX = 0; blockX < _halfWidth; blockX++)
+            {
+                var block = (blockY * _halfWidth) + blockX;
+                var landValue = _landValue[block];
+                if (landValue == 0)
+                {
+                    _crime[block] = 0;
+                    continue;
+                }
+
+                var crime = Math.Min(CrimeBase - landValue + _density[block], MostCrimeBeforePolice);
+                crime -= services.PoliceCoverageAt(blockX * 2, blockY * 2);
+                crime = Math.Clamp(crime, 0, MostCrime);
+                _crime[block] = crime;
+                total += crime;
+                count++;
+            }
+        }
+
+        CrimeAverage = count > 0 ? (int)(total / count) : 0;
+    }
+
+    // A tile's pollution: a developed industrial zone's or a coal plant's, whichever tile of it this
+    // is, or a road's by the traffic it showed when the scan last passed.
+    private int PollutionOf(int x, int y, TileState state, TrafficMap traffic) => state.Use switch
+    {
+        TileUse.Industrial => _map.ZoneStateAt(x, y).Development > 0 ? IndustryPollution : 0,
+        TileUse.CoalPowerPlant => CoalPlantPollution,
+        _ => traffic.LevelAt(x, y) switch
+        {
+            TrafficLevel.Light => LightTrafficPollution,
+            TrafficLevel.Heavy => HeavyTrafficPollution,
+            _ => 0,
+        },
+    };
+
+    // The average of the blocks that have any, as Micropolis counts it.
+    private static int AverageOfNonZero(int[] blocks)
+    {
+        long total = 0;
+        var count = 0;
+        foreach (var value in blocks)
+        {
+            if (value != 0)
+            {
+                total += value;
+                count++;
+            }
+        }
+
+        return count > 0 ? (int)(total / count) : 0;
     }
 
     /// <summary>
@@ -232,5 +361,30 @@ public sealed class CityMaps
         SaveChecks.CopyInto(save.Density, _density, "cityMaps.density");
         SaveChecks.CopyInto(save.Terrain, _terrain, "cityMaps.terrain");
         SaveChecks.CopyInto(save.CommercialRate, _commercialRate, "cityMaps.commercialRate");
+    }
+
+    internal BlockMapSave CapturePollution() => new() { Blocks = [.. _pollution], Average = PollutionAverage };
+
+    internal BlockMapSave CaptureCrime() => new() { Blocks = [.. _crime], Average = CrimeAverage };
+
+    internal void RestorePollution(BlockMapSave save)
+    {
+        PollutionAverage = SaveChecks.InRange(save.Average, 0, MostPollution, "pollution.average");
+        RestoreBlocks(save.Blocks, _pollution, MostPollution, "pollution.blocks");
+    }
+
+    internal void RestoreCrime(BlockMapSave save)
+    {
+        CrimeAverage = SaveChecks.InRange(save.Average, 0, MostCrime, "crime.average");
+        RestoreBlocks(save.Blocks, _crime, MostCrime, "crime.blocks");
+    }
+
+    private static void RestoreBlocks(int[]? from, int[] to, int most, string at)
+    {
+        SaveChecks.CopyInto(from, to, at);
+        for (var i = 0; i < to.Length; i++)
+        {
+            SaveChecks.InRange(to[i], 0, most, $"{at}[{i}]");
+        }
     }
 }

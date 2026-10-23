@@ -10,7 +10,7 @@ namespace CityLimits.Core.Saving;
 internal static class SaveUpgrades
 {
     /// <summary>The save model's version, which both save formats write.</summary>
-    public static readonly FormatVersion Current = new(1, 4);
+    public static readonly FormatVersion Current = new(1, 5);
 
     /// <summary>Upgrades a save in place, from whatever older 1.x version it is.</summary>
     public static void ToCurrent(CitySave save)
@@ -32,6 +32,11 @@ internal static class SaveUpgrades
             AddRail(save);
         }
 
+        if (save.Format < new FormatVersion(1, 5))
+        {
+            AddPollutionAndCrime(save);
+        }
+
         save.Format = Current;
     }
 
@@ -51,6 +56,18 @@ internal static class SaveUpgrades
         if (save.Map is { Width: >= 1 and <= MapCodec.MaxSide, Height: >= 1 and <= MapCodec.MaxSide } map)
         {
             save.Rail ??= new RailSave { Track = [.. Enumerable.Repeat(new string('.', map.Width), map.Height)], Tiles = 0, BudgetedTiles = 0 };
+        }
+    }
+
+    // 1.5 added pollution and crime. A city from before has none, which phases 12 and 13 work out
+    // within a cycle; until then land value is as it was, without them.
+    private static void AddPollutionAndCrime(CitySave save)
+    {
+        if (save.Map is { Width: >= 1 and <= MapCodec.MaxSide, Height: >= 1 and <= MapCodec.MaxSide } map)
+        {
+            var blocks = CityMaps.BlocksFor(map.Width, map.Height);
+            save.Pollution ??= new BlockMapSave { Blocks = new int[blocks], Average = 0 };
+            save.Crime ??= new BlockMapSave { Blocks = new int[blocks], Average = 0 };
         }
     }
 

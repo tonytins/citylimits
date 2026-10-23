@@ -102,7 +102,7 @@ simulation is deterministic in. Phase 2 adds goals by date, such as
   "$schema": "https://raw.githubusercontent.com/tonytins/citylimits/main/docs/schemas/scenario.v1.0.schema.json",
   "format": "1.0",
   "name": "Demo town",
-  "description": "A road with a residential, a commercial, and an industrial zone, powered by a coal plant; the industry is knocked down after a year.",
+  "description": "A road with a residential, a commercial, and an industrial zone, powered by a coal plant up a line to the north; the industry is knocked down after a year.",
   "seed": 2000,
   "funds": 20000,
   "ticks": 1536,
@@ -111,7 +111,8 @@ simulation is deterministic in. Phase 2 adds goals by date, such as
     { "tick": 0, "tool": "ZoneResidential", "from": { "x": 35, "y": 51 } },
     { "tick": 0, "tool": "ZoneCommercial", "from": { "x": 38, "y": 51 } },
     { "tick": 0, "tool": "ZoneIndustrial", "from": { "x": 41, "y": 51 } },
-    { "tick": 0, "tool": "CoalPowerPlant", "from": { "x": 35, "y": 47 }, "expect": "Built" },
+    { "tick": 0, "tool": "CoalPowerPlant", "from": { "x": 35, "y": 40 }, "expect": "Built" },
+    { "tick": 0, "tool": "PowerLine", "from": { "x": 35, "y": 43 }, "to": { "x": 35, "y": 49 }, "expect": "Built" },
     { "tick": 768, "tool": "Bulldoze", "from": { "x": 41, "y": 51 }, "expect": "Built" }
   ],
   "checks": [
@@ -120,7 +121,7 @@ simulation is deterministic in. Phase 2 adds goals by date, such as
     { "tick": 1536, "count": "Developed", "equals": 1 },
     { "tick": 1536, "tile": { "x": 38, "y": 50 }, "served": true, "powered": true },
     { "tick": 1536, "tile": { "x": 42, "y": 52 }, "kind": "Rubble", "use": "None" },
-    { "tick": 1536, "fundsEquals": 16603 },
+    { "tick": 1536, "fundsEquals": 16568 },
     { "tick": 1536, "count": "Road", "equals": 9 },
     { "tick": 1536, "count": "Industrial", "equals": 0 }
   ]
@@ -283,14 +284,15 @@ scripts already reading it keep working.
     "tick": 1536,
     "cityTime": 96,
     "date": "1902-01",
-    "funds": 16603,
-    "counts": { "road": 9, "bridge": 0, "residential": 1, "commercial": 1, "industrial": 0, "developed": 1, "coalPowerPlant": 1, "nuclearPowerPlant": 0, "powerLine": 0, "fireStation": 0, "policeStation": 0, "park": 0, "hospital": 0, "church": 0, "rail": 0 }
+    "funds": 16568,
+    "counts": { "road": 9, "bridge": 0, "residential": 1, "commercial": 1, "industrial": 0, "developed": 1, "coalPowerPlant": 1, "nuclearPowerPlant": 0, "powerLine": 7, "fireStation": 0, "policeStation": 0, "park": 0, "hospital": 0, "church": 0, "rail": 0 }
   },
   "actions": [
     { "index": 0, "tick": 0, "tool": "Road", "status": "Built", "tiles": 9, "skipped": {}, "cost": 90, "met": true },
     { "index": 1, "tick": 0, "tool": "ZoneResidential", "status": "Built", "tiles": 9, "skipped": {}, "cost": 100 },
     { "index": 4, "tick": 0, "tool": "CoalPowerPlant", "status": "Built", "tiles": 16, "skipped": {}, "cost": 3000, "met": true },
-    { "index": 5, "tick": 768, "tool": "Bulldoze", "status": "Built", "tiles": 9, "skipped": {}, "cost": 1, "met": true }
+    { "index": 5, "tick": 0, "tool": "PowerLine", "status": "Built", "tiles": 7, "skipped": {}, "cost": 35, "met": true },
+    { "index": 6, "tick": 768, "tool": "Bulldoze", "status": "Built", "tiles": 9, "skipped": {}, "cost": 1, "met": true }
   ],
   "checks": [
     { "index": 0, "tick": 1536, "passed": true },

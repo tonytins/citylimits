@@ -137,10 +137,14 @@ public class CitySimulationTests
     [Fact]
     public void AServedZoneGetsPeople()
     {
-        var simulation = new CitySimulation(FlatMap(), 1);
+        // The plant powers the zone down a line, far enough off that its pollution doesn't stop it growing.
+        var simulation = new CitySimulation(TileMap.FromTerrain(20, 9, new TileKind[20 * 9]), 1);
         simulation.Builder.Apply(BuildAction.Road, 3, 1);
         simulation.Builder.Apply(BuildAction.ZoneResidential, 3, 3);
-        simulation.Builder.Apply(BuildAction.CoalPowerPlant, 6, 3);
+        simulation.Builder.Apply(BuildAction.CoalPowerPlant, 17, 3);
+        var line = new BuildStroke(BuildAction.PowerLine, 5, 3);
+        line.DragTo(15, 3);
+        simulation.Builder.Apply(line);
 
         for (var i = 0; i < 200 * CityCalendar.StepsPerCount; i++)
         {

@@ -1,6 +1,6 @@
 # CityLimits roadmap
 
-> **Last reviewed:** 2026-10-21 · **Last updated:** 2026-10-22 · **Change:** patch (reopening a save's kept parts; backports of opening newer saves to 0.3.100–0.3.102) · **Stage:** alpha
+> **Last reviewed:** 2026-10-21 · **Last updated:** 2026-10-22 · **Change:** minor (Deadwood, D1: pollution and crime) · **Stage:** alpha
 
 Forward-looking: where CityLimits stands, what blocks the next milestone,
 and what comes next. Verified status and evidence are in the
@@ -45,9 +45,10 @@ unsupported things in imported cities becoming bare ground.
 
 Next, in order:
 
-1. **Deadwood: crime, pollution, fire, and disasters**, which give the
-   coverage maps and land value their effects. Radial, traffic and rail,
-   is complete.
+1. **Deadwood: fire, then floods and earthquakes**, in the phases Tony
+   Bark settled (D2 and D3). D1, pollution and crime, is in, so police
+   coverage and land value have their effects; fire coverage gets its
+   with D2. Radial, traffic and rail, is complete.
 
 ## Milestones
 
@@ -62,16 +63,17 @@ Next, in order:
 | Kowloon: Simulation core | 100% | 0 | Time runs as in Micropolis: the 16-phase cycle, the 48ths-of-a-year calendar, and its pace. Scenarios run from files and from the command line. Zones grow and decline one by one, with population, demand, and trips. The heart of the game |
 | Joffburg: Services and economy | 100% | 0 | Meets the baseline: power, taxes and the budget, services (stations, coverage, parks, hospitals, and churches), and the overview map with its power, coverage, land value, and density modes, as in Micropolis |
 | Radial: Traffic and commuting | 100% | 0 | Meets the baseline: versioned file formats with schemas, read without reflection, the traffic map trips leave and what it shows and costs, and rail, with tunnels, crossings, trips along it, its upkeep and message, and the commuter train |
-| Deadwood: Land value, pollution, disasters | 0% | 12–20 | Nothing yet |
+| Deadwood: Land value, pollution, disasters | 40% | 7–11 | D1 is in: pollution and crime, as in Micropolis, with their effects on land value and growth, their messages, and overview modes. Fire (D2) and floods and earthquakes (D3) are left |
 | Happy Isle: Player-facing game | 50% | 6–10 | The palette, laid out as Micropolis', and the HUD, with its bar along the bottom over a news ticker after Tony Bark's mock-up, are in; the budget, demand, and city panels and the overview's power mode are too, and cities save, load, autosave, and import from Micropolis. The city score and map size on the start screen are left |
 | Yokohama: Polish and release | 0% | 10–20 | Nothing yet |
-| | **Total** | **≈ 28–50** | |
+| | **Total** | **≈ 23–41** | |
 
 ## Upcoming work, ranked
 
 | Rank | Work | Milestone | Estimate (h) |
 |---|---|---|---|
-| 1 | Deadwood: crime, pollution, fire, and disasters | Deadwood | 12–20 |
+| 1 | Deadwood, D2: fire, with the ticker's fire-risk hints | Deadwood | 4–6 |
+| 2 | Deadwood, D3: floods and earthquakes | Deadwood | 3–5 |
 
 Every row of the alpha gate passes, and CityLimits is an alpha since 0.3.100.
 
@@ -226,12 +228,34 @@ pollution, in Deadwood.
 
 ### Deadwood: Land value, pollution, disasters
 
-- [ ] Land value, from a set of desirability factors, with an overlay.
-- [ ] Pollution from industry and traffic, and its effect on land value.
-- [ ] Fire: fires start, spread to buildings, and are answered by the
-  fire service.
-- [ ] Earthquakes and floods, on a timer, with a warning first.
-- [ ] Damage, repair cost, and recovery.
+Built to the Micropolis baseline, in the phases Tony Bark settled. Of
+Micropolis' disasters, fire, floods, and earthquakes are in Deadwood; its
+tornado, monster, and meltdown are left for later, and the roll that
+would bring them does nothing. Every disaster is reported in red on the
+news ticker the moment it starts. Fire also gets hints ahead of time,
+which Tony Bark asked for after SimCity 3000: flavour headlines when the
+city's fire risk runs high, which read the city and never decide a fire.
+Damage is repaired as in Micropolis, at no cost: stations and plants
+rebuild their own damaged tiles, and the player clears rubble.
+
+- [x] D1: land value, from a set of desirability factors, with an
+  overlay. Closeness to the centre, terrain, pollution, and crime, as in
+  Micropolis; the overview's Value mode shows it, and Crime has a mode of
+  its own. Crime is 128 less land value plus density, less police
+  coverage, and takes 20 off land value above 190.
+- [x] D1: pollution from industry and traffic, and its effect on land
+  value. As Micropolis' core counts it, every tile of a building, as Tony
+  Bark chose over the Java port's centre alone; it lowers land value and
+  homes' worth, stops homes growing above 128, and has an overview mode
+  and a message. Its numbers are constants until the definitions format
+  can grow without stopping older versions opening new saves. Saved from
+  format 1.5, as two parts older versions may leave out or keep.
+- [ ] D2: fire. Fires start, spread to buildings, and are answered by
+  the fire service, with hints on the ticker when the risk runs high.
+- [ ] D3: earthquakes and floods, from Micropolis' disaster roll,
+  reported as they start.
+- [ ] D2 and D3: damage and recovery, as in Micropolis: stations and
+  plants repair themselves, zones regrow, and the player clears rubble.
 
 ### Happy Isle: Player-facing game
 
@@ -334,6 +358,7 @@ baseline's growth depends on.
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-22 | minor | Deadwood, D1, as in Micropolis: pollution from industry, coal plants, and busy roads, every tile of a building counting as in Micropolis' core (Tony Bark's choice over the Java port), lowering land value and homes' worth and stopping homes above 128; crime from land value, density, and police coverage, taking 20 off land value above 190; messages above averages of 60 and 100; Pollution and Crime overview modes. Saves move to format 1.5 with two parts older versions may leave out or keep, and 0.3.106 opened one. Tony Bark settled Deadwood's phases: fire (D2, with SimCity 3000-style hints on the ticker), then floods and earthquakes (D3); no tornado, monster, or meltdown yet; no warnings before a disaster beyond fire's hints; Micropolis' free repairs. The built-in scenarios' and the headless town's coal plants moved up power lines out of their homes' pollution; small town's industry now holds back its neighbours. Deadwood is at 40%; 23–41 h left in total, 722 tests. |
 | 2026-10-22 | patch | A save that kept a newer save's parts but fell back to this version opens again with them; before, the flat format refused it and the binary one dropped them. 0.3.100 to 0.3.102 got backports that open saves from 0.3.103 on, 0.3.100.1 to 0.3.102.1, on release branches, and a save from each is a fixture. 705 tests. |
 | 2026-10-22 | minor | Radial, R3, and with it Radial, is complete, as in Micropolis: rail at $20 a tile, tunnels at $100, crossings with roads and lines, trips on road and rail alike with traffic only on roads, rail serving zones, each rail tile two road tiles of upkeep, crumbling underfunded rail, and the inadequate-rail message past 50 zones; the commuter train wanders the track, drawn by the game alone with its own generator, as Tony Bark chose. Saves move to format 1.4, with rail a part an older version can leave out, and scenarios to 1.1 for the Rail tool and count; a built-in `rail` scenario. Imports bring rail in as rail. The palette's buttons became switches and the number keys were dropped. Radial is at 100%; 28–50 h left in total, 697 tests. |
 | 2026-10-22 | minor | An interface update of its own before Radial's R3, after Tony Bark's revised mock-up and SimCity 3000's ticker: the bar moves to the bottom, over a news ticker that never stops (white headlines, some reacting to the city and some flavour; yellow notices and the city's messages; red for disasters to come), replacing the notice line; the key hints become a movable help window behind a green question mark or F1; build results and refusals, and the Inspect tool's tile readout in place of its old panel, show beside the pointer in black on yellow; the ticker stands still while the city is paused; the palette and the overview move to the top corners; and the loading screen's phrases scroll like the ticker. 673 tests. |

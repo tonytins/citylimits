@@ -35,4 +35,10 @@ public enum CityMessage
 
     /// <summary>The city has more than 50 zones and fewer rail tiles than zones.</summary>
     NeedRail,
+
+    /// <summary>The city's average pollution is above 60.</summary>
+    HighPollution,
+
+    /// <summary>The city's average crime is above 100.</summary>
+    HighCrime,
 }

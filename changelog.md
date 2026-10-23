@@ -1,5 +1,27 @@
 # CityLimits Changelog
 
+## 0.3.108
+
+Your city now has pollution and crime, as in Micropolis. Industry, coal
+plants, and busy roads pollute the land around them, which lowers what
+it's worth, and homes won't grow where the air is worst, so keep your
+coal plants and factories away from where people live and run a power
+line out to them. Crime is highest where land is cheap and people are
+crowded, and police stations bring it down; where it runs very high, it
+takes a little off the land's value too. The city tells you when
+pollution or crime is very high, and the overview map has two new modes,
+Pollution and Crime, to show you where.
+
+For developers and agents: saves are format 1.5, adding pollution and
+crime as two parts (`"pollution"` and `"crime"`, and the `POLL` and
+`CRIM` chunks) that older versions may leave out or keep, so 0.3.103 and
+later, and the backports, still open new cities. The headless run's
+monthly line gives the pollution and crime averages, and its demo town,
+the built-in `demo-town` and `zones-and-bulldozer` scenarios, and
+`small-town` power their zones from a coal plant up a line, out of the
+pollution; `small-town`'s industry now holds back the homes and shops
+beside it, and its checks say so.
+
 ## 0.3.107
 
 Older versions can now open your newer cities too. 0.3.100, 0.3.101, and

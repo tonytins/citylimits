@@ -16,12 +16,12 @@ change. Statuses are `done`, `partial`, and `missing`.
 | [Map](#map-and-terrain) | 4 | 0 | 0 | 4 kinds of ground, 16 shore and 17 wood drawings, one 256 by 960 atlas |
 | [Zoning](#roads-and-zoning) | 5 | 0 | 0 | 5 tools that change the world, $10 a road, $50 a bridge, $100 a 3 by 3 zone, $1 to bulldoze |
 | [Simulation](#simulation) | 7 | 0 | 0 | 16 phases a 48th of a year, 3 minutes a year at Normal, houses then 4 to 5 building levels, 3 built-in scenarios |
-| [Economy](#economy-and-services) | 4 | 1 | 0 | $20 000 in the treasury, 7% tax, 700 and 2 000 tile plants, the budget panel, the overview map's seven modes |
+| [Economy](#economy-and-services) | 4 | 1 | 0 | $20 000 in the treasury, 7% tax, 700 and 2 000 tile plants, the budget panel, the overview map's nine modes |
 | [Traffic](#traffic-and-commuting) | 4 | 1 | 0 | 1 road network, trips of up to 30 tiles, traffic up to 240 a block, light from 64 and heavy from 192, jams above an average of 60, rail at $20 a tile counting as two road tiles |
-| [Environment](#land-value-pollution-and-disasters) | 0 | 1 | 4 | land value from distance and terrain, 0 disasters |
+| [Environment](#land-value-pollution-and-disasters) | 2 | 0 | 3 | land value from distance, terrain, pollution, and crime; pollution 50 an industry tile and 100 a coal plant tile; 0 disasters |
 | [Interface](#player-interface) | 3 | 2 | 1 | 12 tools with icons, the bar along the bottom, a news ticker, a help window, the demand panel, the budget panel, the overview map, a loading screen and start menu |
 | [Platform](#platform) | 8 | 0 | 2 | Raylib-cs 8.1.0, NLog 6.2.2, .NET 10, data mods, versioned formats with schemas |
-| [Reliability](#reliability) | 6 | 0 | 0 | 705 tests, all passing, CI green |
+| [Reliability](#reliability) | 6 | 0 | 0 | 722 tests, all passing, CI green |
 | [Documentation](#documentation) | 3 | 0 | 2 | 3 of 5 documents exist |
 | [Known issues](#known-issues) | | | | 1 open, 3 resolved |
 
@@ -35,7 +35,7 @@ city charges for the work and refuses what it cannot pay for. Zones grow
 and decline with population, demand, and trips, as in Micropolis, and their
 buildings are drawn from the tiles' own state. Power, taxes, the budget,
 services, an overview map with its overlays, saving, and traffic on the
-roads and rail are in; crime, pollution, and disasters are still missing, and that is the point
+roads and rail, pollution, and crime are in; fire and disasters are still missing, and that is the point
 of the table: it is the contract the work has to meet.
 
 How the state was verified on 2026-10-20:
@@ -128,8 +128,8 @@ there is something to grow.
 
 | Id | Target | Status | Evidence |
 |---|---|---|---|
-| ENV-1 | Land value comes from desirability factors and has an overlay | partial | `CityMaps.UpdateLandValue`, as Micropolis: closeness to the city's centre of mass and the trees and water nearby, from 1 to 250, on 2 by 2 blocks. Pollution and crime aren't in it yet, and there is no overlay. `CityMapsTests` works the values out by hand |
-| ENV-2 | Pollution comes from industry and traffic and lowers land value | missing | No pollution model |
+| ENV-1 | Land value comes from desirability factors and has an overlay | done | `CityMaps.UpdateLandValue`, as Micropolis: closeness to the city's centre of mass and the trees and water nearby, less pollution, and 20 less where crime is above 190, from 1 to 250, on 2 by 2 blocks. The overview map's Value mode shows it (ECON-5). `CityMapsTests` works the values out by hand, crime's 20 included. Crime (`CityMaps.UpdateCrime`, phase 13) is 128 less land value plus density, less police coverage, and has its own overview mode; a police station on cheap land lowers it, and a city of cheap land hears that crime is very high (`PollutionAndCrimeTests`) |
+| ENV-2 | Pollution comes from industry and traffic and lowers land value | done | `CityMaps.UpdateLandValue`, phase 12, as Micropolis' core: 50 for every tile of an industrial building, 100 for every tile of a coal plant, and 50 or 75 for a road showing light or heavy traffic, up to 255 a block, smoothed twice. It comes off land value and off a residential zone's worth, and stops homes growing above 128 (`ZoneGrowthTests`: the cut-off test grows a house when the rule is taken out). `CityMapsTests` works a plant's and a road's out by hand. On a private display on 2026-10-22 the overview's Pollution mode showed a coal plant's plume and a town's industry, and its Crime mode the town's dense middle. A save from before opens with none and works it out within a cycle, and 0.3.106 opened a 1.5 save in both formats, kept both parts, and wrote them back |
 | ENV-3 | Fires start, spread, and are answered by the fire service | missing | No fire model |
 | ENV-4 | Earthquakes and floods happen on a timer, with a warning first | missing | No disasters |
 | ENV-5 | Damage, repair cost, and recovery exist | missing | No repair model |
@@ -167,7 +167,7 @@ there is something to grow.
 | REL-1 | Nothing ends the player's session: the frame loop catches, reports, and keeps drawing | done | `WindowedGame` catches every exception around the update and the draw, and `GameLoop.ReportError` puts the message on screen; the game keeps running |
 | REL-2 | The world and the simulation never call the engine | done | `CityLimits.Core` references no package at all, and the game references the core library; no Raylib type appears in the core |
 | REL-3 | Input, tile indices, map sizes, and files are validated where they enter | done | Map sizes, tile counts, and the settings file are checked, and the tile indexer throws outside the map. The mouse position is turned into a tile by `MapRenderer.TryGetTileAt`, which reports when the pointer is off the map, and `CityBuilder.Apply` refuses a tile that is off the map, ground that cannot be built on, and work the city cannot pay for |
-| REL-4 | A test project covers the engine-free logic, and the tests pass | done | `CityLimits.Tests` references `CityLimits.Core` and `CityLimits.CommandLine` and holds 462 xUnit tests over the generator and the terrain edges, the power plants, lines, and grid, the budget, the stations and their coverage, parks, hospitals and churches, the map, the tile state, the rules, the calendar and the cycle, the clock, the simulation, the settings, the treasury, the road network and its connections, the map's change event, the builder and its strokes, the scenario loader and runner, every built-in scenario, the definitions and the mod loader, zone growth, the census and demand, trips, growth and the city maps, the option reader, and the dispatcher. All 481 passed on 2026-10-21. Letting an unknown option and an out-of-range number through on purpose failed 3 of them, and letting `--headless` reach a command that needs a window failed 2 |
+| REL-4 | A test project covers the engine-free logic, and the tests pass | done | `CityLimits.Tests` references `CityLimits.Core` and `CityLimits.CommandLine` and holds 722 xUnit tests over pollution and crime, the generator and the terrain edges, the power plants, lines, and grid, the budget, the stations and their coverage, parks, hospitals and churches, the map, the tile state, the rules, the calendar and the cycle, the clock, the simulation, the settings, the treasury, the road network and its connections, the map's change event, the builder and its strokes, the scenario loader and runner, every built-in scenario, the definitions and the mod loader, zone growth, the census and demand, trips, growth and the city maps, the option reader, and the dispatcher. All 722 passed on 2026-10-22. Letting an unknown option and an out-of-range number through on purpose failed 3 of them, and letting `--headless` reach a command that needs a window failed 2 |
 | REL-5 | A determinism test proves the same seed gives the same city | done | `DeterministicRandomTests.TheSameSeedGivesTheSameSequence`, `CitySimulationTests.TheSameSeedAndTheSameTicksGiveTheSameCity`, and `CitySimulationTests.TheSameSeedAndTheSameWorkGiveTheSameCity`, which builds the same road and zones in two cities and compares the tiles and the money after 40 ticks |
 | REL-6 | CI builds and tests on every push | done | `.github/workflows/dotnet.yml` runs on a push to `main` and on a pull request: restore, build, and test. The first run, on the commit 273fd9f on 2026-10-20, finished with the conclusion `success` (run 39443031762) |
 

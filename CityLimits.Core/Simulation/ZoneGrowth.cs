@@ -13,8 +13,9 @@ namespace CityLimits.Core.Simulation;
 /// A residential zone grows single houses until its spec's number, then a building once the
 /// population density around it is high enough; buildings grow and decline a level at a time, in
 /// the land-value class of the moment. One time in four, an empty zone that would grow becomes a
-/// hospital or a church instead, when the city needs one. Until its system exists, pollution is
-/// none.
+/// hospital or a church instead, when the city needs one. Pollution counts against a residential
+/// zone's worth and against the land-value class of homes and shops, and a residential zone doesn't
+/// grow at all where it is above 128.
 /// </remarks>
 internal sealed class ZoneGrowth
 {
@@ -37,6 +38,9 @@ internal sealed class ZoneGrowth
 
     // The density around a residential zone its houses need before it builds.
     private const int DensityForBuilding = 64;
+
+    // Micropolis' residential zones don't grow where pollution is above this.
+    private const int MostPollutionForHomes = 128;
 
     // The outer tiles in the order a house is looked for: across the top, the sides, the bottom.
     private static readonly (int Dx, int Dy)[] Lots =
@@ -202,15 +206,16 @@ internal sealed class ZoneGrowth
 
     private int Roll() => _random.NextInt(0, 0x10000) - 0x8000;
 
-    // Land value, less pollution (none yet), times 32, between -3000 and 3000.
+    // Land value, less pollution, times 32, between -3000 and 3000.
     private int ResidentialWorth(int x, int y)
     {
-        var value = _maps.LandValueAt(x, y);
+        var value = _maps.LandValueAt(x, y) - _maps.PollutionAt(x, y);
         return Math.Min(Math.Max(value, 0) * 32, MostResidentialWorth) - (MostResidentialWorth / 2);
     }
 
-    // The land-value class a zone's building takes: thresholds at 30, 80, and 150.
-    private int ValueClass(int x, int y) => _maps.LandValueAt(x, y) switch
+    // The land-value class a zone's building takes, from land value less pollution: thresholds at
+    // 30, 80, and 150.
+    private int ValueClass(int x, int y) => (_maps.LandValueAt(x, y) - _maps.PollutionAt(x, y)) switch
     {
         < 30 => 0,
         < 80 => 1,
@@ -220,6 +225,11 @@ internal sealed class ZoneGrowth
 
     private void GrowResidential(int x, int y, TileState center, ZoneSpec spec, int valueClass)
     {
+        if (_maps.PollutionAt(x, y) > MostPollutionForHomes)
+        {
+            return;
+        }
+
         if (center.Development > 0)
         {
             if (center.Development < spec.Levels)

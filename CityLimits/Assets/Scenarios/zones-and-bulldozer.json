@@ -9,7 +9,8 @@
     { "tick": 0, "tool": "Road", "from": { "x": 34, "y": 54 }, "to": { "x": 45, "y": 54 }, "expect": "Built" },
     { "tick": 0, "tool": "ZoneResidential", "from": { "x": 35, "y": 52 }, "to": { "x": 41, "y": 52 }, "expect": "Built" },
     { "tick": 0, "tool": "ZoneCommercial", "from": { "x": 44, "y": 48 }, "expect": "Built" },
-    { "tick": 0, "tool": "CoalPowerPlant", "from": { "x": 36, "y": 48 }, "expect": "Built" },
+    { "tick": 0, "tool": "CoalPowerPlant", "from": { "x": 36, "y": 41 }, "expect": "Built" },
+    { "tick": 0, "tool": "PowerLine", "from": { "x": 36, "y": 44 }, "to": { "x": 36, "y": 50 }, "expect": "Built" },
     { "tick": 0, "tool": "ZoneIndustrial", "from": { "x": 36, "y": 52 }, "expect": "Refused:CannotBuildHere" },
     { "tick": 0, "tool": "Bulldoze", "from": { "x": 34, "y": 51 }, "expect": "Refused:PartOfAZone" },
     { "tick": 0, "tool": "Bulldoze", "from": { "x": 34, "y": 48 }, "expect": "Unchanged:NothingToClear" },
@@ -24,6 +25,6 @@
     { "tick": 767, "tile": { "x": 41, "y": 52 }, "powered": true },
     { "tick": 768, "tile": { "x": 38, "y": 52 }, "kind": "Rubble", "use": "None" },
     { "tick": 768, "count": "Residential", "equals": 2 },
-    { "tick": 768, "fundsEquals": 16479 }
+    { "tick": 768, "fundsEquals": 16444 }
   ]
 }

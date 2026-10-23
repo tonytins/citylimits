@@ -68,6 +68,12 @@ internal sealed class CitySave
     /// <summary>The rail on the map, and the scan's count of it; from format 1.4, and none for a city upgraded from before.</summary>
     public RailSave? Rail { get; set; }
 
+    /// <summary>The pollution on the map, and its average; from format 1.5, and none for a city upgraded from before.</summary>
+    public BlockMapSave? Pollution { get; set; }
+
+    /// <summary>The crime on the map, and its average; from format 1.5, and none for a city upgraded from before.</summary>
+    public BlockMapSave? Crime { get; set; }
+
     /// <summary>
     /// A newer save's sections this version doesn't know, caught as they are so they can be checked
     /// against the parts list and written back. Unknown fields inside a known section are still refused.
@@ -346,6 +352,17 @@ internal sealed class RailSave
 
     /// <summary>The rail tiles the budget last counted.</summary>
     public required int BudgetedTiles { get; set; }
+}
+
+/// <summary>One of the city's maps on 2 by 2 tile blocks, such as pollution or crime, and its average.</summary>
+[System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(SectionCodec.ModelMembers)]
+internal sealed class BlockMapSave
+{
+    /// <summary>Each 2 by 2 block's value, row by row.</summary>
+    public required int[] Blocks { get; set; }
+
+    /// <summary>The average the city last worked out.</summary>
+    public required int Average { get; set; }
 }
 
 [System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(SectionCodec.ModelMembers)]

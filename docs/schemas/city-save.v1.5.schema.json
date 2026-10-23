@@ -1,0 +1,800 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/tonytins/citylimits/main/docs/schemas/city-save.v1.5.schema.json",
+  "title": "A city saved by CityLimits in the flat city format, .fcl",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "description": "The schema the file follows, for editors; the game ignores it.",
+      "type": "string"
+    },
+    "format": {
+      "description": "The file's format version, as \"major.minor\"; a whole number, as older files wrote it, is that major version, .0.",
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+$"
+        },
+        {
+          "type": "integer",
+          "minimum": 0
+        }
+      ]
+    },
+    "parts": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "chunk": {
+            "type": "string"
+          },
+          "since": {
+            "type": "string"
+          },
+          "ignorable": {
+            "type": "boolean"
+          },
+          "keepable": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "chunk",
+          "since",
+          "ignorable",
+          "keepable"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "name": {
+      "type": "string"
+    },
+    "seed": {
+      "type": "integer"
+    },
+    "random": {
+      "type": "string"
+    },
+    "tick": {
+      "type": "integer"
+    },
+    "cityTime": {
+      "type": "integer"
+    },
+    "funds": {
+      "type": "integer"
+    },
+    "definitions": {
+      "$ref": "https://raw.githubusercontent.com/tonytins/citylimits/main/docs/schemas/definitions.v1.0.schema.json"
+    },
+    "mods": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "version": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "map": {
+      "type": "object",
+      "properties": {
+        "width": {
+          "type": "integer"
+        },
+        "height": {
+          "type": "integer"
+        },
+        "ground": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "use": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "part": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "buildings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "x": {
+                "type": "integer"
+              },
+              "y": {
+                "type": "integer"
+              },
+              "development": {
+                "type": "integer"
+              },
+              "valueClass": {
+                "type": "integer"
+              },
+              "powered": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "x",
+              "y"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "houses": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "x": {
+                "type": "integer"
+              },
+              "y": {
+                "type": "integer"
+              },
+              "house": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "x",
+              "y",
+              "house"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "width",
+        "height",
+        "ground",
+        "use",
+        "part",
+        "buildings",
+        "houses"
+      ],
+      "additionalProperties": false
+    },
+    "budget": {
+      "type": "object",
+      "properties": {
+        "taxRate": {
+          "type": "integer"
+        },
+        "roadFunding": {
+          "type": "integer"
+        },
+        "fireFunding": {
+          "type": "integer"
+        },
+        "policeFunding": {
+          "type": "integer"
+        },
+        "taxEffect": {
+          "type": "integer"
+        },
+        "roadEffect": {
+          "type": "integer"
+        },
+        "fireEffect": {
+          "type": "integer"
+        },
+        "policeEffect": {
+          "type": "integer"
+        },
+        "taxFund": {
+          "type": "integer"
+        },
+        "roadFund": {
+          "type": "integer"
+        },
+        "fireFund": {
+          "type": "integer"
+        },
+        "policeFund": {
+          "type": "integer"
+        },
+        "cut": {
+          "type": "boolean"
+        },
+        "lastYear": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "taxRate": {
+              "type": "integer"
+            },
+            "taxIncome": {
+              "type": "integer"
+            },
+            "roadRequest": {
+              "type": "integer"
+            },
+            "roadFunded": {
+              "type": "integer"
+            },
+            "fireRequest": {
+              "type": "integer"
+            },
+            "fireFunded": {
+              "type": "integer"
+            },
+            "policeRequest": {
+              "type": "integer"
+            },
+            "policeFunded": {
+              "type": "integer"
+            },
+            "cut": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "taxRate",
+            "taxIncome",
+            "roadRequest",
+            "roadFunded",
+            "fireRequest",
+            "fireFunded",
+            "policeRequest",
+            "policeFunded",
+            "cut"
+          ],
+          "additionalProperties": false
+        },
+        "estimated": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "taxRate": {
+              "type": "integer"
+            },
+            "taxIncome": {
+              "type": "integer"
+            },
+            "roadRequest": {
+              "type": "integer"
+            },
+            "roadFunded": {
+              "type": "integer"
+            },
+            "fireRequest": {
+              "type": "integer"
+            },
+            "fireFunded": {
+              "type": "integer"
+            },
+            "policeRequest": {
+              "type": "integer"
+            },
+            "policeFunded": {
+              "type": "integer"
+            },
+            "cut": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "taxRate",
+            "taxIncome",
+            "roadRequest",
+            "roadFunded",
+            "fireRequest",
+            "fireFunded",
+            "policeRequest",
+            "policeFunded",
+            "cut"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "taxRate",
+        "roadFunding",
+        "fireFunding",
+        "policeFunding",
+        "taxEffect",
+        "roadEffect",
+        "fireEffect",
+        "policeEffect",
+        "taxFund",
+        "roadFund",
+        "fireFund",
+        "policeFund",
+        "cut"
+      ],
+      "additionalProperties": false
+    },
+    "census": {
+      "type": "object",
+      "properties": {
+        "residential": {
+          "type": "integer"
+        },
+        "commercial": {
+          "type": "integer"
+        },
+        "industrial": {
+          "type": "integer"
+        },
+        "residentPopulation": {
+          "type": "integer"
+        },
+        "commercialPopulation": {
+          "type": "integer"
+        },
+        "industrialPopulation": {
+          "type": "integer"
+        },
+        "residentialHistory": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "commercialHistory": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "industrialHistory": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        }
+      },
+      "required": [
+        "residential",
+        "commercial",
+        "industrial",
+        "residentPopulation",
+        "commercialPopulation",
+        "industrialPopulation",
+        "residentialHistory",
+        "commercialHistory",
+        "industrialHistory"
+      ],
+      "additionalProperties": false
+    },
+    "demand": {
+      "type": "object",
+      "properties": {
+        "residential": {
+          "type": "integer"
+        },
+        "commercial": {
+          "type": "integer"
+        },
+        "industrial": {
+          "type": "integer"
+        },
+        "taxablePopulation": {
+          "type": "integer"
+        },
+        "residentialPull": {
+          "type": "integer"
+        },
+        "commercialPull": {
+          "type": "integer"
+        },
+        "industrialPull": {
+          "type": "integer"
+        },
+        "taxPushApplied": {
+          "type": "integer"
+        },
+        "jobsPerResident": {
+          "type": "number"
+        },
+        "workersPerJob": {
+          "type": "number"
+        },
+        "historyCount": {
+          "type": "integer"
+        },
+        "residentialHistory": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "commercialHistory": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "industrialHistory": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        }
+      },
+      "required": [
+        "residential",
+        "commercial",
+        "industrial",
+        "taxablePopulation",
+        "residentialPull",
+        "commercialPull",
+        "industrialPull",
+        "taxPushApplied",
+        "jobsPerResident",
+        "workersPerJob",
+        "historyCount",
+        "residentialHistory",
+        "commercialHistory",
+        "industrialHistory"
+      ],
+      "additionalProperties": false
+    },
+    "power": {
+      "type": "object",
+      "properties": {
+        "plants": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "powered": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "coalPlants": {
+          "type": "integer"
+        },
+        "nuclearPlants": {
+          "type": "integer"
+        },
+        "zones": {
+          "type": "integer"
+        },
+        "poweredBuildings": {
+          "type": "integer"
+        },
+        "unpoweredBuildings": {
+          "type": "integer"
+        },
+        "capacity": {
+          "type": "integer"
+        },
+        "poweredTiles": {
+          "type": "integer"
+        },
+        "brownedOut": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "plants",
+        "powered",
+        "coalPlants",
+        "nuclearPlants",
+        "zones",
+        "poweredBuildings",
+        "unpoweredBuildings",
+        "capacity",
+        "poweredTiles",
+        "brownedOut"
+      ],
+      "additionalProperties": false
+    },
+    "services": {
+      "type": "object",
+      "properties": {
+        "fireStations": {
+          "type": "integer"
+        },
+        "policeStations": {
+          "type": "integer"
+        },
+        "fireRaw": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "policeRaw": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "fire": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "police": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        }
+      },
+      "required": [
+        "fireStations",
+        "policeStations",
+        "fireRaw",
+        "policeRaw",
+        "fire",
+        "police"
+      ],
+      "additionalProperties": false
+    },
+    "community": {
+      "type": "object",
+      "properties": {
+        "hospitals": {
+          "type": "integer"
+        },
+        "churches": {
+          "type": "integer"
+        },
+        "hospitalNeed": {
+          "type": "integer"
+        },
+        "churchNeed": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "hospitals",
+        "churches",
+        "hospitalNeed",
+        "churchNeed"
+      ],
+      "additionalProperties": false
+    },
+    "cityMaps": {
+      "type": "object",
+      "properties": {
+        "centerX": {
+          "type": "integer"
+        },
+        "centerY": {
+          "type": "integer"
+        },
+        "landValueAverage": {
+          "type": "integer"
+        },
+        "landValue": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "density": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "terrain": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "commercialRate": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        }
+      },
+      "required": [
+        "centerX",
+        "centerY",
+        "landValueAverage",
+        "landValue",
+        "density",
+        "terrain",
+        "commercialRate"
+      ],
+      "additionalProperties": false
+    },
+    "cycle": {
+      "type": "object",
+      "properties": {
+        "roadTiles": {
+          "type": "integer"
+        },
+        "budgetedRoadTiles": {
+          "type": "integer"
+        },
+        "budgetedFireStations": {
+          "type": "integer"
+        },
+        "budgetedPoliceStations": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "roadTiles",
+        "budgetedRoadTiles",
+        "budgetedFireStations",
+        "budgetedPoliceStations"
+      ],
+      "additionalProperties": false
+    },
+    "traffic": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "density": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        }
+      },
+      "required": [
+        "density"
+      ],
+      "additionalProperties": false
+    },
+    "roadTraffic": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "levels": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "average": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "levels",
+        "average"
+      ],
+      "additionalProperties": false
+    },
+    "rail": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "track": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "tiles": {
+          "type": "integer"
+        },
+        "budgetedTiles": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "track",
+        "tiles",
+        "budgetedTiles"
+      ],
+      "additionalProperties": false
+    },
+    "pollution": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "blocks": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "average": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "blocks",
+        "average"
+      ],
+      "additionalProperties": false
+    },
+    "crime": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "blocks": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "average": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "blocks",
+        "average"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "format",
+    "name",
+    "seed",
+    "random",
+    "tick",
+    "cityTime",
+    "funds",
+    "definitions",
+    "mods",
+    "map",
+    "budget",
+    "census",
+    "demand",
+    "power",
+    "services",
+    "community",
+    "cityMaps",
+    "cycle"
+  ],
+  "additionalProperties": false
+}

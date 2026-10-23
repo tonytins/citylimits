@@ -51,7 +51,7 @@ public class FormatVersionTests
         var city = new CitySimulation(TileMap.FromTerrain(6, 6, new TileKind[36]), 3);
         var save = JsonNode.Parse(FlatCityFormat.Write(city))!.AsObject();
 
-        Assert.Equal("1.4", save["format"]!.GetValue<string>());
+        Assert.Equal("1.5", save["format"]!.GetValue<string>());
         Assert.Equal(FormatSchemas.UrlFor("city-save", FlatCityFormat.Format), save["$schema"]!.GetValue<string>());
 
         // A save from before major and minor versions wrote a whole number, and no schema.

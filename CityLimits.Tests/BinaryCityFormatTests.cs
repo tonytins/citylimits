@@ -72,10 +72,10 @@ public class BinaryCityFormatTests
 
     [Theory]
     [InlineData("magic", "The file isn't a binary CityLimits city")]
-    [InlineData("format", "format: this is format 9.0; this version of CityLimits reads up to 1.4.")]
+    [InlineData("format", "format: this is format 9.0; this version of CityLimits reads up to 1.5.")]
     [InlineData("checksum", "BUDG: is damaged: its checksum doesn't match.")]
     [InlineData("truncated", "The file ends partway through a chunk")]
-    [InlineData("cut short", "RAIL: says it is")]
+    [InlineData("cut short", "CRIM: says it is")]
     [InlineData("length", "CYCL: says it is")]
     [InlineData("duplicate", "CYCL: the file holds it twice.")]
     [InlineData("missing", "CYCL: the file is missing it.")]

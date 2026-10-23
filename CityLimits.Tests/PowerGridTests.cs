@@ -259,7 +259,7 @@ public class PowerGridTests
     }
 
     [Fact]
-    public void APoweredCityHearsNothing()
+    public void APoweredCityHearsNothingAboutPower()
     {
         var city = City(40, 6);
         var zones = new BuildStroke(BuildAction.ZoneResidential, 1, 1);
@@ -271,7 +271,8 @@ public class PowerGridTests
 
         RunCycles(city, 64);
 
-        Assert.Empty(heard);
+        // A coal plant among the homes pollutes them, which the city does complain of.
+        Assert.DoesNotContain(heard, message => message is CityMessage.NeedPower or CityMessage.Blackouts or CityMessage.Brownouts);
         Assert.Equal(12, city.Power.PoweredBuildings);
         Assert.Equal(0, city.Power.UnpoweredBuildings);
     }

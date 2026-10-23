@@ -44,7 +44,7 @@ public class ScenarioLoaderTests
     {
         Assert.True(ScenarioLoader.TryParse(DemoTown.Json, out var scenario, out var error), error);
         Assert.Equal("Demo town", scenario.Name);
-        Assert.Equal(6, scenario.Actions.Count);
+        Assert.Equal(7, scenario.Actions.Count);
         Assert.Same(DemoTown.Scenario, DemoTown.Scenario);
     }
 

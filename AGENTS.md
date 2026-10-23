@@ -142,9 +142,9 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   year, and phases 1 to 8 scan the map in 8 vertical bands; phase 9
   records the census and sets a 48th of the year's taxes and upkeep
   aside, settling the year when it comes round, 10 fades the traffic and checks the city's messages, 11 traces power, 12
-  works out land value, 13 spreads police coverage, 14 population
-  density, and 15 fire coverage; 13 and 15 are also where crime, and fire
-  and disasters, will run.
+  works out land value and pollution, 13 spreads police coverage and works
+  out crime, 14 population density, and 15 fire coverage; 15 is also where
+  fire and disasters will run.
   `CityCalendar` turns the count into a month: 4 counts a month, 48 a
   year, from January 1900. At Normal speed a step runs every quarter of a
   second, so a month takes 16 seconds and a year about 3 minutes; Fast is
@@ -184,8 +184,9 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   1 000), halved without power and halved again without a road along its
   edge. Phase 13 spreads the police map and phase 15 the fire map, each
   smoothed three times: a block keeps half of itself plus an eighth of
-  each neighbour. Coverage acts on crime and fires, which come with
-  Deadwood; until then nothing answers to it. The city says when more
+  each neighbour. Police coverage lowers crime; fire coverage acts on
+  fires, which come with Deadwood's D2, and until then nothing answers to
+  it. The city says when more
   than 60 people have no fire station or no police station, and when
   either is funded below 70%. An unpowered station blinks the bolt, as a
   zone does.
@@ -266,7 +267,9 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   class from land value, except industry's, which is a coin toss.
   Commerce grows only as far as land value divided by 32. A zone with no
   power never grows. The same seed and the same work give the same city.
-  Until their systems exist, pollution and crime are none.
+  Pollution comes off a residential zone's worth, and off the land value
+  a home's or a shop's building takes its class from, and a residential
+  zone doesn't grow at all where pollution is above 128.
 - **Hospitals and churches.** As in Micropolis (`CommunityBuildings`),
   nobody builds them: each month the city needs one of each for every 256
   residents, and one time in four, when an empty residential zone would
@@ -280,9 +283,24 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   on 2 by 2 tile blocks, as Micropolis does. Land value (phase 12) is, for
   a block with something built on it, 34 less the distance to the city's
   centre of mass, times four, plus 15 for each tree, wooded park, or water tile in the
-  4 by 4 area around it, smoothed, from 1 to 250. Population density
+  4 by 4 area around it, smoothed, less the block's pollution and 20 more
+  where its crime is above 190, from 1 to 250. Population density
   (phase 14) spreads each zone's population, smoothed three times, and
   sets the centre of mass and the commercial rate.
+- **Pollution and crime.** As in Micropolis, `CityMaps` works pollution
+  out with land value (phase 12), on the same 2 by 2 blocks: every tile of
+  an industrial building adds 50, every tile of a coal plant 100, and a
+  road 50 or 75 for the light or heavy traffic it shows, up to 255 a
+  block, smoothed twice. Every tile of a building counts, as in
+  Micropolis' core; the Java port counts only the centre, and Tony Bark
+  chose the core. Crime (phase 13, once police coverage has spread) is,
+  for a block with land value, 128 less the land value plus the
+  population density, no more than 300, less police coverage, from 0 to
+  250. Each keeps its average over the blocks that have any, and the city
+  says pollution is very high above an average of 60 and crime above 100.
+  Their numbers are constants for now, not specs, as Tony Bark chose,
+  because a spec field would make every save refuse to open in older
+  versions until the definitions format can grow without that.
 - **Trips.** As in Micropolis, a zone's trip (`TripPlanner`) sets out
   from the first road along its edge and drives up to 30 road tiles, each
   step in a direction picked by the simulation's seeded generator, never
@@ -421,7 +439,7 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   on it moves the view there. A row of buttons under it switches it
   between the city, power (a building lit or dark by what its centre
   last had, and the lines grey), fire and police coverage, land value,
-  population density, and traffic, each map in four bands of its own colours over
+  population density, traffic, pollution, and crime, each map in four bands of its own colours over
   the city dimmed. It reads the simulation and never writes it, and it is
   drawn into its own texture, redrawn when a tile changes, the mode
   changes, or a count begins; without the texture it is drawn straight to
@@ -530,8 +548,10 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   simulation can be checked on a machine with no screen. It takes `--seed`
   and `--ticks`, the number of steps, from 0 to 100 000 (768 by default, a
   year), and builds a small demo town first so there is something to
-  grow: a coal plant, a road, and three zones. Each month's line includes
-  the tiles powered and the capacity, and the busiest road's traffic,
+  grow: three zones along a road, and a coal plant up a power line, far
+  enough off that its pollution doesn't reach them. Each month's line
+  includes the tiles powered and the capacity, the busiest road's
+  traffic, and the pollution and crime averages,
   each settled year's budget gets a
   line with the traffic average, and the city's messages are logged as warnings. `--ticks` without `--headless` is refused, because
   the window runs until it is closed.
@@ -575,7 +595,7 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   and no project. It holds the parser, the dispatcher, the default
   command, the strict option reader, and the exit codes.
 - **The tests.** `CityLimits.Tests` uses xUnit 2 with the VSTest runner
-  and coverlet, and holds 705 tests over rail and the train, the news ticker's queue, its headlines, and the loading phrases, opening newer saves and the backports' saves, traffic and its animation, saving, loading, autosave, importing Micropolis cities, format versions and schemas, with a city
+  and coverlet, and holds 722 tests over pollution and crime, rail and the train, the news ticker's queue, its headlines, and the loading phrases, opening newer saves and the backports' saves, traffic and its animation, saving, loading, autosave, importing Micropolis cities, format versions and schemas, with a city
   the owner built in both formats in `CityLimits.Tests/Assets/`, the generator, the terrain edges, the power plants, lines, and grid, the budget, the stations and their coverage, parks, hospitals and churches, the map, the
   calendar, the clock, the simulation, the settings, the tile rules, the
   build actions, the road network, the treasury, the scenario loader and
@@ -756,11 +776,12 @@ without reflection.
   number from before, `1`, reads as `1.0`. A binary save keeps its major
   version in the header and its minor in the `VERS` chunk, and new state
   goes in new chunks, never new fields in old ones. The scenario report's
-  `format` stays a whole number, since scripts read it. Saves are at 1.4:
+  `format` stays a whole number, since scripts read it. Saves are at 1.5:
   1.1 added traffic, 1.2 the parts list, 1.3 the traffic each road
-  shows and the year's average, and 1.4 rail, in a part of its own
+  shows and the year's average, 1.4 rail, in a part of its own
   (`RailCodec`) with the map holding what lies beneath it, so a version
-  that doesn't know rail opens the city as if it had none. Scenarios are
+  that doesn't know rail opens the city as if it had none, and 1.5
+  pollution and crime, two parts an older version may leave out or keep. Scenarios are
   at 1.1, which added the Rail tool and the Rail count.
 - **Older saves climb one minor version at a time,** each step a small
   function in `SaveUpgrades`, with a test from a fixture; Bridgeport's

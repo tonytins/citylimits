@@ -48,6 +48,11 @@ internal static class SaveParts
         // The map holds what lies beneath the rail, so a game that doesn't know rail opens the city
         // as if it had none, as Tony Bark chose. It can't keep the rail, since it may build where it was.
         new() { Name = "rail", Chunk = "RAIL", Since = "1.4", Ignorable = true, Keepable = false },
+
+        // Pollution and crime are worked out again every cycle from the map, so they may be left out
+        // or kept stale; land value reads a stale one for a cycle at most.
+        new() { Name = "pollution", Chunk = "POLL", Since = "1.5", Ignorable = true, Keepable = true },
+        new() { Name = "crime", Chunk = "CRIM", Since = "1.5", Ignorable = true, Keepable = true },
     ];
 
     /// <summary>

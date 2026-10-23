@@ -73,7 +73,7 @@ public sealed class HeadlessRun
             {
                 month = simulation.Date;
                 Logger.Info(
-                    "tick {Tick}: {Date}   ${Funds}   population {Population}   demand R {Residential} C {Commercial} I {Industrial}   power {Powered}/{Capacity}   busiest road {Traffic}",
+                    "tick {Tick}: {Date}   ${Funds}   population {Population}   demand R {Residential} C {Commercial} I {Industrial}   power {Powered}/{Capacity}   busiest road {Traffic}   pollution {Pollution}   crime {Crime}",
                     simulation.TickCount,
                     simulation.Date,
                     simulation.Treasury.Funds,
@@ -83,7 +83,9 @@ public sealed class HeadlessRun
                     simulation.Demand.Industrial,
                     simulation.Power.PoweredTiles,
                     simulation.Power.Capacity,
-                    simulation.Traffic.Busiest);
+                    simulation.Traffic.Busiest,
+                    simulation.Maps.PollutionAverage,
+                    simulation.Maps.CrimeAverage);
             }
         }
 
@@ -92,11 +94,12 @@ public sealed class HeadlessRun
     }
 
     // The demo town is a road nine tiles long with a residential, a commercial, and an industrial
-    // zone along its north side, and a coal plant against the zones' north side to power them,
-    // built with strokes as a player would build it.
+    // zone along its north side, and a coal plant to the north that powers them down a line, far
+    // enough off that its pollution doesn't reach them, built with strokes as a player would build it.
     private const int TownWidth = 9;
     private const int PlantSize = 4;
-    private const int TownHeight = PlantSize + ZoneLayout.Size + 1;
+    private const int LineLength = 6;
+    private const int TownHeight = PlantSize + LineLength + ZoneLayout.Size + 1;
 
     private static void BuildDemoTown(CitySimulation simulation)
     {
@@ -110,10 +113,13 @@ public sealed class HeadlessRun
         }
 
         var (left, top) = spot.Value;
-        var zonesY = top + PlantSize + 1;
-        var roadY = top + PlantSize + ZoneLayout.Size;
+        var zonesY = top + PlantSize + LineLength + 1;
+        var roadY = top + PlantSize + LineLength + ZoneLayout.Size;
 
         simulation.Builder.Apply(BuildAction.CoalPowerPlant, left + 1, top + 1);
+        var line = new BuildStroke(BuildAction.PowerLine, left + 1, top + PlantSize);
+        line.DragTo(left + 1, top + PlantSize + LineLength - 1);
+        simulation.Builder.Apply(line);
         var road = new BuildStroke(BuildAction.Road, left, roadY);
         road.DragTo(left + TownWidth - 1, roadY);
         simulation.Builder.Apply(road);
@@ -121,7 +127,7 @@ public sealed class HeadlessRun
         simulation.Builder.Apply(BuildAction.ZoneCommercial, left + 4, zonesY);
         simulation.Builder.Apply(BuildAction.ZoneIndustrial, left + 7, zonesY);
 
-        Logger.Info("Built a coal plant, a road, and three zones at {X}, {Y}", left, top);
+        Logger.Info("Built a coal plant, a power line, a road, and three zones at {X}, {Y}", left, top);
     }
 
     // The buildable area closest to the middle that holds the whole town.

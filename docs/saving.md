@@ -107,6 +107,7 @@ size of the same city as `.fcl`.
 | `PART` | The parts list (see Opening a newer save); from format 1.2, written after `VERS` |
 | `RTRF` | The traffic each road shows, and the year's average; from format 1.3 |
 | `RAIL` | The rail on the map, and the scan's count of it; from format 1.4 |
+| `POLL`, `CRIM` | The pollution and the crime on each 2 by 2 block, and each one's average; from format 1.5 |
 
 Each tile's word holds, from its lowest bit: the ground (2 bits), the use
 (4 bits), the footprint part (4 bits), power (1 bit), and 5 bits more: a
@@ -188,6 +189,7 @@ arrays of numbers sit on one line each.
 | `map` | The map: see below |
 | `budget`, `census`, `demand`, `power`, `services`, `community`, `cityMaps` | Each part of the simulation's state |
 | `cycle` | The road tiles counted this cycle, and what the last count set aside for the budget |
+| `parts`, `traffic`, `roadTraffic`, `rail`, `pollution`, `crime` | The parts list and the parts later versions added, each from the version the table under Versions gives |
 
 ### The map
 
@@ -252,6 +254,7 @@ baseline that adds to the city takes the next minor version.
 | 1.2 | The parts list: `"parts"`, and the `PART` chunk, so a newer save can open in an older game | Nothing: a save without a list has no newer parts |
 | 1.3 | The traffic each road shows and the year's traffic average: `"roadTraffic"`, and the `RTRF` chunk | The roads show no traffic until the scan passes them, within a cycle, and the average is 0 until the year ends |
 | 1.4 | Rail: `"rail"`, and the `RAIL` chunk | A city from before has no rail |
+| 1.5 | Pollution and crime: `"pollution"` and `"crime"`, and the `POLL` and `CRIM` chunks | A city from before has none until phases 12 and 13 work them out, within a cycle |
 - **Growing the binary format.** New state goes in new chunks, not new
   fields in old ones, so a minor version stays an addition.
 - **The flat format** writes its version as a string, `"1.0"`, so 1.10
@@ -274,6 +277,18 @@ as if it had no rail, with its roads and lines whole. It can't keep the
 part, since it may build where the rail was, so the city it saves has no
 rail. Reading refuses rail where it can't be, such as track on a road
 or a crossing on clear ground, and says where.
+
+## Pollution and crime
+
+From format 1.5, the city's pollution and crime are saved as two parts,
+`"pollution"` and `"crime"` in `.fcl` and the `POLL` and `CRIM` chunks
+in `.cl`. Each holds a number for every 2 by 2 block of the map, row by
+row (pollution from 0 to 255, crime from 0 to 250), and the average the
+city last worked out. Both are worked out again every cycle from the
+map, so they are ignorable and keepable: a version that doesn't know
+them opens the city without them, and one that kept them stale writes
+them back, which costs the newer game a cycle of land value worked out
+from old figures.
 
 ## Opening a newer save
 

@@ -23,6 +23,12 @@ public enum OverviewMode
 
     /// <summary>How busy the roads are.</summary>
     Traffic,
+
+    /// <summary>What industry, coal plants, and busy roads give off.</summary>
+    Pollution,
+
+    /// <summary>Where crime is.</summary>
+    Crime,
 }
 
 /// <summary>
@@ -54,7 +60,7 @@ public sealed class OverviewMap : IDisposable
     private const int HighDensity = 200;
 
     private static readonly OverviewMode[] Modes = Enum.GetValues<OverviewMode>();
-    private static readonly string[] Labels = ["City", "Power", "Fire", "Police", "Value", "People", "Traffic"];
+    private static readonly string[] Labels = ["City", "Power", "Fire", "Police", "Value", "People", "Traffic", "Pollution", "Crime"];
 
     private readonly CitySimulation _city;
     private readonly RenderTexture2D? _texture;
@@ -200,6 +206,8 @@ public sealed class OverviewMap : IDisposable
             OverviewMode.LandValue => Band(_city.Maps.LandValueAt(x, y), CityMaps.MaxLandValue, city),
             OverviewMode.PopulationDensity => Band(_city.Maps.DensityAt(x, y), HighDensity, city),
             OverviewMode.Traffic => Band(_city.Traffic.DensityAt(x, y), TrafficMap.Most, city),
+            OverviewMode.Pollution => Band(_city.Maps.PollutionAt(x, y), CityMaps.MostPollution, city),
+            OverviewMode.Crime => Band(_city.Maps.CrimeAt(x, y), CityMaps.MostCrime, city),
             _ => city,
         };
     }

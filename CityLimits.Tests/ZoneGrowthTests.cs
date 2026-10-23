@@ -10,12 +10,24 @@ public class ZoneGrowthTests
     private static readonly ZoneSpec Residential = CityDefinitions.Base.Zone(TileUse.Residential);
 
     // A zone centred at (4, 4), with a road along its bottom edge on row 6 unless asked not to,
-    // and a coal plant against its east side, which powers it.
-    private static CitySimulation LoneZone(BuildAction zone, bool road = true, CityDefinitions? definitions = null)
+    // and a coal plant that powers it down a line from its east side, far enough off that its
+    // pollution doesn't reach the zone, or right against it when asked.
+    private static CitySimulation LoneZone(BuildAction zone, bool road = true, CityDefinitions? definitions = null, bool plantBeside = false)
     {
-        var map = TileMap.FromTerrain(10, 9, new TileKind[90]);
+        var map = TileMap.FromTerrain(24, 9, new TileKind[24 * 9]);
         var city = new CitySimulation(map, 1, definitions: definitions);
-        city.Builder.Apply(BuildAction.CoalPowerPlant, 7, 3);
+        if (plantBeside)
+        {
+            city.Builder.Apply(BuildAction.CoalPowerPlant, 7, 3);
+        }
+        else
+        {
+            city.Builder.Apply(BuildAction.CoalPowerPlant, 20, 3);
+            var line = new BuildStroke(BuildAction.PowerLine, 6, 4);
+            line.DragTo(18, 4);
+            city.Builder.Apply(line);
+        }
+
         if (road)
         {
             var stroke = new BuildStroke(BuildAction.Road, 2, 6);
@@ -66,6 +78,57 @@ public class ZoneGrowthTests
 
         Assert.NotNull(first);
         Assert.Equal(5, first.Value.Y);
+    }
+
+    [Fact]
+    public void AResidentialZoneBesideACoalPlantDoesntGrowForItsPollution()
+    {
+        // The plant's pollution comes off the zone's land value, so its worth stays too low to grow;
+        // the same zone with the plant down a line grows its first house within these counts.
+        var city = LoneZone(BuildAction.ZoneResidential, plantBeside: true);
+        var grew = false;
+        city.Map.TileChanged += (x, y) => grew |= city.Map.StateAt(x, y).HasHouse;
+
+        RunCounts(city, 200);
+
+        Assert.True(city.Map.StateAt(4, 4).Powered);
+        Assert.True(city.Maps.PollutionAt(4, 4) > 0);
+        Assert.False(grew);
+    }
+
+    [Fact]
+    public void AResidentialZoneBetweenTwoCoalPlantsDoesntGrowAtAll()
+    {
+        // Above 128 pollution a home doesn't grow, however high its score. Pollution comes off land
+        // value, and again off the zone's worth, as in Micropolis, so this only decides anything where
+        // the woods' worth runs land value over its cap of 250: here every free tile is wooded, and
+        // without the rule the zone would grow.
+        var map = TileMap.FromTerrain(14, 12, new TileKind[14 * 12]);
+        var city = new CitySimulation(map, 1);
+        city.Builder.Apply(BuildAction.CoalPowerPlant, 2, 3);
+        city.Builder.Apply(BuildAction.CoalPowerPlant, 9, 3);
+        var road = new BuildStroke(BuildAction.Road, 5, 6);
+        road.DragTo(7, 6);
+        city.Builder.Apply(road);
+        city.Builder.Apply(BuildAction.ZoneResidential, 6, 4);
+        for (var y = 0; y < map.Height; y++)
+        {
+            for (var x = 0; x < map.Width; x++)
+            {
+                if (map.StateAt(x, y).Use == TileUse.None)
+                {
+                    map.SetState(x, y, new TileState(TileKind.Trees));
+                }
+            }
+        }
+
+        var grew = false;
+        city.Map.TileChanged += (x, y) => grew |= city.Map.StateAt(x, y).HasHouse;
+
+        RunCounts(city, 200);
+
+        Assert.True(city.Maps.PollutionAt(6, 4) > 128, $"pollution {city.Maps.PollutionAt(6, 4)}");
+        Assert.False(grew);
     }
 
     [Fact]

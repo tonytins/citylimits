@@ -26,10 +26,10 @@ public class ScenarioRunnerTests
         Assert.Equal(1536, report.Final.Tick);
         Assert.Equal(96, report.Final.CityTime);
         Assert.Equal("1902-01", report.Final.Date);
-        Assert.Equal(16603, report.Final.Funds);
-        Assert.Equal(new CityCounts(9, 0, 1, 1, 0, 1, CoalPowerPlant: 1), report.Final.Counts);
-        Assert.Equal([90, 100, 100, 100, 3000, 1], report.Actions.Select(a => a.Cost));
-        Assert.Equal([9, 9, 9, 9, 16, 9], report.Actions.Select(a => a.Tiles));
+        Assert.Equal(16568, report.Final.Funds);
+        Assert.Equal(new CityCounts(9, 0, 1, 1, 0, 1, CoalPowerPlant: 1, PowerLine: 7), report.Final.Counts);
+        Assert.Equal([90, 100, 100, 100, 3000, 35, 1], report.Actions.Select(a => a.Cost));
+        Assert.Equal([9, 9, 9, 9, 16, 7, 9], report.Actions.Select(a => a.Tiles));
         Assert.All(report.Actions, a => Assert.True(a.Met));
         Assert.Null(report.Fallback);
     }
@@ -140,7 +140,7 @@ public class ScenarioRunnerTests
 
         runner.Run(DemoTown.Scenario, DemoTown.Id);
 
-        Assert.Equal(["action 0", "action 1", "action 2", "action 3", "action 4", "check 0", "action 5", "check 1", "check 2", "check 3", "check 4", "check 5", "check 6", "check 7"], heard);
+        Assert.Equal(["action 0", "action 1", "action 2", "action 3", "action 4", "action 5", "check 0", "action 6", "check 1", "check 2", "check 3", "check 4", "check 5", "check 6", "check 7"], heard);
     }
 
     [Fact]
