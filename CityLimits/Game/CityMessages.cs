@@ -4,7 +4,7 @@ namespace CityLimits.Game;
 public static class CityMessages
 {
     /// <summary>Tells whether a message reports a disaster as it starts, which the ticker shows in red.</summary>
-    public static bool IsDisaster(CityMessage message) => message is CityMessage.FireReported or CityMessage.ExplosionReported;
+    public static bool IsDisaster(CityMessage message) => message is CityMessage.FireReported or CityMessage.ExplosionReported or CityMessage.FloodReported or CityMessage.EarthquakeReported;
 
     /// <summary>The line the game shows, and the log writes, for a message.</summary>
     public static string Describe(CityMessage message) => message switch
@@ -23,6 +23,8 @@ public static class CityMessages
         CityMessage.HighCrime => "Crime very high",
         CityMessage.FireReported => "Fire reported!",
         CityMessage.ExplosionReported => "Explosion reported!",
+        CityMessage.FloodReported => "Flooding reported!",
+        CityMessage.EarthquakeReported => "Major earthquake reported!",
         CityMessage.Brownouts => "Brownouts: the power plants can't keep up, so build another",
         _ => message.ToString(),
     };

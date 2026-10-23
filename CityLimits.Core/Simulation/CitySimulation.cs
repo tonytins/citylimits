@@ -67,12 +67,30 @@ public sealed class CitySimulation
     // Micropolis reports traffic jams when the year's traffic average is above this.
     private const int MostTrafficBeforeJams = 60;
 
-    // As Micropolis on Easy: once a cycle a disaster comes one time in 481, and is one of nine kinds,
-    // two of them a fire. The rest are floods, a tornado, an earthquake, a monster, or nothing, which
-    // CityLimits doesn't have yet, so they pass by.
+    // As Micropolis on Easy: once a cycle a disaster comes one time in 481, and is one of nine kinds:
+    // two a fire, two a flood, one an earthquake, and the rest a tornado, a monster, or nothing,
+    // which CityLimits doesn't have, so they pass by.
     private const int DisasterChance = 481;
     private const int DisasterKinds = 9;
     private const int FireKinds = 2;
+    private const int FloodKinds = 2;
+    private const int EarthquakeKind = 6;
+
+    // A flood looks this many times for a shore with land beside it to rise onto; a flooded tile
+    // spreads to each side one time in eight while the flood lasts, and drains one time in sixteen after.
+    private const int FloodSearches = 300;
+    private const int FloodSpreadChance = 8;
+    private const int FloodDrainChance = 16;
+
+    // An earthquake shakes 300 to 1 000 tiles, and wrecks an outer tile of a building it shakes, to
+    // rubble three times in four and to fire otherwise.
+    private const int FewestQuakeTiles = 300;
+    private const int QuakeTileRange = 701;
+    private const int QuakeFireChance = 4;
+
+    // Plants and stations redraw their bare holes every 8 counts, hospitals and churches every 16.
+    private const int BuildingRepairCounts = 8;
+    private const int CommunityRepairCounts = 16;
 
     // A burning tile does anything at all one visit in four, spreads to each side one time in eight,
     // and burns out sooner the better the fire stations cover it, as in Micropolis.
@@ -106,14 +124,14 @@ public sealed class CitySimulation
         Treasury = new Treasury(funds);
         Roads = new RoadNetwork();
         Definitions = definitions ?? CityDefinitions.Base;
-        Fires = new Fires(map);
-        Builder = new CityBuilder(map, Treasury, Roads, Definitions, Fires);
+        Hazards = new Hazards(map);
+        Builder = new CityBuilder(map, Treasury, Roads, Definitions, Hazards);
         Maps = new CityMaps(map);
         Services = new ServiceCoverage(map);
         Traffic = new TrafficMap(map);
         Trips = new TripPlanner(Traffic);
         Budget = new CityBudget(Definitions.Service(TileUse.FireStation).Upkeep, Definitions.Service(TileUse.PoliceStation).Upkeep);
-        _growth = new ZoneGrowth(map, Random, Trips, Definitions, Demand, Maps, Community, Fires);
+        _growth = new ZoneGrowth(map, Random, Trips, Definitions, Demand, Maps, Community, Hazards);
     }
 
     /// <summary>
@@ -147,16 +165,32 @@ public sealed class CitySimulation
     /// <summary>Raised when a burning building explodes, with where, so the game can show it; the fires it set are already burning.</summary>
     public event Action<int, int>? Exploded;
 
-    /// <summary>The fires burning on the map, and the holes they leave in buildings.</summary>
-    public Fires Fires { get; }
+    /// <summary>Raised when an earthquake strikes, after its damage is done, so the game can shake the view.</summary>
+    public event Action? EarthquakeStruck;
+
+    /// <summary>The fires and floods on the map, and the holes they leave in buildings.</summary>
+    public Hazards Hazards { get; }
+
+    /// <summary>The fires burning on the map.</summary>
+    public Fires Fires => Hazards.Fires;
+
+    /// <summary>The floods on the map.</summary>
+    public Floods Floods => Hazards.Floods;
 
     /// <summary>
     /// Whether fires start on their own, as Micropolis' disasters start them. The player's settings
     /// decide it in the game, and a scenario's file in a scenario; it isn't saved with the city. A
-    /// fire already burning spreads either way. The dice are rolled whether it is on or off, so
-    /// turning it off changes nothing else the city does.
+    /// fire already burning spreads either way, and an earthquake's fires are its own. When a
+    /// disaster is off, its dice are rolled as if it had found nothing to harm, so in a city it
+    /// wouldn't have harmed, turning it off changes nothing else the city does.
     /// </summary>
     public bool RandomFires { get; set; } = true;
+
+    /// <summary>Whether floods rise on their own, as <see cref="RandomFires"/> says for fires. A flood already rising goes on either way.</summary>
+    public bool RandomFloods { get; set; } = true;
+
+    /// <summary>Whether earthquakes strike, as <see cref="RandomFires"/> says for fires.</summary>
+    public bool RandomEarthquakes { get; set; } = true;
 
     /// <summary>The definitions the city runs on: the base game's, with any mods applied.</summary>
     public CityDefinitions Definitions { get; }
@@ -311,6 +345,9 @@ public sealed class CitySimulation
         else if (phase == FirePhase)
         {
             Services.SpreadFire();
+
+            // As in Micropolis, the flood's time runs down before the dice are rolled.
+            Floods.Recede();
             RollForDisaster();
         }
         else if (phase == DensityPhase)
@@ -375,7 +412,7 @@ public sealed class CitySimulation
         {
             var (cx, cy) = (x + dx, y + dy);
             var state = Map.StateAtOrDefault(cx, cy, new TileState(TileKind.Water));
-            var bare = state.Use == TileUse.None && state.Kind == TileKind.Grass;
+            var bare = state.Use == TileUse.None && state.Kind == TileKind.Grass && !Floods.IsFlooded(cx, cy);
             if (!state.IsBuildingCenter && (bare || Fires.CanBurn(cx, cy)))
             {
                 Fires.Ignite(cx, cy);
@@ -387,8 +424,8 @@ public sealed class CitySimulation
     }
 
     // As Micropolis does at the end of each cycle: a disaster one time in 481, and then which kind.
-    // Only fires exist yet. Where a fire would start is picked whether fires may start or not, so
-    // the switch never changes the dice anything else rolls.
+    // A kind that is off rolls its dice as if it found nothing to harm, so the switches never change
+    // the dice anything else rolls in a city the disaster would have left alone.
     private void RollForDisaster()
     {
         if (Random.NextInt(0, DisasterChance) != 0)
@@ -396,7 +433,8 @@ public sealed class CitySimulation
             return;
         }
 
-        if (Random.NextInt(0, DisasterKinds) < FireKinds)
+        var kind = Random.NextInt(0, DisasterKinds);
+        if (kind < FireKinds)
         {
             var (x, y) = (Random.NextInt(0, Map.Width), Random.NextInt(0, Map.Height));
             if (RandomFires && IsArsonable(x, y))
@@ -404,6 +442,139 @@ public sealed class CitySimulation
                 Ignite(x, y);
                 MessageSent?.Invoke(CityMessage.FireReported);
             }
+        }
+        else if (kind < FireKinds + FloodKinds)
+        {
+            StartFlood();
+        }
+        else if (kind == EarthquakeKind)
+        {
+            Quake();
+        }
+    }
+
+    // As Micropolis does: up to 300 tries at a shore, a stretch of water with land beside it, and
+    // the first side of it with land the water can rise onto, if it is bare ground, trees, or a
+    // road, rail, a line, or a park; a flood can't start on a building or rubble, but spreads onto them.
+    private void StartFlood()
+    {
+        for (var tries = 0; tries < FloodSearches; tries++)
+        {
+            var (x, y) = (Random.NextInt(0, Map.Width), Random.NextInt(0, Map.Height));
+            if (!IsShore(x, y))
+            {
+                continue;
+            }
+
+            foreach (var (_, dx, dy) in Sides.All)
+            {
+                var (landX, landY) = (x + dx, y + dy);
+                if (!CanFloodStart(landX, landY))
+                {
+                    continue;
+                }
+
+                if (RandomFloods)
+                {
+                    Floods.Flood(landX, landY);
+                    Floods.Rise();
+                    MessageSent?.Invoke(CityMessage.FloodReported);
+                }
+
+                return;
+            }
+        }
+    }
+
+    private bool IsShore(int x, int y)
+    {
+        if (Map.StateAt(x, y) is not { Kind: TileKind.Water, Use: TileUse.None })
+        {
+            return false;
+        }
+
+        foreach (var (_, dx, dy) in Sides.All)
+        {
+            if (Map.Contains(x + dx, y + dy) && Map.StateAt(x + dx, y + dy).Kind != TileKind.Water)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private bool CanFloodStart(int x, int y)
+    {
+        if (!Floods.CanFlood(x, y))
+        {
+            return false;
+        }
+
+        var state = Map.StateAt(x, y);
+        return state.Use == TileUse.None
+            ? state.Kind is TileKind.Grass or TileKind.Trees
+            : !state.HasFootprint;
+    }
+
+    // As Micropolis does: 300 to 1 000 tiles shaken at random, and each outer tile of a building
+    // among them wrecked, to rubble or to fire. With earthquakes off, the same tiles are picked,
+    // and nothing happens to them. The fires are the earthquake's, whatever the fire switch says.
+    private void Quake()
+    {
+        var shaken = Random.NextInt(0, QuakeTileRange) + FewestQuakeTiles;
+        for (var i = 0; i < shaken; i++)
+        {
+            var (x, y) = (Random.NextInt(0, Map.Width), Random.NextInt(0, Map.Height));
+            var state = Map.StateAt(x, y);
+            if (!state.HasFootprint || state.IsBuildingCenter)
+            {
+                continue;
+            }
+
+            var burns = Random.NextInt(0, QuakeFireChance) == 0;
+            if (!RandomEarthquakes)
+            {
+                continue;
+            }
+
+            if (burns)
+            {
+                Fires.Ignite(x, y);
+            }
+            else
+            {
+                Map.SetState(x, y, new TileState(TileKind.Rubble));
+            }
+        }
+
+        if (RandomEarthquakes)
+        {
+            MessageSent?.Invoke(CityMessage.EarthquakeReported);
+            EarthquakeStruck?.Invoke();
+        }
+    }
+
+    // As in Micropolis' flood: while it lasts, a flooded tile spreads to each side one time in
+    // eight; after, it drains one time in sixteen, leaving bare ground.
+    private void VisitFlood(int x, int y)
+    {
+        if (Floods.CyclesLeft > 0)
+        {
+            foreach (var (_, dx, dy) in Sides.All)
+            {
+                if (Random.NextInt(0, FloodSpreadChance) == 0)
+                {
+                    Floods.Flood(x + dx, y + dy);
+                }
+            }
+
+            return;
+        }
+
+        if (Random.NextInt(0, FloodDrainChance) == 0)
+        {
+            Floods.Drain(x, y);
         }
     }
 
@@ -531,6 +702,12 @@ public sealed class CitySimulation
                     continue;
                 }
 
+                if (Floods.IsFlooded(x, y))
+                {
+                    VisitFlood(x, y);
+                    continue;
+                }
+
                 var state = Map.StateAt(x, y);
                 if (state.IsRoad)
                 {
@@ -552,12 +729,20 @@ public sealed class CitySimulation
                 var powered = Power.Visit(Map, x, y);
                 if (TileRules.IsCommunityBuilding(state.Use))
                 {
-                    Community.Visit(Map, Random, x, y);
+                    RepairNowAndThen(x, y, CommunityRepairCounts);
+                    Community.Visit(Map, Random, x, y, Hazards);
+                    continue;
+                }
+
+                if (TileRules.IsPowerPlant(state.Use))
+                {
+                    RepairNowAndThen(x, y, BuildingRepairCounts);
                     continue;
                 }
 
                 if (TileRules.IsService(state.Use))
                 {
+                    RepairNowAndThen(x, y, BuildingRepairCounts);
                     var effect = state.Use == TileUse.FireStation ? Budget.FireEffect : Budget.PoliceEffect;
                     Services.AddStation(x, y, state.Use, effect, powered, Roads.IsZoneServed(x, y));
                     continue;
@@ -631,7 +816,7 @@ public sealed class CitySimulation
         Funds = Treasury.Funds,
         Definitions = DefinitionWriter.Write(Definitions),
         Mods = [.. Definitions.AppliedMods.Select(mod => new ModSave { Id = mod.Id, Name = mod.Name, Version = mod.Version })],
-        Map = MapCodec.Encode(FireCodec.WholeMap(Map, Fires)),
+        Map = MapCodec.Encode(FireCodec.WholeMap(Map, Hazards)),
         Budget = Budget.Capture(),
         Census = Census.Capture(),
         Demand = Demand.Capture(),
@@ -651,7 +836,8 @@ public sealed class CitySimulation
         Rail = RailCodec.Capture(Map, RailTiles, _budgetedRailTiles),
         Pollution = Maps.CapturePollution(),
         Crime = Maps.CaptureCrime(),
-        Fire = FireCodec.Capture(Map, Fires),
+        Fire = FireCodec.Capture(Map, Hazards),
+        Flood = FloodCodec.Capture(Map, Floods),
     };
 
     /// <summary>Makes a city from a save, checking each part as it goes.</summary>
@@ -699,6 +885,7 @@ public sealed class CitySimulation
         city.Maps.RestorePollution(save.Pollution ?? throw new InvalidSave("pollution: missing."));
         city.Maps.RestoreCrime(save.Crime ?? throw new InvalidSave("crime: missing."));
         FireCodec.Apply(map, city.Fires, save.Fire ?? throw new InvalidSave("fire: missing."));
+        FloodCodec.Apply(map, city.Hazards, save.Flood ?? throw new InvalidSave("flood: missing."));
         var cycle = save.Cycle ?? throw new InvalidSave("cycle: missing.");
         city.RoadTiles = SaveChecks.InRange(cycle.RoadTiles, 0, int.MaxValue, "cycle.roadTiles");
         city._budgetedRoadTiles = SaveChecks.InRange(cycle.BudgetedRoadTiles, 0, int.MaxValue, "cycle.budgetedRoadTiles");
@@ -776,6 +963,16 @@ public sealed class CitySimulation
         Power.StartCount();
         VisitBuildings();
         Power.StartCount();
+    }
+
+    // As Micropolis repairs its plants, stations, hospitals, and churches: every so many counts,
+    // the holes in one that are bare ground are redrawn, at no cost.
+    private void RepairNowAndThen(int x, int y, int counts)
+    {
+        if (CityTime % counts == 0)
+        {
+            Hazards.RepairBareHoles(x, y);
+        }
     }
 
     private void VisitBuildings()

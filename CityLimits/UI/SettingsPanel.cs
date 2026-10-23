@@ -3,9 +3,12 @@ namespace CityLimits.UI;
 /// <summary>
 /// The settings window, opened from the start menu or the menu Escape opens in a city. Its tabs
 /// group the settings: Graphics, for fullscreen, which takes effect when the game next starts;
-/// Gameplay, for autosave and whether disasters happen at all; and Disasters, for each kind. A
+/// Gameplay, for autosave and whether disasters happen at all; and Disasters, for each kind: fires,
+/// floods, and earthquakes. A
 /// change applies at once otherwise; the window's owner writes the settings when it closes. The
-/// player moves it by its title, and its x or Escape closes it.
+/// player moves it by its title, and its x or Escape closes it. Choosing a fullscreen setting the
+/// game isn't running in opens a pop-up saying it waits for a restart, which takes the input,
+/// Escape and dragging included, until its Okay closes it.
 /// </summary>
 public sealed class SettingsPanel : IMovableWindow
 {
@@ -23,7 +26,7 @@ public sealed class SettingsPanel : IMovableWindow
     private const int OptionWidth = 64;
     private const int OptionHeight = 24;
     private const int OptionGap = 6;
-    private const int Rows = 2;
+    private const int Rows = 3;
     private const int Height = TitleStrip + TabHeight + Padding + (Rows * RowHeight) + Padding;
 
     private static readonly string[] Tabs = ["Graphics", "Gameplay", "Disasters"];
@@ -61,11 +64,27 @@ public sealed class SettingsPanel : IMovableWindow
                 settings => settings.Fires ? 1 : 0,
                 (settings, choice) => settings with { Fires = choice == 1 },
                 "Fires break out now and then; a fire already burning spreads either way."),
+            new(
+                "Floods",
+                ["Off", "On"],
+                settings => settings.Floods ? 1 : 0,
+                (settings, choice) => settings with { Floods = choice == 1 },
+                "Rivers and lakes now and then rise over the land beside them."),
+            new(
+                "Earthquakes",
+                ["Off", "On"],
+                settings => settings.Earthquakes ? 1 : 0,
+                (settings, choice) => settings with { Earthquakes = choice == 1 },
+                "The ground shakes, wrecking buildings and starting fires of its own."),
         ],
     ];
 
     private readonly WindowPlacement _placement = new(TitleStrip);
+    private readonly NoticePanel _notice = new();
     private int _tab;
+
+    // The press that closes the pop-up mustn't also start dragging the window behind it.
+    private bool _noticeClosedThisFrame;
 
     /// <summary>What the player did with the window this frame.</summary>
     public enum Outcome
@@ -83,8 +102,8 @@ public sealed class SettingsPanel : IMovableWindow
     /// <summary>The settings as the player has set them.</summary>
     public GameSettings Current { get; private set; } = GameSettings.Default;
 
-    /// <summary>Tells whether the player is dragging the window by its title.</summary>
-    public bool IsDragging => _placement.IsDragging;
+    /// <summary>Tells whether the player is dragging the window, or its pop-up, by its title.</summary>
+    public bool IsDragging => _placement.IsDragging || _notice.IsDragging;
 
     /// <summary>Where the window is on the screen: in the middle until the player moves it.</summary>
     public Rectangle Bounds => _placement.Bounds(
@@ -98,16 +117,42 @@ public sealed class SettingsPanel : IMovableWindow
         Current = settings;
     }
 
-    /// <summary>Starts moving the window when a press lands on its title, but not on its x. Tells whether it did.</summary>
-    public bool BeginDrag(Vector2 point) =>
-        !Raylib.CheckCollisionPointRec(point, CloseBounds(Bounds)) && _placement.BeginDrag(point, Bounds);
+    /// <summary>
+    /// Starts moving the window when a press lands on its title, but not on its x; while the pop-up is
+    /// open, only the pop-up moves. Tells whether it did.
+    /// </summary>
+    public bool BeginDrag(Vector2 point)
+    {
+        if (_notice.IsOpen || _noticeClosedThisFrame)
+        {
+            return _notice.BeginDrag(point);
+        }
 
-    /// <summary>Moves the window with the pointer while the button is held.</summary>
-    public void Drag(Vector2 point, bool held) => _placement.Drag(point, held, new Vector2(Width, Height));
+        return !Raylib.CheckCollisionPointRec(point, CloseBounds(Bounds)) && _placement.BeginDrag(point, Bounds);
+    }
+
+    /// <summary>Moves the window, or its pop-up, with the pointer while the button is held.</summary>
+    public void Drag(Vector2 point, bool held)
+    {
+        if (_notice.IsDragging)
+        {
+            _notice.Drag(point, held);
+            return;
+        }
+
+        _placement.Drag(point, held, new Vector2(Width, Height));
+    }
 
     /// <summary>Takes this frame's input: Escape or the x closes it, a tab shows its settings, and a choice changes one.</summary>
     public Outcome Update()
     {
+        _noticeClosedThisFrame = false;
+        if (_notice.IsOpen)
+        {
+            _noticeClosedThisFrame = _notice.Update();
+            return Outcome.Open;
+        }
+
         if (Raylib.IsKeyPressed(KeyboardKey.Escape))
         {
             return Outcome.Closed;
@@ -142,7 +187,9 @@ public sealed class SettingsPanel : IMovableWindow
             {
                 if (Raylib.CheckCollisionPointRec(mouse, OptionBounds(bounds, row, choice)) && choice != setting.Chosen(Current))
                 {
+                    var before = Current;
                     Current = setting.Choose(Current, choice);
+                    WarnOfRestart(before);
                     return Outcome.Changed;
                 }
             }
@@ -197,6 +244,19 @@ public sealed class SettingsPanel : IMovableWindow
             }
 
             Raylib.DrawText(setting.Note, x, top + OptionHeight + 8, SmallSize, Theme.TextDim);
+        }
+
+        _notice.Draw();
+    }
+
+    // Fullscreen changes when the game next starts, so choosing what it isn't running in says so;
+    // choosing what it already is, such as turning it back, needs no restart and says nothing.
+    private void WarnOfRestart(GameSettings before)
+    {
+        if (Current.Fullscreen != before.Fullscreen && Current.Fullscreen != Display.IsFullscreen)
+        {
+            var change = Current.Fullscreen ? "fill the screen" : "go back to a window";
+            _notice.Show("Restart needed", $"The game will {change} the next time you start CityLimits.");
         }
     }
 

@@ -169,7 +169,9 @@ A zone or a station with no power blinks tile 827, a lightning bolt, over its ce
 A burning tile is drawn from tiles 56 to 63, the flames' eight frames, played
 in turn, each tile starting at a frame picked from where it is
 (`TileAtlas.FireIndexFor`). An explosion plays tiles 860 to 867, Micropolis'
-drawings of a building blowing apart, over the building's centre.
+drawings of a building blowing apart, over the building's centre. A
+flooded tile is drawn from tiles 48 to 50, the flood's three drawings,
+picked by where the tile is (`TileAtlas.FloodIndexFor`).
 It is drawn over the map each frame, not into it.
 
 A park is one of tiles 40 to 43, four wooded drawings, or 840, a fountain

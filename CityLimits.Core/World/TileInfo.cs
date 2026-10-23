@@ -111,22 +111,30 @@ public static class TileInfo
     /// <summary>
     /// The line the readout shows for a tile on a map. A zone is described as a whole, from its
     /// centre and its houses: its name, how far it has grown, its population, and whether the
-    /// scan last found it without power. With the city's fires, a burning tile and a hole fire left
-    /// in a building say so.
+    /// scan last found it without power. With the city's hazards, a burning or flooded tile and a
+    /// hole left in a building say so.
     /// </summary>
-    public static string Describe(TileMap map, int x, int y, CityDefinitions definitions, Fires? fires = null)
+    public static string Describe(TileMap map, int x, int y, CityDefinitions definitions, Hazards? hazards = null)
     {
         ArgumentNullException.ThrowIfNull(map);
         ArgumentNullException.ThrowIfNull(definitions);
 
-        if (fires?.IsBurning(x, y) == true)
+        if (hazards?.Fires.IsBurning(x, y) == true)
         {
             return "On fire - it burns out to rubble, sooner near a fire station";
         }
 
-        if (fires?.HoleOwner(x, y) is var (ownerX, ownerY))
+        if (hazards?.Floods.IsFlooded(x, y) == true)
         {
-            return $"Burned out - part of a {Name(map.StateAt(ownerX, ownerY).Use).ToLowerInvariant()}, rebuilt as it grows";
+            return "Flooded - the water drains to bare ground in time";
+        }
+
+        if (hazards?.HoleOwner(x, y) is var (ownerX, ownerY))
+        {
+            var owner = map.StateAt(ownerX, ownerY).Use;
+            return TileRules.IsZone(owner)
+                ? $"Damaged - part of a {Name(owner).ToLowerInvariant()}, rebuilt as it grows"
+                : $"Damaged - part of a {Name(owner).ToLowerInvariant()}, repaired in time once it is clear ground";
         }
 
         var state = map.StateAt(x, y);

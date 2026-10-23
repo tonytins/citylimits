@@ -26,4 +26,7 @@ public enum BuildRefusal
 
     /// <summary>The tile is on fire, which nothing can build on or clear until it burns out.</summary>
     OnFire,
+
+    /// <summary>The tile is under water from a flood, which nothing can build on or clear until it drains.</summary>
+    Flooded,
 }

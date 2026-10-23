@@ -27,6 +27,13 @@ public sealed class GameLoop : IDisposable
     private readonly (int X, int Y, int Steps)[] _explosions = new (int, int, int)[MostExplosions];
     private int _explosionCount;
     private int _fireFrame;
+
+    // An earthquake shakes the map's drawing from side to side for a moment, as the Java port does;
+    // the city itself isn't moved.
+    private const float ShakeSeconds = 1.5f;
+    private const float ShakePixels = 4f;
+    private const float ShakesPerSecond = 18f;
+    private float _shakeLeft;
     private readonly Random _trainRandom = new();
     private readonly GameAssets _assets;
     private readonly CitySimulation _simulation;
@@ -131,11 +138,12 @@ public sealed class GameLoop : IDisposable
         }
 
         _simulation.MessageSent += ShowMessage;
-        _simulation.RandomFires = settings.RandomFires;
+        ApplyDisasters(settings);
         _simulation.YearSettled += OnYearSettled;
 
-        _mapRenderer = new MapRenderer(map, assets, _simulation.Traffic, _simulation.Fires);
+        _mapRenderer = new MapRenderer(map, assets, _simulation.Traffic, _simulation.Fires, _simulation.Floods);
         _simulation.Exploded += ShowExplosion;
+        _simulation.EarthquakeStruck += () => _shakeLeft = ShakeSeconds;
         Logger.Info(_mapRenderer.IsCached ? "The map is drawn from cached chunks" : "The map is drawn tile by tile");
         _toolPaletteView = new ToolPaletteView(assets, definitions);
         _overview = new OverviewMap(_simulation);
@@ -239,6 +247,7 @@ public sealed class GameLoop : IDisposable
         // starts a third of the way across, so a city opened paused still shows the news.
         _ticker.Update(_settings.Speed > 0 && _modal == Modal.None ? elapsed : 0f, Raylib.GetScreenWidth(), 1f / 3f);
         _hintSeconds = Math.Max(0f, _hintSeconds - elapsed);
+        _shakeLeft = Math.Max(0f, _shakeLeft - elapsed);
 
         // With autosave off, the time to the next one doesn't run.
         if (_settings.AutosaveSlots > 0 && _autosave.Advance(elapsed, _settings.Speed > 0 && _modal == Modal.None))
@@ -266,7 +275,14 @@ public sealed class GameLoop : IDisposable
 
         var mouse = Raylib.GetMousePosition();
 
-        Raylib.BeginMode2D(_camera.ToRaylib());
+        var view = _camera.ToRaylib();
+        if (_shakeLeft > 0f)
+        {
+            var sway = MathF.Sin(_shakeLeft * ShakesPerSecond * MathF.Tau) * ShakePixels * (_shakeLeft / ShakeSeconds);
+            view.Offset = view.Offset with { X = view.Offset.X + sway };
+        }
+
+        Raylib.BeginMode2D(view);
         _mapRenderer.Draw(_camera, _trafficAnimation.Frame, _fireFrame);
         DrawTrain();
         for (var i = 0; i < _explosionCount; i++)
@@ -327,7 +343,7 @@ public sealed class GameLoop : IDisposable
         }
         else if (_tools.Selected == Tool.Inspect && onMap && _modal == Modal.None && !IsOverInterface(mouse))
         {
-            Hud.DrawPointerHint(mouse, $"Tile {tileX}, {tileY}", TileInfo.Describe(_simulation.Map, tileX, tileY, _simulation.Definitions, _simulation.Fires));
+            Hud.DrawPointerHint(mouse, $"Tile {tileX}, {tileY}", TileInfo.Describe(_simulation.Map, tileX, tileY, _simulation.Definitions, _simulation.Hazards));
         }
 
         switch (_modal)
@@ -594,9 +610,24 @@ public sealed class GameLoop : IDisposable
             case SettingsPanel.Outcome.Changed:
                 // Fullscreen is kept for the next start; the rest apply now.
                 var chosen = _settingsPanel.Current;
-                _settings = _settings with { Fullscreen = chosen.Fullscreen, AutosaveSlots = chosen.AutosaveSlots, Disasters = chosen.Disasters, Fires = chosen.Fires };
-                _simulation.RandomFires = _settings.RandomFires;
-                Logger.Info("Settings changed: fullscreen {Fullscreen} from the next start, {Slots} autosaves, disasters {Disasters}, fires {Fires}", chosen.Fullscreen, chosen.AutosaveSlots, chosen.Disasters, chosen.Fires);
+                _settings = _settings with
+                {
+                    Fullscreen = chosen.Fullscreen,
+                    AutosaveSlots = chosen.AutosaveSlots,
+                    Disasters = chosen.Disasters,
+                    Fires = chosen.Fires,
+                    Floods = chosen.Floods,
+                    Earthquakes = chosen.Earthquakes,
+                };
+                ApplyDisasters(_settings);
+                Logger.Info(
+                    "Settings changed: fullscreen {Fullscreen} from the next start, {Slots} autosaves, disasters {Disasters}: fires {Fires}, floods {Floods}, earthquakes {Earthquakes}",
+                    chosen.Fullscreen,
+                    chosen.AutosaveSlots,
+                    chosen.Disasters,
+                    chosen.Fires,
+                    chosen.Floods,
+                    chosen.Earthquakes);
                 return;
             case SettingsPanel.Outcome.Closed:
                 if (!SettingsStore.TrySave(_folders.SettingsFile, Settings, out var error))
@@ -945,6 +976,7 @@ public sealed class GameLoop : IDisposable
         BuildStatus.Unchanged when result.Reason == BuildRefusal.AlreadyDone => "The land is already like that",
         BuildStatus.Refused when result.Reason == BuildRefusal.PartOfAZone => "Bulldoze its centre to clear it",
         BuildStatus.Refused when result.Reason == BuildRefusal.OnFire => "It's on fire: wait for it to burn out",
+        BuildStatus.Refused when result.Reason == BuildRefusal.Flooded => "It's under water: wait for it to drain",
         BuildStatus.Unchanged => "There was nothing to clear",
         BuildStatus.Refused when result.Reason == BuildRefusal.NotEnoughFunds => $"Not enough money, it costs ${result.Cost}",
         BuildStatus.Refused when result.Reason == BuildRefusal.CannotBuildHere => "That ground cannot be built on",
@@ -1010,6 +1042,14 @@ public sealed class GameLoop : IDisposable
     private int DemandPanelTop() => _toolPaletteView.Bottom() + 8;
 
     // The train is drawn over the map, centred on where it is, 32 pixels square as Micropolis' is.
+    // The player's disaster switches decide which disasters happen on their own in the city.
+    private void ApplyDisasters(GameSettings settings)
+    {
+        _simulation.RandomFires = settings.RandomFires;
+        _simulation.RandomFloods = settings.RandomFloods;
+        _simulation.RandomEarthquakes = settings.RandomEarthquakes;
+    }
+
     // A new explosion takes the oldest one's place when the buffer is full.
     private void ShowExplosion(int x, int y)
     {

@@ -10,7 +10,7 @@ namespace CityLimits.Core.Saving;
 internal static class SaveUpgrades
 {
     /// <summary>The save model's version, which both save formats write.</summary>
-    public static readonly FormatVersion Current = new(1, 6);
+    public static readonly FormatVersion Current = new(1, 7);
 
     /// <summary>Upgrades a save in place, from whatever older 1.x version it is.</summary>
     public static void ToCurrent(CitySave save)
@@ -42,6 +42,11 @@ internal static class SaveUpgrades
             AddFire(save);
         }
 
+        if (save.Format < new FormatVersion(1, 7))
+        {
+            AddFlood(save);
+        }
+
         save.Format = Current;
     }
 
@@ -61,6 +66,15 @@ internal static class SaveUpgrades
         if (save.Map is { Width: >= 1 and <= MapCodec.MaxSide, Height: >= 1 and <= MapCodec.MaxSide } map)
         {
             save.Rail ??= new RailSave { Track = [.. Enumerable.Repeat(new string('.', map.Width), map.Height)], Tiles = 0, BudgetedTiles = 0 };
+        }
+    }
+
+    // 1.7 added floods. A city from before has none.
+    private static void AddFlood(CitySave save)
+    {
+        if (save.Map is { Width: >= 1 and <= MapCodec.MaxSide, Height: >= 1 and <= MapCodec.MaxSide } map)
+        {
+            save.Flood ??= new FloodSave { Tiles = [.. Enumerable.Repeat(new string('.', map.Width), map.Height)], CyclesLeft = 0 };
         }
     }
 

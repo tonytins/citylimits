@@ -89,8 +89,8 @@ public class ScenarioLoaderTests
 
     [Theory]
     [InlineData("""{ "name": "A", "seed": 1, "ticks": 1 }""", "format: is required.")]
-    [InlineData("""{ "format": 2, "name": "A", "seed": 1, "ticks": 1 }""", "format: this is format 2.0; this version of CityLimits reads up to 1.2.")]
-    [InlineData("""{ "format": "1.5", "name": "A", "seed": 1, "ticks": 1 }""", "format: this is format 1.5; this version of CityLimits reads up to 1.2.")]
+    [InlineData("""{ "format": 2, "name": "A", "seed": 1, "ticks": 1 }""", "format: this is format 2.0; this version of CityLimits reads up to 1.3.")]
+    [InlineData("""{ "format": "1.5", "name": "A", "seed": 1, "ticks": 1 }""", "format: this is format 1.5; this version of CityLimits reads up to 1.3.")]
     [InlineData("""{ "format": 1, "name": " ", "seed": 1, "ticks": 1 }""", "name: needs 1 to 80 characters, not 0.")]
     [InlineData("""{ "format": 1, "name": "A", "ticks": 1 }""", "seed: is required.")]
     [InlineData("""{ "format": 1, "name": "A", "seed": 1, "ticks": 100001 }""", "ticks: needs a number from 0 to 100000, not 100001.")]
@@ -106,7 +106,7 @@ public class ScenarioLoaderTests
     [InlineData("""{ "tick": 0, "tool": "0", "from": { "x": 0, "y": 0 } }""", "actions[0].tool: '0' is not one of Road, ZoneResidential, ZoneCommercial, ZoneIndustrial, Bulldoze, CoalPowerPlant, NuclearPowerPlant, PowerLine, FireStation, PoliceStation, Park, Rail.")]
     [InlineData("""{ "tick": 0, "tool": "Road" }""", "actions[0].from: is required.")]
     [InlineData("""{ "tick": 0, "tool": "Road", "from": { "x": 0, "y": 0 }, "expect": "Built:CannotBuildHere" }""", "actions[0].expect: a stroke that was built has no reason, so 'Built:CannotBuildHere' can never be met.")]
-    [InlineData("""{ "tick": 0, "tool": "Road", "from": { "x": 0, "y": 0 }, "expect": "Refused:Broke" }""", "actions[0].expect: 'Broke' is not one of None, OffTheMap, CannotBuildHere, AlreadyDone, NotEnoughFunds, NothingToClear, PartOfAZone, OnFire.")]
+    [InlineData("""{ "tick": 0, "tool": "Road", "from": { "x": 0, "y": 0 }, "expect": "Refused:Broke" }""", "actions[0].expect: 'Broke' is not one of None, OffTheMap, CannotBuildHere, AlreadyDone, NotEnoughFunds, NothingToClear, PartOfAZone, OnFire, Flooded.")]
     [InlineData("null", "actions[0]: needs an action, not null.")]
     public void EachActionIsChecked(string action, string error) =>
         Assert.Equal(error, Refuse(With("actions", action)));

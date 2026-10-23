@@ -77,6 +77,9 @@ internal sealed class CitySave
     /// <summary>The fires on the map, and the holes they left in buildings; from format 1.6, and none for a city upgraded from before.</summary>
     public FireSave? Fire { get; set; }
 
+    /// <summary>The floods on the map, and how long they spread for; from format 1.7, and none for a city upgraded from before.</summary>
+    public FloodSave? Flood { get; set; }
+
     /// <summary>
     /// A newer save's sections this version doesn't know, caught as they are so they can be checked
     /// against the parts list and written back. Unknown fields inside a known section are still refused.
@@ -363,6 +366,17 @@ internal sealed class FireSave
 {
     /// <summary>Each row of the map, a character a tile: '.' for none, 'f' for a fire, 'x' for a hole fire left in a building, and 'b' for a hole still burning.</summary>
     public required string[] Tiles { get; set; }
+}
+
+/// <summary>The floods on the map, as <see cref="FloodCodec"/> writes them.</summary>
+[System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(SectionCodec.ModelMembers)]
+internal sealed class FloodSave
+{
+    /// <summary>Each row of the map, a character a tile: '.' for none, and 'w' for a tile under water.</summary>
+    public required string[] Tiles { get; set; }
+
+    /// <summary>How many more cycles the water spreads for.</summary>
+    public required int CyclesLeft { get; set; }
 }
 
 /// <summary>One of the city's maps on 2 by 2 tile blocks, such as pollution or crime, and its average.</summary>

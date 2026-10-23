@@ -15,9 +15,9 @@ namespace CityLimits.Core.Simulation;
 /// the land-value class of the moment. One time in four, an empty zone that would grow becomes a
 /// hospital or a church instead, when the city needs one. Pollution counts against a residential
 /// zone's worth and against the land-value class of homes and shops, and a residential zone doesn't
-/// grow at all where it is above 128. A zone with any tile burning can't be redrawn, so it neither
-/// grows nor declines a level until the fire is out; when it next does, the holes fire left in it
-/// are redrawn too, as Micropolis' zones are. A house never goes in a hole.
+/// grow at all where it is above 128. A zone with any tile burning or flooded can't be redrawn, so it
+/// neither grows nor declines a level until the fire is out or the water gone; when it next does,
+/// the holes left in it are redrawn too, as Micropolis' zones are. A house never goes in a hole.
 /// </remarks>
 internal sealed class ZoneGrowth
 {
@@ -67,11 +67,11 @@ internal sealed class ZoneGrowth
     private readonly CityDemand _demand;
     private readonly CityMaps _maps;
     private readonly CommunityBuildings _community;
-    private readonly Fires _fires;
+    private readonly Hazards _hazards;
 
-    public ZoneGrowth(TileMap map, DeterministicRandom random, TripPlanner trips, CityDefinitions definitions, CityDemand demand, CityMaps maps, CommunityBuildings community, Fires fires)
+    public ZoneGrowth(TileMap map, DeterministicRandom random, TripPlanner trips, CityDefinitions definitions, CityDemand demand, CityMaps maps, CommunityBuildings community, Hazards hazards)
     {
-        _fires = fires;
+        _hazards = hazards;
         _community = community;
         _map = map;
         _random = random;
@@ -123,7 +123,7 @@ internal sealed class ZoneGrowth
             // One time in four an empty zone becomes a hospital or a church, if the city needs one.
             if (population == 0 && _random.NextInt(0, 4) == 0)
             {
-                _community.TryBuildIn(_map, x, y, _fires);
+                _community.TryBuildIn(_map, x, y, _hazards);
                 return;
             }
 
@@ -250,7 +250,7 @@ internal sealed class ZoneGrowth
             return;
         }
 
-        if (_maps.DensityAt(x, y) > DensityForBuilding && spec.Levels > 0 && !_fires.AnyBurningIn(x, y))
+        if (_maps.DensityAt(x, y) > DensityForBuilding && spec.Levels > 0 && !_hazards.AnyActiveIn(x, y))
         {
             ClearHouses(x, y);
             SetLevel(x, y, center, 1, valueClass);
@@ -356,15 +356,15 @@ internal sealed class ZoneGrowth
         _map.SetState(x, y, new TileState(lot.Kind, lot.Use, zonePart: lot.ZonePart, house: house));
     }
 
-    // A zone is redrawn at its new level, holes and all, unless any of it is burning; tells whether it was.
+    // A zone is redrawn at its new level, holes and all, unless any of it is burning or flooded; tells whether it was.
     private bool SetLevel(int x, int y, TileState center, int level, int valueClass)
     {
-        if (_fires.AnyBurningIn(x, y))
+        if (_hazards.AnyActiveIn(x, y))
         {
             return false;
         }
 
-        _fires.RepairHoles(x, y);
+        _hazards.RepairHoles(x, y);
         _map.SetState(x, y, new TileState(center.Kind, center.Use, level, valueClass: level > 0 ? valueClass : 0, powered: center.Powered));
         return true;
     }

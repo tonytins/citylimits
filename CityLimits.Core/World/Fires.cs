@@ -4,9 +4,8 @@ namespace CityLimits.Core.World;
 /// The fires burning on the map, as Micropolis has them. A burning tile has lost what stood on it:
 /// the map holds rubble there, and this holds that it burns, until it burns out and the rubble is
 /// all that is left. Fire spreads to almost anything built, and to trees; not to water, bare
-/// ground, or rubble. A building that loses an outer tile keeps standing with a hole in it, which
-/// nothing can be built in, until the building redraws itself as it grows or declines, as
-/// Micropolis' zones do; a hole is worked out from the map, not kept, so it can't drift from it.
+/// ground, or rubble. A building that loses an outer tile keeps standing with a hole in it
+/// (<see cref="Hazards"/>).
 /// </summary>
 /// <remarks>
 /// When fire reaches a building's centre, the building is lost, and its other tiles with
@@ -47,45 +46,6 @@ public sealed class Fires
 
         var state = _map.StateAt(x, y);
         return state.Kind != TileKind.Water && (state.Use != TileUse.None || state.Kind == TileKind.Trees);
-    }
-
-    /// <summary>
-    /// Tells whether a tile is a hole in a standing building: inside its footprint, but not one of
-    /// its tiles any more, because it burned. Nothing can be built in one.
-    /// </summary>
-    public bool IsHole(int x, int y) => HoleOwner(x, y) is not null;
-
-    /// <summary>Tells whether the player can't build on a tile, or clear it, because it is burning or a hole in a building.</summary>
-    public bool IsOffLimits(int x, int y) => IsBurning(x, y) || IsHole(x, y);
-
-    /// <summary>The centre of the standing building a tile is a hole in, or null when it isn't one.</summary>
-    public (int X, int Y)? HoleOwner(int x, int y)
-    {
-        if (!_map.Contains(x, y) || _map.StateAt(x, y).HasFootprint)
-        {
-            return null;
-        }
-
-        // A building's centre is at most two tiles from any of its tiles, and buildings never overlap.
-        for (var cy = y - 2; cy <= y + 2; cy++)
-        {
-            for (var cx = x - 2; cx <= x + 2; cx++)
-            {
-                var center = _map.StateAtOrDefault(cx, cy);
-                if (!center.IsBuildingCenter)
-                {
-                    continue;
-                }
-
-                var size = Footprint.SizeOf(center.Use);
-                if (x >= cx - 1 && x < cx - 1 + size && y >= cy - 1 && y < cy - 1 + size)
-                {
-                    return (cx, cy);
-                }
-            }
-        }
-
-        return null;
     }
 
     /// <summary>
@@ -156,48 +116,6 @@ public sealed class Fires
         }
 
         return false;
-    }
-
-    /// <summary>
-    /// Redraws the building centred on a tile whole, as a Micropolis zone does when it grows or
-    /// declines: each hole in it becomes its tile again. Call it only when none of it is burning.
-    /// </summary>
-    public void RepairHoles(int centerX, int centerY)
-    {
-        var center = _map.StateAtOrDefault(centerX, centerY);
-        if (!center.IsBuildingCenter)
-        {
-            return;
-        }
-
-        var size = Footprint.SizeOf(center.Use);
-        for (var part = 0; part < Footprint.Parts(size); part++)
-        {
-            var (dx, dy) = Footprint.OffsetFromCenter(part, size);
-            var (px, py) = (centerX + dx, centerY + dy);
-            if (_map.Contains(px, py) && HoleOwner(px, py) == (centerX, centerY) && !IsBurning(px, py))
-            {
-                _map.SetState(px, py, new TileState(TileKind.Grass, center.Use, zonePart: part));
-            }
-        }
-    }
-
-    /// <summary>
-    /// The building's tile a hole stands in for, as it would be whole: its use and its part, with
-    /// nothing on it. A save writes it there, so an older version that doesn't know fire opens the
-    /// building whole.
-    /// </summary>
-    public TileState WholeStateAt(int x, int y)
-    {
-        if (HoleOwner(x, y) is not var (cx, cy))
-        {
-            return _map.StateAt(x, y);
-        }
-
-        var center = _map.StateAt(cx, cy);
-        var size = Footprint.SizeOf(center.Use);
-        var part = Footprint.PartAt(x - cx + 1, y - cy + 1, size);
-        return new TileState(TileKind.Grass, center.Use, zonePart: part);
     }
 
     /// <summary>Sets a tile burning as a save had it, without touching what the map holds beneath it.</summary>

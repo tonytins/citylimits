@@ -103,13 +103,13 @@ public class FireTests
         city.Fires.Ignite(4, 4);
 
         Assert.True(city.Map.StateAt(5, 5).IsZoneCenter);
-        Assert.True(city.Fires.IsHole(4, 4));
-        Assert.Equal((5, 5), city.Fires.HoleOwner(4, 4));
+        Assert.True(city.Hazards.IsHole(4, 4));
+        Assert.Equal((5, 5), city.Hazards.HoleOwner(4, 4));
         Assert.Equal(BuildRefusal.OnFire, city.Builder.Apply(BuildAction.Road, 4, 4).Reason);
         Assert.Equal(BuildRefusal.OnFire, city.Builder.Apply(BuildAction.Bulldoze, 4, 4).Reason);
 
         city.Fires.PutOut(4, 4);
-        Assert.True(city.Fires.IsHole(4, 4));
+        Assert.True(city.Hazards.IsHole(4, 4));
         Assert.Equal(BuildRefusal.CannotBuildHere, city.Builder.Apply(BuildAction.Road, 4, 4).Reason);
     }
 
@@ -123,7 +123,7 @@ public class FireTests
 
         Assert.True(city.Fires.AnyBurningIn(5, 5));
         city.Fires.PutOut(6, 6);
-        city.Fires.RepairHoles(5, 5);
+        city.Hazards.RepairHoles(5, 5);
 
         Assert.Equal(TileUse.Commercial, city.Map.StateAt(6, 6).Use);
         Assert.Equal(Footprint.PartAt(2, 2, 3), city.Map.StateAt(6, 6).ZonePart);
@@ -144,7 +144,7 @@ public class FireTests
         Assert.True(city.Fires.IsBurning(4, 4));
         Assert.Equal(2, city.Fires.Count);
         Assert.Equal(new TileState(TileKind.Grass), city.Map.StateAt(6, 6));
-        Assert.False(city.Fires.IsHole(6, 6));
+        Assert.False(city.Hazards.IsHole(6, 6));
     }
 
     [Fact]
@@ -215,6 +215,10 @@ public class FireTests
             zones.DragTo(28, 28);
             city.Builder.Apply(zones);
             city.RandomFires = allowed;
+
+            // An earthquake would wreck the shops before a fire found them; this is about fires alone.
+            city.RandomEarthquakes = false;
+            city.RandomFloods = false;
             return city;
         }
 
@@ -268,9 +272,9 @@ public class FireTests
 
         foreach (var loaded in new[] { flat, binary })
         {
-            Assert.True(loaded.Fires.IsBurning(4, 4) && loaded.Fires.IsHole(4, 4));
-            Assert.True(!loaded.Fires.IsBurning(6, 6) && loaded.Fires.IsHole(6, 6));
-            Assert.True(loaded.Fires.IsBurning(3, 9) && !loaded.Fires.IsHole(3, 9));
+            Assert.True(loaded.Fires.IsBurning(4, 4) && loaded.Hazards.IsHole(4, 4));
+            Assert.True(!loaded.Fires.IsBurning(6, 6) && loaded.Hazards.IsHole(6, 6));
+            Assert.True(loaded.Fires.IsBurning(3, 9) && !loaded.Hazards.IsHole(3, 9));
             Assert.Equal(3, loaded.Fires.Count + 1);
             Assert.All(Enumerable.Range(0, 12), x => Assert.Equal(city.Map.StateAt(x, 4), loaded.Map.StateAt(x, 4)));
         }

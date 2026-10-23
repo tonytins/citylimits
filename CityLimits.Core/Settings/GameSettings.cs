@@ -33,7 +33,7 @@ public sealed record GameSettings
     /// disasters has them on, as Micropolis starts.
     /// </summary>
     /// <exception cref="ArgumentOutOfRangeException">A value is outside its allowed range.</exception>
-    public GameSettings(int windowWidth, int windowHeight, int speed, int autosaveSlots = 1, bool fullscreen = false, bool disasters = true, bool fires = true)
+    public GameSettings(int windowWidth, int windowHeight, int speed, int autosaveSlots = 1, bool fullscreen = false, bool disasters = true, bool fires = true, bool floods = true, bool earthquakes = true)
     {
         ArgumentOutOfRangeException.ThrowIfLessThan(windowWidth, MinWindowWidth);
         ArgumentOutOfRangeException.ThrowIfGreaterThan(windowWidth, MaxWindowWidth);
@@ -51,6 +51,8 @@ public sealed record GameSettings
         Fullscreen = fullscreen;
         Disasters = disasters;
         Fires = fires;
+        Floods = floods;
+        Earthquakes = earthquakes;
     }
 
     /// <summary>The width of the window, in pixels.</summary>
@@ -80,8 +82,20 @@ public sealed record GameSettings
     /// <summary>Whether fires start on their own, when <see cref="Disasters"/> are on too.</summary>
     public bool Fires { get; init; }
 
+    /// <summary>Whether floods rise on their own, when <see cref="Disasters"/> are on too.</summary>
+    public bool Floods { get; init; }
+
+    /// <summary>Whether earthquakes strike, when <see cref="Disasters"/> are on too. A quake's fires are its own.</summary>
+    public bool Earthquakes { get; init; }
+
     /// <summary>Whether fires start on their own: both switches are on.</summary>
     public bool RandomFires => Disasters && Fires;
+
+    /// <summary>Whether floods rise on their own: both switches are on.</summary>
+    public bool RandomFloods => Disasters && Floods;
+
+    /// <summary>Whether earthquakes strike: both switches are on.</summary>
+    public bool RandomEarthquakes => Disasters && Earthquakes;
 
     /// <summary>The settings the game starts with when there are none.</summary>
     public static GameSettings Default { get; } = new(1280, 720, 1);

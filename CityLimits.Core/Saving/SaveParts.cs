@@ -58,6 +58,10 @@ internal static class SaveParts
         // city as if its fires had burned out and its buildings been repaired, as Tony Bark chose. It
         // can't keep the fires, since it may build where they were.
         new() { Name = "fire", Chunk = "FIRE", Since = "1.6", Ignorable = true, Keepable = false },
+
+        // Floods are left out as fires are: the map holds bare ground beneath them, and a flooded hole
+        // in a building is marked in the fire part. A game that doesn't know floods can't keep them.
+        new() { Name = "flood", Chunk = "FLOD", Since = "1.7", Ignorable = true, Keepable = false },
     ];
 
     /// <summary>

@@ -17,9 +17,10 @@ public static class ScenarioLoader
     /// <summary>
     /// The newest scenario format this version reads. A file of an older minor version reads too;
     /// one written as a whole number, such as <c>1</c>, is 1.0. 1.1 added the Rail tool and the Rail count,
-    /// and 1.2 the <c>disasters</c> switch and the OnFire refusal.
+    /// 1.2 the <c>disasters</c> switch and the OnFire refusal, and 1.3 the Flooded refusal, with floods
+    /// and earthquakes among the disasters the switch lets happen.
     /// </summary>
-    public static readonly FormatVersion Format = new(1, 2);
+    public static readonly FormatVersion Format = new(1, 3);
 
     /// <summary>The most actions, and the most checks, a scenario may hold.</summary>
     public const int MaxEntries = 10_000;

@@ -1,0 +1,136 @@
+namespace CityLimits.UI;
+
+/// <summary>
+/// A small pop-up window with a title, a short message, and an Okay button in the middle at the
+/// bottom, which Enter, Escape, or a click on Okay closes. It moves by its title like the other
+/// windows, and opens in the middle of the space above the bar. Its owner draws it over whatever
+/// opened it, and gives it the input while it is open.
+/// </summary>
+public sealed class NoticePanel : IMovableWindow
+{
+    private const int FontSize = 14;
+    private const int TitleSize = 20;
+    private const int Padding = 12;
+    private const int Width = 340;
+    private const int LineHeight = 18;
+    private const int TitleStrip = Padding + TitleSize + 6;
+    private const int ButtonWidth = 90;
+    private const int ButtonHeight = 28;
+    private const string ButtonText = "Okay";
+
+    private readonly WindowPlacement _placement = new(TitleStrip);
+    private readonly List<string> _lines = [];
+    private string _title = string.Empty;
+
+    /// <summary>Tells whether the pop-up is showing.</summary>
+    public bool IsOpen { get; private set; }
+
+    /// <summary>Tells whether the player is dragging the pop-up by its title.</summary>
+    public bool IsDragging => _placement.IsDragging;
+
+    /// <summary>Where the pop-up is on the screen: in the middle until the player moves it.</summary>
+    public Rectangle Bounds
+    {
+        get
+        {
+            var size = new Vector2(Width, Height());
+            return _placement.Bounds(size, new Vector2((Raylib.GetScreenWidth() - size.X) / 2, (Hud.BarTop() - size.Y) / 2));
+        }
+    }
+
+    /// <summary>Opens the pop-up with a title and a message, which is wrapped to fit it.</summary>
+    /// <exception cref="ArgumentException">The title or the message is empty.</exception>
+    public void Show(string title, string message)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(title);
+        ArgumentException.ThrowIfNullOrWhiteSpace(message);
+
+        _title = title;
+        Wrap(message, Width - (Padding * 2));
+        IsOpen = true;
+    }
+
+    /// <summary>Starts moving the pop-up when a press lands on its title. Tells whether it did.</summary>
+    public bool BeginDrag(Vector2 point) => IsOpen && _placement.BeginDrag(point, Bounds);
+
+    /// <summary>Moves the pop-up with the pointer while the button is held.</summary>
+    public void Drag(Vector2 point, bool held) => _placement.Drag(point, held, new Vector2(Width, Height()));
+
+    /// <summary>Takes this frame's input: Enter, Escape, or a click on Okay closes it. Tells whether it closed.</summary>
+    public bool Update()
+    {
+        if (!IsOpen)
+        {
+            return false;
+        }
+
+        var closed = Raylib.IsKeyPressed(KeyboardKey.Enter) || Raylib.IsKeyPressed(KeyboardKey.KpEnter) || Raylib.IsKeyPressed(KeyboardKey.Escape) ||
+            (Raylib.IsMouseButtonPressed(MouseButton.Left) && Raylib.CheckCollisionPointRec(Raylib.GetMousePosition(), ButtonBounds(Bounds)));
+        IsOpen = !closed;
+        return closed;
+    }
+
+    /// <summary>Draws the pop-up where it is, when it is open.</summary>
+    public void Draw()
+    {
+        if (!IsOpen)
+        {
+            return;
+        }
+
+        var bounds = Bounds;
+        Raylib.DrawRectangleRec(bounds, Theme.Panel);
+        Raylib.DrawRectangleLinesEx(bounds, 1f, Theme.PanelBorder);
+
+        var x = (int)bounds.X + Padding;
+        Raylib.DrawText(_title, x, (int)bounds.Y + Padding, TitleSize, Theme.Text);
+        var y = (int)bounds.Y + TitleStrip + 4;
+        foreach (var line in _lines)
+        {
+            Raylib.DrawText(line, x, y, FontSize, Theme.TextDim);
+            y += LineHeight;
+        }
+
+        var button = ButtonBounds(bounds);
+        var hovered = Raylib.CheckCollisionPointRec(Raylib.GetMousePosition(), button);
+        Raylib.DrawRectangleRec(button, hovered ? Theme.PanelBorder : Theme.Panel);
+        Raylib.DrawRectangleLinesEx(button, 1f, Theme.Accent);
+        var textX = (int)(button.X + ((ButtonWidth - Raylib.MeasureText(ButtonText, FontSize)) / 2));
+        Raylib.DrawText(ButtonText, textX, (int)button.Y + ((ButtonHeight - FontSize) / 2), FontSize, hovered ? Theme.Accent : Theme.Text);
+    }
+
+    private int Height() => TitleStrip + 4 + (Math.Max(_lines.Count, 1) * LineHeight) + Padding + ButtonHeight + Padding;
+
+    private static Rectangle ButtonBounds(Rectangle bounds) => new()
+    {
+        X = bounds.X + ((bounds.Width - ButtonWidth) / 2),
+        Y = bounds.Y + bounds.Height - Padding - ButtonHeight,
+        Width = ButtonWidth,
+        Height = ButtonHeight,
+    };
+
+    // Words are laid on a line until the next one wouldn't fit; done once, when the pop-up opens.
+    private void Wrap(string message, int width)
+    {
+        _lines.Clear();
+        var line = string.Empty;
+        foreach (var word in message.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var longer = line.Length == 0 ? word : $"{line} {word}";
+            if (line.Length > 0 && Raylib.MeasureText(longer, FontSize) > width)
+            {
+                _lines.Add(line);
+                line = word;
+            }
+            else
+            {
+                line = longer;
+            }
+        }
+
+        if (line.Length > 0)
+        {
+            _lines.Add(line);
+        }
+    }
+}

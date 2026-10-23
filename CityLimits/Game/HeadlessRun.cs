@@ -73,7 +73,7 @@ public sealed class HeadlessRun
             {
                 month = simulation.Date;
                 Logger.Info(
-                    "tick {Tick}: {Date}   ${Funds}   population {Population}   demand R {Residential} C {Commercial} I {Industrial}   power {Powered}/{Capacity}   busiest road {Traffic}   pollution {Pollution}   crime {Crime}   fires {Fires}",
+                    "tick {Tick}: {Date}   ${Funds}   population {Population}   demand R {Residential} C {Commercial} I {Industrial}   power {Powered}/{Capacity}   busiest road {Traffic}   pollution {Pollution}   crime {Crime}   fires {Fires}   floods {Floods}",
                     simulation.TickCount,
                     simulation.Date,
                     simulation.Treasury.Funds,
@@ -86,7 +86,8 @@ public sealed class HeadlessRun
                     simulation.Traffic.Busiest,
                     simulation.Maps.PollutionAverage,
                     simulation.Maps.CrimeAverage,
-                    simulation.Fires.Count);
+                    simulation.Fires.Count,
+                    simulation.Floods.Count);
             }
         }
 

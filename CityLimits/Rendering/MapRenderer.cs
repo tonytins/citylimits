@@ -9,20 +9,22 @@ public sealed class MapRenderer : IDisposable
     private readonly TileMap _map;
     private readonly TrafficMap? _traffic;
     private readonly Fires? _fires;
+    private readonly Floods? _floods;
     private readonly Texture2D? _sheet;
     private readonly MapChunkCache? _chunks;
 
     /// <summary>
     /// Creates a renderer for a map, with the given assets and, when the map is to show them, the
-    /// city's traffic and fires. Call it after the window is open.
+    /// city's traffic, fires, and floods. Call it after the window is open.
     /// </summary>
-    public MapRenderer(TileMap map, GameAssets? assets, TrafficMap? traffic = null, Fires? fires = null)
+    public MapRenderer(TileMap map, GameAssets? assets, TrafficMap? traffic = null, Fires? fires = null, Floods? floods = null)
     {
         ArgumentNullException.ThrowIfNull(map);
 
         _map = map;
         _traffic = traffic;
         _fires = fires;
+        _floods = floods;
         _sheet = assets?.TileSheet;
         _chunks = MapChunkCache.TryCreate(map, _sheet);
     }
@@ -73,6 +75,7 @@ public sealed class MapRenderer : IDisposable
         }
 
         DrawTraffic(minX, minY, maxX, maxY, trafficFrame);
+        DrawFloods(minX, minY, maxX, maxY);
         DrawFires(minX, minY, maxX, maxY, fireFrame);
 
         if (camera.Zoom >= 0.75f)
@@ -160,6 +163,37 @@ public sealed class MapRenderer : IDisposable
 
         var index = TileAtlas.ExplosionTile + Math.Clamp(frame, 0, TileAtlas.ExplosionFrames - 1);
         Raylib.DrawTexturePro(_sheet.Value, TileAtlas.SourceFor(index), destination, Vector2.Zero, 0f, Color.White);
+    }
+
+    // Floods aren't part of the map's state, which holds the bare ground beneath them, so they are
+    // drawn over the cached map, as fires are.
+    private void DrawFloods(int minX, int minY, int maxX, int maxY)
+    {
+        if (_floods is null || _floods.Count == 0)
+        {
+            return;
+        }
+
+        for (var y = minY; y <= maxY; y++)
+        {
+            for (var x = minX; x <= maxX; x++)
+            {
+                if (!_floods.IsFlooded(x, y))
+                {
+                    continue;
+                }
+
+                var destination = new Rectangle { X = x * TileSize, Y = y * TileSize, Width = TileSize, Height = TileSize };
+                if (_sheet is null)
+                {
+                    Raylib.DrawRectangleRec(destination, Theme.Flood);
+                }
+                else
+                {
+                    Raylib.DrawTexturePro(_sheet.Value, TileAtlas.SourceFor(TileAtlas.FloodIndexFor(x, y)), destination, Vector2.Zero, 0f, Color.White);
+                }
+            }
+        }
     }
 
     // Fires flicker every frame, so they are drawn over the cached map, which holds the rubble

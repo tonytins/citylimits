@@ -1,5 +1,33 @@
 # CityLimits Changelog
 
+## 0.3.111
+
+Floods and earthquakes have come to your city, as in Micropolis. Now and
+then a river or lake rises over the land beside it, spreading for a while
+before it drains away and leaves bare ground behind. An earthquake shakes
+the whole city, leaving rubble and fires in its buildings, and the screen
+shakes with it. Both are reported in red on the news ticker the moment
+they happen.
+
+Damaged buildings recover, as they do in Micropolis, and it costs you
+nothing. Zones rebuild their damaged parts as they grow. Power plants,
+fire and police stations, hospitals, and churches rebuild any part that
+is clear ground, so they recover from a flood on their own; after a fire
+or an earthquake, bulldoze the rubble and they rebuild the rest.
+
+The Disasters tab in the settings now has a switch for floods and one for
+earthquakes, beside fires. An earthquake's fires come with the
+earthquake, even with fires switched off.
+
+Switching fullscreen on or off now opens a small window saying the change
+takes effect the next time you start the game.
+
+For developers and agents: saves are format 1.7, with floods in a part of
+their own (`"flood"`, and the `FLOD` chunk). Scenarios are format 1.3,
+adding `Refused:Flooded`, and `"disasters": true` now lets floods and
+earthquakes happen too. `settings.json` gains `Floods` and `Earthquakes`.
+The headless run's monthly line gives the floods.
+
 ## 0.3.110
 
 Fire has come to your city, as in Micropolis. Now and then a fire breaks

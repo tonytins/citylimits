@@ -47,4 +47,10 @@ public enum CityMessage
 
     /// <summary>A burning building has exploded.</summary>
     ExplosionReported,
+
+    /// <summary>A flood has risen from the water onto the land.</summary>
+    FloodReported,
+
+    /// <summary>An earthquake has struck.</summary>
+    EarthquakeReported,
 }

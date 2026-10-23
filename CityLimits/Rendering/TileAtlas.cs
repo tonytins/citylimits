@@ -69,6 +69,15 @@ public static class TileAtlas
     /// <summary>How many frames a fire is animated in.</summary>
     public const int FireFrames = 8;
 
+    /// <summary>The first of the flood's three drawings of water over the land.</summary>
+    public const int FloodTile = 48;
+
+    /// <summary>How many drawings of flood water the sheet has.</summary>
+    public const int FloodDrawings = 3;
+
+    /// <summary>The drawing of a flooded tile, picked from where it is, as Micropolis picks one at random as the water spreads.</summary>
+    public static int FloodIndexFor(int x, int y) => FloodTile + (int)(((uint)(x * 7) + (uint)(y * 13)) % FloodDrawings);
+
     /// <summary>The first of the drawings of a building blowing apart, which an explosion plays through.</summary>
     public const int ExplosionTile = 860;
 

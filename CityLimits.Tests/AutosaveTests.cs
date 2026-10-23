@@ -150,6 +150,13 @@ public class AutosaveTests
             Assert.False(settings.RandomFires);
 
             Assert.False((GameSettings.Default with { Disasters = false }).RandomFires);
+            Assert.True(settings.RandomFloods && settings.RandomEarthquakes);
+
+            Assert.True(SettingsStore.TrySave(path, settings with { Floods = false, Earthquakes = false }, out _));
+            settings = SettingsStore.Load(path, out warning);
+            Assert.Null(warning);
+            Assert.False(settings.RandomFloods || settings.RandomEarthquakes);
+            Assert.False((GameSettings.Default with { Disasters = false }).RandomEarthquakes);
         }
         finally
         {

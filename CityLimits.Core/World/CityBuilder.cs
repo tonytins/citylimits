@@ -9,7 +9,7 @@ public sealed class CityBuilder
     private readonly Treasury _treasury;
     private readonly RoadNetwork _roads;
     private readonly CityDefinitions _definitions;
-    private readonly Fires? _fires;
+    private readonly Hazards? _hazards;
 
     // Apply works the stroke out again here, so a preview the player saw earlier can't go stale.
     private readonly BuildPlan _applying = new();
@@ -19,11 +19,11 @@ public sealed class CityBuilder
 
     /// <summary>
     /// Creates a builder that works on the given map, at the prices its definitions set: the base
-    /// game's when none are given. With the city's fires, it leaves burning tiles and the holes fire
-    /// leaves in buildings alone.
+    /// game's when none are given. With the city's hazards, it leaves burning and flooded tiles, and
+    /// the holes they leave in buildings, alone.
     /// </summary>
     /// <exception cref="ArgumentNullException">One of the parts of the city is null.</exception>
-    public CityBuilder(TileMap map, Treasury treasury, RoadNetwork roads, CityDefinitions? definitions = null, Fires? fires = null)
+    public CityBuilder(TileMap map, Treasury treasury, RoadNetwork roads, CityDefinitions? definitions = null, Hazards? hazards = null)
     {
         ArgumentNullException.ThrowIfNull(map);
         ArgumentNullException.ThrowIfNull(treasury);
@@ -33,7 +33,7 @@ public sealed class CityBuilder
         _treasury = treasury;
         _roads = roads;
         _definitions = definitions ?? CityDefinitions.Base;
-        _fires = fires;
+        _hazards = hazards;
     }
 
     /// <summary>
@@ -148,6 +148,11 @@ public sealed class CityBuilder
         if (plan.SkippedBecause(BuildRefusal.OnFire) > 0)
         {
             return BuildResult.Refused(BuildRefusal.OnFire);
+        }
+
+        if (plan.SkippedBecause(BuildRefusal.Flooded) > 0)
+        {
+            return BuildResult.Refused(BuildRefusal.Flooded);
         }
 
         if (plan.SkippedBecause(BuildRefusal.PartOfAZone) > 0)
@@ -438,13 +443,13 @@ public sealed class CityBuilder
             for (var column = 0; column < size; column++)
             {
                 var state = _map.StateAt(left + column, top + row);
-                if (_fires?.IsBurning(left + column, top + row) == true)
+                if (ActiveHazard(left + column, top + row) is { } hazard)
                 {
-                    plan.Skip(BuildRefusal.OnFire);
+                    plan.Skip(hazard);
                     return;
                 }
 
-                if (state.Use != TileUse.None || !TileRules.CanZone(state.Kind) || _fires?.IsHole(left + column, top + row) == true)
+                if (state.Use != TileUse.None || !TileRules.CanZone(state.Kind) || _hazards?.IsHole(left + column, top + row) == true)
                 {
                     plan.Skip(BuildRefusal.CannotBuildHere);
                     return;
@@ -476,9 +481,9 @@ public sealed class CityBuilder
             for (var x = bounds.X; x < bounds.X + bounds.Width; x++)
             {
                 var state = _map.StateAt(x, y);
-                if (_fires?.IsBurning(x, y) == true)
+                if (ActiveHazard(x, y) is { } hazard)
                 {
-                    plan.Skip(BuildRefusal.OnFire);
+                    plan.Skip(hazard);
                     continue;
                 }
 
@@ -516,13 +521,13 @@ public sealed class CityBuilder
                     continue;
                 }
 
-                // A tile already burning goes on burning: the bulldozer can't clear fire, as in Micropolis.
+                // A tile burning or flooded stays so: the bulldozer can't clear fire or water, as in Micropolis.
                 var size = Footprint.SizeOf(center.Use);
                 for (var dy = -1; dy < size - 1; dy++)
                 {
                     for (var dx = -1; dx < size - 1; dx++)
                     {
-                        if (_fires?.IsBurning(x + dx, y + dy) != true)
+                        if (_hazards?.IsActive(x + dx, y + dy) != true)
                         {
                             plan.Change(x + dx, y + dy, new TileState(TileKind.Rubble), 0);
                         }
@@ -534,22 +539,17 @@ public sealed class CityBuilder
         }
     }
 
-    // Nothing is built on a burning tile, or in the hole fire left in a building; the bulldozer
-    // decides for itself, since it may clear a hole's rubble but never a fire.
+    // Nothing is built on a burning or flooded tile, or in the hole a hazard left in a building; the
+    // bulldozer decides for itself, since it may clear a hole's rubble but never a fire or a flood.
     private bool Blocked(int x, int y, BuildPlan plan)
     {
-        if (_fires is null)
+        if (ActiveHazard(x, y) is { } hazard)
         {
-            return false;
-        }
-
-        if (_fires.IsBurning(x, y))
-        {
-            plan.Skip(BuildRefusal.OnFire);
+            plan.Skip(hazard);
             return true;
         }
 
-        if (_fires.IsHole(x, y))
+        if (_hazards?.IsHole(x, y) == true)
         {
             plan.Skip(BuildRefusal.CannotBuildHere);
             return true;
@@ -557,6 +557,12 @@ public sealed class CityBuilder
 
         return false;
     }
+
+    // Why a fire or a flood on a tile refuses the work, or null when there is neither.
+    private BuildRefusal? ActiveHazard(int x, int y) =>
+        _hazards?.Fires.IsBurning(x, y) == true ? BuildRefusal.OnFire
+        : _hazards?.Floods.IsFlooded(x, y) == true ? BuildRefusal.Flooded
+        : null;
 
     private static int ClearingCost(TileState state) =>
         TileRules.NeedsClearing(state.Kind) ? TileCosts.AutoClear : 0;

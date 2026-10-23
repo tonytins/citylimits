@@ -16,7 +16,7 @@ internal static class FireCodec
     private const char BurningHole = 'b';
 
     /// <summary>The fires on the map, a row of characters a row of the map.</summary>
-    public static FireSave Capture(TileMap map, Fires fires)
+    public static FireSave Capture(TileMap map, Hazards hazards)
     {
         var rows = new string[map.Height];
         var row = new char[map.Width];
@@ -24,8 +24,8 @@ internal static class FireCodec
         {
             for (var x = 0; x < map.Width; x++)
             {
-                var hole = fires.IsHole(x, y);
-                row[x] = fires.IsBurning(x, y) ? (hole ? BurningHole : Burning) : (hole ? Hole : Nothing);
+                var hole = hazards.IsHole(x, y);
+                row[x] = hazards.Fires.IsBurning(x, y) ? (hole ? BurningHole : Burning) : (hole ? Hole : Nothing);
             }
 
             rows[y] = new string(row);
@@ -34,21 +34,21 @@ internal static class FireCodec
         return new FireSave { Tiles = rows };
     }
 
-    /// <summary>The map to write: the city's own when no building has a hole, or a copy with each hole filled in.</summary>
-    public static TileMap WholeMap(TileMap map, Fires fires)
+    /// <summary>The map to write: the city's own when no building has a hole, or a copy with each hole filled in, whatever made it.</summary>
+    public static TileMap WholeMap(TileMap map, Hazards hazards)
     {
         TileState[]? tiles = null;
         for (var y = 0; y < map.Height; y++)
         {
             for (var x = 0; x < map.Width; x++)
             {
-                if (!fires.IsHole(x, y))
+                if (!hazards.IsHole(x, y))
                 {
                     continue;
                 }
 
                 tiles ??= AllStates(map);
-                tiles[(y * map.Width) + x] = fires.WholeStateAt(x, y);
+                tiles[(y * map.Width) + x] = hazards.WholeStateAt(x, y);
             }
         }
 

@@ -133,14 +133,14 @@ simulation is deterministic in. Phase 2 adds goals by date, such as
 | Field | Required | Meaning |
 |---|---|---|
 | `$schema` | no | The scenario's schema, `docs/schemas/scenario.v1.0.schema.json`, for editors to check the file against; the game ignores it |
-| `format` | yes | The file format version, `"1.0"`, `"1.1"` for a file that lays or counts rail, or `"1.2"` for one with `disasters` or that expects `OnFire`. A whole number, such as `1`, reads as `1.0`. A newer minor version, or another major one, is refused with a message saying which this version reads |
+| `format` | yes | The file format version, `"1.0"`, `"1.1"` for a file that lays or counts rail, `"1.2"` for one with `disasters` or that expects `OnFire`, or `"1.3"` for one that expects `Flooded`. A whole number, such as `1`, reads as `1.0`. A newer minor version, or another major one, is refused with a message saying which this version reads |
 | `name` | yes | A display name, 1 to 80 characters |
 | `description` | no | One or two sentences, up to 500 characters |
 | `seed` | yes | The seed the map and the simulation are built from: any 32-bit integer |
 | `map` | no | `width` and `height`, each from 16 to 512. Default: the game's map, `MapSize.DefaultWidth` by `MapSize.DefaultHeight` |
 | `funds` | no | The starting treasury, from 0 to 1 000 000. Default: `Treasury.StartingFunds` |
 | `ticks` | yes | How many ticks the run takes, from 0 to 100 000, the same limit as `--ticks` |
-| `disasters` | no | From format 1.2: `true` lets disasters happen on their own, as they do in the game with its settings on; fires are the only kind so far. Default: `false`, so a scenario's result never depends on the machine's settings. A fire already burning spreads either way |
+| `disasters` | no | From format 1.2: `true` lets disasters happen on their own, as they do in the game with its settings on: fires, and from 1.3 floods and earthquakes. Default: `false`, so a scenario's result never depends on the machine's settings. A fire already burning spreads either way |
 | `actions` | no | Tool strokes made on the map; see below. Up to 10 000 entries |
 | `checks` | no | What must be true; see below. Up to 10 000 entries |
 
@@ -155,7 +155,7 @@ tool pressed on `from` and dragged to `to`.
 | `tool` | yes | A `BuildAction` name: `Road`, `ZoneResidential`, `ZoneCommercial`, `ZoneIndustrial`, `Bulldoze`, `CoalPowerPlant`, `NuclearPowerPlant`, `PowerLine`, `FireStation`, `PoliceStation`, `Park`, and from format 1.1 `Rail` |
 | `from` | yes | `{ "x", "y" }`: the tile the stroke starts on |
 | `to` | no | `{ "x", "y" }`: the tile the stroke is dragged to. Default: `from`, a stroke that doesn't move |
-| `expect` | no | A `BuildStatus` (`Built`, `Unchanged`, `Refused`), or a status and a `BuildRefusal`, as in `Refused:NotEnoughFunds`, `Refused:PartOfAZone`, `Unchanged:AlreadyDone`, or, from format 1.2, `Refused:OnFire`, for a tile that is burning |
+| `expect` | no | A `BuildStatus` (`Built`, `Unchanged`, `Refused`), or a status and a `BuildRefusal`, as in `Refused:NotEnoughFunds`, `Refused:PartOfAZone`, `Unchanged:AlreadyDone`, or, from format 1.2, `Refused:OnFire`, for a tile that is burning, and from 1.3 `Refused:Flooded`, for one under water |
 
 A stroke covers what `BuildStroke.Bounds` says it covers, as in the
 game:
@@ -261,7 +261,7 @@ first problem is reported with its location, as in
 
 ## The schema
 
-`docs/schemas/scenario.v1.2.schema.json` describes the file, and `scenario.v1.1.schema.json` and `scenario.v1.0.schema.json` the versions before it: its fields
+`docs/schemas/scenario.v1.3.schema.json` describes the file, and the files for 1.0 to 1.2 the versions before it: its fields
 and their types, with no others. Name it in `"$schema"`, as the built-in
 scenarios do, and an editor such as VS Code checks the file and suggests
 its fields as you write. The schema is generated from the loader's own
