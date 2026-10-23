@@ -1,28 +1,28 @@
 {
-  "$schema": "https://raw.githubusercontent.com/tonytins/citylimits/main/docs/schemas/scenario.v1.0.schema.json",
-  "format": "1.0",
+  "$schema": "https://raw.githubusercontent.com/tonytins/citylimits/main/docs/schemas/scenario.v2.0.schema.json",
+  "format": "2.0",
   "name": "Small town",
   "description": "Twelve zones along two roads, powered by a coal plant up a line to the north, grow for ten years: houses first, then buildings where the houses cluster, with commerce and industry alongside. The industry's pollution holds back the homes across the road from it and the shops beside it.",
   "seed": 2000,
-  "ticks": 7680,
+  "ends": "1910-01",
   "actions": [
-    { "tick": 0, "tool": "Road", "from": { "x": 33, "y": 47 }, "to": { "x": 52, "y": 47 }, "expect": "Built" },
-    { "tick": 0, "tool": "CoalPowerPlant", "from": { "x": 31, "y": 36 }, "expect": "Built" },
-    { "tick": 0, "tool": "PowerLine", "from": { "x": 33, "y": 39 }, "to": { "x": 33, "y": 48 }, "expect": "Built" },
-    { "tick": 0, "tool": "Road", "from": { "x": 33, "y": 54 }, "to": { "x": 52, "y": 54 }, "expect": "Built" },
-    { "tick": 0, "tool": "ZoneResidential", "from": { "x": 35, "y": 49 }, "to": { "x": 50, "y": 49 }, "expect": "Built" },
-    { "tick": 0, "tool": "ZoneResidential", "from": { "x": 35, "y": 52 }, "to": { "x": 38, "y": 52 }, "expect": "Built" },
-    { "tick": 0, "tool": "ZoneCommercial", "from": { "x": 41, "y": 52 }, "to": { "x": 44, "y": 52 }, "expect": "Built" },
-    { "tick": 0, "tool": "ZoneIndustrial", "from": { "x": 47, "y": 52 }, "to": { "x": 50, "y": 52 }, "expect": "Built" }
+    { "at": "1900-01", "tool": "Road", "from": { "x": 33, "y": 47 }, "to": { "x": 52, "y": 47 }, "expect": "Built" },
+    { "at": "1900-01", "tool": "CoalPowerPlant", "from": { "x": 31, "y": 36 }, "expect": "Built" },
+    { "at": "1900-01", "tool": "PowerLine", "from": { "x": 33, "y": 39 }, "to": { "x": 33, "y": 48 }, "expect": "Built" },
+    { "at": "1900-01", "tool": "Road", "from": { "x": 33, "y": 54 }, "to": { "x": 52, "y": 54 }, "expect": "Built" },
+    { "at": "1900-01", "tool": "ZoneResidential", "from": { "x": 35, "y": 49 }, "to": { "x": 50, "y": 49 }, "expect": "Built" },
+    { "at": "1900-01", "tool": "ZoneResidential", "from": { "x": 35, "y": 52 }, "to": { "x": 38, "y": 52 }, "expect": "Built" },
+    { "at": "1900-01", "tool": "ZoneCommercial", "from": { "x": 41, "y": 52 }, "to": { "x": 44, "y": 52 }, "expect": "Built" },
+    { "at": "1900-01", "tool": "ZoneIndustrial", "from": { "x": 47, "y": 52 }, "to": { "x": 50, "y": 52 }, "expect": "Built" }
   ],
   "checks": [
-    { "tick": 0, "fundsEquals": 15350 },
-    { "tick": 0, "tile": { "x": 33, "y": 47 }, "use": "RoadAcrossPowerLine" },
-    { "tick": 32, "tile": { "x": 50, "y": 52 }, "powered": true },
-    { "tick": 768, "tile": { "x": 47, "y": 52 }, "use": "Industrial", "developmentAtLeast": 1 },
-    { "tick": 7680, "count": "Developed", "equals": 10 },
-    { "tick": 7680, "tile": { "x": 47, "y": 49 }, "use": "Residential", "development": 0 },
-    { "tick": 7680, "tile": { "x": 41, "y": 52 }, "developmentAtLeast": 1 },
-    { "tick": 7680, "tile": { "x": 47, "y": 52 }, "development": 4 }
+    { "at": "1900-01", "fundsEquals": 15350 },
+    { "at": "1900-01", "tile": { "x": 33, "y": 47 }, "use": "RoadAcrossPowerLine" },
+    { "at": "1900-01", "week": 3, "tile": { "x": 50, "y": 52 }, "powered": true },
+    { "at": "1901-01", "tile": { "x": 47, "y": 52 }, "use": "Industrial", "developmentAtLeast": 1 },
+    { "at": "1910-01", "count": "Developed", "equals": 10 },
+    { "at": "1910-01", "tile": { "x": 47, "y": 49 }, "use": "Residential", "development": 0 },
+    { "at": "1910-01", "tile": { "x": 41, "y": 52 }, "developmentAtLeast": 1 },
+    { "at": "1910-01", "tile": { "x": 47, "y": 52 }, "development": 4 }
   ]
 }

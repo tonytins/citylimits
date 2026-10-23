@@ -1,6 +1,6 @@
 # CityLimits roadmap
 
-> **Last reviewed:** 2026-10-21 · **Last updated:** 2026-10-22 · **Change:** major (beta: 0.4.100) · **Stage:** beta
+> **Last reviewed:** 2026-10-21 · **Last updated:** 2026-10-22 · **Change:** major (scenario format 2.0) · **Stage:** beta
 
 Forward-looking: where CityLimits stands, what blocks the next milestone,
 and what comes next. Verified status and evidence are in the
@@ -51,7 +51,8 @@ Next, in order:
 1. **Scenarios to play**, the polish Tony Bark chose first, in four
    phases: P1, a city's calendar starting in a later year, which is in;
    P2, scenario format 2.0, with the game's dates in place of ticks,
-   goals, and scheduled disasters, still reading 1.x files; P3, playing a
+   goals, and scheduled disasters, still reading 1.x files, which is in;
+   P3, playing a
    scenario from the start page, with its goals, its result, and saving
    partway; P4, the first built-in challenges, written fresh on seeded maps.
 2. **Happy Isle's last items**: the city score, and map size on the
@@ -72,18 +73,17 @@ Next, in order:
 | Joffburg: Services and economy | 100% | 0 | Meets the baseline: power, taxes and the budget, services (stations, coverage, parks, hospitals, and churches), and the overview map with its power, coverage, land value, and density modes, as in Micropolis |
 | Radial: Traffic and commuting | 100% | 0 | Meets the baseline: versioned file formats with schemas, read without reflection, the traffic map trips leave and what it shows and costs, and rail, with tunnels, crossings, trips along it, its upkeep and message, and the commuter train |
 | Deadwood: Land value, pollution, disasters | 100% | 0 | Meets the baseline: pollution and crime, fire with the ticker's fire-risk hints, floods, and earthquakes, as in Micropolis, with free repair and the settings' disaster switches |
-| Happy Isle: Player-facing game | 50% | 17–28 | The palette, laid out as Micropolis', and the HUD, with its bar along the bottom over a news ticker after Tony Bark's mock-up, are in; the budget, demand, and city panels, the overview's power mode, and the settings window are too, and cities save, load, autosave, and import from Micropolis. Scenarios to play (P1 of four in), the city score, and map size on the start screen are left |
+| Happy Isle: Player-facing game | 50% | 13–22 | The palette, laid out as Micropolis', and the HUD, with its bar along the bottom over a news ticker after Tony Bark's mock-up, are in; the budget, demand, and city panels, the overview's power mode, and the settings window are too, and cities save, load, autosave, and import from Micropolis. Scenarios to play (P1 and P2 of four in), the city score, and map size on the start screen are left |
 | Yokohama: Polish and release | 0% | 10–20 | Nothing yet |
-| | **Total** | **≈ 27–48** | |
+| | **Total** | **≈ 23–42** | |
 
 ## Upcoming work, ranked
 
 | Rank | Work | Milestone | Estimate (h) |
 |---|---|---|---|
-| 1 | Scenarios, P2: format 2.0, with dates, goals, and events | Happy Isle | 4–6 |
-| 2 | Scenarios, P3: playing one from the start page | Happy Isle | 5–8 |
-| 3 | Scenarios, P4: the first built-in challenges | Happy Isle | 2–4 |
-| 4 | Happy Isle: the city score and map size on the start screen | Happy Isle | 6–10 |
+| 1 | Scenarios, P3: playing one from the start page | Happy Isle | 5–8 |
+| 2 | Scenarios, P4: the first built-in challenges | Happy Isle | 2–4 |
+| 3 | Happy Isle: the city score and map size on the start screen | Happy Isle | 6–10 |
 
 Every row of the alpha gate passes, and CityLimits is an alpha since 0.3.100.
 
@@ -349,7 +349,10 @@ later games, where such tools live in the palette.
   - [x] P1: a city's calendar can start in a later year
     (`CitySimulation`'s `startYear`), counted from 1900 in steps so
     saves don't change.
-  - [ ] P2: scenario format 2.0.
+  - [x] P2: scenario format 2.0: dates in place of ticks, a start year
+    or a saved city to start from, disasters on dates, and goals judged at
+    the end, reported as `won` apart from `passed`; format 1 still read,
+    and the built-ins rewritten.
   - [ ] P3: playing a scenario from the start page.
   - [ ] P4: the first built-in challenges.
 - [ ] A city score, rating the city the way the classic games do.
@@ -408,6 +411,7 @@ baseline's growth depends on.
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-23 | major | Scenarios, P2: format 2.0, the scenario format's first major version, as Tony Bark asked, so players needn't know what a tick is. Times are dates, a month and an optional week; a scenario starts in a year of its own or from a saved `.fcl` or `.cl` city beside it; `events` strike disasters on dates whatever the switches say (`CitySimulation.Strike`); `goals` (population, funds, pollution, crime, traffic) are judged at `ends`, and the report says `won` apart from `passed`, so a lost challenge isn't a failed run. Format 1 files are still read; every built-in is rewritten in 2.0, with `zones-and-bulldozer`'s checks a step before its bulldozing moved to the year's last week. The report gains dates, events, and goals. 23–42 h left in total, 793 tests. |
 | 2026-10-22 | major | Tony Bark marked CityLimits a beta: the version's base is 0.4.100, and the changelog sums up everything since 0.3.100. Polish begins with scenarios to play, in four phases Tony Bark settled (format 2.0 with dates, goals, and events; the start page; built-in challenges); P1 is in: a city can start in a later year, counted from 1900 in steps, so saves are unchanged. 27–48 h left in total, 764 tests. |
 | 2026-10-22 | minor | Deadwood, D3, and with it Deadwood, is complete, as in Micropolis: floods (two disaster kinds in nine) rise from a shore, spread for 30 cycles over any land but a fire, and drain to bare ground, a flooded centre taking its whole building, as Tony Bark chose; earthquakes (one in nine) shake 300 to 1 000 tiles, wreck the outer tiles of buildings among them to rubble or their own fires, and shake the view. Micropolis' repair: plants and stations every 8 counts, hospitals and churches every 16, redraw holes of bare ground. Each disaster has a switch on the Disasters tab; an off disaster rolls as if it harmed nothing. A small movable pop-up with an Okay button, which Tony Bark asked for, says fullscreen waits for a restart. Hole logic moved to `World/Hazards.cs`. Saves move to 1.7 with floods a part of their own; scenarios to 1.3 for `Refused:Flooded`. Deadwood is at 100%; 16–30 h left in total, 758 tests. |
 | 2026-10-22 | minor | Deadwood, D2, as in Micropolis: fire. A disaster roll each cycle (1 in 481 on Easy, a fire 2 times in 9) starts a fire on a building's outer tile; it spreads one visit in four to each side one time in eight, burns out sooner under fire coverage, leaves holes in buildings that are redrawn as they grow, and takes a building's furnished tiles when it reaches the centre, as Tony Bark chose; industry, plants, and stations explode, at once. The ticker reports fires and explosions in red, and, as Tony Bark asked after SimCity 3000, hints at zones out of an engine's reach, cut fire funding, and homes against the woods. The settings gain a Disasters switch on Gameplay and a Disasters tab with Fires, the player's and never a city's; the dice are rolled either way. Fullscreen now applies only at launch, after Tony Bark found going back to a window at runtime left a screen-sized window. Saves move to 1.6 with fire a part of its own and buildings written whole; scenarios to 1.2 with `disasters`, off by default. The new roll shifts every later one, so the demo town ends $4 richer. Deadwood is at 60%; 19–35 h left in total, 746 tests. |

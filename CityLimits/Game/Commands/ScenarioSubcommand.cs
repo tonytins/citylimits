@@ -112,7 +112,7 @@ public sealed class ScenarioSubcommand : ISubcommand
 
         if (ticks is { } length && length < ScenarioRunner.LatestTick(scenario!))
         {
-            return Refuse(context, $"--ticks {length} ends before tick {ScenarioRunner.LatestTick(scenario!)}, when the scenario's last action or check is due.");
+            return Refuse(context, $"--ticks {length} ends before tick {ScenarioRunner.LatestTick(scenario!)}, when the scenario's last action, disaster, or check is due.");
         }
 
         ScenarioReport report;
@@ -142,19 +142,38 @@ public sealed class ScenarioSubcommand : ISubcommand
     private static ScenarioReport Run(Scenario scenario, string source, int? ticks, ScenarioFallback? fallback)
     {
         Logger.Info(
-            "Scenario '{Name}' from {Source}: seed {Seed}, map {Width} by {Height}, {Ticks} ticks, ${Funds}",
+            "Scenario '{Name}' from {Source}: {From}, map {Width} by {Height}, {Start} to {Ends}, {Ticks} ticks, ${Funds}",
             scenario.Name,
             source,
-            scenario.Seed,
+            scenario.CityFile is { } city ? $"the city {Path.GetFileName(city)}" : $"seed {scenario.Seed}",
             scenario.MapWidth,
             scenario.MapHeight,
+            scenario.DateAt(0),
+            scenario.DateAt(ticks ?? scenario.Ticks),
             ticks ?? scenario.Ticks,
             scenario.Funds);
 
         var runner = new ScenarioRunner();
         runner.ActionMade += LogAction;
+        runner.EventHappened += LogEvent;
         runner.CheckMade += LogCheck;
         var report = runner.Run(scenario, source, ticks, fallback);
+        foreach (var goal in report.Goals)
+        {
+            if (goal.Met)
+            {
+                Logger.Info("goal {Index}: {Text}: met, with {Found}", goal.Index, goal.Text, goal.Found);
+            }
+            else
+            {
+                Logger.Warn("goal {Index}: {Text}: NOT met, with {Found}", goal.Index, goal.Text, goal.Found);
+            }
+        }
+
+        if (report.Won is { } won)
+        {
+            Logger.Info("The challenge was {Outcome}", won ? "won" : "lost");
+        }
 
         var counts = report.Final.Counts;
         Logger.Info(
@@ -184,22 +203,31 @@ public sealed class ScenarioSubcommand : ISubcommand
 
         if (action.Met == false)
         {
-            Logger.Warn("action {Index} at tick {Tick}: {Tool} {Status}{Reason}, {Tiles} tiles, ${Cost}{Expectation}", action.Index, action.Tick, action.Tool, action.Status, reason, action.Tiles, action.Cost, expectation);
+            Logger.Warn("action {Index} at {Date}, tick {Tick}: {Tool} {Status}{Reason}, {Tiles} tiles, ${Cost}{Expectation}", action.Index, action.Date, action.Tick, action.Tool, action.Status, reason, action.Tiles, action.Cost, expectation);
             return;
         }
 
-        Logger.Info("action {Index} at tick {Tick}: {Tool} {Status}{Reason}, {Tiles} tiles, ${Cost}{Expectation}", action.Index, action.Tick, action.Tool, action.Status, reason, action.Tiles, action.Cost, expectation);
+        Logger.Info("action {Index} at {Date}, tick {Tick}: {Tool} {Status}{Reason}, {Tiles} tiles, ${Cost}{Expectation}", action.Index, action.Date, action.Tick, action.Tool, action.Status, reason, action.Tiles, action.Cost, expectation);
     }
+
+    private static void LogEvent(EventReport happening) =>
+        Logger.Info(
+            "event {Index} at {Date}, tick {Tick}: {Disaster} {Outcome}",
+            happening.Index,
+            happening.Date,
+            happening.Tick,
+            happening.Disaster,
+            happening.Happened ? "struck" : "found nowhere to strike");
 
     private static void LogCheck(CheckReport check)
     {
         if (check.Passed)
         {
-            Logger.Info("check {Index} at tick {Tick}: passed", check.Index, check.Tick);
+            Logger.Info("check {Index} at {Date}, tick {Tick}: passed", check.Index, check.Date, check.Tick);
             return;
         }
 
-        Logger.Warn("check {Index} at tick {Tick}: FAILED, expected {Expected}, found {Actual}", check.Index, check.Tick, check.Expected, check.Actual);
+        Logger.Warn("check {Index} at {Date}, tick {Tick}: FAILED, expected {Expected}, found {Actual}", check.Index, check.Date, check.Tick, check.Expected, check.Actual);
     }
 
     private static int List(SubcommandContext context, ScenarioCatalog catalog)
@@ -213,7 +241,7 @@ public sealed class ScenarioSubcommand : ISubcommand
         foreach (var id in ids)
         {
             var line = catalog.TryLoad(id, out var scenario, out var error)
-                ? $"{id,-24} {scenario.Name}"
+                ? $"{id,-24} {scenario.Name}{(scenario.HasGoals ? " (a challenge)" : string.Empty)}"
                 : $"{id,-24} (can't be read: {error})";
             context.Output.WriteLine(line);
         }

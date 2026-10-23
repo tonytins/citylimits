@@ -1,30 +1,30 @@
 {
-  "$schema": "https://raw.githubusercontent.com/tonytins/citylimits/main/docs/schemas/scenario.v1.0.schema.json",
-  "format": "1.0",
+  "$schema": "https://raw.githubusercontent.com/tonytins/citylimits/main/docs/schemas/scenario.v2.0.schema.json",
+  "format": "2.0",
   "name": "Zones and the bulldozer",
   "description": "A grid of zones along a road, powered by a coal plant beside them, a zone with no road or power, and the bulldozer's rules for zones.",
   "seed": 2000,
-  "ticks": 768,
+  "ends": "1901-01",
   "actions": [
-    { "tick": 0, "tool": "Road", "from": { "x": 34, "y": 54 }, "to": { "x": 45, "y": 54 }, "expect": "Built" },
-    { "tick": 0, "tool": "ZoneResidential", "from": { "x": 35, "y": 52 }, "to": { "x": 41, "y": 52 }, "expect": "Built" },
-    { "tick": 0, "tool": "ZoneCommercial", "from": { "x": 44, "y": 48 }, "expect": "Built" },
-    { "tick": 0, "tool": "CoalPowerPlant", "from": { "x": 36, "y": 41 }, "expect": "Built" },
-    { "tick": 0, "tool": "PowerLine", "from": { "x": 36, "y": 44 }, "to": { "x": 36, "y": 50 }, "expect": "Built" },
-    { "tick": 0, "tool": "ZoneIndustrial", "from": { "x": 36, "y": 52 }, "expect": "Refused:CannotBuildHere" },
-    { "tick": 0, "tool": "Bulldoze", "from": { "x": 34, "y": 51 }, "expect": "Refused:PartOfAZone" },
-    { "tick": 0, "tool": "Bulldoze", "from": { "x": 34, "y": 48 }, "expect": "Unchanged:NothingToClear" },
-    { "tick": 768, "tool": "Bulldoze", "from": { "x": 37, "y": 52 }, "to": { "x": 39, "y": 52 }, "expect": "Built" }
+    { "at": "1900-01", "tool": "Road", "from": { "x": 34, "y": 54 }, "to": { "x": 45, "y": 54 }, "expect": "Built" },
+    { "at": "1900-01", "tool": "ZoneResidential", "from": { "x": 35, "y": 52 }, "to": { "x": 41, "y": 52 }, "expect": "Built" },
+    { "at": "1900-01", "tool": "ZoneCommercial", "from": { "x": 44, "y": 48 }, "expect": "Built" },
+    { "at": "1900-01", "tool": "CoalPowerPlant", "from": { "x": 36, "y": 41 }, "expect": "Built" },
+    { "at": "1900-01", "tool": "PowerLine", "from": { "x": 36, "y": 44 }, "to": { "x": 36, "y": 50 }, "expect": "Built" },
+    { "at": "1900-01", "tool": "ZoneIndustrial", "from": { "x": 36, "y": 52 }, "expect": "Refused:CannotBuildHere" },
+    { "at": "1900-01", "tool": "Bulldoze", "from": { "x": 34, "y": 51 }, "expect": "Refused:PartOfAZone" },
+    { "at": "1900-01", "tool": "Bulldoze", "from": { "x": 34, "y": 48 }, "expect": "Unchanged:NothingToClear" },
+    { "at": "1901-01", "tool": "Bulldoze", "from": { "x": 37, "y": 52 }, "to": { "x": 39, "y": 52 }, "expect": "Built" }
   ],
   "checks": [
-    { "tick": 0, "count": "Residential", "equals": 3 },
-    { "tick": 0, "tile": { "x": 35, "y": 52 }, "served": true },
-    { "tick": 0, "tile": { "x": 44, "y": 48 }, "served": false },
-    { "tick": 767, "count": "Developed", "atLeast": 1 },
-    { "tick": 767, "tile": { "x": 44, "y": 48 }, "development": 0, "powered": false },
-    { "tick": 767, "tile": { "x": 41, "y": 52 }, "powered": true },
-    { "tick": 768, "tile": { "x": 38, "y": 52 }, "kind": "Rubble", "use": "None" },
-    { "tick": 768, "count": "Residential", "equals": 2 },
-    { "tick": 768, "fundsEquals": 16444 }
+    { "at": "1900-01", "count": "Residential", "equals": 3 },
+    { "at": "1900-01", "tile": { "x": 35, "y": 52 }, "served": true },
+    { "at": "1900-01", "tile": { "x": 44, "y": 48 }, "served": false },
+    { "at": "1900-12", "week": 4, "count": "Developed", "atLeast": 1 },
+    { "at": "1900-12", "week": 4, "tile": { "x": 44, "y": 48 }, "development": 0, "powered": false },
+    { "at": "1900-12", "week": 4, "tile": { "x": 41, "y": 52 }, "powered": true },
+    { "at": "1901-01", "tile": { "x": 38, "y": 52 }, "kind": "Rubble", "use": "None" },
+    { "at": "1901-01", "count": "Residential", "equals": 2 },
+    { "at": "1901-01", "fundsEquals": 16444 }
   ]
 }

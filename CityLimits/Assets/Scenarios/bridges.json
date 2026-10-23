@@ -1,21 +1,21 @@
 {
-  "$schema": "https://raw.githubusercontent.com/tonytins/citylimits/main/docs/schemas/scenario.v1.0.schema.json",
-  "format": "1.0",
+  "$schema": "https://raw.githubusercontent.com/tonytins/citylimits/main/docs/schemas/scenario.v2.0.schema.json",
+  "format": "2.0",
   "name": "Bridges",
   "description": "Roads cross a lake as bridges from either bank; water with no road beside it can't be bridged.",
   "seed": 2000,
-  "ticks": 0,
+  "ends": "1900-01",
   "actions": [
-    { "tick": 0, "tool": "Road", "from": { "x": 55, "y": 51 }, "to": { "x": 70, "y": 51 }, "expect": "Built" },
-    { "tick": 0, "tool": "Road", "from": { "x": 62, "y": 52 }, "to": { "x": 70, "y": 52 }, "expect": "Built" },
-    { "tick": 0, "tool": "Road", "from": { "x": 62, "y": 48 }, "expect": "Refused:CannotBuildHere" }
+    { "at": "1900-01", "tool": "Road", "from": { "x": 55, "y": 51 }, "to": { "x": 70, "y": 51 }, "expect": "Built" },
+    { "at": "1900-01", "tool": "Road", "from": { "x": 62, "y": 52 }, "to": { "x": 70, "y": 52 }, "expect": "Built" },
+    { "at": "1900-01", "tool": "Road", "from": { "x": 62, "y": 48 }, "expect": "Refused:CannotBuildHere" }
   ],
   "checks": [
-    { "tick": 0, "tile": { "x": 62, "y": 51 }, "kind": "Water", "use": "Road" },
-    { "tick": 0, "tile": { "x": 55, "y": 51 }, "kind": "Grass", "use": "Road" },
-    { "tick": 0, "tile": { "x": 62, "y": 48 }, "kind": "Water", "use": "None" },
-    { "tick": 0, "count": "Bridge", "equals": 18 },
-    { "tick": 0, "count": "Road", "equals": 25 },
-    { "tick": 0, "fundsEquals": 19030 }
+    { "at": "1900-01", "tile": { "x": 62, "y": 51 }, "kind": "Water", "use": "Road" },
+    { "at": "1900-01", "tile": { "x": 55, "y": 51 }, "kind": "Grass", "use": "Road" },
+    { "at": "1900-01", "tile": { "x": 62, "y": 48 }, "kind": "Water", "use": "None" },
+    { "at": "1900-01", "count": "Bridge", "equals": 18 },
+    { "at": "1900-01", "count": "Road", "equals": 25 },
+    { "at": "1900-01", "fundsEquals": 19030 }
   ]
 }

@@ -1,6 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
+using CityLimits.Core.Simulation;
 
 namespace CityLimits.Core.Scenarios;
 
@@ -15,12 +16,22 @@ public static class ScenarioLoader
     public const long MaxFileBytes = 1024 * 1024;
 
     /// <summary>
-    /// The newest scenario format this version reads. A file of an older minor version reads too;
-    /// one written as a whole number, such as <c>1</c>, is 1.0. 1.1 added the Rail tool and the Rail count,
-    /// 1.2 the <c>disasters</c> switch and the OnFire refusal, and 1.3 the Flooded refusal, with floods
-    /// and earthquakes among the disasters the switch lets happen.
+    /// The newest scenario format this version reads, and the one built-in scenarios are written in.
+    /// Format 2 names its times as the game's dates, a month and a week of it, rather than ticks; it
+    /// starts a city in a year of its own or from a saved city, and adds goals and disasters on dates.
     /// </summary>
-    public static readonly FormatVersion Format = new(1, 3);
+    public static readonly FormatVersion Format = new(2, 0);
+
+    /// <summary>
+    /// The newest format 1 this version still reads, its times in ticks: 1.1 added the Rail tool
+    /// and the Rail count, 1.2 the <c>disasters</c> switch and the OnFire refusal, and 1.3 the Flooded
+    /// refusal, with floods and earthquakes among the disasters the switch lets happen. A file
+    /// written as a whole number, such as <c>1</c>, is 1.0.
+    /// </summary>
+    public static readonly FormatVersion LegacyFormat = new(1, 3);
+
+    /// <summary>The longest a goal's own words may be.</summary>
+    public const int MaxGoalTextLength = 120;
 
     /// <summary>The most actions, and the most checks, a scenario may hold.</summary>
     public const int MaxEntries = 10_000;
@@ -41,6 +52,9 @@ public static class ScenarioLoader
     public const int MaxCoordinate = 1023;
 
     private const int MaxNameLength = 80;
+
+    // The traffic average can't pass the most a block holds, 240, times the year's 2.4.
+    private const int MostTrafficAverage = 576;
     private const int MaxDescriptionLength = 500;
 
     private static readonly JsonSerializerOptions Options = new()
@@ -54,7 +68,16 @@ public static class ScenarioLoader
         TypeInfoResolver = ScenarioJson.Default,
     };
 
-    /// <summary>Reads a scenario file, refusing one that is too big, can't be read, or isn't valid.</summary>
+    // The format alone is read first, with every other field let by, to tell which document the file is.
+    private static readonly JsonSerializerOptions FormatOptions = new(Options)
+    {
+        UnmappedMemberHandling = System.Text.Json.Serialization.JsonUnmappedMemberHandling.Skip,
+    };
+
+    /// <summary>
+    /// Reads a scenario file, refusing one that is too big, can't be read, or isn't valid. A saved
+    /// city it starts from is read from beside it.
+    /// </summary>
     public static bool TryLoadFile(string path, [NotNullWhen(true)] out Scenario? scenario, out string error)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
@@ -75,7 +98,7 @@ public static class ScenarioLoader
                 return false;
             }
 
-            return TryParse(File.ReadAllText(path), out scenario, out error);
+            return TryParse(File.ReadAllText(path), Path.GetDirectoryName(Path.GetFullPath(path)), out scenario, out error);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
         {
@@ -84,8 +107,12 @@ public static class ScenarioLoader
         }
     }
 
-    /// <summary>Reads a scenario from its JSON text, and checks it.</summary>
-    public static bool TryParse(string json, [NotNullWhen(true)] out Scenario? scenario, out string error)
+    /// <summary>Reads a scenario from its JSON text, and checks it; one that starts from a saved city is refused, with no folder to find it in.</summary>
+    public static bool TryParse(string json, [NotNullWhen(true)] out Scenario? scenario, out string error) =>
+        TryParse(json, folder: null, out scenario, out error);
+
+    /// <summary>Reads a scenario from its JSON text, and checks it, reading a saved city it starts from in the given folder.</summary>
+    public static bool TryParse(string json, string? folder, [NotNullWhen(true)] out Scenario? scenario, out string error)
     {
         ArgumentNullException.ThrowIfNull(json);
         scenario = null;
@@ -97,28 +124,39 @@ public static class ScenarioLoader
             return false;
         }
 
-        ScenarioDocument? document;
         try
         {
-            document = JsonSerializer.Deserialize(json, (JsonTypeInfo<ScenarioDocument>)Options.GetTypeInfo(typeof(ScenarioDocument)));
+            if (JsonSerializer.Deserialize(json, (JsonTypeInfo<FormatDocument>)FormatOptions.GetTypeInfo(typeof(FormatDocument))) is not { } header)
+            {
+                error = "The scenario is empty.";
+                return false;
+            }
+
+            var format = header.Format ?? throw new InvalidScenario("format: is required.");
+            if (format.Major == LegacyFormat.Major)
+            {
+                if (format.ProblemReadingWith(LegacyFormat) is { } legacyProblem)
+                {
+                    throw new InvalidScenario($"format: {legacyProblem}");
+                }
+
+                scenario = Validate(JsonSerializer.Deserialize(json, (JsonTypeInfo<ScenarioDocument>)Options.GetTypeInfo(typeof(ScenarioDocument)))!);
+                return true;
+            }
+
+            if (format.ProblemReadingWith(Format) is { } problem)
+            {
+                throw new InvalidScenario($"format: {problem}");
+            }
+
+            scenario = Validate(JsonSerializer.Deserialize(json, (JsonTypeInfo<ScenarioDocument2>)Options.GetTypeInfo(typeof(ScenarioDocument2)))!, folder);
+            return true;
         }
         catch (JsonException ex)
         {
             var where = string.IsNullOrEmpty(ex.Path) || ex.Path == "$" ? "the file" : ex.Path.TrimStart('$', '.');
             error = $"{where}: {Describe(ex)}";
             return false;
-        }
-
-        if (document is null)
-        {
-            error = "The scenario is empty.";
-            return false;
-        }
-
-        try
-        {
-            scenario = Validate(document);
-            return true;
         }
         catch (InvalidScenario ex)
         {
@@ -134,26 +172,10 @@ public static class ScenarioLoader
                 ? "has the wrong type of value."
                 : "is not valid JSON.";
 
+    // Format 1: times in ticks from the start of January 1900.
     private static Scenario Validate(ScenarioDocument document)
     {
-        var format = document.Format ?? throw new InvalidScenario("format: is required.");
-        if (format.ProblemReadingWith(Format) is { } problem)
-        {
-            throw new InvalidScenario($"format: {problem}");
-        }
-
-        var name = Required(document.Name, "name").Trim();
-        if (name.Length is 0 or > MaxNameLength)
-        {
-            throw new InvalidScenario($"name: needs 1 to {MaxNameLength} characters, not {name.Length}.");
-        }
-
-        var description = document.Description?.Trim();
-        if (description is { Length: > MaxDescriptionLength })
-        {
-            throw new InvalidScenario($"description: needs at most {MaxDescriptionLength} characters, not {description.Length}.");
-        }
-
+        var (name, description) = NameAndDescription(document.Name, document.Description);
         var seed = Required(document.Seed, "seed");
         var width = document.Map is null ? MapSize.DefaultWidth : InRange(Required(document.Map.Width, "map.width"), MinMapSide, MaxMapSide, "map.width");
         var height = document.Map is null ? MapSize.DefaultHeight : InRange(Required(document.Map.Height, "map.height"), MinMapSide, MaxMapSide, "map.height");
@@ -179,6 +201,230 @@ public static class ScenarioLoader
         return new Scenario(name, description, seed, width, height, funds, ticks, actions, checks, document.Disasters ?? false);
     }
 
+    // Format 2: times as the game's dates, from a city made from a seed in a year of its own, or
+    // from a saved city beside the scenario, which brings its own seed, map, money, and date.
+    private static Scenario Validate(ScenarioDocument2 document, string? folder)
+    {
+        var (name, description) = NameAndDescription(document.Name, document.Description);
+
+        int seed, width, height, funds, startYear;
+        long startStep;
+        string? cityFile = null;
+        if (document.City is { } city)
+        {
+            foreach (var (given, field) in new[] { (document.Seed is not null, "seed"), (document.Map is not null, "map"), (document.Funds is not null, "funds"), (document.Start is not null, "start") })
+            {
+                if (given)
+                {
+                    throw new InvalidScenario($"{field}: a scenario that starts from a saved city takes its seed, map, money, and date from the city, so it can't also have {field}.");
+                }
+            }
+
+            cityFile = CityPath(city, folder);
+            if (!CityFiles.TryRead(cityFile, out var saved, out var problem, out _))
+            {
+                throw new InvalidScenario($"city: '{city}' couldn't be opened: {problem}");
+            }
+
+            (seed, width, height, funds, startYear, startStep) = (saved.Seed, saved.Map.Width, saved.Map.Height, saved.Treasury.Funds, saved.Date.Year, saved.TickCount);
+        }
+        else
+        {
+            seed = Required(document.Seed, "seed");
+            width = document.Map is null ? MapSize.DefaultWidth : InRange(Required(document.Map.Width, "map.width"), MinMapSide, MaxMapSide, "map.width");
+            height = document.Map is null ? MapSize.DefaultHeight : InRange(Required(document.Map.Height, "map.height"), MinMapSide, MaxMapSide, "map.height");
+            funds = InRange(document.Funds ?? Treasury.StartingFunds, 0, MaxFunds, "funds");
+            startYear = InRange(document.Start ?? CityCalendar.StartYear, CityCalendar.StartYear, CityCalendar.LatestStartYear, "start");
+            startStep = (long)(startYear - CityCalendar.StartYear) * CityCalendar.StepsPerYear;
+        }
+
+        var start = ScenarioDate.AtCount((startStep + CityCalendar.StepsPerCount - 1) / CityCalendar.StepsPerCount);
+        var ends = Date(Required(document.Ends, "ends"), null, "ends");
+        var length = ends.Step - startStep;
+        if (length < 0)
+        {
+            throw new InvalidScenario($"ends: {ends} is before the scenario starts, in {start}.");
+        }
+
+        if (length > Scenario.MaxTicks)
+        {
+            throw new InvalidScenario($"ends: {ends} is {length} ticks from the start, in {start}; a scenario may run at most {Scenario.MaxTicks}, about 130 years.");
+        }
+
+        var ticks = (int)length;
+        int TickAt(string? at, int? week, string where)
+        {
+            var date = Date(Required(at, $"{where}.at"), week, $"{where}.at");
+            var tick = date.Step - startStep;
+            if (tick < 0 || tick > ticks)
+            {
+                throw new InvalidScenario($"{where}.at: {date} is outside the scenario, which runs from {start} to {ends}.");
+            }
+
+            return (int)tick;
+        }
+
+        var actions = new List<ScenarioAction>();
+        var actionDocuments = document.Actions ?? [];
+        Limit(actionDocuments.Count, "actions");
+        for (var i = 0; i < actionDocuments.Count; i++)
+        {
+            var action = actionDocuments[i] ?? throw new InvalidScenario($"actions[{i}]: needs an action, not null.");
+            actions.Add(Stroke(action, $"actions[{i}]", i, TickAt(action.At, action.Week, $"actions[{i}]")));
+        }
+
+        var checks = new List<ScenarioCheck>();
+        var checkDocuments = document.Checks ?? [];
+        Limit(checkDocuments.Count, "checks");
+        for (var i = 0; i < checkDocuments.Count; i++)
+        {
+            var check = checkDocuments[i] ?? throw new InvalidScenario($"checks[{i}]: needs a check, not null.");
+            checks.Add(Conditions(check, $"checks[{i}]", i, TickAt(check.At, check.Week, $"checks[{i}]"), width, height));
+        }
+
+        var goals = new List<ScenarioGoal>();
+        var goalDocuments = document.Goals ?? [];
+        Limit(goalDocuments.Count, "goals");
+        for (var i = 0; i < goalDocuments.Count; i++)
+        {
+            goals.Add(Goal(goalDocuments[i], i));
+        }
+
+        var events = new List<ScenarioEvent>();
+        var eventDocuments = document.Events ?? [];
+        Limit(eventDocuments.Count, "events");
+        for (var i = 0; i < eventDocuments.Count; i++)
+        {
+            var happening = eventDocuments[i] ?? throw new InvalidScenario($"events[{i}]: needs an event, not null.");
+            var disaster = EnumNamed<Disaster>(Required(happening.Disaster, $"events[{i}].disaster"), $"events[{i}].disaster");
+            events.Add(new ScenarioEvent(i, TickAt(happening.At, happening.Week, $"events[{i}]"), disaster));
+        }
+
+        return new Scenario(name, description, seed, width, height, funds, ticks, actions, checks, document.Disasters ?? false)
+        {
+            StartYear = startYear,
+            CityFile = cityFile,
+            StartStep = startStep,
+            Goals = goals,
+            Events = events,
+        };
+    }
+
+    private static (string Name, string? Description) NameAndDescription(string? givenName, string? givenDescription)
+    {
+        var name = Required(givenName, "name").Trim();
+        if (name.Length is 0 or > MaxNameLength)
+        {
+            throw new InvalidScenario($"name: needs 1 to {MaxNameLength} characters, not {name.Length}.");
+        }
+
+        var description = givenDescription?.Trim();
+        if (description is { Length: > MaxDescriptionLength })
+        {
+            throw new InvalidScenario($"description: needs at most {MaxDescriptionLength} characters, not {description.Length}.");
+        }
+
+        return (name, description);
+    }
+
+    // A month written YYYY-MM, from 1900 to 9999, and the week of it, 1 to 4, the first when none is given.
+    private static ScenarioDate Date(string text, int? week, string at)
+    {
+        if (week is { } given && given is < 1 or > ScenarioDate.WeeksPerMonth)
+        {
+            throw new InvalidScenario($"{at[..at.LastIndexOf('.')]}.week: needs a number from 1 to {ScenarioDate.WeeksPerMonth}, not {given}.");
+        }
+
+        return ScenarioDate.TryParse(text, week ?? 1, out var date)
+            ? date.Value
+            : throw new InvalidScenario($"{at}: needs a month written YYYY-MM, from {CityCalendar.StartYear}-01 to {CityCalendar.LatestStartYear}-12, not '{text}'.");
+    }
+
+    // A saved city's file, named as a path inside the scenario's folder: no folder above it, and
+    // no other drive, so a scenario can't read a file it shouldn't.
+    private static string CityPath(string city, string? folder)
+    {
+        if (folder is null)
+        {
+            throw new InvalidScenario("city: only a scenario read from a file can start from a saved city, which is read from beside it.");
+        }
+
+        var extension = Path.GetExtension(city);
+        if (!extension.Equals(FlatCityFormat.Extension, StringComparison.OrdinalIgnoreCase) && !extension.Equals(BinaryCityFormat.Extension, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidScenario($"city: needs a {FlatCityFormat.Extension} or a {BinaryCityFormat.Extension} file, not '{city}'.");
+        }
+
+        var root = Path.GetFullPath(folder);
+        var full = Path.GetFullPath(Path.Combine(root, city));
+        if (Path.IsPathRooted(city) || !full.StartsWith(root + Path.DirectorySeparatorChar, StringComparison.Ordinal))
+        {
+            throw new InvalidScenario($"city: '{city}' needs to be a file beside the scenario, or in a folder beside it.");
+        }
+
+        return full;
+    }
+
+    private static ScenarioGoal Goal(GoalDocument? goal, int index)
+    {
+        var at = $"goals[{index}]";
+        if (goal is null)
+        {
+            throw new InvalidScenario($"{at}: needs a goal, not null.");
+        }
+
+        var measure = EnumNamed<GoalMeasure>(Required(goal.Measure, $"{at}.measure"), $"{at}.measure");
+        var (lowest, highest) = measure switch
+        {
+            GoalMeasure.Funds => (-MaxFunds * 1000, MaxFunds * 1000),
+            GoalMeasure.Pollution => (0, CityMaps.MostPollution),
+            GoalMeasure.Crime => (0, CityMaps.MostCrime),
+            GoalMeasure.Traffic => (0, MostTrafficAverage),
+            _ => (0, int.MaxValue),
+        };
+        var atLeast = Optional(goal.AtLeast, lowest, highest, $"{at}.atLeast");
+        var atMost = Optional(goal.AtMost, lowest, highest, $"{at}.atMost");
+        if (atLeast is null && atMost is null)
+        {
+            throw new InvalidScenario($"{at}: needs atLeast, atMost, or both.");
+        }
+
+        if (atLeast > atMost)
+        {
+            throw new InvalidScenario($"{at}: atLeast {atLeast} is more than atMost {atMost}, so it can never be met.");
+        }
+
+        var text = goal.Text?.Trim();
+        if (text is { Length: 0 or > MaxGoalTextLength })
+        {
+            throw new InvalidScenario($"{at}.text: needs 1 to {MaxGoalTextLength} characters, not {text.Length}.");
+        }
+
+        return new ScenarioGoal(index, measure, atLeast, atMost, text ?? GoalText(measure, atLeast, atMost));
+    }
+
+    // How a goal reads to a player when its file gives no words of its own.
+    private static string GoalText(GoalMeasure measure, int? atLeast, int? atMost)
+    {
+        static string Number(int value) => value.ToString("N0", System.Globalization.CultureInfo.InvariantCulture);
+        static string Money(int value) => value < 0 ? $"-${Number(-value)}" : $"${Number(value)}";
+        var (what, show) = measure switch
+        {
+            GoalMeasure.Population => ("a population", (Func<int, string>)Number),
+            GoalMeasure.Funds => ("funds", Money),
+            GoalMeasure.Pollution => ("average pollution", Number),
+            GoalMeasure.Crime => ("average crime", Number),
+            _ => ("a traffic average", Number),
+        };
+
+        return (atLeast, atMost) switch
+        {
+            ({ } low, { } high) => $"Have {what} from {show(low)} to {show(high)}",
+            ({ } low, null) => $"Have {what} of at least {show(low)}",
+            _ => $"Keep {what} at most {show(atMost!.Value)}",
+        };
+    }
+
     private static ScenarioAction ValidateAction(ActionDocument? action, int index, int ticks)
     {
         var at = $"actions[{index}]";
@@ -187,7 +433,12 @@ public static class ScenarioLoader
             throw new InvalidScenario($"{at}: needs an action, not null.");
         }
 
-        var tick = InRange(Required(action.Tick, $"{at}.tick"), 0, ticks, $"{at}.tick");
+        return Stroke(action, at, index, InRange(Required(action.Tick, $"{at}.tick"), 0, ticks, $"{at}.tick"));
+    }
+
+    // What an action does, whichever format named its time.
+    private static ScenarioAction Stroke(ActionFields action, string at, int index, int tick)
+    {
         var tool = EnumNamed<BuildAction>(Required(action.Tool, $"{at}.tool"), $"{at}.tool");
         var (fromX, fromY) = Coordinates(Required(action.From, $"{at}.from"), $"{at}.from");
         var (toX, toY) = action.To is null ? (fromX, fromY) : Coordinates(action.To, $"{at}.to");
@@ -204,7 +455,12 @@ public static class ScenarioLoader
             throw new InvalidScenario($"{at}: needs a check, not null.");
         }
 
-        var tick = InRange(Required(check.Tick, $"{at}.tick"), 0, ticks, $"{at}.tick");
+        return Conditions(check, at, index, InRange(Required(check.Tick, $"{at}.tick"), 0, ticks, $"{at}.tick"), width, height);
+    }
+
+    // What a check looks at, whichever format named its time.
+    private static ScenarioCheck Conditions(CheckFields check, string at, int index, int tick, int width, int height)
+    {
         var tileConditions = check.Kind is not null || check.Use is not null || check.Development is not null ||
             check.DevelopmentAtLeast is not null || check.DevelopmentAtMost is not null || check.Served is not null || check.Powered is not null;
         var fundsConditions = check.FundsAtLeast is not null || check.FundsAtMost is not null || check.FundsEquals is not null;
@@ -354,5 +610,5 @@ public static class ScenarioLoader
     private sealed class InvalidScenario(string message) : Exception(message);
 
     /// <summary>The scenario file's document, for its schema.</summary>
-    internal static JsonTypeInfo SchemaDocument() => Options.GetTypeInfo(typeof(ScenarioDocument));
+    internal static JsonTypeInfo SchemaDocument() => Options.GetTypeInfo(typeof(ScenarioDocument2));
 }

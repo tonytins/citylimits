@@ -3,9 +3,11 @@ using CityLimits.Core.Simulation;
 namespace CityLimits.Core.Scenarios;
 
 /// <summary>
-/// Runs a scenario: builds its city from the seed, makes its strokes and its checks at their
-/// ticks, and reports what came of them. A run is deterministic, touches no file, and logs
-/// nothing; it raises an event for each action and check so a caller can log them.
+/// Runs a scenario: builds its city from the seed in its start year, or opens its saved city,
+/// makes its strokes, strikes its disasters, and makes its checks at their ticks, judges its goals
+/// at the end, and reports what came of them. A run is deterministic, reads no file but the saved
+/// city a scenario starts from, and logs nothing; it raises an event for each action, disaster,
+/// and check so a caller can log them.
 /// </summary>
 public sealed class ScenarioRunner
 {
@@ -14,6 +16,9 @@ public sealed class ScenarioRunner
 
     /// <summary>Raised after each check is made.</summary>
     public event Action<CheckReport>? CheckMade;
+
+    /// <summary>Raised after each of the scenario's disasters strikes, or finds nowhere to.</summary>
+    public event Action<EventReport>? EventHappened;
 
     /// <summary>The last tick an action or a check needs, so a run can't be cut short of it.</summary>
     public static int LatestTick(Scenario scenario)
@@ -31,18 +36,25 @@ public sealed class ScenarioRunner
             latest = Math.Max(latest, check.Tick);
         }
 
+        foreach (var happening in scenario.Events)
+        {
+            latest = Math.Max(latest, happening.Tick);
+        }
+
         return latest;
     }
 
     /// <summary>
     /// Runs a scenario for its ticks, or for <paramref name="ticks"/> when given. At each tick the
-    /// actions due are made in file order, then the checks due, and then the city takes a step.
+    /// actions due are made in file order, then the disasters due strike, then the checks due are
+    /// made, and then the city takes a step; on the last tick the goals are judged.
     /// </summary>
     /// <param name="scenario">The scenario to run.</param>
     /// <param name="source">Where the scenario came from, an id or a path, for the report.</param>
     /// <param name="ticks">How many ticks to run instead of the scenario's own, or null.</param>
     /// <param name="fallback">When the demo town runs in place of another scenario, which one and why.</param>
-    /// <exception cref="ArgumentOutOfRangeException">The ticks are outside 0 to <see cref="Scenario.MaxTicks"/>, or end before an action or a check is due.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">The ticks are outside 0 to <see cref="Scenario.MaxTicks"/>, or end before an action, a disaster, or a check is due.</exception>
+    /// <exception cref="InvalidDataException">The saved city the scenario starts from can't be opened any more.</exception>
     public ScenarioReport Run(Scenario scenario, string source, int? ticks = null, ScenarioFallback? fallback = null)
     {
         ArgumentNullException.ThrowIfNull(scenario);
@@ -53,34 +65,48 @@ public sealed class ScenarioRunner
         ArgumentOutOfRangeException.ThrowIfGreaterThan(end, Scenario.MaxTicks, nameof(ticks));
         ArgumentOutOfRangeException.ThrowIfLessThan(end, LatestTick(scenario), nameof(ticks));
 
-        var map = TileMapGenerator.Generate(scenario.Seed, scenario.MapWidth, scenario.MapHeight);
-        var city = new CitySimulation(map, scenario.Seed, scenario.Funds) { RandomFires = scenario.Disasters, RandomFloods = scenario.Disasters, RandomEarthquakes = scenario.Disasters };
+        var city = Start(scenario);
+        city.RandomFires = scenario.Disasters;
+        city.RandomFloods = scenario.Disasters;
+        city.RandomEarthquakes = scenario.Disasters;
         var plan = new BuildPlan();
         var actions = scenario.Actions.OrderBy(a => a.Tick).ThenBy(a => a.Index).ToList();
+        var events = scenario.Events.OrderBy(e => e.Tick).ThenBy(e => e.Index).ToList();
         var checks = scenario.Checks.OrderBy(c => c.Tick).ThenBy(c => c.Index).ToList();
         var actionReports = new List<ActionReport>(actions.Count);
+        var eventReports = new List<EventReport>(events.Count);
         var checkReports = new List<CheckReport>(checks.Count);
-        var nextAction = 0;
-        var nextCheck = 0;
+        var goalReports = new List<GoalReport>(scenario.Goals.Count);
+        var (nextAction, nextEvent, nextCheck) = (0, 0, 0);
 
         for (var tick = 0; ; tick++)
         {
+            var date = scenario.DateAt(tick).ToString();
             while (nextAction < actions.Count && actions[nextAction].Tick == tick)
             {
-                var report = Make(city, plan, actions[nextAction++]);
+                var report = Make(city, plan, actions[nextAction++], date);
                 actionReports.Add(report);
                 ActionMade?.Invoke(report);
             }
 
+            while (nextEvent < events.Count && events[nextEvent].Tick == tick)
+            {
+                var happening = events[nextEvent++];
+                var report = new EventReport(happening.Index, tick, date, happening.Disaster.ToString(), city.Strike(happening.Disaster));
+                eventReports.Add(report);
+                EventHappened?.Invoke(report);
+            }
+
             while (nextCheck < checks.Count && checks[nextCheck].Tick == tick)
             {
-                var report = Check(city, checks[nextCheck++]);
+                var report = Check(city, checks[nextCheck++], date);
                 checkReports.Add(report);
                 CheckMade?.Invoke(report);
             }
 
             if (tick == end)
             {
+                goalReports.AddRange(scenario.Goals.Select(goal => Judge(city, goal)));
                 break;
             }
 
@@ -89,13 +115,55 @@ public sealed class ScenarioRunner
 
         return new ScenarioReport
         {
-            Scenario = new ScenarioSummary(scenario.Name, source, scenario.Seed, end),
+            Scenario = new ScenarioSummary(scenario.Name, source, scenario.Seed, end, scenario.DateAt(0).ToString(), scenario.DateAt(end).ToString()),
             Passed = checkReports.All(c => c.Passed) && actionReports.All(a => a.Met != false),
+            Won = scenario.HasGoals ? goalReports.All(g => g.Met) : null,
             Fallback = fallback,
-            Final = new ScenarioFinal(city.TickCount, city.CityTime, city.Date.ToString(), city.Treasury.Funds, Count(map, city.Definitions)),
+            Final = new ScenarioFinal(city.TickCount, city.CityTime, city.Date.ToString(), city.Treasury.Funds, Count(city.Map, city.Definitions)),
             Actions = actionReports,
+            Events = eventReports,
             Checks = checkReports,
+            Goals = goalReports,
         };
+    }
+
+    /// <summary>The scenario's city as it starts: its saved city, opened afresh, or one made from its seed in its start year.</summary>
+    /// <exception cref="InvalidDataException">The saved city can't be opened any more.</exception>
+    public static CitySimulation Start(Scenario scenario)
+    {
+        ArgumentNullException.ThrowIfNull(scenario);
+        if (scenario.CityFile is { } file)
+        {
+            return CityFiles.TryRead(file, out var saved, out var problem, out _)
+                ? saved
+                : throw new InvalidDataException($"The scenario's city '{file}' couldn't be opened: {problem}");
+        }
+
+        var map = TileMapGenerator.Generate(scenario.Seed, scenario.MapWidth, scenario.MapHeight);
+        return new CitySimulation(map, scenario.Seed, scenario.Funds, startYear: scenario.StartYear);
+    }
+
+    /// <summary>What a goal measures in a city now.</summary>
+    public static int Measure(CitySimulation city, GoalMeasure measure)
+    {
+        ArgumentNullException.ThrowIfNull(city);
+        return measure switch
+        {
+            GoalMeasure.Population => city.Census.CityPopulation,
+            GoalMeasure.Funds => city.Treasury.Funds,
+            GoalMeasure.Pollution => city.Maps.PollutionAverage,
+            GoalMeasure.Crime => city.Maps.CrimeAverage,
+            _ => city.Traffic.Average,
+        };
+    }
+
+    /// <summary>Whether a city meets a goal now, and what was asked and found when it doesn't.</summary>
+    public static GoalReport Judge(CitySimulation city, ScenarioGoal goal)
+    {
+        ArgumentNullException.ThrowIfNull(goal);
+        var found = Measure(city, goal.Measure);
+        var met = (goal.AtLeast is not { } least || found >= least) && (goal.AtMost is not { } most || found <= most);
+        return new GoalReport(goal.Index, goal.Text, met, found);
     }
 
     /// <summary>
@@ -152,7 +220,7 @@ public sealed class ScenarioRunner
 
     // The stroke is planned first, for what it would skip and why, then applied as the tool
     // applies it. Both see the same map, so they agree.
-    private static ActionReport Make(CitySimulation city, BuildPlan plan, ScenarioAction action)
+    private static ActionReport Make(CitySimulation city, BuildPlan plan, ScenarioAction action, string date)
     {
         var stroke = new BuildStroke(action.Tool, action.FromX, action.FromY);
         stroke.DragTo(action.ToX, action.ToY);
@@ -179,10 +247,11 @@ public sealed class ScenarioRunner
             result.TilesChanged,
             skipped,
             built ? result.Cost : 0,
-            action.Expect?.IsMetBy(result));
+            action.Expect?.IsMetBy(result),
+            date);
     }
 
-    private static CheckReport Check(CitySimulation city, ScenarioCheck check)
+    private static CheckReport Check(CitySimulation city, ScenarioCheck check, string date)
     {
         var failure = check.Subject switch
         {
@@ -192,8 +261,8 @@ public sealed class ScenarioRunner
         };
 
         return failure is { } found
-            ? new CheckReport(check.Index, check.Tick, false, found.Expected, found.Actual)
-            : new CheckReport(check.Index, check.Tick, true, null, null);
+            ? new CheckReport(check.Index, check.Tick, false, found.Expected, found.Actual, date)
+            : new CheckReport(check.Index, check.Tick, true, null, null, date);
     }
 
     // Each check returns the first condition that doesn't hold, or null when they all do.

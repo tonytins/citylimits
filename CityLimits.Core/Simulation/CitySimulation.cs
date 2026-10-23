@@ -88,6 +88,10 @@ public sealed class CitySimulation
     private const int QuakeTileRange = 701;
     private const int QuakeFireChance = 4;
 
+    // A fire started on purpose, as Micropolis' Disasters menu starts one, takes up to 40 tries to
+    // find something that can burn and isn't a building's centre.
+    private const int FireSearches = 40;
+
     // Plants and stations redraw their bare holes every 8 counts, hospitals and churches every 16.
     private const int BuildingRepairCounts = 8;
     private const int CommunityRepairCounts = 16;
@@ -451,18 +455,48 @@ public sealed class CitySimulation
         }
         else if (kind < FireKinds + FloodKinds)
         {
-            StartFlood();
+            StartFlood(RandomFloods);
         }
         else if (kind == EarthquakeKind)
         {
-            Quake();
+            Quake(RandomEarthquakes);
         }
+    }
+
+    /// <summary>
+    /// Strikes the city with a disaster now, as a scenario's event does, whatever the switches for
+    /// disasters on their own say: a fire on something that can burn, as Micropolis' Disasters menu
+    /// starts one, a flood from a shore, or an earthquake. Each is reported as one on its own is.
+    /// </summary>
+    /// <returns>Whether it found anywhere to strike: a fire something to burn, a flood a shore with land beside it.</returns>
+    public bool Strike(Disaster disaster) => disaster switch
+    {
+        Disaster.Fire => StartFireOnPurpose(),
+        Disaster.Flood => StartFlood(allowed: true),
+        Disaster.Earthquake => Quake(allowed: true),
+        _ => throw new ArgumentOutOfRangeException(nameof(disaster), disaster, null),
+    };
+
+    private bool StartFireOnPurpose()
+    {
+        for (var tries = 0; tries < FireSearches; tries++)
+        {
+            var (x, y) = (Random.NextInt(0, Map.Width), Random.NextInt(0, Map.Height));
+            if (!Map.StateAt(x, y).IsBuildingCenter && Fires.CanBurn(x, y))
+            {
+                Ignite(x, y);
+                MessageSent?.Invoke(CityMessage.FireReported);
+                return true;
+            }
+        }
+
+        return false;
     }
 
     // As Micropolis does: up to 300 tries at a shore, a stretch of water with land beside it, and
     // the first side of it with land the water can rise onto, if it is bare ground, trees, or a
     // road, rail, a line, or a park; a flood can't start on a building or rubble, but spreads onto them.
-    private void StartFlood()
+    private bool StartFlood(bool allowed)
     {
         for (var tries = 0; tries < FloodSearches; tries++)
         {
@@ -480,16 +514,18 @@ public sealed class CitySimulation
                     continue;
                 }
 
-                if (RandomFloods)
+                if (allowed)
                 {
                     Floods.Flood(landX, landY);
                     Floods.Rise();
                     MessageSent?.Invoke(CityMessage.FloodReported);
                 }
 
-                return;
+                return true;
             }
         }
+
+        return false;
     }
 
     private bool IsShore(int x, int y)
@@ -526,7 +562,7 @@ public sealed class CitySimulation
     // As Micropolis does: 300 to 1 000 tiles shaken at random, and each outer tile of a building
     // among them wrecked, to rubble or to fire. With earthquakes off, the same tiles are picked,
     // and nothing happens to them. The fires are the earthquake's, whatever the fire switch says.
-    private void Quake()
+    private bool Quake(bool allowed)
     {
         var shaken = Random.NextInt(0, QuakeTileRange) + FewestQuakeTiles;
         for (var i = 0; i < shaken; i++)
@@ -539,7 +575,7 @@ public sealed class CitySimulation
             }
 
             var burns = Random.NextInt(0, QuakeFireChance) == 0;
-            if (!RandomEarthquakes)
+            if (!allowed)
             {
                 continue;
             }
@@ -554,11 +590,13 @@ public sealed class CitySimulation
             }
         }
 
-        if (RandomEarthquakes)
+        if (allowed)
         {
             MessageSent?.Invoke(CityMessage.EarthquakeReported);
             EarthquakeStruck?.Invoke();
         }
+
+        return true;
     }
 
     // As in Micropolis' flood: while it lasts, a flooded tile spreads to each side one time in

@@ -22,7 +22,7 @@ public class ScenarioRunnerTests
         var report = new ScenarioRunner().Run(DemoTown.Scenario, DemoTown.Id);
 
         Assert.True(report.Passed, string.Join("; ", report.Checks.Where(c => !c.Passed).Select(c => $"{c.Expected}: {c.Actual}")));
-        Assert.Equal(new ScenarioSummary("Demo town", "demo-town", 2000, 1536), report.Scenario);
+        Assert.Equal(new ScenarioSummary("Demo town", "demo-town", 2000, 1536, "1900-01", "1902-01"), report.Scenario);
         Assert.Equal(1536, report.Final.Tick);
         Assert.Equal(96, report.Final.CityTime);
         Assert.Equal("1902-01", report.Final.Date);

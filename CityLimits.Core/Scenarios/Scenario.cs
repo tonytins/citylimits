@@ -1,11 +1,15 @@
+using CityLimits.Core.Simulation;
+
 namespace CityLimits.Core.Scenarios;
 
 /// <summary>
-/// A scenario after it has been read and checked: a city set up from a seed, the tool strokes
-/// made on it at set ticks, and what must be true along the way. <see cref="ScenarioLoader"/>
-/// is the only way to make one, so every scenario has passed the same validation. Disasters,
-/// such as fires starting on their own, happen only when it asks for them, so a scenario's result
-/// doesn't depend on the player's settings.
+/// A scenario after it has been read and checked: a city set up from a seed or a saved city, the
+/// tool strokes made on it, the disasters that strike it, what must be true along the way, and
+/// the goals a player has to meet by its end. A file names its times as the game's dates (format
+/// 2.0) or as ticks (format 1); here every time is a tick, counted from the step the scenario
+/// starts at. <see cref="ScenarioLoader"/> is the only way to make one, so every scenario has
+/// passed the same validation. Disasters happen on their own only when it asks for them, so a
+/// scenario's result doesn't depend on the player's settings.
 /// </summary>
 public sealed record Scenario(
     string Name,
@@ -21,7 +25,61 @@ public sealed record Scenario(
 {
     /// <summary>The longest a scenario may run, the same limit as <c>--ticks</c>: about 130 years.</summary>
     public const int MaxTicks = 100_000;
+
+    /// <summary>The year the city's calendar starts in, for a city made from a seed.</summary>
+    public int StartYear { get; init; } = CityCalendar.StartYear;
+
+    /// <summary>The saved city the scenario starts from, as a full path, or null for one made from the seed.</summary>
+    public string? CityFile { get; init; }
+
+    /// <summary>The step the scenario starts at, counted from January 1900: its start year's, or its city's own.</summary>
+    public long StartStep { get; init; }
+
+    /// <summary>What the player has to meet by the end, judged on the last tick; none for a scenario that only checks.</summary>
+    public IReadOnlyList<ScenarioGoal> Goals { get; init; } = [];
+
+    /// <summary>The disasters that strike, whatever the player's settings, in file order.</summary>
+    public IReadOnlyList<ScenarioEvent> Events { get; init; } = [];
+
+    /// <summary>Tells whether the scenario is a challenge for a player, with goals to meet, rather than only checks.</summary>
+    public bool HasGoals => Goals.Count > 0;
+
+    /// <summary>The date on the calendar a tick of the scenario falls in.</summary>
+    public ScenarioDate DateAt(long tick) => ScenarioDate.AtCount((StartStep + tick) / CityCalendar.StepsPerCount);
 }
+
+/// <summary>What a goal measures about the city at the end.</summary>
+public enum GoalMeasure
+{
+    /// <summary>The city's population, as the bar shows it.</summary>
+    Population,
+
+    /// <summary>The city's money.</summary>
+    Funds,
+
+    /// <summary>The city's average pollution, over the blocks that have any.</summary>
+    Pollution,
+
+    /// <summary>The city's average crime, over the blocks with land value.</summary>
+    Crime,
+
+    /// <summary>The city's traffic average, as the year's evaluation works it out.</summary>
+    Traffic,
+}
+
+/// <summary>Something the player has to meet by the end of a scenario: a measure of the city, at least or at most a number.</summary>
+/// <param name="Index">Where the goal is in the file, from 0.</param>
+/// <param name="Measure">What it measures.</param>
+/// <param name="AtLeast">The least the measure may be, or null.</param>
+/// <param name="AtMost">The most the measure may be, or null.</param>
+/// <param name="Text">How the goal reads to a player.</param>
+public sealed record ScenarioGoal(int Index, GoalMeasure Measure, int? AtLeast, int? AtMost, string Text);
+
+/// <summary>A disaster that strikes during a scenario, at a random place, as Micropolis' scenarios' do.</summary>
+/// <param name="Index">Where the event is in the file, from 0.</param>
+/// <param name="Tick">It strikes after this many ticks, after that tick's actions and before its checks.</param>
+/// <param name="Disaster">What strikes.</param>
+public sealed record ScenarioEvent(int Index, int Tick, Disaster Disaster);
 
 /// <summary>A tool stroke a scenario makes: the tool pressed on one tile and dragged to another, after a number of ticks.</summary>
 /// <param name="Index">Where the action is in the file, from 0.</param>

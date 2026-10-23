@@ -1,5 +1,23 @@
 # CityLimits Changelog
 
+## 0.4.101
+
+For developers and agents: scenarios are format 2.0, the format's first
+major version. Times are the game's dates, a month written `YYYY-MM` and
+an optional `week` of it, rather than ticks: `ends` in place of `ticks`,
+and `at` in place of `tick`. A scenario can `start` in a later year, or
+start from a saved `city` beside it, a `.fcl` or `.cl` file. `events`
+strike a fire, a flood, or an earthquake on a date, whatever the
+`disasters` switch says, and `goals` set what a player has to meet by
+the end: a population, funds, or the pollution, crime, or traffic
+average. A scenario with goals is a challenge; the report says whether
+it was `won`, apart from `passed`, so a lost challenge still exits with
+0. The report gives dates beside its ticks, and each event and goal;
+`scenario list` marks challenges. Format 1 files are still read, and the
+built-in scenarios are rewritten in 2.0. `docs/scenarios.md` describes
+the new format, and `docs/schemas/scenario.v2.0.schema.json` is its
+schema.
+
 ## 0.4.100
 
 CityLimits is now a beta. Your city lives through everything Micropolis

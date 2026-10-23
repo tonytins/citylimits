@@ -22,8 +22,11 @@ public sealed record ScenarioReport
     /// <summary>Which scenario ran.</summary>
     public required ScenarioSummary Scenario { get; init; }
 
-    /// <summary>Whether every check passed and every action met what it expected.</summary>
+    /// <summary>Whether every check passed and every action met what it expected. A scenario's goals don't count toward it.</summary>
     public required bool Passed { get; init; }
+
+    /// <summary>Whether every goal was met at the end; absent for a scenario with no goals.</summary>
+    public bool? Won { get; init; }
 
     /// <summary>The scenario that was asked for and why it couldn't run, when the demo town ran instead.</summary>
     public ScenarioFallback? Fallback { get; init; }
@@ -34,12 +37,18 @@ public sealed record ScenarioReport
     /// <summary>Each action, in the order it was made.</summary>
     public required IReadOnlyList<ActionReport> Actions { get; init; }
 
+    /// <summary>Each of the scenario's disasters, in the order it struck.</summary>
+    public IReadOnlyList<EventReport> Events { get; init; } = [];
+
     /// <summary>Each check, in the order it was made.</summary>
     public required IReadOnlyList<CheckReport> Checks { get; init; }
+
+    /// <summary>Each goal, as it was judged at the end.</summary>
+    public IReadOnlyList<GoalReport> Goals { get; init; } = [];
 }
 
-/// <summary>Which scenario ran: its name, where it came from (an id or a path), its seed, and how many ticks it ran.</summary>
-public sealed record ScenarioSummary(string Name, string Source, int Seed, int Ticks);
+/// <summary>Which scenario ran: its name, where it came from (an id or a path), its seed, how many ticks it ran, and the dates it started and ended at.</summary>
+public sealed record ScenarioSummary(string Name, string Source, int Seed, int Ticks, string? Start = null, string? Ends = null);
 
 /// <summary>The scenario that was asked for, and why it couldn't be loaded.</summary>
 public sealed record ScenarioFallback(string Requested, string Reason);
@@ -95,10 +104,17 @@ public sealed record ActionReport(
     int Tiles,
     IReadOnlyDictionary<string, int> Skipped,
     int Cost,
-    bool? Met);
+    bool? Met,
+    string? Date = null);
 
-/// <summary>What came of one check: whether it passed, and when it didn't, what was expected and what was found.</summary>
-public sealed record CheckReport(int Index, int Tick, bool Passed, string? Expected, string? Actual);
+/// <summary>What came of one check: whether it passed, and when it didn't, what was expected and what was found; and when it was made.</summary>
+public sealed record CheckReport(int Index, int Tick, bool Passed, string? Expected, string? Actual, string? Date = null);
+
+/// <summary>What came of one of a scenario's disasters: when it struck, what it was, and whether it found anywhere to strike.</summary>
+public sealed record EventReport(int Index, int Tick, string Date, string Disaster, bool Happened);
+
+/// <summary>How a goal stood at the end: its words, whether it was met, and what the city measured.</summary>
+public sealed record GoalReport(int Index, string Text, bool Met, int Found);
 
 /// <summary>Writes a report as JSON.</summary>
 public static class ScenarioReportJson

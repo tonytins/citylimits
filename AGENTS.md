@@ -640,18 +640,26 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   each settled year's budget gets a
   line with the traffic average, and the city's messages are logged as warnings. `--ticks` without `--headless` is refused, because
   the window runs until it is closed.
-- **Scenarios.** A scenario is a city set up from a file: a seed, tool
-  strokes made at set ticks, and checks on tiles, zones, funds, and
-  counts (`docs/scenarios.md`, phase 1). `ScenarioLoader` reads and checks
+- **Scenarios.** A scenario is a city set up from a file
+  (`docs/scenarios.md`, format 2.0): a seed and tool strokes, or a saved
+  `.fcl` or `.cl` city beside the file, a start year, disasters that
+  strike on dates (`CitySimulation.Strike`), checks on tiles, zones,
+  funds, and counts, and goals a player has to meet by its end date
+  (population, funds, and the pollution, crime, and traffic averages). Times
+  are the game's dates, a month and an optional week of it, as Tony Bark
+  asked, so a player needn't know what a tick is; format 1 files, in
+  ticks, are still read. A scenario with goals is a challenge, and one
+  with only checks a test. `ScenarioLoader` reads and checks
   a file, reporting the first problem with where it is; `ScenarioRunner`
-  runs it deterministically and returns a `ScenarioReport`, raising an
-  event per action and check instead of logging. `citylimits scenario
+  runs it deterministically and returns a `ScenarioReport`, with dates
+  beside its ticks and, for a challenge, whether it was won, raising an
+  event per action, disaster, and check instead of logging. `citylimits scenario
   <id> --headless` runs a built-in one (`demo-town`, defined in code, and
   the files in `Assets/Scenarios/`), `--file <path>` runs any file, and
   `scenario list` lists them; `rail` lays rail across a road, a line, and a lake. `--json` writes the report to stdout and the
   log to stderr. A scenario that can't be loaded falls back to the demo
   town, logged and recorded in the report. Exit codes: 0 passed, 1 could
-  not run, 2 a bad command line, 3 a check or expectation failed. A run
+  not run, 2 a bad command line, 3 a check or expectation failed; a lost challenge is still 0. A run
   needs `--headless`, because a scenario will open a window once
   scenarios can be played; `list` doesn't. Every built-in scenario runs as
   a test, so a rule that changes is caught by the scenarios that depend on
@@ -680,7 +688,7 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   and no project. It holds the parser, the dispatcher, the default
   command, the strict option reader, and the exit codes.
 - **The tests.** `CityLimits.Tests` uses xUnit 2 with the VSTest runner
-  and coverlet, and holds 764 tests over a later start year, floods and earthquakes, fire and its hints, pollution and crime, rail and the train, the news ticker's queue, its headlines, and the loading phrases, opening newer saves and the backports' saves, traffic and its animation, saving, loading, autosave, importing Micropolis cities, format versions and schemas, with a city
+  and coverlet, and holds 793 tests over scenario format 2.0, a later start year, floods and earthquakes, fire and its hints, pollution and crime, rail and the train, the news ticker's queue, its headlines, and the loading phrases, opening newer saves and the backports' saves, traffic and its animation, saving, loading, autosave, importing Micropolis cities, format versions and schemas, with a city
   the owner built in both formats in `CityLimits.Tests/Assets/`, the generator, the terrain edges, the power plants, lines, and grid, the budget, the stations and their coverage, parks, hospitals and churches, the map, the
   calendar, the clock, the simulation, the settings, the tile rules, the
   build actions, the road network, the treasury, the scenario loader and
@@ -872,10 +880,11 @@ without reflection.
   opens the city as if its fires had burned out and its buildings been
   repaired, as Tony Bark chose, and 1.7 floods, a part of their own
   (`FloodCodec`) beside the fire part, which marks a flooded hole as a
-  hole. Scenarios are at 1.3: 1.1 added the Rail tool and the Rail count,
-  1.2 the `disasters` switch, off unless a file turns it on, and the
-  OnFire refusal, and 1.3 the Flooded refusal, with floods and
-  earthquakes among the disasters the switch lets happen.
+  hole. Scenarios are at 2.0, their first major version, which names
+  times as dates and adds a start year, a saved city to start from,
+  events, and goals; the 2.0 reader still reads format 1 (1.0 to 1.3, in
+  ticks), whose 1.1 added the Rail tool and count, 1.2 the `disasters`
+  switch and the OnFire refusal, and 1.3 the Flooded refusal.
 - **Older saves climb one minor version at a time,** each step a small
   function in `SaveUpgrades`, with a test from a fixture; Bridgeport's
   fixtures in `CityLimits.Tests/Assets/` stay at 1.0 for that.

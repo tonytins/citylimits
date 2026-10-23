@@ -15,31 +15,31 @@ public static class DemoTown
     /// <summary>The demo town as a scenario file.</summary>
     public const string Json = """
         {
-          "$schema": "https://raw.githubusercontent.com/tonytins/citylimits/main/docs/schemas/scenario.v1.0.schema.json",
-          "format": "1.0",
+          "$schema": "https://raw.githubusercontent.com/tonytins/citylimits/main/docs/schemas/scenario.v2.0.schema.json",
+          "format": "2.0",
           "name": "Demo town",
           "description": "A road with a residential, a commercial, and an industrial zone, powered by a coal plant up a line to the north; the industry is knocked down after a year.",
           "seed": 2000,
           "funds": 20000,
-          "ticks": 1536,
+          "ends": "1902-01",
           "actions": [
-            { "tick": 0, "tool": "Road", "from": { "x": 34, "y": 53 }, "to": { "x": 42, "y": 53 }, "expect": "Built" },
-            { "tick": 0, "tool": "ZoneResidential", "from": { "x": 35, "y": 51 }, "expect": "Built" },
-            { "tick": 0, "tool": "ZoneCommercial", "from": { "x": 38, "y": 51 }, "expect": "Built" },
-            { "tick": 0, "tool": "ZoneIndustrial", "from": { "x": 41, "y": 51 }, "expect": "Built" },
-            { "tick": 0, "tool": "CoalPowerPlant", "from": { "x": 35, "y": 40 }, "expect": "Built" },
-            { "tick": 0, "tool": "PowerLine", "from": { "x": 35, "y": 43 }, "to": { "x": 35, "y": 49 }, "expect": "Built" },
-            { "tick": 768, "tool": "Bulldoze", "from": { "x": 41, "y": 51 }, "expect": "Built" }
+            { "at": "1900-01", "tool": "Road", "from": { "x": 34, "y": 53 }, "to": { "x": 42, "y": 53 }, "expect": "Built" },
+            { "at": "1900-01", "tool": "ZoneResidential", "from": { "x": 35, "y": 51 }, "expect": "Built" },
+            { "at": "1900-01", "tool": "ZoneCommercial", "from": { "x": 38, "y": 51 }, "expect": "Built" },
+            { "at": "1900-01", "tool": "ZoneIndustrial", "from": { "x": 41, "y": 51 }, "expect": "Built" },
+            { "at": "1900-01", "tool": "CoalPowerPlant", "from": { "x": 35, "y": 40 }, "expect": "Built" },
+            { "at": "1900-01", "tool": "PowerLine", "from": { "x": 35, "y": 43 }, "to": { "x": 35, "y": 49 }, "expect": "Built" },
+            { "at": "1901-01", "tool": "Bulldoze", "from": { "x": 41, "y": 51 }, "expect": "Built" }
           ],
           "checks": [
-            { "tick": 0, "count": "Road", "equals": 9 },
-            { "tick": 1536, "tile": { "x": 35, "y": 51 }, "use": "Residential", "development": 0 },
-            { "tick": 1536, "tile": { "x": 38, "y": 51 }, "use": "Commercial", "development": 0 },
-            { "tick": 1536, "count": "Developed", "equals": 1 },
-            { "tick": 1536, "tile": { "x": 38, "y": 50 }, "served": true, "powered": true },
-            { "tick": 1536, "tile": { "x": 42, "y": 52 }, "kind": "Rubble", "use": "None" },
-            { "tick": 1536, "fundsEquals": 16572 },
-            { "tick": 1536, "count": "Industrial", "equals": 0 }
+            { "at": "1900-01", "count": "Road", "equals": 9 },
+            { "at": "1902-01", "tile": { "x": 35, "y": 51 }, "use": "Residential", "development": 0 },
+            { "at": "1902-01", "tile": { "x": 38, "y": 51 }, "use": "Commercial", "development": 0 },
+            { "at": "1902-01", "count": "Developed", "equals": 1 },
+            { "at": "1902-01", "tile": { "x": 38, "y": 50 }, "served": true, "powered": true },
+            { "at": "1902-01", "tile": { "x": 42, "y": 52 }, "kind": "Rubble", "use": "None" },
+            { "at": "1902-01", "fundsEquals": 16572 },
+            { "at": "1902-01", "count": "Industrial", "equals": 0 }
           ]
         }
         """;
