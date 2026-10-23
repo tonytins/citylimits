@@ -18,6 +18,7 @@ public sealed class StartMenu
     private static readonly string[] Items = ["New Game", "Load Game", "Settings", "Quit"];
 
     private readonly Texture2D? _logo;
+    private readonly string _version;
     private readonly NewCityPanel _newCity = new();
     private readonly LoadPanel _load = new();
     private readonly SettingsPanel _settings = new();
@@ -47,11 +48,13 @@ public sealed class StartMenu
         Quit,
     }
 
-    /// <summary>Creates the menu with the logo, when it loaded.</summary>
-    public StartMenu(GameAssets assets)
+    /// <summary>Creates the menu with the logo, when it loaded, and the game's version as the corner shows it.</summary>
+    public StartMenu(GameAssets assets, string version)
     {
         ArgumentNullException.ThrowIfNull(assets);
+        ArgumentException.ThrowIfNullOrWhiteSpace(version);
         _logo = assets.Logo;
+        _version = version;
     }
 
     /// <summary>The city the player asked for, once the choice is <see cref="Choice.NewCity"/>.</summary>
@@ -159,7 +162,7 @@ public sealed class StartMenu
             Raylib.DrawText(Items[i], (int)bounds.X, (int)bounds.Y, FontSize, color);
         }
 
-        var version = VersionInfo.DisplayVersion;
+        var version = _version;
         Raylib.DrawText(version, Raylib.GetScreenWidth() - Raylib.MeasureText(version, VersionSize) - Margin, Raylib.GetScreenHeight() - VersionSize - Margin, VersionSize, Theme.Text);
 
         if (_newCityOpen)

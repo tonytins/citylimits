@@ -1,4 +1,4 @@
-namespace CityLimits.Game;
+namespace CityLimits.UI;
 
 /// <summary>The tools the player can pick from, and the one that is held.</summary>
 public sealed class ToolPalette

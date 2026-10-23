@@ -16,16 +16,20 @@ the scorecard says what is true today, with evidence.
 ## 1. Workspace map
 
 ```text
-CityLimits.slnx             solution: the game, the core library, the command line library, and the tests
-CityLimits/                  the game project (Raylib-cs, NLog, net10.0)
+CityLimits.slnx             solution: the game, the interface library, the core library, the command line library, and the tests
+CityLimits/                  the game project (Raylib-cs, NLog, GitInfo, net10.0)
   CityLimits.csproj            package references, the library references, the target framework, and the asset copy
   Program.cs                    entry point: the log, the command dispatcher, shutdown
   GlobalUsings.cs               global usings shared by the project
-  Game/                         namespace CityLimits.Game: the game command, the window, the loop, the tools, the city's messages, the mods folder, the headless run, the log
+  VersionInfo.cs                the version, from GitInfo, which counts this project's commits
+  Game/                         namespace CityLimits.Game: the game command, the window, the loop, the city's messages, the mods folder, the headless run, the log
     Commands/                   namespace CityLimits.Game.Commands: the subcommands, one class each
-  Rendering/                    namespace CityLimits.Rendering: the camera, the tile drawing, the chunk cache, the tile sheet, the theme
-  UI/                           namespace CityLimits.UI: the loading screen, the start menu and its new-city panel, the HUD and its bar along the bottom, the news ticker, the pointer's hints, the tool palette, the budget, demand, city, help, and settings panels, the small pop-up notice, and how windows are moved, the in-game menu, the overview map
   Assets/                       the tile sheet, the tool icons, the train's drawings (sprites/), the logo, and the built-in scenarios (Scenarios/*.json), copied to the output folder
+CityLimits.Interface/        the interface library: what the game draws and how the player works it (Raylib-cs, NLog, net10.0)
+  CityLimits.Interface.csproj   the project file; it references Raylib-cs, NLog, and the core library, never the game
+  GlobalUsings.cs               global usings shared by the project
+  Rendering/                    namespace CityLimits.Rendering: the camera, the display, the tile drawing, the chunk cache, the tile sheet, the theme
+  UI/                           namespace CityLimits.UI: the tools and the palette, the loading screen, the start menu and its new-city panel, the HUD and its bar along the bottom, the news ticker, the pointer's hints, the budget, demand, city, help, and settings panels, the small pop-up notice, and how windows are moved, the in-game menu, the overview map
 CityLimits.Core/              engine-free library: the world and the simulation, no Raylib
   CityLimits.Core.csproj        the project file; it must never reference Raylib-cs
   GlobalUsings.cs               global usings shared by the project
@@ -45,7 +49,7 @@ CityLimits.CommandLine/       engine-free library: the command line, no Raylib
   GlobalUsings.cs               global usings shared by the project
   *.cs                          namespace CityLimits.CommandLine: the parser, the dispatcher, the option reader, the exit codes
 CityLimits.Tests/              xUnit 2 tests for CityLimits.Core and CityLimits.CommandLine, and every built-in scenario
-  CityLimits.Tests.csproj       references the two libraries, never the game project
+  CityLimits.Tests.csproj       references the core and command line libraries, never the game or the interface library
 .agents/skills/                skills for agents and contributors
   dotnet-guidelines/            C# and .NET conventions
   raylib-cs/                    how CityLimits uses Raylib-cs 8.1.0, and how to check a visual change
@@ -63,15 +67,20 @@ docs/
 
 The split is the point of the layout: `CityLimits.Core/` holds everything
 that can be decided without a window, `CityLimits.CommandLine/` holds the
-command line, which knows nothing of the city, and `CityLimits/` holds
-everything that draws it and the commands that run it. The game project may
-reference both libraries; neither library may reference the game, and
-neither references the other.
+command line, which knows nothing of the city, `CityLimits.Interface/`
+holds what the game draws and the windows the player works, and
+`CityLimits/` holds the game itself: its screens, its loop, and the
+commands that run it. The interface library was split out of the game, as
+Tony Bark chose, so the scenario editor to come can share it with play.
+The game project references all three libraries; the interface library
+references the core library; no library references the game, and the
+core and command line libraries reference nothing of each other's or the
+interface's.
 
 The folders above are the target shape, and the code follows it today:
 the world, the simulation, the generator, and the settings live in
-`CityLimits.Core/`, and the window, the loop, the camera, and the drawing
-live in `CityLimits/`. Keep new code in the folder that matches the map,
+`CityLimits.Core/`, the camera, the drawing, and the panels in
+`CityLimits.Interface/`, and the window and the loop in `CityLimits/`. Keep new code in the folder that matches the map,
 and don't invent a parallel structure.
 
 Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
@@ -673,8 +682,8 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   challenges.
 - **The log.** NLog writes to the console and nowhere else. Failures go to
   the log as well as to the screen.
-- **The solution.** `CityLimits.slnx` holds four projects: the game, the
-  core library, the command line library, and the tests. Every .NET project in the repository lives
+- **The solution.** `CityLimits.slnx` holds five projects: the game, the
+  interface library, the core library, the command line library, and the tests. Every .NET project in the repository lives
   in its own folder and is listed in the solution.
 - **The core library.** `CityLimits.Core` targets `net10.0` with nullable
   and implicit usings enabled, and references no package at all. It holds
@@ -694,9 +703,15 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   build actions, the road network, the treasury, the scenario loader and
   runner, every built-in scenario, the definitions and the mod loader, zone growth, the census and demand, trips, growth and the city maps,
   the option reader, and the dispatcher.
+- **The interface library.** `CityLimits.Interface` targets `net10.0` with
+  nullable and implicit usings enabled, and references `Raylib-cs`
+  `8.1.0`, `NLog` `6.2.2`, and the core library. It holds the camera, the
+  display, the map's drawing and its chunk cache, the tile sheet, the
+  theme, the tools, and every screen, window, and panel the game draws;
+  the start menu is given the game's version, which only the game knows.
 - **The game project.** `CityLimits.csproj` targets `net10.0` with nullable
   and implicit usings enabled, and references `Raylib-cs` `8.1.0` and
-  `NLog` `6.2.2`. The native `raylib` library ships inside the NuGet
+  `NLog` `6.2.2`, GitInfo for its version, and the three libraries. The native `raylib` library ships inside the NuGet
   package for `linux-x64`, `win-x64`, and `win-x86`, so no system install
   is needed on Linux or Windows.
 - **The assets.** `CityLimits/Assets/` holds the tile sheet, the tool
@@ -821,11 +836,12 @@ A city builder lives or dies on its simulation, not its art. The rules:
 - **Every frame is bracketed.** `GameLoop.Draw` opens with
   `Raylib.BeginDrawing()` and closes with `Raylib.EndDrawing()`. Without
   them the window stays black, because the buffer is never presented.
-- **The libraries never reference Raylib-cs.** `CityLimits.Core` and
-  `CityLimits.CommandLine` have no package references at all, and they must
-  keep it that way. The game project may reference them; they may never
+- **The engine-free libraries never reference Raylib-cs.** `CityLimits.Core`
+  and `CityLimits.CommandLine` have no package references at all, and they
+  must keep it that way. Only the game and `CityLimits.Interface` reference
+  Raylib-cs. The game project may reference every library; no library may
   reference the game, and the test project may never reference the game
-  either.
+  or the interface library either.
 - **Load assets once.** Create textures and fonts at startup, keep them for
   the life of the game, and unload them at shutdown. Never load a texture
   inside the frame loop. Textures need an OpenGL context, so they are loaded
@@ -1002,7 +1018,7 @@ without reflection.
   belong in `Game/WindowedGame.cs`, and everything else belongs in `CityLimits.Core/Randomness/`,
   `CityLimits.Core/World/`, `CityLimits.Core/Simulation/`,
   `CityLimits.Core/Settings/`, `CityLimits.CommandLine/`, `CityLimits/Game/`,
-  `CityLimits/Rendering/`, or `CityLimits/UI/`.
+  `CityLimits.Interface/Rendering/`, or `CityLimits.Interface/UI/`.
 - Match the surrounding code when it disagrees with this file, and mention
   the disagreement.
 

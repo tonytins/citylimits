@@ -61,7 +61,7 @@ public static class WindowedGame
                 loading.Draw();
             }
 
-            var menu = new StartMenu(assets);
+            var menu = new StartMenu(assets, VersionInfo.DisplayVersion);
             menu.Show(fromLoading: true, seed, folders.CitiesFolder, settings);
             while (true)
             {

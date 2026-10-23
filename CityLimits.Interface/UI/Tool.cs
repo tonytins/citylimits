@@ -1,4 +1,4 @@
-namespace CityLimits.Game;
+namespace CityLimits.UI;
 
 /// <summary>The tools the player can hold.</summary>
 public enum Tool

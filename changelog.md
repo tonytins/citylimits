@@ -1,5 +1,13 @@
 # CityLimits Changelog
 
+## 0.4.102
+
+For developers: the camera, the map's drawing, the theme, the tools, and
+every screen and panel moved out of the game into a library of their
+own, `CityLimits.Interface`, so a scenario editor can share them with
+play. Their namespaces are unchanged. The game keeps its window, its
+loop, its commands, and its version, which it gives the start menu.
+
 ## 0.4.101
 
 For developers and agents: scenarios are format 2.0, the format's first

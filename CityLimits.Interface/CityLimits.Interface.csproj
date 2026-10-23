@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- What the game draws and how the player works it: the camera, the map's drawing, the tile
+       sheet, the theme, the tools, and the windows and panels. It references Raylib-cs, as only the
+       game did before; the engine-free libraries never reference it, or this. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>CityLimits</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="NLog" Version="6.2.2" />
+    <PackageReference Include="Raylib-cs" Version="8.1.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CityLimits.Core\CityLimits.Core.csproj" />
+  </ItemGroup>
+
+</Project>

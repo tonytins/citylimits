@@ -52,12 +52,12 @@ under earlier agents' feet: `IsTextureReady` is now `IsTextureValid`, and
 
 | Place | Raylib? |
 |---|---|
-| `CityLimits/Rendering/`, `CityLimits/UI/`, `GameLoop`, `WindowedGame`, `SplashScreen` | yes |
+| `CityLimits.Interface/Rendering/`, `CityLimits.Interface/UI/`, `GameLoop`, `WindowedGame` | yes |
 | `CityLimits.Core/`, `CityLimits.CommandLine/`, `CityLimits.Tests/` | never: no package reference, no type, no call |
 | The `--headless` path (`GameCommand` with `Headless` set, `HeadlessRun`, `scenario`) | never: not even `SetTraceLogLevel`. A Raylib call there opens a window or loads native code a server may not have |
 
 If you can't decide something without Raylib, it belongs in the game
-project. If something can be decided without it, it belongs in Core,
+project or the interface library. If something can be decided without it, it belongs in Core,
 behind a test. Which road tile a crossing needs is an example: Core reports
 the connections (`RoadNetwork.ConnectionsAt`), and only the choice of
 drawing is in `Rendering/`.

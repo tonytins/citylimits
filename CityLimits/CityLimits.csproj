@@ -28,6 +28,7 @@
   <ItemGroup>
     <ProjectReference Include="..\CityLimits.Core\CityLimits.Core.csproj" />
     <ProjectReference Include="..\CityLimits.CommandLine\CityLimits.CommandLine.csproj" />
+    <ProjectReference Include="..\CityLimits.Interface\CityLimits.Interface.csproj" />
   </ItemGroup>
 
   <ItemGroup>
