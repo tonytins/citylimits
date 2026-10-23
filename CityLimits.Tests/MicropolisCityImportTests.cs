@@ -113,9 +113,6 @@ public class MicropolisCityImportTests
         SetTile(bytes, 9, 5, 48);         // flood
         SetTile(bytes, 10, 5, 56);        // fire
         SetTile(bytes, 11, 5, 52);        // radiation
-        Stamp(bytes, 20, 20, 709, 6);     // an airport
-        Stamp(bytes, 30, 30, 779, 4);     // a stadium
-        Stamp(bytes, 40, 40, 693, 4);     // a seaport
         SetTile(bytes, 60, 60, 252);      // a house with no zone
 
         var city = Import(bytes, out var notes);
@@ -127,19 +124,39 @@ public class MicropolisCityImportTests
         Assert.Equal(TileUse.RailDownRoad, city.Map.StateAt(12, 5).Use);
         Assert.Equal(TileUse.RailDownPowerLine, city.Map.StateAt(13, 5).Use);
         Assert.Equal(new TileState(TileKind.Water, TileUse.Rail), city.Map.StateAt(14, 5));
-        Assert.Equal(new TileState(TileKind.Grass), city.Map.StateAt(21, 21));
         Assert.Equal(new TileState(TileKind.Grass), city.Map.StateAt(60, 60));
         Assert.Equal(
             [
-                "1 airport became bare ground: CityLimits doesn't have them yet.",
                 "1 burning tile became bare ground: CityLimits doesn't have them yet.",
                 "1 flooded tile became bare ground: CityLimits doesn't have them yet.",
                 "1 part of a building with no centre became bare ground: CityLimits doesn't have them yet.",
                 "1 radioactive tile became bare ground: CityLimits doesn't have them yet.",
-                "1 seaport became bare ground: CityLimits doesn't have them yet.",
-                "1 stadium became bare ground: CityLimits doesn't have them yet.",
             ],
             notes);
+    }
+
+    [Fact]
+    public void SeaportsAirportsAndStadiumsComeInWholeAndAStadiumWithAGameOnIsAStadium()
+    {
+        var bytes = MicropolisCityWriter.Write(new CitySimulation(TileMap.FromTerrain(Width, Height, new TileKind[Width * Height]), 1));
+        Stamp(bytes, 20, 20, 709, 6);     // an airport
+        Stamp(bytes, 30, 30, 779, 4);     // a stadium
+        Stamp(bytes, 50, 30, 795, 4);     // a stadium with a game on
+        Stamp(bytes, 40, 40, 693, 4);     // a seaport
+
+        var city = Import(bytes, out var notes);
+
+        Assert.Empty(notes);
+        Assert.Equal((TileUse.Airport, 0, 0), Building(city, 20, 20));
+        Assert.Equal((TileUse.Stadium, 0, 0), Building(city, 30, 30));
+        Assert.Equal((TileUse.Stadium, 0, 0), Building(city, 50, 30));
+        Assert.Equal((TileUse.Seaport, 0, 0), Building(city, 40, 40));
+        Assert.Equal(new TileState(TileKind.Grass, TileUse.Airport, zonePart: 35), city.Map.StateAt(24, 24));
+        Assert.Equal(new TileState(TileKind.Grass, TileUse.Stadium, zonePart: 3), city.Map.StateAt(32, 29));
+
+        // And it saves and opens again as it was, the airport in its own part.
+        Assert.True(FlatCityFormat.TryRead(FlatCityFormat.Write(city), out var reopened, out var problem), problem);
+        Assert.Equal(city.Map.StateAt(24, 24), reopened.Map.StateAt(24, 24));
     }
 
     [Fact]

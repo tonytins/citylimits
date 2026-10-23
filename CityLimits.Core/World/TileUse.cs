@@ -62,4 +62,13 @@ public enum TileUse
 
     /// <summary>The tile is rail running down over a power line running across.</summary>
     RailDownPowerLine,
+
+    /// <summary>The tile is part of a stadium, 4 by 4, which residents want once the city is big.</summary>
+    Stadium,
+
+    /// <summary>The tile is part of a seaport, 4 by 4, which industry wants once it is big.</summary>
+    Seaport,
+
+    /// <summary>The tile is part of an airport, 6 by 6, which commerce wants once it is big.</summary>
+    Airport,
 }

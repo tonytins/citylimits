@@ -24,8 +24,8 @@ public sealed class CityMaps
     private const int TerrainPerTile = 15;
 
     // What each tile adds to its block's pollution, as Micropolis' core has it: every tile of an
-    // industrial building and of a coal plant, not only the centre the Java port counts, as Tony
-    // Bark chose, and a road by the traffic it shows. A block holds at most 255.
+    // industrial building, of a coal plant, of a seaport, and of an airport, not only the centre the
+    // Java port counts, as Tony Bark chose, and a road by the traffic it shows. A block holds at most 255.
     private const int IndustryPollution = 50;
     private const int CoalPlantPollution = 100;
     private const int LightTrafficPollution = 50;
@@ -238,7 +238,7 @@ public sealed class CityMaps
     private int PollutionOf(int x, int y, TileState state, TrafficMap traffic) => state.Use switch
     {
         TileUse.Industrial => _map.ZoneStateAt(x, y).Development > 0 ? IndustryPollution : 0,
-        TileUse.CoalPowerPlant => CoalPlantPollution,
+        TileUse.CoalPowerPlant or TileUse.Seaport or TileUse.Airport => CoalPlantPollution,
         _ => traffic.LevelAt(x, y) switch
         {
             TrafficLevel.Light => LightTrafficPollution,

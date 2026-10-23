@@ -53,4 +53,13 @@ public enum CityMessage
 
     /// <summary>An earthquake has struck.</summary>
     EarthquakeReported,
+
+    /// <summary>The city has more than 500 residential units and no stadium, so residential demand is held at zero.</summary>
+    NeedStadium,
+
+    /// <summary>The city has more than 70 industrial units and no seaport, so industrial demand is held at zero.</summary>
+    NeedSeaport,
+
+    /// <summary>The city has more than 100 commercial units and no airport, so commercial demand is held at zero.</summary>
+    NeedAirport,
 }

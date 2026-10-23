@@ -1,9 +1,10 @@
 # Scenarios
 
-> **Status:** format 2.0 is built: `CityLimits.Core/Scenarios/` and
+> **Status:** format 2.1 is built: `CityLimits.Core/Scenarios/` and
 > `citylimits scenario`, with `demo-town`, the built-in scenarios
 > `bridges`, `rail`, `zones-and-bulldozer`, and `small-town`, and the
-> example challenge `first-town`, each run as a test, all written in 2.0.
+> example challenge `first-town`, each run as a test, all written in 2.0,
+> which 2.1 reads, since none needs what 2.1 added.
 > Files in format 1, which counted time in ticks, are still read. A
 > challenge can be [played in the game](#playing-a-scenario). It follows the Micropolis
 > baseline: tools are strokes, zones are 3 by 3, the bulldozer refunds
@@ -114,7 +115,10 @@ report gives each time as both a date and a tick. A tick is one step of
 the simulation, one phase of Micropolis' cycle, the same unit as
 `citylimits --headless --ticks`; `CityCalendar` holds these numbers.
 
-## The file, version 2.0
+## The file, version 2.1
+
+2.1 adds the `Stadium`, `Seaport`, and `Airport` tools and counts to 2.0;
+a 2.0 file reads as it did.
 
 ```json
 {
@@ -172,7 +176,7 @@ A challenge has goals, and may start later and have a disaster:
 | Field | Required | Meaning |
 |---|---|---|
 | `$schema` | no | The scenario's schema, `docs/schemas/scenario.v2.0.schema.json`, for editors to check the file against; the game ignores it |
-| `format` | yes | The file format version, `"2.0"`. A file of format 1, such as `"1.3"`, is read as [format 1](#format-1). A newer minor version, or another major one, is refused with a message saying which this version reads |
+| `format` | yes | The file format version, `"2.1"` or `"2.0"`. A file of format 1, such as `"1.3"`, is read as [format 1](#format-1). A newer minor version, or another major one, is refused with a message saying which this version reads |
 | `name` | yes | A display name, 1 to 80 characters |
 | `description` | no | One or two sentences, up to 500 characters |
 | `seed` | yes, without `city` | The seed the map and the simulation are built from: any 32-bit integer |
@@ -207,7 +211,7 @@ tool pressed on `from` and dragged to `to`.
 | Field | Required | Meaning |
 |---|---|---|
 | `at`, `week` | yes, `week` no | The date the stroke is made at, before the city's step then |
-| `tool` | yes | A `BuildAction` name: `Road`, `ZoneResidential`, `ZoneCommercial`, `ZoneIndustrial`, `Bulldoze`, `CoalPowerPlant`, `NuclearPowerPlant`, `PowerLine`, `FireStation`, `PoliceStation`, `Park`, `Rail` |
+| `tool` | yes | A `BuildAction` name: `Road`, `ZoneResidential`, `ZoneCommercial`, `ZoneIndustrial`, `Bulldoze`, `CoalPowerPlant`, `NuclearPowerPlant`, `PowerLine`, `FireStation`, `PoliceStation`, `Park`, `Rail`, and from 2.1 `Stadium`, `Seaport`, `Airport` |
 | `from` | yes | `{ "x", "y" }`: the tile the stroke starts on |
 | `to` | no | `{ "x", "y" }`: the tile the stroke is dragged to. Default: `from`, a stroke that doesn't move |
 | `expect` | no | A `BuildStatus` (`Built`, `Unchanged`, `Refused`), or a status and a `BuildRefusal`, as in `Refused:NotEnoughFunds`, `Refused:PartOfAZone`, `Unchanged:AlreadyDone`, `Refused:OnFire`, for a tile that is burning, or `Refused:Flooded`, for one under water |
@@ -316,6 +320,7 @@ plant it fails, with the reason that the tile has no zone or plant.
 | `Park` | Park tiles |
 | `Hospital`, `Church` | Hospitals and churches, by their centres; a residential zone becomes one when the city needs it |
 | `Rail` | Rail tiles, tunnels and crossings included |
+| `Stadium`, `Seaport`, `Airport` | Stadiums, seaports, and airports, by their centres, not tiles; from 2.1 |
 
 ### Validation
 
@@ -352,7 +357,7 @@ and earthquakes among the disasters. Their schemas are
 
 ## The schema
 
-`docs/schemas/scenario.v2.0.schema.json` describes the file, and the files for 1.0 to 1.3 format 1: its fields
+`docs/schemas/scenario.v2.1.schema.json` describes the file (`scenario.v2.0.schema.json` 2.0, which differs only in its name), and the files for 1.0 to 1.3 format 1: its fields
 and their types, with no others. Name it in `"$schema"`, as the built-in
 scenarios do, and an editor such as VS Code checks the file and suggests
 its fields as you write. The schema is generated from the loader's own

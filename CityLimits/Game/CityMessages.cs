@@ -25,6 +25,9 @@ public static class CityMessages
         CityMessage.ExplosionReported => "Explosion reported!",
         CityMessage.FloodReported => "Flooding reported!",
         CityMessage.EarthquakeReported => "Major earthquake reported!",
+        CityMessage.NeedStadium => "Residents demand a stadium",
+        CityMessage.NeedSeaport => "Industry requires a seaport",
+        CityMessage.NeedAirport => "Commerce requires an airport",
         CityMessage.Brownouts => "Brownouts: the power plants can't keep up, so build another",
         _ => message.ToString(),
     };

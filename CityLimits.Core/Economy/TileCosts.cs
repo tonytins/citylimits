@@ -1,7 +1,8 @@
 namespace CityLimits.Core.Economy;
 
 /// <summary>
-/// What the player pays for roads, bridges, rail, tunnels, power lines, parks, clearing, and the bulldozer; the prices are Micropolis'.
+/// What the player pays for roads, bridges, rail, tunnels, power lines, parks, stadiums, seaports, airports, clearing, and the
+/// bulldozer; the prices are Micropolis'.
 /// A zone's price is in its <see cref="Definitions.ZoneSpec"/> and a plant's in its
 /// <see cref="Definitions.PlantSpec"/>, where a mod can change them.
 /// </summary>
@@ -33,4 +34,17 @@ public static class TileCosts
 
     /// <summary>What one tile of rail under water, a tunnel, costs; Micropolis' price, approved by Tony Bark for Radial.</summary>
     public const int Tunnel = 100;
+
+    // The stadium's, the seaport's, and the airport's prices are Micropolis', approved by Tony Bark for
+    // Kyoto. They are constants for now, as Tony Bark chose, rather than specs, since a new section in
+    // the definitions would make every older version refuse every new save.
+
+    /// <summary>What a stadium costs.</summary>
+    public const int Stadium = 5000;
+
+    /// <summary>What a seaport costs.</summary>
+    public const int Seaport = 3000;
+
+    /// <summary>What an airport costs.</summary>
+    public const int Airport = 10000;
 }

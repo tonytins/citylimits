@@ -33,6 +33,9 @@ public sealed class GameAssets : IDisposable
         (Tool.PoliceStation, "icpol.png"),
         (Tool.Park, "icpark.png"),
         (Tool.Rail, "icrail.png"),
+        (Tool.Stadium, "icstad.png"),
+        (Tool.Seaport, "icseap.png"),
+        (Tool.Airport, "icairp.png"),
     ];
 
     // Each icon's highlighted version, drawn while its tool is held, is beside it with "hi" on its name.

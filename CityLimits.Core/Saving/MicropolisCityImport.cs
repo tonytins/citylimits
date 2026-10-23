@@ -12,8 +12,8 @@ namespace CityLimits.Core.Saving;
 /// city's settings, and the 120 by 100 map, a number a tile, column by column, each a Micropolis
 /// tile number with flags above it. Tiles are read with Micropolis' numbering, which the owner
 /// approved for this, and buildings from their centres, so each comes in whole. Rail comes in as
-/// rail, tunnels and crossings included. Anything CityLimits doesn't have yet (seaports, airports,
-/// stadiums, fire, flood, and radiation) becomes bare ground, as the owner chose, and the import lists it. <c>docs/saving.md</c> describes it.
+/// rail, tunnels and crossings included, and seaports, airports, and stadiums as themselves. Anything
+/// CityLimits doesn't have yet (fire, flood, and radiation) becomes bare ground, as the owner chose, and the import lists it. <c>docs/saving.md</c> describes it.
 /// </summary>
 public static class MicropolisCityImport
 {
@@ -97,8 +97,8 @@ public static class MicropolisCityImport
     private const int FirstDownDrawbridge = 948;
     private const int LastDownDrawbridge = 951;
 
-    // Each building's drawings: where its first tile is, its size, its use in CityLimits (none for
-    // one CityLimits doesn't have yet), and for zones, how many levels and value classes they come in.
+    // Each building's drawings: where its first tile is, its size, its use in CityLimits, and for
+    // zones, how many levels and value classes they come in.
     private static readonly Building[] Buildings =
     [
         new(240, 3, TileUse.Residential, 0, 1),
@@ -109,13 +109,15 @@ public static class MicropolisCityImport
         new(432, 3, TileUse.Commercial, 5, 4),
         new(612, 3, TileUse.Industrial, 0, 1),
         new(621, 3, TileUse.Industrial, 4, 2),
-        new(693, 4, TileUse.None, 0, 1, "seaport"),
-        new(709, 6, TileUse.None, 0, 1, "airport"),
+        new(693, 4, TileUse.Seaport, 0, 1),
+        new(709, 6, TileUse.Airport, 0, 1),
         new(745, 4, TileUse.CoalPowerPlant, 0, 1),
         new(761, 3, TileUse.FireStation, 0, 1),
         new(770, 3, TileUse.PoliceStation, 0, 1),
-        new(779, 4, TileUse.None, 0, 1, "stadium"),
-        new(795, 4, TileUse.None, 0, 1, "stadium"),
+        new(779, 4, TileUse.Stadium, 0, 1),
+
+        // A stadium with a game on is drawn apart from an empty one, but is the same stadium.
+        new(795, 4, TileUse.Stadium, 0, 1),
         new(811, 4, TileUse.NuclearPowerPlant, 0, 1),
     ];
 
@@ -208,7 +210,7 @@ public static class MicropolisCityImport
         {
             for (var x = 0; x < Width; x++)
             {
-                Stamp(numbers, x, y, tiles, covered, replaced);
+                Stamp(numbers, x, y, tiles, covered);
             }
         }
 
@@ -292,7 +294,7 @@ public static class MicropolisCityImport
 
     // Stamps the building whose centre this is, whole: a zone at the level and class its number
     // says, with the houses on an empty residential zone's outer tiles.
-    private static void Stamp(int[,] numbers, int x, int y, TileState[] tiles, bool[] covered, SortedDictionary<string, int> replaced)
+    private static void Stamp(int[,] numbers, int x, int y, TileState[] tiles, bool[] covered)
     {
         // A house belongs to the zone around it and is never a centre, though its number falls where one would.
         var tile = numbers[x, y] & TileMask;
@@ -310,11 +312,6 @@ public static class MicropolisCityImport
 
         var (development, valueClass) = building.Levels == 0 ? (0, 0) : ((drawing % building.Levels) + 1, drawing / building.Levels);
         var powered = (numbers[x, y] & PoweredFlag) != 0;
-        if (building.Missing is not null)
-        {
-            Count(replaced, building.Missing);
-        }
-
         for (var p = 0; p < Footprint.Parts(building.Size); p++)
         {
             var (dx, dy) = Footprint.OffsetFromCenter(p, building.Size);
@@ -326,12 +323,6 @@ public static class MicropolisCityImport
 
             var index = (tileY * Width) + tileX;
             covered[index] = true;
-            if (building.Use == TileUse.None)
-            {
-                tiles[index] = new TileState(TileKind.Grass);
-                continue;
-            }
-
             var outer = numbers[tileX, tileY] & TileMask;
             var house = building.Use == TileUse.Residential && development == 0 && outer is >= FirstHouse and <= LastHouse ? outer - FirstHouse + 1 : 0;
             tiles[index] = new TileState(TileKind.Grass, building.Use, development, p, valueClass, house, powered);
@@ -447,5 +438,5 @@ public static class MicropolisCityImport
     private static string Plural(int count, string what) =>
         $"{count.ToString(CultureInfo.InvariantCulture)} {what}{(count == 1 ? string.Empty : "s")}";
 
-    private sealed record Building(int First, int Size, TileUse Use, int Levels, int ValueClasses, string? Missing = null);
+    private sealed record Building(int First, int Size, TileUse Use, int Levels, int ValueClasses);
 }

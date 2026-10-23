@@ -149,6 +149,66 @@ public sealed class MapRenderer : IDisposable
     }
 
     /// <summary>
+    /// Draws a game on at each powered stadium the camera can see, as Micropolis fills its stadiums now
+    /// and then: for eight counts of every thirty-two, staggered by where each stands, the crowd is in
+    /// and the game plays on the field. It comes and goes with the calendar, so it is drawn over the
+    /// cached map, not into it. With no sheet, nothing is drawn. Call it inside <c>BeginMode2D</c>.
+    /// </summary>
+    public void DrawStadiumGames(Camera camera, long cityTime, int frame)
+    {
+        if (_sheet is null)
+        {
+            return;
+        }
+
+        // A stadium partly in view has its centre at most a tile up or left of the view, and two right or down of it.
+        var (minX, minY, maxX, maxY) = VisibleRange(_map, camera);
+        for (var y = Math.Max(minY - 2, 0); y <= Math.Min(maxY + 1, _map.Height - 1); y++)
+        {
+            for (var x = Math.Max(minX - 2, 0); x <= Math.Min(maxX + 1, _map.Width - 1); x++)
+            {
+                var center = _map.StateAt(x, y);
+                if (center.Use != TileUse.Stadium || !center.IsBuildingCenter || !center.Powered || (cityTime + x + y) % StadiumGameRound >= StadiumGameCounts)
+                {
+                    continue;
+                }
+
+                DrawStadiumGame(x, y, frame);
+            }
+        }
+    }
+
+    // Micropolis fills a powered stadium when the count and its place come round to a multiple of
+    // 32, and empties it eight counts later.
+    private const int StadiumGameRound = 32;
+    private const int StadiumGameCounts = 8;
+
+    // Only the stadium's own tiles are drawn full: a hole, or a tile burning or flooded, is left as it is.
+    private void DrawStadiumGame(int centerX, int centerY, int frame)
+    {
+        var size = Footprint.SizeOf(TileUse.Stadium);
+        for (var part = 0; part < Footprint.Parts(size); part++)
+        {
+            var (dx, dy) = Footprint.OffsetFromCenter(part, size);
+            var (x, y) = (centerX + dx, centerY + dy);
+            var state = _map.StateAtOrDefault(x, y);
+            if (state.Use != TileUse.Stadium || state.ZonePart != part || _fires?.IsBurning(x, y) == true || _floods?.IsFlooded(x, y) == true)
+            {
+                continue;
+            }
+
+            var index = part switch
+            {
+                TileAtlas.FootballGamePart => TileAtlas.FootballGameIndexFor(lower: false, frame),
+                TileAtlas.FootballGameLowerPart => TileAtlas.FootballGameIndexFor(lower: true, frame),
+                _ => TileAtlas.FullStadiumIndexFor(part),
+            };
+            var destination = new Rectangle { X = x * TileSize, Y = y * TileSize, Width = TileSize, Height = TileSize };
+            Raylib.DrawTexturePro(_sheet!.Value, TileAtlas.SourceFor(index), destination, Vector2.Zero, 0f, Color.White);
+        }
+    }
+
+    /// <summary>
     /// Draws an explosion at a tile, in a frame of the sheet's drawings of a building blowing apart.
     /// It is the game's alone: the fires it set are already burning. Call it inside <c>BeginMode2D</c>.
     /// </summary>

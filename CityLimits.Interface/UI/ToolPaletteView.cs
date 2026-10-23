@@ -2,13 +2,12 @@ namespace CityLimits.UI;
 
 /// <summary>
 /// Draws the palette of tools as Micropolis lays it out: the tool's name and price at the top,
-/// then rows of icon buttons, each row centred. The rows keep Micropolis' order, leaving out the
-/// tools CityLimits doesn't have yet. A button is a switch: a click picks its tool up, and another
-/// puts it down.
+/// then rows of icon buttons, each row centred, in Micropolis' order. A button is a switch: a click
+/// picks its tool up, and another puts it down.
 /// </summary>
 public sealed class ToolPaletteView
 {
-    // Micropolis' rows, with its stadium, seaport, and airport left out until CityLimits has them.
+    // Micropolis' rows.
     private static readonly Tool[][] Rows =
     [
         [Tool.Bulldozer, Tool.PowerLine, Tool.Park],
@@ -16,6 +15,8 @@ public sealed class ToolPaletteView
         [Tool.Residential, Tool.Commercial, Tool.Industrial],
         [Tool.FireStation, Tool.Inspect, Tool.PoliceStation],
         [Tool.CoalPowerPlant, Tool.NuclearPowerPlant],
+        [Tool.Stadium, Tool.Seaport],
+        [Tool.Airport],
     ];
 
     private const int FontSize = 14;
@@ -178,6 +179,9 @@ public sealed class ToolPaletteView
         Tool.PoliceStation => "Police station",
         Tool.Park => "Park",
         Tool.Rail => "Rail",
+        Tool.Stadium => "Stadium",
+        Tool.Seaport => "Seaport",
+        Tool.Airport => "Airport",
         _ => "Inspect",
     };
 
@@ -195,6 +199,9 @@ public sealed class ToolPaletteView
         Tool.PoliceStation => "Pol",
         Tool.Park => "Park",
         Tool.Rail => "Rail",
+        Tool.Stadium => "Stad",
+        Tool.Seaport => "Port",
+        Tool.Airport => "Air",
         _ => "?",
     };
 }

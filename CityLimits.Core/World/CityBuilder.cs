@@ -83,6 +83,11 @@ public sealed class CityBuilder
             case BuildAction.PoliceStation:
                 PlanFootprint(bounds.X, bounds.Y, stroke.Use, _definitions.Service(stroke.Use).Price, plan);
                 break;
+            case BuildAction.Stadium:
+            case BuildAction.Seaport:
+            case BuildAction.Airport:
+                PlanFootprint(bounds.X, bounds.Y, stroke.Use, _definitions.CostOf(stroke.Action), plan);
+                break;
             default:
                 PlanZones(bounds, stroke.Use, plan);
                 break;

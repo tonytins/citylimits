@@ -16,11 +16,12 @@ public static class ScenarioLoader
     public const long MaxFileBytes = 1024 * 1024;
 
     /// <summary>
-    /// The newest scenario format this version reads, and the one built-in scenarios are written in.
-    /// Format 2 names its times as the game's dates, a month and a week of it, rather than ticks; it
-    /// starts a city in a year of its own or from a saved city, and adds goals and disasters on dates.
+    /// The newest scenario format this version reads. Format 2 names its times as the game's dates, a
+    /// month and a week of it, rather than ticks; it starts a city in a year of its own or from a saved
+    /// city, and adds goals and disasters on dates. 2.1 added the Stadium, Seaport, and Airport tools and
+    /// counts. The built-in scenarios are written in 2.0, since none of them needs what 2.1 added.
     /// </summary>
-    public static readonly FormatVersion Format = new(2, 0);
+    public static readonly FormatVersion Format = new(2, 1);
 
     /// <summary>
     /// The newest format 1 this version still reads, its times in ticks: 1.1 added the Rail tool

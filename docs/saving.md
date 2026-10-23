@@ -79,7 +79,9 @@ game is paused:
 - the census and demand with their histories, the power grid's last trace
   and this cycle's count, police and fire coverage, hospitals and
   churches, land value, population density, the terrain's worth, and the
-  commercial rate, each as the simulation last left it.
+  commercial rate, each as the simulation last left it;
+- the stadiums, seaports, and airports, this cycle's count of them, and
+  the demand held back for want of one, from format 1.9.
 
 The road network is not saved; it is worked out again from the map.
 
@@ -113,6 +115,7 @@ size of the same city as `.fcl`.
 | `FIRE` | The fires on the map, and the holes they left in buildings; from format 1.6 |
 | `FLOD` | The floods on the map, and how long the water spreads for; from format 1.7 |
 | `CHAL` | The scenario being played, for a city that is a challenge; from format 1.8, and only in such a city |
+| `FCLT` | The stadiums, seaports, and airports, the scan's counts of them, and the demand held back for want of one; from format 1.9 |
 
 Each tile's word holds, from its lowest bit: the ground (2 bits), the use
 (4 bits), the footprint part (4 bits), power (1 bit), and 5 bits more: a
@@ -160,14 +163,15 @@ fountains, roads at any level of traffic, bridges and drawbridges, power
 lines, and road-and-line crossings come in a tile at a time. Buildings come
 in from their centres, so each is whole: zones at the level and land-value
 class their drawing says, with an empty residential zone's houses, and
-plants, stations, hospitals, and churches.
+plants, stations, hospitals, churches, seaports, airports, and stadiums;
+a stadium with a game on comes in as a stadium.
 
 **Rail comes in as rail,** its tunnels and its crossings with roads and
 power lines included.
 
-**What CityLimits doesn't have yet becomes bare ground:** seaports,
-airports, stadiums, and burning, flooded, or radioactive tiles, as does
-what's left of a building with no centre. The import lists what it
+**What CityLimits doesn't have yet becomes bare ground:** burning,
+flooded, or radioactive tiles, as does what's left of a building with no
+centre. The import lists what it
 replaced; the game logs it, and the news ticker says so.
 
 Also carried over: the date, the money, the tax rate (back to 7% when it
@@ -194,7 +198,7 @@ arrays of numbers sit on one line each.
 | `map` | The map: see below |
 | `budget`, `census`, `demand`, `power`, `services`, `community`, `cityMaps` | Each part of the simulation's state |
 | `cycle` | The road tiles counted this cycle, and what the last count set aside for the budget |
-| `parts`, `traffic`, `roadTraffic`, `rail`, `pollution`, `crime`, `fire`, `flood`, `challenge` | The parts list and the parts later versions added, each from the version the table under Versions gives |
+| `parts`, `traffic`, `roadTraffic`, `rail`, `pollution`, `crime`, `fire`, `flood`, `challenge`, `facilities` | The parts list and the parts later versions added, each from the version the table under Versions gives |
 
 ### The map
 
@@ -263,6 +267,7 @@ baseline that adds to the city takes the next minor version.
 | 1.6 | Fire: `"fire"`, and the `FIRE` chunk | A city from before has nothing burning, and its buildings whole |
 | 1.7 | Floods: `"flood"`, and the `FLOD` chunk | A city from before has no flood |
 | 1.8 | A challenge: `"challenge"`, and the `CHAL` chunk, only in a city being played as one | A city from before isn't one |
+| 1.9 | Stadiums, seaports, and airports: `"facilities"`, and the `FCLT` chunk | A city from before has none, and no demand held back until the city next checks |
 - **Growing the binary format.** New state goes in new chunks, not new
   fields in old ones, so a minor version stays an addition.
 - **The flat format** writes its version as a string, `"1.0"`, so 1.10
@@ -351,6 +356,28 @@ or a disaster the game doesn't know, or a step out of range, and says
 where. The binary format holds a goal's missing least or most, and a
 challenge not yet judged, as a byte saying the value is there or not,
 then the value.
+
+## Stadiums, seaports, and airports
+
+From format 1.9, the city's stadiums, seaports, and airports are saved as
+a part of their own, `"facilities"` in `.fcl` and the `FCLT` chunk in
+`.cl` (`Saving/FacilityCodec.cs`), as rail is: the map holds the bare
+ground beneath each, and the part lists each one by its centre, with what
+it is (`Stadium`, `Seaport`, or `Airport`), whether it had power, and its
+holes, as part numbers counted across and then down. It also holds the
+counts of each the scan has made this cycle, and whether residential,
+commercial, and industrial demand are held back for want of one.
+
+A hole in one of these, from a fire, a flood, or an earthquake, is
+written in the map as what it is, rubble or bare ground, and in the fire
+and flood parts as a plain fire or flood, not as a hole, since the map
+holds no building there. So a version that doesn't know them leaves the
+part out, as the parts list allows, and opens the city as if they had
+never been built, with what was lost from them lying where it fell. It
+can't keep the part, since it may build where they stood. Reading refuses
+a use that isn't one of the three, a building that runs off the map or
+onto another, a tile under one that isn't bare ground (or rubble, at a
+hole), or a hole that isn't an outer part, and says where.
 
 ## Opening a newer save
 

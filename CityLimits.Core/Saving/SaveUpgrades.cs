@@ -10,7 +10,7 @@ namespace CityLimits.Core.Saving;
 internal static class SaveUpgrades
 {
     /// <summary>The save model's version, which both save formats write.</summary>
-    public static readonly FormatVersion Current = new(1, 8);
+    public static readonly FormatVersion Current = new(1, 9);
 
     /// <summary>Upgrades a save in place, from whatever older 1.x version it is.</summary>
     public static void ToCurrent(CitySave save)
@@ -48,6 +48,10 @@ internal static class SaveUpgrades
         }
 
         // 1.8 added the challenge being played, which a city from before simply isn't.
+        if (save.Format < new FormatVersion(1, 9))
+        {
+            AddFacilities(save);
+        }
 
         save.Format = Current;
     }
@@ -70,6 +74,20 @@ internal static class SaveUpgrades
             save.Rail ??= new RailSave { Track = [.. Enumerable.Repeat(new string('.', map.Width), map.Height)], Tiles = 0, BudgetedTiles = 0 };
         }
     }
+
+    // 1.9 added stadiums, seaports, and airports. A city from before has none, and no demand held
+    // back for want of one until the city next checks.
+    private static void AddFacilities(CitySave save) =>
+        save.Facilities ??= new FacilitiesSave
+        {
+            Stadiums = 0,
+            Seaports = 0,
+            Airports = 0,
+            ResidentialCapped = false,
+            CommercialCapped = false,
+            IndustrialCapped = false,
+            Buildings = [],
+        };
 
     // 1.7 added floods. A city from before has none.
     private static void AddFlood(CitySave save)

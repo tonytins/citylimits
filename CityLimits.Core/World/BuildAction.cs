@@ -38,4 +38,13 @@ public enum BuildAction
 
     /// <summary>Lay rail.</summary>
     Rail,
+
+    /// <summary>Build a stadium, centred on the tile.</summary>
+    Stadium,
+
+    /// <summary>Build a seaport, centred on the tile.</summary>
+    Seaport,
+
+    /// <summary>Build an airport, centred on the tile.</summary>
+    Airport,
 }

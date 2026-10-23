@@ -8,9 +8,9 @@ namespace CityLimits.Core.Simulation;
 /// </summary>
 /// <remarks>
 /// The tax rate pushes all three up or down, by Micropolis' own steps: a push of 200 at no tax,
-/// none at the default 7%, and -600 at 20%. Until the systems they come from exist, two of
-/// Micropolis' inputs are fixed: the difficulty is Easy, and the caps that stop demand without
-/// a stadium, an airport, or a seaport are off.
+/// none at the default 7%, and -600 at 20%. A demand the city's <see cref="Facilities"/> hold back
+/// can't rise above zero, as Micropolis holds it while a big city lacks a stadium, a seaport, or an
+/// airport. Until its system exists, the difficulty is fixed at Easy.
 /// </remarks>
 public sealed class CityDemand
 {
@@ -110,10 +110,10 @@ public sealed class CityDemand
 
     /// <summary>
     /// Moves each demand by how far its population is from what the city's economy calls for, and
-    /// by the push of the tax rate.
+    /// by the push of the tax rate; a demand held back by <paramref name="caps"/> goes no higher than zero.
     /// </summary>
     /// <exception cref="ArgumentOutOfRangeException">The tax rate is outside 0 to 20.</exception>
-    public void Update(CityCensus census, int taxRate = CityBudget.DefaultTaxRate)
+    public void Update(CityCensus census, int taxRate = CityBudget.DefaultTaxRate, DemandCaps caps = DemandCaps.None)
     {
         ArgumentNullException.ThrowIfNull(census);
         ArgumentOutOfRangeException.ThrowIfNegative(taxRate);
@@ -149,6 +149,12 @@ public sealed class CityDemand
         Residential = Move(Residential, residentialRatio, push, ResidentialLimit);
         Commercial = Move(Commercial, commercialRatio, push, BusinessLimit);
         Industrial = Move(Industrial, industrialRatio, push, BusinessLimit);
+
+        // As Micropolis does, once it has moved: a demand held back stays where it is if it is
+        // falling, and comes down to zero if it would rise.
+        Residential = caps.HasFlag(DemandCaps.Residential) ? Math.Min(Residential, 0) : Residential;
+        Commercial = caps.HasFlag(DemandCaps.Commercial) ? Math.Min(Commercial, 0) : Commercial;
+        Industrial = caps.HasFlag(DemandCaps.Industrial) ? Math.Min(Industrial, 0) : Industrial;
         Record();
     }
 

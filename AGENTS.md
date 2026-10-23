@@ -36,7 +36,7 @@ CityLimits.Core/              engine-free library: the world and the simulation,
   Randomness/                   namespace CityLimits.Core.Randomness: the seeded generator the simulation owns
   World/                        namespace CityLimits.Core.World: the map and its default size, the tiles and their footprints, the terrain and its edges, the tile rules, the build actions, roads, rail, power lines, and the fires and floods on the map and the holes they leave
   Sprites/                      namespace CityLimits.Core.Sprites: the things that move over the map without being part of it, such as the train
-  Simulation/                   namespace CityLimits.Core.Simulation: the clock, the calendar, the tick and its cycle, the census, demand, growth, trips, traffic and its animation, the city maps, the power grid, service coverage, fire risk, the city's messages
+  Simulation/                   namespace CityLimits.Core.Simulation: the clock, the calendar, the tick and its cycle, the census, demand, growth, trips, traffic and its animation, the city maps, the power grid, service coverage, fire risk, the stadiums, seaports, and airports and the demand they hold back, the city's messages
   Economy/                      namespace CityLimits.Core.Economy: the treasury, the costs, the budget
   News/                         namespace CityLimits.Core.News: the news ticker's queue, its headlines and the desk that picks them, and the loading screen's phrases
   Settings/                     namespace CityLimits.Core.Settings: the settings that survive a session, and the folders the game keeps its files in
@@ -179,8 +179,9 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   its edges, just outside it, not at a corner (`RoadNetwork.IsZoneServed`).
 - **Power plants.** A coal or a nuclear power plant is 4 by 4, as in
   Micropolis, with its centre one tile in from its top-left corner, like a
-  zone's. `Footprint` says how big each use is (3 by 3 for a zone, 4 by 4
-  for a plant, one tile for anything else) and numbers its parts across
+  zone's. `Footprint` says how big each use is (3 by 3 for a zone or a
+  station, 4 by 4 for a plant, a stadium, or a seaport, 6 by 6 for an
+  airport, one tile for anything else) and numbers its parts across
   and then down, so a plant's tiles are parts 0 to 15 with 5 the centre.
   `TileState.HasFootprint` and `IsBuildingCenter` cover zones and plants
   alike; `IsZoned` and `IsZoneCenter` stay the three zones only. A plant's
@@ -282,6 +283,26 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   Pollution comes off a residential zone's worth, and off the land value
   a home's or a shop's building takes its class from, and a residential
   zone doesn't grow at all where pollution is above 128.
+- **Stadiums, seaports, and airports.** As in Micropolis, a stadium and
+  a seaport are 4 by 4 and an airport 6 by 6, each placed whole, centred
+  on the pointer, at Micropolis' prices, and knocked down through its
+  centre; Tony Bark brought them in for Kyoto. Each needs power like a
+  zone, has no upkeep, and repairs its bare holes now and then (an
+  airport every 8 counts, the others every 16). The scan counts them
+  (`Simulation/Facilities.cs`), and at its own count of Micropolis' 64
+  the city checks whether it has outgrown being without one: more than
+  500 residential units and no stadium, 70 industrial and no seaport, or
+  100 commercial and no airport, by the cycle's census. Until it next
+  checks, the demand that building serves can't rise above zero
+  (`DemandCaps`), and the city says "Residents demand a stadium",
+  "Industry requires a seaport", or "Commerce requires an airport". The
+  demand panel says what is held back. Every tile of a seaport or an
+  airport pollutes as a coal plant's does. A powered stadium has a game
+  on for 8 counts of every 32, staggered by where it stands, as in
+  Micropolis, which the game draws over the cached map from the city's
+  time (`MapRenderer.DrawStadiumGames`), not from the map's state. The
+  ship, the planes, and the helicopters Micropolis sends out from them
+  aren't in yet, as Tony Bark chose.
 - **Hospitals and churches.** As in Micropolis (`CommunityBuildings`),
   nobody builds them: each month the city needs one of each for every 256
   residents, and one time in four, when an empty residential zone would
@@ -301,8 +322,8 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   sets the centre of mass and the commercial rate.
 - **Pollution and crime.** As in Micropolis, `CityMaps` works pollution
   out with land value (phase 12), on the same 2 by 2 blocks: every tile of
-  an industrial building adds 50, every tile of a coal plant 100, and a
-  road 50 or 75 for the light or heavy traffic it shows, up to 255 a
+  an industrial building adds 50, every tile of a coal plant, a seaport,
+  or an airport 100, and a road 50 or 75 for the light or heavy traffic it shows, up to 255 a
   block, smoothed twice. Every tile of a building counts, as in
   Micropolis' core; the Java port counts only the centre, and Tony Bark
   chose the core. Crime (phase 13, once police coverage has spread) is,
@@ -327,7 +348,7 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   tile of a plant, a station, a hospital, or a church), and its empty
   lots go bare, which Tony Bark chose because Micropolis' loose pieces
   have no place in CityLimits' map. Industry with a building, power
-  plants, and stations explode, setting the four tiles at the centre's
+  plants, stations, stadiums, seaports, and airports explode, setting the four tiles at the centre's
   corners alight at once (Micropolis waits for its drawing to finish), and
   the game plays Micropolis' explosion drawing there alone. In phase 15,
   as on Micropolis' Easy, a disaster comes one time in 481 and is a fire
@@ -405,8 +426,10 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   keeps residents', commerce's, and industry's shares of the population,
   so the demand panel can show them. The headless run logs the
   population and demand each month. The tax rate pushes all three demands by Micropolis' own
-  steps, from +200 at 0% to -600 at 20%, none at 7%. Until their systems
-  exist, the difficulty is Easy and the demand caps are off.
+  steps, from +200 at 0% to -600 at 20%, none at 7%. A demand the city's
+  `Facilities` hold back can't rise above zero (see the stadium, the
+  seaport, and the airport below). Until its system exists, the
+  difficulty is Easy.
 - **Taxes and the budget.** As in Micropolis (`Economy/CityBudget.cs`),
   every count phase 9 estimates the year from the city as it stands and
   sets a 48th aside; when the count comes round to a year, the city
@@ -511,11 +534,11 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   drawn into its own texture, redrawn when a tile changes, the mode
   changes, or a count begins; without the texture it is drawn straight to
   the screen. Clicks on it never reach the map.
-- **The tools.** Thirteen tools sit in the palette down the left, laid out as
+- **The tools.** Sixteen tools sit in the palette down the left, laid out as
   Micropolis' is (`UI/ToolPaletteView.cs`): the name and price of the tool
   under the pointer, or of the held one, then centred rows of icon
-  buttons in Micropolis' order, rail beside the road, leaving out the
-  tools CityLimits doesn't have yet. A button is a switch, as Tony Bark
+  buttons in Micropolis' order, rail beside the road, and the stadium and
+  the seaport, then the airport, at the bottom. A button is a switch, as Tony Bark
   chose (`ToolPalette.Toggle`): a click picks its tool up and another
   puts it down, the game starts with no tool held, and the header says so.
   Tools are picked only from the palette; the number keys were dropped.
@@ -558,7 +581,10 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   Micropolis' (`Economy/TileCosts.cs`, and the zones' in their
   `ZoneSpec`, `PlantSpec`, and `ServiceSpec`): $10 a road tile, $50 a bridge tile, $5 a power line tile,
   $25 under water, $10 a park tile, $100 a zone, $500 a fire or police station, $3,000 a
-  coal power plant, $5,000 a nuclear power plant, $1 more for each tile of trees or rubble a tool
+  coal power plant, $5,000 a nuclear power plant, $5,000 a stadium, $3,000 a
+  seaport, $10,000 an airport (constants in `TileCosts`, not specs, as Tony
+  Bark chose, since a new definitions section would make older versions
+  refuse every new save), $1 more for each tile of trees or rubble a tool
   clears first, and $1 for each tile the bulldozer clears or each zone or
   plant it knocks down. Nothing is refunded. The palette and the HUD show the
   prices, the treasury pays for a stroke as a whole, and a stroke the city
@@ -570,7 +596,7 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   that carries power, and crosses a straight road, or is crossed by one,
   to make a road-and-line tile. Zones are laid as a grid, the first centred where the stroke
   started; a zone goes down whole or not at all, on ground with nothing on
-  it. A plant or a station is placed the same way, one at a time, centred on the
+  it. A plant, a station, a stadium, a seaport, or an airport is placed the same way, one at a time, centred on the
   pointer. Parks are laid as a rectangle. The bulldozer clears roads, bridges, power lines, parks, trees, and rubble tile by tile,
   but a zone, a plant, or a station only through its centre, which turns all its tiles
   to rubble. Nothing is built on a burning or flooded tile, or in a hole
@@ -612,8 +638,9 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   folder are listed too, and opening one imports it
   (`Saving/MicropolisCityImport.cs`), never writing it back: tiles by
   Micropolis' numbers, rail as rail, buildings whole from their centres,
-  and what CityLimits doesn't have yet (seaports, airports, stadiums,
-  fire, flood, radiation) as bare ground, listed in the log and on the
+  seaports, airports, and stadiums among them (a stadium with a game on
+  is a stadium), and what CityLimits doesn't have yet (fire, flood,
+  radiation) as bare ground, listed in the log and on the
   news ticker.
 - **The settings and the game's folders.** `GameFolders` works out where
   the game keeps its files, because a packaged game, such as the
@@ -714,7 +741,7 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   and no project. It holds the parser, the dispatcher, the default
   command, the strict option reader, and the exit codes.
 - **The tests.** `CityLimits.Tests` uses xUnit 2 with the VSTest runner
-  and coverlet, and holds 803 tests over challenges, scenario format 2.0, a later start year, floods and earthquakes, fire and its hints, pollution and crime, rail and the train, the news ticker's queue, its headlines, and the loading phrases, opening newer saves and the backports' saves, traffic and its animation, saving, loading, autosave, importing Micropolis cities, format versions and schemas, with a city
+  and coverlet, and holds 828 tests over stadiums, seaports, and airports and the demand they hold back, challenges, scenario format 2.0, a later start year, floods and earthquakes, fire and its hints, pollution and crime, rail and the train, the news ticker's queue, its headlines, and the loading phrases, opening newer saves and the backports' saves, traffic and its animation, saving, loading, autosave, importing Micropolis cities, format versions and schemas, with a city
   the owner built in both formats in `CityLimits.Tests/Assets/`, the generator, the terrain edges, the power plants, lines, and grid, the budget, the stations and their coverage, parks, hospitals and churches, the map, the
   calendar, the clock, the simulation, the settings, the tile rules, the
   build actions, the road network, the treasury, the scenario loader and
@@ -902,7 +929,7 @@ without reflection.
   number from before, `1`, reads as `1.0`. A binary save keeps its major
   version in the header and its minor in the `VERS` chunk, and new state
   goes in new chunks, never new fields in old ones. The scenario report's
-  `format` stays a whole number, since scripts read it. Saves are at 1.8:
+  `format` stays a whole number, since scripts read it. Saves are at 1.9:
   1.1 added traffic, 1.2 the parts list, 1.3 the traffic each road
   shows and the year's average, 1.4 rail, in a part of its own
   (`RailCodec`) with the map holding what lies beneath it, so a version
@@ -915,9 +942,15 @@ without reflection.
   (`FloodCodec`) beside the fire part, which marks a flooded hole as a
   hole, and 1.8 a challenge being played, a part only such a city has,
   which an older version may leave out or keep, since what fell due
-  meanwhile is made when it is opened here again. Scenarios are at 2.0, their first major version, which names
+  meanwhile is made when it is opened here again, and 1.9 the stadiums,
+  seaports, and airports, a part of their own (`FacilityCodec`), with the
+  map holding the bare ground beneath each, and the holes in one written
+  in the map and the fire and flood parts as the rubble or ground they
+  are, so a version that doesn't know them opens the city as if they had
+  never been built. Scenarios are at 2.1: 2.0, their first major version, names
   times as dates and adds a start year, a saved city to start from,
-  events, and goals; the 2.0 reader still reads format 1 (1.0 to 1.3, in
+  events, and goals, and 2.1 the Stadium, Seaport, and Airport tools and
+  counts; the 2.x reader still reads format 1 (1.0 to 1.3, in
   ticks), whose 1.1 added the Rail tool and count, 1.2 the `disasters`
   switch and the OnFire refusal, and 1.3 the Flooded refusal.
 - **Older saves climb one minor version at a time,** each step a small

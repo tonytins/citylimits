@@ -56,6 +56,7 @@ public static class BinaryCityFormat
     private const string FireTag = "FIRE";
     private const string FloodTag = "FLOD";
     private const string ChallengeTag = "CHAL";
+    private const string FacilitiesTag = "FCLT";
 
     private static readonly string[] Required = [CityTag, DefinitionsTag, MapTag, BudgetTag, CensusTag, DemandTag, PowerTag, ServicesTag, CommunityTag, CityMapsTag, CycleTag];
 
@@ -63,7 +64,7 @@ public static class BinaryCityFormat
     private static readonly string[] Optional = [ChallengeTag];
 
     // The chunks each minor version added, required from that version on; an older file goes without.
-    private static readonly (string Tag, FormatVersion Since)[] Added = [(TrafficTag, new FormatVersion(1, 1)), (RoadTrafficTag, new FormatVersion(1, 3)), (RailTag, new FormatVersion(1, 4)), (PollutionTag, new FormatVersion(1, 5)), (CrimeTag, new FormatVersion(1, 5)), (FireTag, new FormatVersion(1, 6)), (FloodTag, new FormatVersion(1, 7))];
+    private static readonly (string Tag, FormatVersion Since)[] Added = [(TrafficTag, new FormatVersion(1, 1)), (RoadTrafficTag, new FormatVersion(1, 3)), (RailTag, new FormatVersion(1, 4)), (PollutionTag, new FormatVersion(1, 5)), (CrimeTag, new FormatVersion(1, 5)), (FireTag, new FormatVersion(1, 6)), (FloodTag, new FormatVersion(1, 7)), (FacilitiesTag, new FormatVersion(1, 9))];
 
     /// <summary>Writes a city as the format's bytes.</summary>
     public static byte[] Write(CitySimulation city)
@@ -108,6 +109,7 @@ public static class BinaryCityFormat
         WriteChunk(stream, CrimeTag, SectionCodec.Write(save.Crime!));
         WriteChunk(stream, FireTag, SectionCodec.Write(save.Fire!));
         WriteChunk(stream, FloodTag, SectionCodec.Write(save.Flood!));
+        WriteChunk(stream, FacilitiesTag, SectionCodec.Write(save.Facilities!));
         if (save.Challenge is { } challenge)
         {
             WriteChunk(stream, ChallengeTag, SectionCodec.Write(challenge));
@@ -313,6 +315,7 @@ public static class BinaryCityFormat
             Crime = chunks.TryGetValue(CrimeTag, out var crime) ? SectionCodec.Read<BlockMapSave>(crime, CrimeTag) : null,
             Fire = chunks.TryGetValue(FireTag, out var fire) ? SectionCodec.Read<FireSave>(fire, FireTag) : null,
             Flood = chunks.TryGetValue(FloodTag, out var flood) ? SectionCodec.Read<FloodSave>(flood, FloodTag) : null,
+            Facilities = chunks.TryGetValue(FacilitiesTag, out var facilities) ? SectionCodec.Read<FacilitiesSave>(facilities, FacilitiesTag) : null,
             Challenge = chunks.TryGetValue(ChallengeTag, out var challenge) ? SectionCodec.Read<ChallengeSave>(challenge, ChallengeTag) : null,
         };
     }

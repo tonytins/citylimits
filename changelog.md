@@ -1,5 +1,28 @@
 # CityLimits Changelog
 
+## 0.4.104
+
+The stadium, the seaport, and the airport are in, at the bottom of the
+palette, as in Micropolis: a stadium for $5,000 and a seaport for
+$3,000, each 4 by 4, and an airport for $10,000, 6 by 6. Each needs
+power. A big city needs them: past about 10,000 residents with no
+stadium, residential demand can't rise above zero, and the city says
+"Residents demand a stadium"; industry wants a seaport, and commerce an
+airport, in the same way. The demand panel says what is holding demand
+back. A seaport or an airport pollutes as a coal plant does. Now and then
+a powered stadium fills up and a game plays on its field. Micropolis
+cities you import now bring their seaports, airports, and stadiums with
+them.
+
+For developers and agents: saves are 1.9, adding the `facilities` part
+(`FCLT` in `.cl`). The map holds the bare ground beneath each building,
+and the part lists each one by its centre with its power and its holes,
+so 0.4.103 and older open the city as if they had never been built.
+Scenarios are 2.1, adding the `Stadium`, `Seaport`, and `Airport` tools
+and counts; the report's counts include them. `CityDemand.Update` takes
+the `DemandCaps` that `CitySimulation.Facilities` holds, and
+`Footprint.Largest` is now 6.
+
 ## 0.4.103
 
 Scenarios can be played. The start menu's Scenarios lists the

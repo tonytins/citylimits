@@ -15,12 +15,15 @@ public sealed class DemandPanel : IMovableWindow
     private const int TitleSize = 20;
     private const int Padding = 12;
     private const int Width = 360;
-    private const int Height = 312;
+    private const int Height = 328;
     private const int ChartHeight = 120;
     private const int CloseSize = 20;
     private const int TitleStrip = Padding + TitleSize + 6;
 
     private readonly WindowPlacement _placement = new(TitleStrip);
+
+    // What the panel says of each set of demands held back, worked out once rather than in a frame.
+    private static readonly string[] HeldBack = [.. Enumerable.Range(0, 8).Select(caps => HeldBackText((DemandCaps)caps))];
 
     /// <summary>Tells whether the player is dragging the panel by its title.</summary>
     public bool IsDragging => _placement.IsDragging;
@@ -79,6 +82,9 @@ public sealed class DemandPanel : IMovableWindow
         Raylib.DrawText($"Taxes at {city.Budget.TaxRate}% push every demand by {Signed(demand.TaxPushApplied)}", x, y, SmallSize, Theme.TextDim);
         y += SmallSize + 6;
         Raylib.DrawText($"Jobs per resident {demand.JobsPerResident:0.00}   Workers per job {demand.WorkersPerJob:0.00}", x, y, SmallSize, Theme.TextDim);
+        y += SmallSize + 6;
+        var caps = city.Facilities.Caps;
+        Raylib.DrawText(HeldBack[(int)caps & 0b111], x, y, SmallSize, caps == DemandCaps.None ? Theme.TextDim : Theme.Error);
         y += SmallSize + 10;
 
         var census = city.Census;
@@ -90,6 +96,33 @@ public sealed class DemandPanel : IMovableWindow
             y,
             SmallSize,
             Theme.TextDim);
+    }
+
+    // As Micropolis holds demand back: residents for a stadium, commerce for an airport, industry for a seaport.
+    private static string HeldBackText(DemandCaps caps)
+    {
+        if (caps == DemandCaps.None)
+        {
+            return "Nothing is holding demand back";
+        }
+
+        var wants = new List<string>();
+        if (caps.HasFlag(DemandCaps.Residential))
+        {
+            wants.Add("R wants a stadium");
+        }
+
+        if (caps.HasFlag(DemandCaps.Commercial))
+        {
+            wants.Add("C wants an airport");
+        }
+
+        if (caps.HasFlag(DemandCaps.Industrial))
+        {
+            wants.Add("I wants a seaport");
+        }
+
+        return $"Held at zero: {string.Join(", ", wants)}";
     }
 
     // Three plain lines, oldest on the left and newest on the right, each against its own limit,

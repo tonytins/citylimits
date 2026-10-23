@@ -163,6 +163,15 @@ public enum CountSubject
 
     /// <summary>Rail tiles, tunnels and crossings included; from scenario format 1.1.</summary>
     Rail,
+
+    /// <summary>Stadiums, by their centres; from scenario format 2.1.</summary>
+    Stadium,
+
+    /// <summary>Seaports, by their centres; from scenario format 2.1.</summary>
+    Seaport,
+
+    /// <summary>Airports, by their centres; from scenario format 2.1.</summary>
+    Airport,
 }
 
 /// <summary>

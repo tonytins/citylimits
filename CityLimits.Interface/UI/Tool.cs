@@ -41,6 +41,15 @@ public enum Tool
 
     /// <summary>Lay rail.</summary>
     Rail,
+
+    /// <summary>Build a stadium.</summary>
+    Stadium,
+
+    /// <summary>Build a seaport.</summary>
+    Seaport,
+
+    /// <summary>Build an airport.</summary>
+    Airport,
 }
 
 /// <summary>The work each tool asks the city to do.</summary>
@@ -61,6 +70,9 @@ public static class ToolActions
         Tool.PoliceStation => BuildAction.PoliceStation,
         Tool.Park => BuildAction.Park,
         Tool.Rail => BuildAction.Rail,
+        Tool.Stadium => BuildAction.Stadium,
+        Tool.Seaport => BuildAction.Seaport,
+        Tool.Airport => BuildAction.Airport,
         _ => null,
     };
 }

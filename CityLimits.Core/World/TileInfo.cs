@@ -42,6 +42,9 @@ public static class TileInfo
         TileUse.Rail => "Rail",
         TileUse.RailAcrossRoad or TileUse.RailDownRoad => "Rail and road",
         TileUse.RailAcrossPowerLine or TileUse.RailDownPowerLine => "Rail and power line",
+        TileUse.Stadium => "Stadium",
+        TileUse.Seaport => "Seaport",
+        TileUse.Airport => "Airport",
         _ => "Empty",
     };
 
@@ -64,6 +67,9 @@ public static class TileInfo
         TileUse.Rail => "rail",
         TileUse.RailAcrossRoad or TileUse.RailDownRoad => "rail and road",
         TileUse.RailAcrossPowerLine or TileUse.RailDownPowerLine => "rail and line",
+        TileUse.Stadium => "stadium",
+        TileUse.Seaport => "seaport",
+        TileUse.Airport => "airport",
         _ => "empty",
     };
 
@@ -77,7 +83,8 @@ public static class TileInfo
         TileUse.Road => "carries traffic",
         TileUse.Residential or TileUse.Commercial or TileUse.Industrial when state.Development == 0 => "not developed yet",
         TileUse.Residential or TileUse.Commercial or TileUse.Industrial => $"developed to level {state.Development}",
-        TileUse.CoalPowerPlant or TileUse.NuclearPowerPlant or TileUse.FireStation or TileUse.PoliceStation => "bulldoze its centre to clear it",
+        TileUse.CoalPowerPlant or TileUse.NuclearPowerPlant or TileUse.FireStation or TileUse.PoliceStation
+            or TileUse.Stadium or TileUse.Seaport or TileUse.Airport => "bulldoze its centre to clear it",
         TileUse.Hospital or TileUse.Church => "the city built it on a residential zone",
         TileUse.Park => "the bulldozer clears it for $1",
         TileUse.PowerLine when state.Kind == TileKind.Water => "laid under water",

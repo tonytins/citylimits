@@ -296,6 +296,7 @@ public sealed class GameLoop : IDisposable
 
         Raylib.BeginMode2D(view);
         _mapRenderer.Draw(_camera, _trafficAnimation.Frame, _fireFrame);
+        _mapRenderer.DrawStadiumGames(_camera, _simulation.CityTime, _fireFrame);
         DrawTrain();
         for (var i = 0; i < _explosionCount; i++)
         {
@@ -999,6 +1000,9 @@ public sealed class GameLoop : IDisposable
         BuildStatus.Built when action == BuildAction.NuclearPowerPlant => $"Built a nuclear power plant for ${result.Cost}",
         BuildStatus.Built when action == BuildAction.FireStation => $"Built a fire station for ${result.Cost}",
         BuildStatus.Built when action == BuildAction.PoliceStation => $"Built a police station for ${result.Cost}",
+        BuildStatus.Built when action == BuildAction.Stadium => $"Built a stadium for ${result.Cost}",
+        BuildStatus.Built when action == BuildAction.Seaport => $"Built a seaport for ${result.Cost}",
+        BuildStatus.Built when action == BuildAction.Airport => $"Built an airport for ${result.Cost}",
         BuildStatus.Built => $"Zoned {Count(result.TilesChanged / ZoneLayout.Parts, "zone")} for ${result.Cost}",
         BuildStatus.Unchanged when result.Reason == BuildRefusal.AlreadyDone => "The land is already like that",
         BuildStatus.Refused when result.Reason == BuildRefusal.PartOfAZone => "Bulldoze its centre to clear it",

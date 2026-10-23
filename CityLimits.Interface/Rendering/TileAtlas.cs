@@ -124,6 +124,40 @@ public static class TileAtlas
     private const int ChurchTile = 414;
 
     /// <summary>
+    /// The first tile of the stadium's 4 by 4 drawing, empty. Its sixteen tiles follow each other in
+    /// the sheet across and then down, so a part's tile is the first tile plus its part number.
+    /// </summary>
+    private const int StadiumTile = 779;
+
+    /// <summary>The first tile of the stadium's drawing with a game on, laid out as the empty one is.</summary>
+    private const int FullStadiumTile = 795;
+
+    /// <inheritdoc cref="StadiumTile"/>
+    private const int SeaportTile = 693;
+
+    /// <summary>The first tile of the airport's 6 by 6 drawing, its thirty-six tiles laid out as the stadium's are.</summary>
+    private const int AirportTile = 709;
+
+    // The two tiles of a game on the stadium's field, each eight frames that follow each other in the
+    // sheet, drawn over the stadium's drawing a tile right of its centre and a tile below that.
+    private const int FootballGameTile = 932;
+    private const int FootballGameLowerTile = 940;
+    private const int FootballGameFrames = 8;
+
+    /// <summary>The parts of a stadium the game on its field is drawn on: a tile right of its centre, and the tile below that.</summary>
+    public const int FootballGamePart = 6;
+
+    /// <inheritdoc cref="FootballGamePart"/>
+    public const int FootballGameLowerPart = 10;
+
+    /// <summary>The tile of a stadium's part, with a game on.</summary>
+    public static int FullStadiumIndexFor(int part) => FullStadiumTile + part;
+
+    /// <summary>The tile of the game on a stadium's field in an animation frame, on its upper or its lower tile.</summary>
+    public static int FootballGameIndexFor(bool lower, int frame) =>
+        (lower ? FootballGameLowerTile : FootballGameTile) + (((frame % FootballGameFrames) + FootballGameFrames) % FootballGameFrames);
+
+    /// <summary>
     /// Where each zone's drawings are. A drawing is 3 by 3, its nine tiles following each other in
     /// the sheet across and then down, so a part's tile is the drawing's first tile plus its part
     /// number. The empty zone comes first; then the buildings, one per development level within
@@ -370,6 +404,21 @@ public static class TileAtlas
         if (state.Use == TileUse.Church)
         {
             return ChurchTile + state.ZonePart;
+        }
+
+        if (state.Use == TileUse.Stadium)
+        {
+            return StadiumTile + state.ZonePart;
+        }
+
+        if (state.Use == TileUse.Seaport)
+        {
+            return SeaportTile + state.ZonePart;
+        }
+
+        if (state.Use == TileUse.Airport)
+        {
+            return AirportTile + state.ZonePart;
         }
 
         if (state.IsZoned)

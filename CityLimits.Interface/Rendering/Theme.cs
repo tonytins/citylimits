@@ -135,6 +135,9 @@ public static class Theme
     /// <summary>The color of a power plant, when the tile sheet could not be loaded.</summary>
     public static readonly Color PowerPlant = new() { R = 150, G = 150, B = 160, A = 255 };
 
+    /// <summary>The color of a stadium, a seaport, or an airport, when the tile sheet could not be loaded.</summary>
+    public static readonly Color Facility = new() { R = 180, G = 170, B = 120, A = 255 };
+
     /// <summary>Returns the color of a kind of ground.</summary>
     public static Color For(TileKind kind) => kind switch
     {
@@ -158,6 +161,7 @@ public static class Theme
         TileUse.Commercial => Commercial,
         TileUse.Industrial => Industrial,
         TileUse.CoalPowerPlant or TileUse.NuclearPowerPlant => PowerPlant,
+        TileUse.Stadium or TileUse.Seaport or TileUse.Airport => Facility,
         _ => Grass,
     };
 }

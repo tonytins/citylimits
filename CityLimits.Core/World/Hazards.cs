@@ -47,10 +47,11 @@ public sealed class Hazards
             return null;
         }
 
-        // A building's centre is at most two tiles from any of its tiles, and buildings never overlap.
-        for (var cy = y - 2; cy <= y + 2; cy++)
+        // A building's centre is one tile in from its top-left corner, so it is at most one tile up or
+        // left of any of its tiles, and as far down or right as the largest is wide less two; buildings never overlap.
+        for (var cy = y - (Footprint.Largest - 2); cy <= y + 1; cy++)
         {
-            for (var cx = x - 2; cx <= x + 2; cx++)
+            for (var cx = x - (Footprint.Largest - 2); cx <= x + 1; cx++)
             {
                 var center = _map.StateAtOrDefault(cx, cy);
                 if (!center.IsBuildingCenter)

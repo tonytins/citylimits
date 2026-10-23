@@ -20,6 +20,9 @@ tools/icfire.png     fire station
 tools/icpol.png      police station
 tools/icpark.png     park
 tools/icrail.png     rail
+tools/icstad.png     stadium
+tools/icseap.png     seaport
+tools/icairp.png     airport
 sprites/obj1-0.png   the train running north or south; obj1-1 east or west, obj1-2 turning
                      between north and west, obj1-3 between north and east, obj1-4 in a tunnel
 Scenarios/           the built-in scenarios, one JSON file each, named for its id
@@ -191,6 +194,22 @@ its part number (0 to 15, with 5 the centre):
 | Coal power plant    | 745 to 760 |
 | Nuclear power plant | 811 to 826 |
 
+A stadium and a seaport are 4 by 4 and drawn the same way, and an airport is
+6 by 6, its tile the first tile plus its part number (0 to 35, with 7 the
+centre). A stadium with a game on is drawn from its own sixteen tiles, with
+the game on its field from two eight-frame animations, a tile right of the
+centre and the tile below that (`TileAtlas.FullStadiumIndexFor`,
+`TileAtlas.FootballGameIndexFor`):
+
+| Building                  | Tiles      |
+| ------------------------- | ---------- |
+| Seaport                   | 693 to 708 |
+| Airport                   | 709 to 744 |
+| Stadium                   | 779 to 794 |
+| Stadium with a game on    | 795 to 810 |
+| The game, upper tile      | 932 to 939 |
+| The game, lower tile      | 940 to 947 |
+
 ## Licensing
 
 The tile sheet and the tool icons come from Micropolis
@@ -203,7 +222,9 @@ art can be used and redistributed here. The tile sheet is the core's
 tool icons are the same drawings, converted to PNG in the same way as the
 others, with their highlighted versions, the core's `*hi.png`; the
 bulldozer icons are the Micropolis dozer icons, `icdozr` and `icdozrhi`. The
-rail icons are the core's `icrail.png` and `icrailhi.png`, and the train's drawings
+rail icons are the core's `icrail.png` and `icrailhi.png`; the stadium, seaport,
+and airport icons are the core's `icstad`, `icseap`, and `icairp`, with their
+`hi` versions, added for Kyoto with Tony Bark's approval; and the train's drawings
 in `sprites/` are the core's `obj1-0.png` to `obj1-4.png`, converted to 8-bit RGBA
 in the same way as the icons, added for Radial with Tony Bark's approval. The art
 is the property of its authors, and CityLimits is not a SimCity product and

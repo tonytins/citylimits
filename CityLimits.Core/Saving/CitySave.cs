@@ -81,6 +81,12 @@ internal sealed class CitySave
     public FloodSave? Flood { get; set; }
 
     /// <summary>
+    /// The stadiums, seaports, and airports on the map, the scan's counts of them, and the demand held
+    /// back for want of one; from format 1.9, and none for a city upgraded from before.
+    /// </summary>
+    public FacilitiesSave? Facilities { get; set; }
+
+    /// <summary>
     /// The scenario being played in the city, if any: its goals, when they are judged, and what is still
     /// to come; from format 1.8. A city that isn't a challenge leaves it out, so its save is as before.
     /// </summary>
@@ -352,6 +358,52 @@ internal sealed class TrafficSave
 {
     /// <summary>Each 2 by 2 block's traffic, row by row.</summary>
     public required int[] Density { get; set; }
+}
+
+/// <summary>The stadiums, seaports, and airports, as <see cref="FacilityCodec"/> writes them.</summary>
+[System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(SectionCodec.ModelMembers)]
+internal sealed class FacilitiesSave
+{
+    /// <summary>The stadiums the scan has counted this cycle.</summary>
+    public required int Stadiums { get; set; }
+
+    /// <summary>The seaports the scan has counted this cycle.</summary>
+    public required int Seaports { get; set; }
+
+    /// <summary>The airports the scan has counted this cycle.</summary>
+    public required int Airports { get; set; }
+
+    /// <summary>Whether residential demand is held at zero for want of a stadium.</summary>
+    public required bool ResidentialCapped { get; set; }
+
+    /// <summary>Whether commercial demand is held at zero for want of an airport.</summary>
+    public required bool CommercialCapped { get; set; }
+
+    /// <summary>Whether industrial demand is held at zero for want of a seaport.</summary>
+    public required bool IndustrialCapped { get; set; }
+
+    /// <summary>Each building on the map, by its centre.</summary>
+    public required FacilitySave[] Buildings { get; set; }
+}
+
+/// <summary>A stadium, a seaport, or an airport on the map.</summary>
+[System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(SectionCodec.ModelMembers)]
+internal sealed class FacilitySave
+{
+    /// <summary>What it is: Stadium, Seaport, or Airport.</summary>
+    public required string Use { get; set; }
+
+    /// <summary>The column of its centre.</summary>
+    public required int X { get; set; }
+
+    /// <summary>The row of its centre.</summary>
+    public required int Y { get; set; }
+
+    /// <summary>Whether it had power when the scan last reached it.</summary>
+    public required bool Powered { get; set; }
+
+    /// <summary>The parts of it that are holes, numbered across and then down, as a footprint's are.</summary>
+    public required int[] Holes { get; set; }
 }
 
 [System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(SectionCodec.ModelMembers)]

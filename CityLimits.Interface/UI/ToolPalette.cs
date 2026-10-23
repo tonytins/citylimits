@@ -18,6 +18,9 @@ public sealed class ToolPalette
         Tool.PoliceStation,
         Tool.Park,
         Tool.Rail,
+        Tool.Stadium,
+        Tool.Seaport,
+        Tool.Airport,
     ];
 
     /// <summary>The tool that is held, or null when none is, as when the game starts.</summary>

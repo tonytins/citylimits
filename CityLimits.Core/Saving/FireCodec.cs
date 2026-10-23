@@ -24,7 +24,9 @@ internal static class FireCodec
         {
             for (var x = 0; x < map.Width; x++)
             {
-                var hole = hazards.IsHole(x, y);
+                // A hole in a stadium, a seaport, or an airport is written as what it is, since the map
+                // holds bare ground beneath the building (FacilityCodec), and the building's part holds the hole.
+                var hole = hazards.IsHole(x, y) && !FacilityCodec.IsHoleInFacility(map, hazards, x, y);
                 row[x] = hazards.Fires.IsBurning(x, y) ? (hole ? BurningHole : Burning) : (hole ? Hole : Nothing);
             }
 
@@ -34,7 +36,10 @@ internal static class FireCodec
         return new FireSave { Tiles = rows };
     }
 
-    /// <summary>The map to write: the city's own when no building has a hole, or a copy with each hole filled in, whatever made it.</summary>
+    /// <summary>
+    /// The map to write: the city's own when no building has a hole, or a copy with each hole filled in,
+    /// whatever made it, but for the holes in stadiums, seaports, and airports, which their own part holds.
+    /// </summary>
     public static TileMap WholeMap(TileMap map, Hazards hazards)
     {
         TileState[]? tiles = null;
@@ -42,7 +47,7 @@ internal static class FireCodec
         {
             for (var x = 0; x < map.Width; x++)
             {
-                if (!hazards.IsHole(x, y))
+                if (!hazards.IsHole(x, y) || FacilityCodec.IsHoleInFacility(map, hazards, x, y))
                 {
                     continue;
                 }

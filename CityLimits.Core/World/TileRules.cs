@@ -27,6 +27,12 @@ public static class TileRules
     /// <summary>Tells whether a use is a service building: a fire or a police station.</summary>
     public static bool IsService(TileUse use) => use is TileUse.FireStation or TileUse.PoliceStation;
 
+    /// <summary>
+    /// Tells whether a use is one of the buildings the city's demand needs once it is big, as in
+    /// Micropolis: a stadium, a seaport, or an airport.
+    /// </summary>
+    public static bool IsFacility(TileUse use) => use is TileUse.Stadium or TileUse.Seaport or TileUse.Airport;
+
     /// <summary>Tells whether a road can be laid on the given ground. Water takes a bridge, which has rules of its own.</summary>
     public static bool CanLayRoad(TileKind kind) => CanBuildOn(kind);
 

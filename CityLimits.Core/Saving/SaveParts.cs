@@ -67,6 +67,11 @@ internal static class SaveParts
         // write it back as it was, since what fell due meanwhile is made, and the goals judged, when the
         // newer game opens it again. Only a city that is a challenge has it.
         new() { Name = "challenge", Chunk = "CHAL", Since = "1.8", Ignorable = true, Keepable = true },
+
+        // The map holds the bare ground beneath each stadium, seaport, and airport, and what was lost
+        // from one lies there as rubble, so a game that doesn't know them opens the city as if they had
+        // never been built. It can't keep them, since it may build where they stood.
+        new() { Name = "facilities", Chunk = "FCLT", Since = "1.9", Ignorable = true, Keepable = false },
     ];
 
     /// <summary>

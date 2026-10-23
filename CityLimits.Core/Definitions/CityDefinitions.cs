@@ -66,6 +66,9 @@ public sealed class CityDefinitions
         BuildAction.Rail => TileCosts.Rail,
         BuildAction.FireStation => Service(TileUse.FireStation).Price,
         BuildAction.PoliceStation => Service(TileUse.PoliceStation).Price,
+        BuildAction.Stadium => TileCosts.Stadium,
+        BuildAction.Seaport => TileCosts.Seaport,
+        BuildAction.Airport => TileCosts.Airport,
         _ => 0,
     };
 

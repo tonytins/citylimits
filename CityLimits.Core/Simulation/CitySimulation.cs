@@ -25,6 +25,9 @@ public sealed class CitySimulation
     private const int MessageRound = 64;
     private const int NeedRailCount = 18;
     private const int NeedPowerCount = 22;
+    private const int NeedStadiumCount = 26;
+    private const int NeedSeaportCount = 28;
+    private const int NeedAirportCount = 30;
     private const int BlackoutsCount = 32;
     private const int HighPollutionCount = 35;
     private const int HighCrimeCount = 42;
@@ -92,7 +95,8 @@ public sealed class CitySimulation
     // find something that can burn and isn't a building's centre.
     private const int FireSearches = 40;
 
-    // Plants and stations redraw their bare holes every 8 counts, hospitals and churches every 16.
+    // Plants, stations, and airports redraw their bare holes every 8 counts; hospitals, churches,
+    // stadiums, and seaports every 16, as in Micropolis.
     private const int BuildingRepairCounts = 8;
     private const int CommunityRepairCounts = 16;
 
@@ -268,6 +272,9 @@ public sealed class CitySimulation
     /// <summary>How well fire and police stations cover the city, and how many there are.</summary>
     public ServiceCoverage Services { get; }
 
+    /// <summary>The city's stadiums, seaports, and airports, and the demand held back for want of one.</summary>
+    public Facilities Facilities { get; } = new();
+
     /// <summary>
     /// The road tiles the scan counted this cycle, as the roads' upkeep counts them: a bridge counts
     /// five, and a road showing heavy traffic one more.
@@ -312,12 +319,13 @@ public sealed class CitySimulation
             CityTime++;
             if (CityTime % 2 == 0)
             {
-                Demand.Update(Census, Budget.TaxEffect);
+                Demand.Update(Census, Budget.TaxEffect, Facilities.Caps);
             }
 
             Census.Clear();
             Power.StartCount();
             Services.StartCount();
+            Facilities.StartCount();
             Community.StartCount();
             RoadTiles = 0;
             RailTiles = 0;
@@ -400,7 +408,7 @@ public sealed class CitySimulation
     }
 
     // A building whose centre catches may explode: as in Micropolis, industry with a building,
-    // power plants, and fire and police stations do.
+    // power plants, fire and police stations, stadiums, seaports, and airports do.
     private void Ignite(int x, int y)
     {
         if (Fires.Ignite(x, y) is not { } building)
@@ -411,7 +419,8 @@ public sealed class CitySimulation
         var explodes = building.Use switch
         {
             TileUse.Industrial => building.Development > 0,
-            TileUse.CoalPowerPlant or TileUse.NuclearPowerPlant or TileUse.FireStation or TileUse.PoliceStation => true,
+            TileUse.CoalPowerPlant or TileUse.NuclearPowerPlant or TileUse.FireStation or TileUse.PoliceStation
+                or TileUse.Stadium or TileUse.Seaport or TileUse.Airport => true,
             _ => false,
         };
         if (explodes)
@@ -683,6 +692,21 @@ public sealed class CitySimulation
             MessageSent?.Invoke(CityMessage.NeedPower);
         }
 
+        if (count == NeedStadiumCount && Facilities.CheckStadium(Census))
+        {
+            MessageSent?.Invoke(CityMessage.NeedStadium);
+        }
+
+        if (count == NeedSeaportCount && Facilities.CheckSeaport(Census))
+        {
+            MessageSent?.Invoke(CityMessage.NeedSeaport);
+        }
+
+        if (count == NeedAirportCount && Facilities.CheckAirport(Census))
+        {
+            MessageSent?.Invoke(CityMessage.NeedAirport);
+        }
+
         var buildings = Power.PoweredBuildings + Power.UnpoweredBuildings;
         if (count == BlackoutsCount && buildings > 0 && (double)Power.PoweredBuildings / buildings < PoweredShareBeforeBlackouts)
         {
@@ -791,6 +815,13 @@ public sealed class CitySimulation
                     continue;
                 }
 
+                if (TileRules.IsFacility(state.Use))
+                {
+                    RepairNowAndThen(x, y, state.Use == TileUse.Airport ? BuildingRepairCounts : CommunityRepairCounts);
+                    Facilities.Count(state.Use);
+                    continue;
+                }
+
                 if (TileRules.IsService(state.Use))
                 {
                     RepairNowAndThen(x, y, BuildingRepairCounts);
@@ -889,6 +920,7 @@ public sealed class CitySimulation
         Crime = Maps.CaptureCrime(),
         Fire = FireCodec.Capture(Map, Hazards),
         Flood = FloodCodec.Capture(Map, Floods),
+        Facilities = FacilityCodec.Capture(Map, Hazards, Facilities),
         Challenge = Challenge?.Capture(),
     };
 
@@ -922,6 +954,7 @@ public sealed class CitySimulation
         CheckZones(map, definitions);
 
         var city = new CitySimulation(map, save.Seed, funds: 0, definitions);
+        FacilityCodec.Apply(map, city.Facilities, save.Facilities ?? throw new InvalidSave("facilities: missing."));
         city.Name = save.Name.Trim();
         city.Random.State = random;
         city.TickCount = tick;
@@ -1018,7 +1051,7 @@ public sealed class CitySimulation
         Power.StartCount();
     }
 
-    // As Micropolis repairs its plants, stations, hospitals, and churches: every so many counts,
+    // As Micropolis repairs its plants, stations, hospitals, churches, stadiums, seaports, and airports: every so many counts,
     // the holes in one that are bare ground are redrawn, at no cost.
     private void RepairNowAndThen(int x, int y, int counts)
     {
