@@ -1,5 +1,10 @@
 # CityLimits Changelog
 
+## 0.4.105
+
+Finally removed the tick counter from the HUD. Now that they're
+tied into the date system, I can finally get rid of that old relic.
+
 ## 0.4.104
 
 The stadium, the seaport, and the airport are in, at the bottom of the

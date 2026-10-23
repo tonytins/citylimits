@@ -323,7 +323,7 @@ public sealed class GameLoop : IDisposable
         _hud.DrawStatus(
             _simulation.Name,
             _simulation.Date,
-            _simulation.TickCount,
+            // _simulation.TickCount,
             _settings.Speed,
             _lastSpeed,
             _simulation.Census.CityPopulation,

@@ -121,7 +121,7 @@ public sealed class Hud
     /// help button on the right. The speed buttons light up to the speed, so two lit is Fast; while paused they
     /// show, dimmed, the speed play will bring back.
     /// </summary>
-    public void DrawStatus(string cityName, GameDate date, long tickCount, int speed, int resumeSpeed, int population, CityDemand demand, int funds, int framesPerSecond)
+    public void DrawStatus(string cityName, GameDate date, int speed, int resumeSpeed, int population, CityDemand demand, int funds, int framesPerSecond)
     {
         ArgumentNullException.ThrowIfNull(demand);
 
@@ -171,7 +171,7 @@ public sealed class Hud
         _helpBounds = new Rectangle { X = width - Padding - HelpSize, Y = top + ((BarHeight - HelpSize) / 2), Width = HelpSize, Height = HelpSize };
         DrawHelpButton(_helpBounds);
 
-        var right = $"{Count(tickCount)} Ticks   {framesPerSecond} FPS";
+        var right = $"{framesPerSecond} FPS";
         Raylib.DrawText(right, (int)_helpBounds.X - 10 - Raylib.MeasureText(right, FontSize), textY, FontSize, Theme.TextDim);
     }
 

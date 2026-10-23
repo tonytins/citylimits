@@ -1,4 +1,10 @@
 <Solution>
+  <Folder Name="/Solution Items/">
+    <File Path="AGENTS.md" />
+    <File Path=".gitignore" />
+    <File Path="README.md" />
+    <File Path="changelog.md" />
+  </Folder>
   <Project Path="CityLimits.CommandLine/CityLimits.CommandLine.csproj" />
   <Project Path="CityLimits.Core/CityLimits.Core.csproj" />
   <Project Path="CityLimits.Interface/CityLimits.Interface.csproj" />
