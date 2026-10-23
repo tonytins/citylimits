@@ -1,6 +1,6 @@
 # CityLimits roadmap
 
-> **Last reviewed:** 2026-10-21 · **Last updated:** 2026-10-22 · **Change:** minor (the interface library; Kyoto, the scenario editor, added) · **Stage:** beta
+> **Last reviewed:** 2026-10-21 · **Last updated:** 2026-10-23 · **Change:** minor (Scenarios, P3: challenges played from the start menu) · **Stage:** beta
 
 Forward-looking: where CityLimits stands, what blocks the next milestone,
 and what comes next. Verified status and evidence are in the
@@ -50,11 +50,11 @@ Next, in order:
 
 1. **Scenarios to play**, the polish Tony Bark chose first: P1, a city's
    calendar starting in a later year, and P2, scenario format 2.0, are in.
-   Next, in the order Tony Bark settled: the interface split out into a
-   library of its own, which is in; P3, playing a scenario from the start
-   page, with its goals, its result, and saving partway, with the
-   demo-town fallback dropped; then Kyoto, the scenario editor; then P4,
-   the first built-in challenges, made with the editor.
+   In the order Tony Bark settled, the interface split out into a
+   library of its own and P3, playing a challenge from the start menu,
+   with its goals, its result, and saving partway, are in, and the
+   demo-town fallback is dropped. Next is Kyoto, the scenario editor;
+   then P4, the first built-in challenges, made with the editor.
 2. **Happy Isle's last items**: the city score, and map size on the
    start screen. Deadwood (pollution, crime, fire, floods, and
    earthquakes) and Radial (traffic and rail) are complete.
@@ -73,19 +73,18 @@ Next, in order:
 | Joffburg: Services and economy | 100% | 0 | Meets the baseline: power, taxes and the budget, services (stations, coverage, parks, hospitals, and churches), and the overview map with its power, coverage, land value, and density modes, as in Micropolis |
 | Radial: Traffic and commuting | 100% | 0 | Meets the baseline: versioned file formats with schemas, read without reflection, the traffic map trips leave and what it shows and costs, and rail, with tunnels, crossings, trips along it, its upkeep and message, and the commuter train |
 | Deadwood: Land value, pollution, disasters | 100% | 0 | Meets the baseline: pollution and crime, fire with the ticker's fire-risk hints, floods, and earthquakes, as in Micropolis, with free repair and the settings' disaster switches |
-| Happy Isle: Player-facing game | 50% | 13–22 | The palette, laid out as Micropolis', and the HUD, with its bar along the bottom over a news ticker after Tony Bark's mock-up, are in; the budget, demand, and city panels, the overview's power mode, and the settings window are too, and cities save, load, autosave, and import from Micropolis. Scenarios to play (P1 and P2 of four in), the city score, and map size on the start screen are left |
+| Happy Isle: Player-facing game | 50% | 8–14 | The palette, laid out as Micropolis', and the HUD, with its bar along the bottom over a news ticker after Tony Bark's mock-up, are in; the budget, demand, and city panels, the overview's power mode, and the settings window are too, and cities save, load, autosave, and import from Micropolis. Scenarios to play (P1 to P3 of four in, with one example challenge), the city score, and map size on the start screen are left |
 | Kyoto: The scenario editor | 0% | 10–16 | The interface library it shares with play is in; its checklist is Tony Bark's to settle |
 | Yokohama: Polish and release | 0% | 10–20 | Nothing yet |
-| | **Total** | **≈ 33–58** | |
+| | **Total** | **≈ 28–50** | |
 
 ## Upcoming work, ranked
 
 | Rank | Work | Milestone | Estimate (h) |
 |---|---|---|---|
-| 1 | Scenarios, P3: playing one from the start page | Happy Isle | 5–8 |
-| 2 | Kyoto: the scenario editor | Kyoto | 10–16 |
-| 3 | Scenarios, P4: the first built-in challenges, made with the editor | Happy Isle | 2–4 |
-| 4 | Happy Isle: the city score and map size on the start screen | Happy Isle | 6–10 |
+| 1 | Kyoto: the scenario editor | Kyoto | 10–16 |
+| 2 | Scenarios, P4: the first built-in challenges, made with the editor | Happy Isle | 2–4 |
+| 3 | Happy Isle: the city score and map size on the start screen | Happy Isle | 6–10 |
 
 Every row of the alpha gate passes, and CityLimits is an alpha since 0.3.100.
 
@@ -355,7 +354,12 @@ later games, where such tools live in the palette.
     or a saved city to start from, disasters on dates, and goals judged at
     the end, reported as `won` apart from `passed`; format 1 still read,
     and the built-ins rewritten.
-  - [ ] P3: playing a scenario from the start page.
+  - [x] P3: playing a challenge from the start menu's Scenarios
+    (`UI/ScenarioPanel.cs`, `ChallengeShelf`), the game's own and the
+    player's from `Documents/CityLimits/Scenarios`; its actions and
+    disasters made on their dates, its goals in the city panel, a pop-up
+    with the result, and the challenge saved with its city (save 1.8).
+    The demo-town fallback is dropped, and `first-town` is an example.
   - [ ] P4: the first built-in challenges.
 - [ ] A city score, rating the city the way the classic games do.
 - [ ] A start screen and a new-city flow: name, seed, and map size. The
@@ -424,6 +428,7 @@ baseline's growth depends on.
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-23 | minor | Scenarios, P3: the start menu's Scenarios lists the challenges, the game's own and the player's, with unreadable files listed with why, and plays one: its strokes and disasters are made on their dates, checks are left out, random disasters follow the player's settings, and a seeded challenge runs on the base game's definitions, as Tony Bark chose. The city panel shows its goals, a pop-up gives the result at the end, and the city plays on. A challenge is saved with its city in a part of its own (save 1.8, ignorable and keepable). The demo-town fallback is gone: a scenario that can't be read fails with why. `first-town` is an example challenge. 28–50 h left in total, 803 tests. |
 | 2026-10-23 | minor | The interface library: `Rendering/`, `UI/`, and the tools moved out of the game into `CityLimits.Interface`, as Tony Bark chose, so a scenario editor can share them; a pure move, with the start menu given the game's version. Tony Bark added Kyoto, the scenario editor, as a milestone, and settled the order: P3, then Kyoto, then P4's challenges made with it; and dropped the demo-town fallback, a relic of when only agents ran scenarios. 33–58 h left in total, 793 tests. |
 | 2026-10-23 | major | Scenarios, P2: format 2.0, the scenario format's first major version, as Tony Bark asked, so players needn't know what a tick is. Times are dates, a month and an optional week; a scenario starts in a year of its own or from a saved `.fcl` or `.cl` city beside it; `events` strike disasters on dates whatever the switches say (`CitySimulation.Strike`); `goals` (population, funds, pollution, crime, traffic) are judged at `ends`, and the report says `won` apart from `passed`, so a lost challenge isn't a failed run. Format 1 files are still read; every built-in is rewritten in 2.0, with `zones-and-bulldozer`'s checks a step before its bulldozing moved to the year's last week. The report gains dates, events, and goals. 23–42 h left in total, 793 tests. |
 | 2026-10-22 | major | Tony Bark marked CityLimits a beta: the version's base is 0.4.100, and the changelog sums up everything since 0.3.100. Polish begins with scenarios to play, in four phases Tony Bark settled (format 2.0 with dates, goals, and events; the start page; built-in challenges); P1 is in: a city can start in a later year, counted from 1900 in steps, so saves are unchanged. 27–48 h left in total, 764 tests. |

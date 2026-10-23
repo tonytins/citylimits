@@ -5,6 +5,7 @@ global using CityLimits.Core.Economy;
 global using CityLimits.Core.News;
 global using CityLimits.Core.Randomness;
 global using CityLimits.Core.Saving;
+global using CityLimits.Core.Scenarios;
 global using CityLimits.Core.Settings;
 global using CityLimits.Core.Simulation;
 global using CityLimits.Core.Sprites;

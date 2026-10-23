@@ -46,7 +46,8 @@ public sealed class NoticePanel : IMovableWindow
         ArgumentException.ThrowIfNullOrWhiteSpace(message);
 
         _title = title;
-        Wrap(message, Width - (Padding * 2));
+        _lines.Clear();
+        _lines.AddRange(TextWrap.Lines(message, FontSize, Width - (Padding * 2)));
         IsOpen = true;
     }
 
@@ -108,29 +109,4 @@ public sealed class NoticePanel : IMovableWindow
         Width = ButtonWidth,
         Height = ButtonHeight,
     };
-
-    // Words are laid on a line until the next one wouldn't fit; done once, when the pop-up opens.
-    private void Wrap(string message, int width)
-    {
-        _lines.Clear();
-        var line = string.Empty;
-        foreach (var word in message.Split(' ', StringSplitOptions.RemoveEmptyEntries))
-        {
-            var longer = line.Length == 0 ? word : $"{line} {word}";
-            if (line.Length > 0 && Raylib.MeasureText(longer, FontSize) > width)
-            {
-                _lines.Add(line);
-                line = word;
-            }
-            else
-            {
-                line = longer;
-            }
-        }
-
-        if (line.Length > 0)
-        {
-            _lines.Add(line);
-        }
-    }
 }

@@ -14,7 +14,11 @@ public sealed class CityPanel : IMovableWindow
     private const int TitleSize = 20;
     private const int Padding = 14;
     private const int Width = 580;
-    private const int Height = 340;
+    private const int BaseHeight = 340;
+
+    // A challenge's section: its heading, a line a goal, and a gap above the seed.
+    private const int ChallengeHeading = 22;
+    private const int ChallengeGap = 10;
     private const int LineHeight = 20;
     private const int CloseSize = 20;
     private const int TitleStrip = Padding + TitleSize + 6;
@@ -27,6 +31,12 @@ public sealed class CityPanel : IMovableWindow
     private string? _problem;
     private double _renamedAt = double.NegativeInfinity;
     private double _copiedAt = double.NegativeInfinity;
+
+    // How many goals the city's challenge has, which sets the panel's height; none for a free city.
+    private int _goalRows;
+    private bool _isChallenge;
+
+    private int Height => BaseHeight + (_isChallenge ? ChallengeHeading + (_goalRows * LineHeight) + ChallengeGap : 0);
 
     /// <summary>What a frame of the panel came to.</summary>
     public enum Outcome
@@ -63,6 +73,8 @@ public sealed class CityPanel : IMovableWindow
     {
         ArgumentNullException.ThrowIfNull(city);
         _name.Text = city.Name;
+        _isChallenge = city.Challenge is not null;
+        _goalRows = city.Challenge?.Goals.Count ?? 0;
         _problem = null;
         _renamedAt = double.NegativeInfinity;
         _copiedAt = double.NegativeInfinity;
@@ -137,6 +149,10 @@ public sealed class CityPanel : IMovableWindow
 
         DrawCity(city, x, y);
         DrawMods(city.Definitions, x + LeftColumn + ColumnGap, y);
+        if (city.Challenge is { } challenge)
+        {
+            DrawChallenge(city, challenge, x, (int)bounds.Y + BaseHeight - Padding - LineHeight - 8);
+        }
 
         var seed = SeedBounds();
         Raylib.DrawLine((int)bounds.X + Padding, (int)seed.Y - 6, (int)(bounds.X + Width) - Padding, (int)seed.Y - 6, Theme.PanelBorder);
@@ -192,6 +208,35 @@ public sealed class CityPanel : IMovableWindow
         var last = city.Budget.LastYear;
         var lastText = last is null ? "Last year: not settled yet" : $"Last year: {SignedMoney(last.CashFlow)}";
         Raylib.DrawText(lastText, x, y, FontSize, last is { CashFlow: < 0 } ? Theme.Error : Theme.Text);
+    }
+
+    // The challenge the city is being played as: its name and end, how it stands, and each goal with
+    // what the city measures now, met or not yet, or, once judged, met or missed.
+    private void DrawChallenge(CitySimulation city, Challenge challenge, int x, int y)
+    {
+        var right = x + Width - (Padding * 2);
+        Raylib.DrawLine(x, y - 4, right, y - 4, Theme.PanelBorder);
+        Raylib.DrawText($"Challenge: {challenge.Name}, by {challenge.Ends}", x, y + 2, FontSize, Theme.Text);
+        var (state, stateColor) = challenge.Won switch
+        {
+            true => ("won", Theme.Accent),
+            false => ("lost", Theme.Error),
+            null => ("under way", Theme.TextDim),
+        };
+        Raylib.DrawText(state, right - Raylib.MeasureText(state, FontSize), y + 2, FontSize, stateColor);
+        y += ChallengeHeading;
+
+        foreach (var goal in challenge.Goals)
+        {
+            var found = ScenarioRunner.Measure(city, goal.Measure);
+            var met = ScenarioRunner.Judge(city, goal).Met;
+            var shown = goal.Measure == GoalMeasure.Funds ? Hud.Money(found) : Hud.Count(found);
+            var verdict = challenge.Won is null ? (met ? "met" : "not yet") : (met ? "met" : "missed");
+            var status = $"{shown}, {verdict}";
+            Raylib.DrawText(goal.Text, x + 8, y + 2, SmallSize + 2, Theme.Text);
+            Raylib.DrawText(status, right - Raylib.MeasureText(status, SmallSize + 2), y + 2, SmallSize + 2, met ? Theme.Accent : Theme.TextDim);
+            y += LineHeight;
+        }
     }
 
     // The mods in the order they were applied; a list too long for the panel ends with how many more.

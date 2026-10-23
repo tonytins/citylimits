@@ -10,7 +10,7 @@ namespace CityLimits.Core.Saving;
 internal static class SaveUpgrades
 {
     /// <summary>The save model's version, which both save formats write.</summary>
-    public static readonly FormatVersion Current = new(1, 7);
+    public static readonly FormatVersion Current = new(1, 8);
 
     /// <summary>Upgrades a save in place, from whatever older 1.x version it is.</summary>
     public static void ToCurrent(CitySave save)
@@ -46,6 +46,8 @@ internal static class SaveUpgrades
         {
             AddFlood(save);
         }
+
+        // 1.8 added the challenge being played, which a city from before simply isn't.
 
         save.Format = Current;
     }

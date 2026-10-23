@@ -22,6 +22,9 @@ public sealed record GameFolders
     /// <summary>The saved cities' folder name.</summary>
     public const string CitiesFolderName = "Cities";
 
+    /// <summary>The player's own scenarios' folder name.</summary>
+    public const string ScenariosFolderName = "Scenarios";
+
     /// <summary>Where the settings are written.</summary>
     public required string SettingsFile { get; init; }
 
@@ -36,6 +39,9 @@ public sealed record GameFolders
 
     /// <summary>Where cities are saved.</summary>
     public required string CitiesFolder { get; init; }
+
+    /// <summary>Where the player's own scenarios are kept, beside their cities; the game lists them with its own.</summary>
+    public required string ScenariosFolder { get; init; }
 
     /// <summary>Tells whether everything is kept beside the executable.</summary>
     public required bool IsPortable { get; init; }
@@ -88,6 +94,7 @@ public sealed record GameFolders
             SettingsToRead = !settingsInConfig && settingsBesideExecutable ? besideExecutable : settings,
             ModsFolder = Path.Combine(documents, ModsFolderName),
             CitiesFolder = Path.Combine(documents, CitiesFolderName),
+            ScenariosFolder = Path.Combine(documents, ScenariosFolderName),
             IsPortable = false,
         };
     }
@@ -117,6 +124,7 @@ public sealed record GameFolders
         SettingsToRead = Path.Combine(executableFolder, SettingsFileName),
         ModsFolder = Path.Combine(executableFolder, ModsFolderName),
         CitiesFolder = Path.Combine(executableFolder, CitiesFolderName),
+        ScenariosFolder = Path.Combine(executableFolder, ScenariosFolderName),
         IsPortable = true,
         Problem = problem,
     };

@@ -1,5 +1,27 @@
 # CityLimits Changelog
 
+## 0.4.103
+
+Scenarios can be played. The start menu's Scenarios lists the
+challenges, the game's own and any you put in
+`Documents/CityLimits/Scenarios`, and a file that can't be read is
+listed with why. Pick one to read its briefing and goals, and Play
+starts its city. What the challenge builds and the disasters it brings
+come on their dates; your settings still decide whether disasters
+strike on their own. The city panel lists each goal and how it stands,
+and at the end a pop-up says whether you won, and which goals you
+missed. The city plays on either way. Saving partway keeps the
+challenge, so it carries on where it left off. First Town is an
+example: reach 2,000 people by 1910 and stay out of debt.
+
+For developers and agents: saves are 1.8, adding the `challenge` part
+(`CHAL` in `.cl`), which only a city being played as a challenge has;
+an older version may leave it out or keep it. The binary codec now
+holds nullable values. A scenario that can't be read no longer falls
+back to the demo town: `scenario` says why and exits with 1, and
+`ScenarioReport.Fallback` is gone. `GameFolders.ScenariosFolder` is the
+player's scenario folder.
+
 ## 0.4.102
 
 For developers: the camera, the map's drawing, the theme, the tools, and

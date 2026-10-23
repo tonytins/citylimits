@@ -112,6 +112,7 @@ size of the same city as `.fcl`.
 | `POLL`, `CRIM` | The pollution and the crime on each 2 by 2 block, and each one's average; from format 1.5 |
 | `FIRE` | The fires on the map, and the holes they left in buildings; from format 1.6 |
 | `FLOD` | The floods on the map, and how long the water spreads for; from format 1.7 |
+| `CHAL` | The scenario being played, for a city that is a challenge; from format 1.8, and only in such a city |
 
 Each tile's word holds, from its lowest bit: the ground (2 bits), the use
 (4 bits), the footprint part (4 bits), power (1 bit), and 5 bits more: a
@@ -193,7 +194,7 @@ arrays of numbers sit on one line each.
 | `map` | The map: see below |
 | `budget`, `census`, `demand`, `power`, `services`, `community`, `cityMaps` | Each part of the simulation's state |
 | `cycle` | The road tiles counted this cycle, and what the last count set aside for the budget |
-| `parts`, `traffic`, `roadTraffic`, `rail`, `pollution`, `crime`, `fire`, `flood` | The parts list and the parts later versions added, each from the version the table under Versions gives |
+| `parts`, `traffic`, `roadTraffic`, `rail`, `pollution`, `crime`, `fire`, `flood`, `challenge` | The parts list and the parts later versions added, each from the version the table under Versions gives |
 
 ### The map
 
@@ -261,6 +262,7 @@ baseline that adds to the city takes the next minor version.
 | 1.5 | Pollution and crime: `"pollution"` and `"crime"`, and the `POLL` and `CRIM` chunks | A city from before has none until phases 12 and 13 work them out, within a cycle |
 | 1.6 | Fire: `"fire"`, and the `FIRE` chunk | A city from before has nothing burning, and its buildings whole |
 | 1.7 | Floods: `"flood"`, and the `FLOD` chunk | A city from before has no flood |
+| 1.8 | A challenge: `"challenge"`, and the `CHAL` chunk, only in a city being played as one | A city from before isn't one |
 - **Growing the binary format.** New state goes in new chunks, not new
   fields in old ones, so a minor version stays an addition.
 - **The flat format** writes its version as a string, `"1.0"`, so 1.10
@@ -331,6 +333,24 @@ one that knows neither opens the building whole. A version that doesn't
 know floods can't keep them, since it may build where the water was.
 Reading refuses a flood on anything but bare ground or a hole, or on a
 fire, and says where.
+
+## Challenges
+
+From format 1.8, a city being played as a scenario's challenge saves it
+as a part of its own, `"challenge"` in `.fcl` and the `CHAL` chunk in
+`.cl`, and a city that isn't one leaves the part out, so its save is just
+as before. The part holds the scenario's name and description, its goals,
+the step they are judged at, and the strokes and disasters still to
+come, each at its step, every step counted from January 1900 as the
+city's own are; and, once the goals are judged, whether it was won. A
+version that doesn't know challenges opens the city as a free one, and
+may keep the part as it was: when this version opens the city again,
+anything that fell due meanwhile is made at once, and goals whose step
+has passed are judged on the next step. Reading refuses a goal, a tool,
+or a disaster the game doesn't know, or a step out of range, and says
+where. The binary format holds a goal's missing least or most, and a
+challenge not yet judged, as a byte saying the value is there or not,
+then the value.
 
 ## Opening a newer save
 

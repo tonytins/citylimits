@@ -52,10 +52,9 @@ public sealed class ScenarioRunner
     /// <param name="scenario">The scenario to run.</param>
     /// <param name="source">Where the scenario came from, an id or a path, for the report.</param>
     /// <param name="ticks">How many ticks to run instead of the scenario's own, or null.</param>
-    /// <param name="fallback">When the demo town runs in place of another scenario, which one and why.</param>
     /// <exception cref="ArgumentOutOfRangeException">The ticks are outside 0 to <see cref="Scenario.MaxTicks"/>, or end before an action, a disaster, or a check is due.</exception>
     /// <exception cref="InvalidDataException">The saved city the scenario starts from can't be opened any more.</exception>
-    public ScenarioReport Run(Scenario scenario, string source, int? ticks = null, ScenarioFallback? fallback = null)
+    public ScenarioReport Run(Scenario scenario, string source, int? ticks = null)
     {
         ArgumentNullException.ThrowIfNull(scenario);
         ArgumentException.ThrowIfNullOrWhiteSpace(source);
@@ -118,7 +117,6 @@ public sealed class ScenarioRunner
             Scenario = new ScenarioSummary(scenario.Name, source, scenario.Seed, end, scenario.DateAt(0).ToString(), scenario.DateAt(end).ToString()),
             Passed = checkReports.All(c => c.Passed) && actionReports.All(a => a.Met != false),
             Won = scenario.HasGoals ? goalReports.All(g => g.Met) : null,
-            Fallback = fallback,
             Final = new ScenarioFinal(city.TickCount, city.CityTime, city.Date.ToString(), city.Treasury.Funds, Count(city.Map, city.Definitions)),
             Actions = actionReports,
             Events = eventReports,

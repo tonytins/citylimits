@@ -31,7 +31,6 @@ public class ScenarioRunnerTests
         Assert.Equal([90, 100, 100, 100, 3000, 35, 1], report.Actions.Select(a => a.Cost));
         Assert.Equal([9, 9, 9, 9, 16, 7, 9], report.Actions.Select(a => a.Tiles));
         Assert.All(report.Actions, a => Assert.True(a.Met));
-        Assert.Null(report.Fallback);
     }
 
     [Fact]
@@ -144,16 +143,6 @@ public class ScenarioRunnerTests
     }
 
     [Fact]
-    public void AFallbackIsRecordedInTheReport()
-    {
-        var fallback = new ScenarioFallback("river", "There is no scenario file at 'river.json'.");
-
-        var report = new ScenarioRunner().Run(DemoTown.Scenario, DemoTown.Id, fallback: fallback);
-
-        Assert.Equal(fallback, report.Fallback);
-    }
-
-    [Fact]
     public void TheJsonReportHasTheDocumentedShape()
     {
         var json = ScenarioReportJson.Serialize(new ScenarioRunner().Run(DemoTown.Scenario, DemoTown.Id));
@@ -162,7 +151,6 @@ public class ScenarioRunnerTests
 
         Assert.Equal(1, root.GetProperty("format").GetInt32());
         Assert.True(root.GetProperty("passed").GetBoolean());
-        Assert.False(root.TryGetProperty("fallback", out _));
         Assert.Equal("demo-town", root.GetProperty("scenario").GetProperty("source").GetString());
         Assert.Equal(9, root.GetProperty("final").GetProperty("counts").GetProperty("road").GetInt32());
         var road = root.GetProperty("actions")[0];

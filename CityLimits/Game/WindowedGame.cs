@@ -31,7 +31,8 @@ public static class WindowedGame
             Logger.Info("Reading the settings an older version left at {Old}; they'll be saved to {New}", folders.SettingsToRead, folders.SettingsFile);
         }
 
-        MakeModsFolder(folders.ModsFolder);
+        MakeFolder(folders.ModsFolder, "mods");
+        MakeFolder(folders.ScenariosFolder, "scenarios");
         var settings = SettingsStore.Load(folders.SettingsToRead, out var warning);
         if (warning is not null)
         {
@@ -62,7 +63,9 @@ public static class WindowedGame
             }
 
             var menu = new StartMenu(assets, VersionInfo.DisplayVersion);
-            menu.Show(fromLoading: true, seed, folders.CitiesFolder, settings);
+            // The game's own challenges, then the player's.
+            IReadOnlyList<string> scenarioFolders = [Commands.ScenarioSubcommand.ScenarioFolder, folders.ScenariosFolder];
+            menu.Show(fromLoading: true, seed, folders.CitiesFolder, settings, scenarioFolders);
             while (true)
             {
                 var choice = RunMenu(menu, folders);
@@ -72,6 +75,7 @@ public static class WindowedGame
                 {
                     StartMenu.Choice.NewCity when menu.City is { } wanted => CreateCity(wanted, folders, out modProblems),
                     StartMenu.Choice.LoadCity => menu.LoadedCity,
+                    StartMenu.Choice.PlayScenario => menu.ChallengeCity,
                     _ => null,
                 };
                 if (city is null)
@@ -86,7 +90,7 @@ public static class WindowedGame
                     break;
                 }
 
-                menu.Show(fromLoading: false, seed, folders.CitiesFolder, settings);
+                menu.Show(fromLoading: false, seed, folders.CitiesFolder, settings, scenarioFolders);
             }
 
             SaveSettings(folders, settings);
@@ -194,9 +198,9 @@ public static class WindowedGame
         }
     }
 
-    // The game makes the mods folder so a player can find where mods go; without it, the game
-    // simply runs with none.
-    private static void MakeModsFolder(string folder)
+    // The game makes the mods and scenarios folders so a player can find where their own go;
+    // without them, the game simply runs with none.
+    private static void MakeFolder(string folder, string what)
     {
         try
         {
@@ -204,7 +208,7 @@ public static class WindowedGame
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            Logger.Warn("The mods folder {Folder} couldn't be made: {Reason}", folder, ex.Message);
+            Logger.Warn("The {What} folder {Folder} couldn't be made: {Reason}", what, folder, ex.Message);
         }
     }
 }

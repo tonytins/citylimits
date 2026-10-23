@@ -74,6 +74,7 @@ public sealed class GameLoop : IDisposable
     private readonly LoadPanel _loadPanel = new();
     private readonly ConfirmPanel _confirm = new();
     private readonly SettingsPanel _settingsPanel = new();
+    private readonly NoticePanel _notice = new();
     private readonly GameFolders _folders;
 
     // The file the city was opened from or last saved to, and the save it was then; a city whose
@@ -138,6 +139,16 @@ public sealed class GameLoop : IDisposable
         }
 
         _simulation.MessageSent += ShowMessage;
+
+        // A challenge says what it asks when it starts, and its result when its goals are judged.
+        if (city.Challenge is { } challenge)
+        {
+            challenge.Finished += ShowChallengeResult;
+            if (challenge.Won is null)
+            {
+                _ticker.Advise($"{challenge.Name}: meet its goals by {challenge.Ends}; the city panel lists them");
+            }
+        }
         ApplyDisasters(settings);
         _simulation.YearSettled += OnYearSettled;
 
@@ -193,6 +204,7 @@ public sealed class GameLoop : IDisposable
         Load,
         Confirm,
         Settings,
+        Notice,
     }
 
     // What a question asks before it goes ahead.
@@ -367,6 +379,10 @@ public sealed class GameLoop : IDisposable
                 Raylib.DrawRectangle(0, 0, Raylib.GetScreenWidth(), Raylib.GetScreenHeight(), Theme.Dim);
                 _settingsPanel.Draw();
                 break;
+            case Modal.Notice:
+                Raylib.DrawRectangle(0, 0, Raylib.GetScreenWidth(), Raylib.GetScreenHeight(), Theme.Dim);
+                _notice.Draw();
+                break;
         }
 
         Raylib.EndDrawing();
@@ -431,6 +447,17 @@ public sealed class GameLoop : IDisposable
                 return;
             case Modal.Settings:
                 HandleSettingsInput(mouse);
+                return;
+            case Modal.Notice:
+                if (_notice.Update())
+                {
+                    CloseModal();
+                }
+                else if (Raylib.IsMouseButtonPressed(MouseButton.Left))
+                {
+                    TryBeginDrag(_notice, mouse);
+                }
+
                 return;
         }
 
@@ -1042,6 +1069,21 @@ public sealed class GameLoop : IDisposable
     private int DemandPanelTop() => _toolPaletteView.Bottom() + 8;
 
     // The train is drawn over the map, centred on where it is, 32 pixels square as Micropolis' is.
+    // The goals are judged on the challenge's last step; the pop-up says how it went, and pauses the
+    // city until the player has read it. The city plays on after, won or lost.
+    private void ShowChallengeResult(IReadOnlyList<GoalReport> goals)
+    {
+        var challenge = _simulation.Challenge!;
+        var missed = goals.Where(goal => !goal.Met).Select(goal => goal.Text).ToList();
+        var (title, message) = challenge.Won == true
+            ? ("Challenge won!", $"{challenge.Name}: every goal was met by {challenge.Ends}. The city is yours to play on.")
+            : ("Challenge lost", $"{challenge.Name}: by {challenge.Ends}, {missed.Count} of {goals.Count} goals weren't met: {string.Join("; ", missed)}. The city is yours to play on.");
+        Logger.Info("{Title} {Message}", title, message);
+        _ticker.Advise(title);
+        _notice.Show(title, message);
+        OpenModal(Modal.Notice);
+    }
+
     // The player's disaster switches decide which disasters happen on their own in the city.
     private void ApplyDisasters(GameSettings settings)
     {

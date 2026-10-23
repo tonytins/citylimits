@@ -1,0 +1,15 @@
+{
+  "$schema": "https://raw.githubusercontent.com/tonytins/citylimits/main/docs/schemas/scenario.v2.0.schema.json",
+  "format": "2.0",
+  "name": "First Town",
+  "description": "Open land by a river, and $20,000 to start. Lay the roads, zone the land, and power it, and grow a town of 2,000 people by 1910 without falling into debt. A fire will break out along the way.",
+  "seed": 2000,
+  "ends": "1910-01",
+  "events": [
+    { "at": "1906-07", "disaster": "Fire" }
+  ],
+  "goals": [
+    { "measure": "Population", "atLeast": 2000 },
+    { "measure": "Funds", "atLeast": 0, "text": "Stay out of debt" }
+  ]
+}

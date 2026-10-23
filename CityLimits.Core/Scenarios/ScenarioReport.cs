@@ -28,9 +28,6 @@ public sealed record ScenarioReport
     /// <summary>Whether every goal was met at the end; absent for a scenario with no goals.</summary>
     public bool? Won { get; init; }
 
-    /// <summary>The scenario that was asked for and why it couldn't run, when the demo town ran instead.</summary>
-    public ScenarioFallback? Fallback { get; init; }
-
     /// <summary>The city when the run ended.</summary>
     public required ScenarioFinal Final { get; init; }
 
@@ -49,9 +46,6 @@ public sealed record ScenarioReport
 
 /// <summary>Which scenario ran: its name, where it came from (an id or a path), its seed, how many ticks it ran, and the dates it started and ended at.</summary>
 public sealed record ScenarioSummary(string Name, string Source, int Seed, int Ticks, string? Start = null, string? Ends = null);
-
-/// <summary>The scenario that was asked for, and why it couldn't be loaded.</summary>
-public sealed record ScenarioFallback(string Requested, string Reason);
 
 /// <summary>The city when a run ended.</summary>
 /// <param name="Tick">The ticks that ran.</param>

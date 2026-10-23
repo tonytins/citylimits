@@ -81,6 +81,13 @@ internal sealed class CitySave
     public FloodSave? Flood { get; set; }
 
     /// <summary>
+    /// The scenario being played in the city, if any: its goals, when they are judged, and what is still
+    /// to come; from format 1.8. A city that isn't a challenge leaves it out, so its save is as before.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public ChallengeSave? Challenge { get; set; }
+
+    /// <summary>
     /// A newer save's sections this version doesn't know, caught as they are so they can be checked
     /// against the parts list and written back. Unknown fields inside a known section are still refused.
     /// </summary>
@@ -366,6 +373,68 @@ internal sealed class FireSave
 {
     /// <summary>Each row of the map, a character a tile: '.' for none, 'f' for a fire, 'x' for a hole fire left in a building, and 'b' for a hole still burning.</summary>
     public required string[] Tiles { get; set; }
+}
+
+/// <summary>A scenario being played, as <see cref="Scenarios.Challenge"/> keeps it: every step counted from January 1900.</summary>
+[System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(SectionCodec.ModelMembers)]
+internal sealed class ChallengeSave
+{
+    public required string Name { get; set; }
+
+    public string? Description { get; set; }
+
+    /// <summary>The step the goals are judged at.</summary>
+    public required long EndStep { get; set; }
+
+    /// <summary>Whether it was won, once judged; null while it is under way.</summary>
+    public bool? Won { get; set; }
+
+    public required GoalSave[] Goals { get; set; }
+
+    /// <summary>The strokes still to come.</summary>
+    public required ChallengeActionSave[] Actions { get; set; }
+
+    /// <summary>The disasters still to come.</summary>
+    public required ChallengeEventSave[] Events { get; set; }
+}
+
+[System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(SectionCodec.ModelMembers)]
+internal sealed class GoalSave
+{
+    /// <summary>A <see cref="Scenarios.GoalMeasure"/> name.</summary>
+    public required string Measure { get; set; }
+
+    public int? AtLeast { get; set; }
+
+    public int? AtMost { get; set; }
+
+    public required string Text { get; set; }
+}
+
+[System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(SectionCodec.ModelMembers)]
+internal sealed class ChallengeActionSave
+{
+    public required long Step { get; set; }
+
+    /// <summary>A <see cref="BuildAction"/> name.</summary>
+    public required string Tool { get; set; }
+
+    public required int FromX { get; set; }
+
+    public required int FromY { get; set; }
+
+    public required int ToX { get; set; }
+
+    public required int ToY { get; set; }
+}
+
+[System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(SectionCodec.ModelMembers)]
+internal sealed class ChallengeEventSave
+{
+    public required long Step { get; set; }
+
+    /// <summary>A <see cref="Simulation.Disaster"/> name.</summary>
+    public required string Disaster { get; set; }
 }
 
 /// <summary>The floods on the map, as <see cref="FloodCodec"/> writes them.</summary>

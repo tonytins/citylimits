@@ -2,10 +2,10 @@ namespace CityLimits.UI;
 
 /// <summary>
 /// The start menu, after the owner's mock-up in <c>docs/design/</c>: the logo near the top of the
-/// blue screen, New Game, Load Game, Settings, and Quit under it, and the version in the bottom right.
-/// Coming from the loading screen, the logo glides up from the middle. New Game opens the new-city
-/// panel, Load Game the list of saved cities, dimmed while there are none, and Settings the settings
-/// window.
+/// blue screen, New Game, Load Game, Scenarios, Settings, and Quit under it, and the version in the
+/// bottom right. Coming from the loading screen, the logo glides up from the middle. New Game opens
+/// the new-city panel, Load Game the list of saved cities, Scenarios the list of challenges, each
+/// dimmed while there are none, and Settings the settings window.
 /// </summary>
 public sealed class StartMenu
 {
@@ -15,14 +15,17 @@ public sealed class StartMenu
     private const int Margin = 16;
     private const float GlideSeconds = 0.3f;
 
-    private static readonly string[] Items = ["New Game", "Load Game", "Settings", "Quit"];
+    private static readonly string[] Items = ["New Game", "Load Game", "Scenarios", "Settings", "Quit"];
 
     private readonly Texture2D? _logo;
     private readonly string _version;
     private readonly NewCityPanel _newCity = new();
     private readonly LoadPanel _load = new();
     private readonly SettingsPanel _settings = new();
+    private readonly ScenarioPanel _scenarios = new();
     private bool _loadOpen;
+    private bool _scenariosOpen;
+    private IReadOnlyList<string> _scenarioFolders = [];
     private bool _settingsOpen;
     private string _citiesFolder = string.Empty;
     private float _glide = GlideSeconds;
@@ -40,6 +43,9 @@ public sealed class StartMenu
 
         /// <summary>Play the saved city in <see cref="LoadedCity"/>.</summary>
         LoadCity,
+
+        /// <summary>Play the challenge whose city is in <see cref="ChallengeCity"/>.</summary>
+        PlayScenario,
 
         /// <summary>The settings window closed; <see cref="Settings"/> holds what the player set.</summary>
         SettingsClosed,
@@ -69,6 +75,9 @@ public sealed class StartMenu
     /// <summary>What importing the opened city replaced, when it came from a Micropolis city.</summary>
     public IReadOnlyList<string> LoadedNotes => _load.Notes;
 
+    /// <summary>The challenge's city, being played, once the choice is <see cref="Choice.PlayScenario"/>.</summary>
+    public CitySimulation? ChallengeCity => _scenarios.City;
+
     /// <summary>The settings as the player has left them, changed in the settings window or not.</summary>
     public GameSettings Settings { get; private set; } = GameSettings.Default;
 
@@ -77,9 +86,13 @@ public sealed class StartMenu
     /// seed given on the command line, if any, fills in the new-city panel, and the saved cities
     /// are listed afresh from their folder.
     /// </summary>
-    public void Show(bool fromLoading, int? commandLineSeed, string citiesFolder, GameSettings settings)
+    public void Show(bool fromLoading, int? commandLineSeed, string citiesFolder, GameSettings settings, IReadOnlyList<string> scenarioFolders)
     {
         ArgumentNullException.ThrowIfNull(settings);
+        ArgumentNullException.ThrowIfNull(scenarioFolders);
+        _scenarioFolders = scenarioFolders;
+        _scenariosOpen = false;
+        _scenarios.Reset(scenarioFolders);
         _glide = fromLoading ? 0f : GlideSeconds;
         _newCityOpen = false;
         _loadOpen = false;
@@ -97,6 +110,20 @@ public sealed class StartMenu
         if (_settingsOpen)
         {
             return UpdateSettings();
+        }
+
+        if (_scenariosOpen)
+        {
+            switch (_scenarios.Update())
+            {
+                case ScenarioPanel.Outcome.Play:
+                    return Choice.PlayScenario;
+                case ScenarioPanel.Outcome.Back:
+                    _scenariosOpen = false;
+                    break;
+            }
+
+            return Choice.None;
         }
 
         if (_loadOpen)
@@ -136,8 +163,9 @@ public sealed class StartMenu
         {
             0 => OpenNewCity(),
             1 => OpenLoad(),
-            2 => OpenSettings(),
-            3 => Choice.Quit,
+            2 => OpenScenarios(),
+            3 => OpenSettings(),
+            4 => Choice.Quit,
             _ => Choice.None,
         };
     }
@@ -154,7 +182,7 @@ public sealed class StartMenu
         }
 
         var mouse = Raylib.GetMousePosition();
-        var hovered = _newCityOpen || _loadOpen || _settingsOpen ? -1 : ItemAt(mouse);
+        var hovered = _newCityOpen || _loadOpen || _settingsOpen || _scenariosOpen ? -1 : ItemAt(mouse);
         for (var i = 0; i < Items.Length; i++)
         {
             var bounds = ItemBounds(i);
@@ -173,6 +201,10 @@ public sealed class StartMenu
         else if (_loadOpen)
         {
             _load.Draw();
+        }
+        else if (_scenariosOpen)
+        {
+            _scenarios.Draw();
         }
         else if (_settingsOpen)
         {
@@ -211,6 +243,13 @@ public sealed class StartMenu
         return Choice.None;
     }
 
+    private Choice OpenScenarios()
+    {
+        _scenarios.Reset(_scenarioFolders);
+        _scenariosOpen = true;
+        return Choice.None;
+    }
+
     private Choice OpenSettings()
     {
         _settings.Open(Settings);
@@ -232,8 +271,13 @@ public sealed class StartMenu
         return Choice.None;
     }
 
-    // Load Game is dimmed while there's no saved city to load.
-    private bool IsEnabled(int item) => item != 1 || _load.HasCities;
+    // Load Game is dimmed while there's no saved city to load, and Scenarios while there's no challenge.
+    private bool IsEnabled(int item) => item switch
+    {
+        1 => _load.HasCities,
+        2 => _scenarios.HasScenarios,
+        _ => true,
+    };
 
     private int ItemAt(Vector2 point)
     {

@@ -62,6 +62,11 @@ internal static class SaveParts
         // Floods are left out as fires are: the map holds bare ground beneath them, and a flooded hole
         // in a building is marked in the fire part. A game that doesn't know floods can't keep them.
         new() { Name = "flood", Chunk = "FLOD", Since = "1.7", Ignorable = true, Keepable = false },
+
+        // A scenario being played: a game that doesn't know it plays the city on as a free one, and may
+        // write it back as it was, since what fell due meanwhile is made, and the goals judged, when the
+        // newer game opens it again. Only a city that is a challenge has it.
+        new() { Name = "challenge", Chunk = "CHAL", Since = "1.8", Ignorable = true, Keepable = true },
     ];
 
     /// <summary>

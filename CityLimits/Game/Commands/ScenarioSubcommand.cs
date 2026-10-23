@@ -5,8 +5,8 @@ using CityLimits.Core.Scenarios;
 
 /// <summary>
 /// Scenario subcommand - runs a scenario with no window and reports what came of it, as
-/// docs/scenarios.md specifies. A scenario that can't be loaded falls back to the demo town,
-/// which is always reported and never mistaken for success.
+/// docs/scenarios.md specifies. A scenario that can't be loaded says why, runs nothing, and exits
+/// with 1.
 /// </summary>
 public sealed class ScenarioSubcommand : ISubcommand
 {
@@ -34,8 +34,8 @@ public sealed class ScenarioSubcommand : ISubcommand
                             but not fewer than its last action or check needs
           --json            write the report as JSON to stdout, and the log to stderr
 
-        Exit codes: 0 every check passed, 1 the scenario could not run (the demo town ran
-        instead), 2 the command line was wrong, 3 a check or an expectation failed.
+        Exit codes: 0 every check passed, 1 the scenario could not run, 2 the command line
+        was wrong, 3 a check or an expectation failed. A lost challenge is still 0.
         """;
 
     public bool SupportsHeadless => true;
@@ -98,17 +98,14 @@ public sealed class ScenarioSubcommand : ISubcommand
             ? catalog.TryLoad(scenarioId, out var scenario, out error)
             : ScenarioLoader.TryLoadFile(scenarioFile!, out scenario, out error);
 
-        ScenarioFallback? fallback = null;
-        var source = requested;
+        // A scenario that can't be read says why and runs nothing; the exit code tells a script so.
         if (!loaded)
         {
-            // The demo town runs in its place, so the run still shows something, but the failure
-            // is logged, recorded in the report, and given its own exit code.
-            Logger.Error("The scenario '{Requested}' could not be loaded, so the demo town runs instead: {Error}", requested, error);
-            fallback = new ScenarioFallback(requested, error);
-            scenario = DemoTown.Scenario;
-            source = DemoTown.Id;
+            Logger.Error("The scenario '{Requested}' could not be loaded: {Error}", requested, error);
+            return ExitCodes.Failure;
         }
+
+        var source = requested;
 
         if (ticks is { } length && length < ScenarioRunner.LatestTick(scenario!))
         {
@@ -118,7 +115,7 @@ public sealed class ScenarioSubcommand : ISubcommand
         ScenarioReport report;
         try
         {
-            report = Run(scenario!, source, ticks, fallback);
+            report = Run(scenario!, source, ticks);
         }
         catch (Exception ex)
         {
@@ -131,15 +128,10 @@ public sealed class ScenarioSubcommand : ISubcommand
             context.Output.WriteLine(ScenarioReportJson.Serialize(report));
         }
 
-        if (fallback is not null)
-        {
-            return ExitCodes.Failure;
-        }
-
         return report.Passed ? ExitCodes.Success : ExitCodes.ChecksFailed;
     }
 
-    private static ScenarioReport Run(Scenario scenario, string source, int? ticks, ScenarioFallback? fallback)
+    private static ScenarioReport Run(Scenario scenario, string source, int? ticks)
     {
         Logger.Info(
             "Scenario '{Name}' from {Source}: {From}, map {Width} by {Height}, {Start} to {Ends}, {Ticks} ticks, ${Funds}",
@@ -157,7 +149,7 @@ public sealed class ScenarioSubcommand : ISubcommand
         runner.ActionMade += LogAction;
         runner.EventHappened += LogEvent;
         runner.CheckMade += LogCheck;
-        var report = runner.Run(scenario, source, ticks, fallback);
+        var report = runner.Run(scenario, source, ticks);
         foreach (var goal in report.Goals)
         {
             if (goal.Met)

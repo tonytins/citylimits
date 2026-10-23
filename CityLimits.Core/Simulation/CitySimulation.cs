@@ -202,6 +202,12 @@ public sealed class CitySimulation
     /// <summary>Whether earthquakes strike, as <see cref="RandomFires"/> says for fires.</summary>
     public bool RandomEarthquakes { get; set; } = true;
 
+    /// <summary>
+    /// The scenario being played in the city, if it is a challenge: it makes what is due, and judges
+    /// its goals, at the top of each step, and it is saved with the city.
+    /// </summary>
+    public Scenarios.Challenge? Challenge { get; set; }
+
     /// <summary>The definitions the city runs on: the base game's, with any mods applied.</summary>
     public CityDefinitions Definitions { get; }
 
@@ -297,6 +303,7 @@ public sealed class CitySimulation
     /// </summary>
     public void Tick()
     {
+        Challenge?.BeforeStep(this);
         TickCount++;
         var phase = (int)(TickCount % CityCalendar.StepsPerCount);
 
@@ -882,6 +889,7 @@ public sealed class CitySimulation
         Crime = Maps.CaptureCrime(),
         Fire = FireCodec.Capture(Map, Hazards),
         Flood = FloodCodec.Capture(Map, Floods),
+        Challenge = Challenge?.Capture(),
     };
 
     /// <summary>Makes a city from a save, checking each part as it goes.</summary>
@@ -930,6 +938,7 @@ public sealed class CitySimulation
         city.Maps.RestoreCrime(save.Crime ?? throw new InvalidSave("crime: missing."));
         FireCodec.Apply(map, city.Fires, save.Fire ?? throw new InvalidSave("fire: missing."));
         FloodCodec.Apply(map, city.Hazards, save.Flood ?? throw new InvalidSave("flood: missing."));
+        city.Challenge = save.Challenge is { } challenge ? Scenarios.Challenge.Restore(challenge) : null;
         var cycle = save.Cycle ?? throw new InvalidSave("cycle: missing.");
         city.RoadTiles = SaveChecks.InRange(cycle.RoadTiles, 0, int.MaxValue, "cycle.roadTiles");
         city._budgetedRoadTiles = SaveChecks.InRange(cycle.BudgetedRoadTiles, 0, int.MaxValue, "cycle.budgetedRoadTiles");

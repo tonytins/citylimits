@@ -1,11 +1,11 @@
 # Scenarios
 
 > **Status:** format 2.0 is built: `CityLimits.Core/Scenarios/` and
-> `citylimits scenario`, with `demo-town` and the built-in scenarios
-> `bridges`, `rail`, `zones-and-bulldozer`, and `small-town`, each run as
-> a test, all written in 2.0. Files in format 1, which counted time in
-> ticks, are still read. Scenarios can't be picked in the game yet; that
-> is phase P3 of the roadmap's scenarios work. It follows the Micropolis
+> `citylimits scenario`, with `demo-town`, the built-in scenarios
+> `bridges`, `rail`, `zones-and-bulldozer`, and `small-town`, and the
+> example challenge `first-town`, each run as a test, all written in 2.0.
+> Files in format 1, which counted time in ticks, are still read. A
+> challenge can be [played in the game](#playing-a-scenario). It follows the Micropolis
 > baseline: tools are strokes, zones are 3 by 3, the bulldozer refunds
 > nothing, and a tick is one phase of the simulation's 16-phase cycle.
 
@@ -27,6 +27,29 @@ any other file; it reads only the saved city a scenario starts from. It
 reports through the log and, on request, a JSON report on stdout. It
 doesn't need a debugging protocol or a live connection to the game.
 
+## Playing a scenario
+
+The start menu's Scenarios opens a list of the challenges a player can
+pick (`UI/ScenarioPanel.cs`, `ChallengeShelf`): the scenarios with goals
+in the game's own folder, then those in the player's own,
+`Documents/CityLimits/Scenarios`, which the game makes. A scenario with
+only checks is a test, for agents, and isn't listed. A file that can't be
+read is listed with why, and can't be played. Picking one shows its
+briefing, its description and its goals; Play, or Enter, starts it.
+
+A played scenario is a city like any other, with its challenge
+(`Challenge`, kept by `CitySimulation.Challenge`): a city made from a
+seed runs on the base game's definitions, whatever mods are installed,
+and takes the scenario's name. Its actions are made on their dates, as
+a scripted town grows, and its events strike on theirs; its checks are
+left out of play. Disasters on their own follow the player's settings,
+as in any city; `disasters` decides them only in a run. The city panel
+shows the challenge, its end date, and each goal with what the city
+measures now. At the end date the goals are judged, and a pop-up says
+whether the challenge was won or lost, and which goals weren't met; the
+city plays on after, won or lost. Saving partway keeps the challenge,
+with what is still to come (`docs/saving.md`).
+
 ## Running a scenario
 
 ```sh
@@ -44,8 +67,10 @@ doesn't need the flag.
 
 Built-in scenarios are the files in `CityLimits/Assets/Scenarios/`, copied
 to the output folder with the other assets, plus `demo-town`, which is
-defined in code because it is the [fallback](#the-fallback-scenario). A
-file scenario's id is its file name without `.json`. An id may contain only lowercase letters, digits,
+defined in code, where it can't go missing, as the town this document's
+examples describe. A file scenario's id is its file name without `.json`.
+A scenario that can't be read says why and runs nothing, with exit code
+1; nothing ever runs in its place. An id may contain only lowercase letters, digits,
 and hyphens, so an id can never name a path outside that folder.
 
 ### Exit codes
@@ -390,8 +415,7 @@ and how each event went:
 ```
 
 `source` is the built-in id, or the file path as given on the command
-line. `fallback` is present only when the requested scenario could not
-be loaded and `demo-town` ran instead. For an action, `status` and, when
+line. For an action, `status` and, when
 it wasn't built, `reason` are its `BuildResult`; `tiles` is how many
 tiles it changed; `skipped` maps each `BuildRefusal` to how many tiles it
 skipped for that reason, or how many zones for a zone stroke, as
@@ -440,41 +464,8 @@ scenario defaults all read, so they can't drift apart.
   and nothing else: their city files belong to their authors, and every
   CityLimits scenario is original work.
 
-## The fallback scenario
-
-`demo-town` is the fallback: when a scenario can't be loaded, CityLimits
-runs `demo-town` instead of stopping. This follows the rule that nothing
-ends the player's session. Exactly when the fallback applies (a broken
-built-in, a broken player file, a scenario picked in the game) is left
-open until scenarios can be picked in the game. For now:
-
-- **It can't be missing.** `demo-town` is defined in code, in
-  `CityLimits.Core/Scenarios/`, not in a file in `Assets/Scenarios/`. A
-  fallback that has to be loaded from disk could fail for the same reason
-  as the scenario it replaces. `scenario list` still lists it, and it
-  runs by id like the built-in files.
-- **It is valid by construction.** A test runs `demo-town` through the
-  same validation as a file and expects it to pass.
-- **It is never silent.** The fallback is a substitute, and the golden
-  rules forbid substituting a silent default. The failure that caused it
-  goes to the log, and to the screen when there is one. The report
-  carries a `fallback` field: `{ "requested": "<id or path>", "reason":
-  "<the load error>" }`, and its `scenario.source` is `demo-town`.
-- **The exit code still tells the truth.** On the command line, a run
-  that fell back exits with 1, the code for a scenario that could not
-  run, even though `demo-town` did. An agent or script then never
-  mistakes the fallback for the scenario it asked for.
-
-`demo-town` is the town `citylimits --headless` builds today, in
-`HeadlessRun`: a road nine tiles long with a residential, a commercial,
-and an industrial zone along its north side. The headless run doesn't
-depend on scenarios, but it should build its town from the `demo-town`
-definition once that exists, so the two can't drift.
-
 ## Open questions
 
-- Which failures fall back to `demo-town` and which only report, once
-  players can pick scenarios in the game.
 - Whether the report should list every tile an action touched, or only
   the totals. Totals keep the report small; a `--verbose` flag could add
   the tiles later without a format bump.

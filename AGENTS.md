@@ -114,7 +114,8 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   under a second.
   The start menu glides the logo up from the middle to a sixth of the way
   down, with New Game, Load Game (dimmed while no city is saved),
-  Settings, and Quit under it and the version in the bottom right. New Game opens a
+  Scenarios (dimmed while there's no challenge), Settings, and Quit under
+  it and the version in the bottom right, which the game gives it. New Game opens a
   panel (`UI/NewCityPanel.cs`) with the city's name, "CityLimits" to
   start, and a seed, blank for any, read by `NewCity.TryRead`; `--seed`
   fills the seed in. Start, or Enter, begins the city; a blank seed is
@@ -618,9 +619,9 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   the game keeps its files, because a packaged game, such as the
   AppImage, runs from a read-only folder. The settings go in the hidden
   per-user config folder (`~/.config/CityLimits/settings.json`, or
-  `%APPDATA%\CityLimits` on Windows), and mods and, later, saved cities
-  under `Documents/CityLimits` (`Mods/`, `Cities/`), which the window
-  makes the mods folder of. A copy with a `settings.json` beside the
+  `%APPDATA%\CityLimits` on Windows), and mods, saved cities, and the
+  player's own scenarios under `Documents/CityLimits` (`Mods/`, `Cities/`,
+  `Scenarios/`), which the window makes the mods and scenarios folders of. A copy with a `settings.json` beside the
   executable, in a folder it can write to, is portable and keeps
   everything there, as development builds do. Settings an older version
   left beside a read-only executable are read once and saved to the new
@@ -666,13 +667,29 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   <id> --headless` runs a built-in one (`demo-town`, defined in code, and
   the files in `Assets/Scenarios/`), `--file <path>` runs any file, and
   `scenario list` lists them; `rail` lays rail across a road, a line, and a lake. `--json` writes the report to stdout and the
-  log to stderr. A scenario that can't be loaded falls back to the demo
-  town, logged and recorded in the report. Exit codes: 0 passed, 1 could
+  log to stderr. A scenario that can't be loaded says why and runs
+  nothing; the demo-town fallback, from when only agents ran scenarios,
+  was dropped, as Tony Bark chose. Exit codes: 0 passed, 1 could
   not run, 2 a bad command line, 3 a check or expectation failed; a lost challenge is still 0. A run
   needs `--headless`, because a scenario will open a window once
   scenarios can be played; `list` doesn't. Every built-in scenario runs as
   a test, so a rule that changes is caught by the scenarios that depend on
   it.
+- **Playing a challenge.** The start menu's Scenarios lists the
+  scenarios with goals, the game's own (`first-town`, an example, so far)
+  and then the player's from `Documents/CityLimits/Scenarios`, with any
+  that can't be read listed with why (`UI/ScenarioPanel.cs`,
+  `ChallengeShelf`). Picking one shows its briefing, and Play starts its
+  city: made from its seed on the base game's definitions and named for
+  it, or opened from its saved city, with its `Challenge`
+  (`CitySimulation.Challenge`), which at the top of each step makes the
+  strokes and strikes the disasters due and, at the end, judges the
+  goals. Checks are left out of play, and disasters on their own follow
+  the player's settings, as Tony Bark chose. The ticker says what the
+  challenge asks, the city panel shows it and each goal as it stands, and
+  at the end a pop-up says whether it was won and which goals weren't
+  met, pausing the city; it plays on after, won or lost. A challenge is
+  saved with its city, with what is still to come.
 - **Scenarios are how agents test the game.** A scenario file, the
   command line, and the JSON report are the whole interface: an agent
   writes the strokes and checks it wants, runs them, and reads the report
@@ -697,7 +714,7 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   and no project. It holds the parser, the dispatcher, the default
   command, the strict option reader, and the exit codes.
 - **The tests.** `CityLimits.Tests` uses xUnit 2 with the VSTest runner
-  and coverlet, and holds 793 tests over scenario format 2.0, a later start year, floods and earthquakes, fire and its hints, pollution and crime, rail and the train, the news ticker's queue, its headlines, and the loading phrases, opening newer saves and the backports' saves, traffic and its animation, saving, loading, autosave, importing Micropolis cities, format versions and schemas, with a city
+  and coverlet, and holds 803 tests over challenges, scenario format 2.0, a later start year, floods and earthquakes, fire and its hints, pollution and crime, rail and the train, the news ticker's queue, its headlines, and the loading phrases, opening newer saves and the backports' saves, traffic and its animation, saving, loading, autosave, importing Micropolis cities, format versions and schemas, with a city
   the owner built in both formats in `CityLimits.Tests/Assets/`, the generator, the terrain edges, the power plants, lines, and grid, the budget, the stations and their coverage, parks, hospitals and churches, the map, the
   calendar, the clock, the simulation, the settings, the tile rules, the
   build actions, the road network, the treasury, the scenario loader and
@@ -885,7 +902,7 @@ without reflection.
   number from before, `1`, reads as `1.0`. A binary save keeps its major
   version in the header and its minor in the `VERS` chunk, and new state
   goes in new chunks, never new fields in old ones. The scenario report's
-  `format` stays a whole number, since scripts read it. Saves are at 1.7:
+  `format` stays a whole number, since scripts read it. Saves are at 1.8:
   1.1 added traffic, 1.2 the parts list, 1.3 the traffic each road
   shows and the year's average, 1.4 rail, in a part of its own
   (`RailCodec`) with the map holding what lies beneath it, so a version
@@ -896,7 +913,9 @@ without reflection.
   opens the city as if its fires had burned out and its buildings been
   repaired, as Tony Bark chose, and 1.7 floods, a part of their own
   (`FloodCodec`) beside the fire part, which marks a flooded hole as a
-  hole. Scenarios are at 2.0, their first major version, which names
+  hole, and 1.8 a challenge being played, a part only such a city has,
+  which an older version may leave out or keep, since what fell due
+  meanwhile is made when it is opened here again. Scenarios are at 2.0, their first major version, which names
   times as dates and adds a start year, a saved city to start from,
   events, and goals; the 2.0 reader still reads format 1 (1.0 to 1.3, in
   ticks), whose 1.1 added the Rail tool and count, 1.2 the `disasters`

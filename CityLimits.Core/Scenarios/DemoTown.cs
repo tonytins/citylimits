@@ -3,9 +3,9 @@ namespace CityLimits.Core.Scenarios;
 /// <summary>
 /// The demo town: a road nine tiles long with a residential, a commercial, and an industrial
 /// zone along its north side, a coal plant up a power line to the north, far enough that its
-/// pollution doesn't reach them, and the industry knocked down after a year. It is the fallback when a
-/// scenario can't be loaded, so it lives in code, where it can't go missing, and it is written as
-/// a scenario file and read by <see cref="ScenarioLoader"/>, so it passes the same validation.
+/// pollution doesn't reach them, and the industry knocked down after a year. It lives in code, where
+/// it can't go missing, as the town the documentation's examples describe, and it is written as a
+/// scenario file and read by <see cref="ScenarioLoader"/>, so it passes the same validation.
 /// </summary>
 public static class DemoTown
 {

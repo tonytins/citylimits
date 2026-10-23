@@ -75,6 +75,18 @@ internal static class SectionCodec
     [UnconditionalSuppressMessage("Trimming", "IL2072", Justification = ModelKept)]
     private static void WriteValue(Stream stream, Type type, object? value)
     {
+        // A number or a yes or no that may be missing, such as a goal's least, says first whether it is there.
+        if (Nullable.GetUnderlyingType(type) is { } inner)
+        {
+            stream.WriteByte(value is null ? (byte)0 : (byte)1);
+            if (value is not null)
+            {
+                WriteValue(stream, inner, value);
+            }
+
+            return;
+        }
+
         switch (value)
         {
             case int number:
@@ -181,6 +193,16 @@ internal static class SectionCodec
         [UnconditionalSuppressMessage("Trimming", "IL2067", Justification = ModelKept)]
         private object? ReadValue(Type type)
         {
+            if (Nullable.GetUnderlyingType(type) is { } inner)
+            {
+                return ReadByte() switch
+                {
+                    0 => null,
+                    1 => ReadValue(inner),
+                    _ => throw Damaged("a value that is neither there nor missing"),
+                };
+            }
+
             if (type == typeof(int))
             {
                 var value = ReadVarint();
