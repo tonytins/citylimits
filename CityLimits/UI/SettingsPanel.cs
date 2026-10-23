@@ -2,9 +2,10 @@ namespace CityLimits.UI;
 
 /// <summary>
 /// The settings window, opened from the start menu or the menu Escape opens in a city. Its tabs
-/// group the settings: Graphics, for fullscreen, and Gameplay, for autosave. A change applies at
-/// once; the window's owner writes the settings when it closes. The player moves it by its title,
-/// and its x or Escape closes it.
+/// group the settings: Graphics, for fullscreen, which takes effect when the game next starts;
+/// Gameplay, for autosave and whether disasters happen at all; and Disasters, for each kind. A
+/// change applies at once otherwise; the window's owner writes the settings when it closes. The
+/// player moves it by its title, and its x or Escape closes it.
 /// </summary>
 public sealed class SettingsPanel : IMovableWindow
 {
@@ -22,10 +23,10 @@ public sealed class SettingsPanel : IMovableWindow
     private const int OptionWidth = 64;
     private const int OptionHeight = 24;
     private const int OptionGap = 6;
-    private const int Rows = 1;
+    private const int Rows = 2;
     private const int Height = TitleStrip + TabHeight + Padding + (Rows * RowHeight) + Padding;
 
-    private static readonly string[] Tabs = ["Graphics", "Gameplay"];
+    private static readonly string[] Tabs = ["Graphics", "Gameplay", "Disasters"];
 
     // Each tab's settings: a label, the choices, which one the settings hold, what choosing one
     // changes, and a line saying what it does.
@@ -37,7 +38,7 @@ public sealed class SettingsPanel : IMovableWindow
                 ["Off", "On"],
                 settings => settings.Fullscreen ? 1 : 0,
                 (settings, choice) => settings with { Fullscreen = choice == 1 },
-                "Fill the screen with the game, as a window without borders."),
+                "Fill the screen, without borders, from the next time the game starts."),
         ],
         [
             new(
@@ -46,6 +47,20 @@ public sealed class SettingsPanel : IMovableWindow
                 settings => settings.AutosaveSlots,
                 (settings, choice) => settings with { AutosaveSlots = choice },
                 "Every 15 minutes of play, beside the city's own file."),
+            new(
+                "Disasters",
+                ["Off", "On"],
+                settings => settings.Disasters ? 1 : 0,
+                (settings, choice) => settings with { Disasters = choice == 1 },
+                "Whether disasters happen on their own; the Disasters tab picks which."),
+        ],
+        [
+            new(
+                "Fires",
+                ["Off", "On"],
+                settings => settings.Fires ? 1 : 0,
+                (settings, choice) => settings with { Fires = choice == 1 },
+                "Fires break out now and then; a fire already burning spreads either way."),
         ],
     ];
 

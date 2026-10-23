@@ -23,4 +23,7 @@ public enum BuildRefusal
 
     /// <summary>The tile is part of a zone, which the bulldozer clears only through its centre.</summary>
     PartOfAZone,
+
+    /// <summary>The tile is on fire, which nothing can build on or clear until it burns out.</summary>
+    OnFire,
 }

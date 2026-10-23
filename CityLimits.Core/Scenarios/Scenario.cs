@@ -3,7 +3,9 @@ namespace CityLimits.Core.Scenarios;
 /// <summary>
 /// A scenario after it has been read and checked: a city set up from a seed, the tool strokes
 /// made on it at set ticks, and what must be true along the way. <see cref="ScenarioLoader"/>
-/// is the only way to make one, so every scenario has passed the same validation.
+/// is the only way to make one, so every scenario has passed the same validation. Disasters,
+/// such as fires starting on their own, happen only when it asks for them, so a scenario's result
+/// doesn't depend on the player's settings.
 /// </summary>
 public sealed record Scenario(
     string Name,
@@ -14,7 +16,8 @@ public sealed record Scenario(
     int Funds,
     int Ticks,
     IReadOnlyList<ScenarioAction> Actions,
-    IReadOnlyList<ScenarioCheck> Checks)
+    IReadOnlyList<ScenarioCheck> Checks,
+    bool Disasters = false)
 {
     /// <summary>The longest a scenario may run, the same limit as <c>--ticks</c>: about 130 years.</summary>
     public const int MaxTicks = 100_000;

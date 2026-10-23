@@ -53,11 +53,12 @@ public static class BinaryCityFormat
     private const string RailTag = "RAIL";
     private const string PollutionTag = "POLL";
     private const string CrimeTag = "CRIM";
+    private const string FireTag = "FIRE";
 
     private static readonly string[] Required = [CityTag, DefinitionsTag, MapTag, BudgetTag, CensusTag, DemandTag, PowerTag, ServicesTag, CommunityTag, CityMapsTag, CycleTag];
 
     // The chunks each minor version added, required from that version on; an older file goes without.
-    private static readonly (string Tag, FormatVersion Since)[] Added = [(TrafficTag, new FormatVersion(1, 1)), (RoadTrafficTag, new FormatVersion(1, 3)), (RailTag, new FormatVersion(1, 4)), (PollutionTag, new FormatVersion(1, 5)), (CrimeTag, new FormatVersion(1, 5))];
+    private static readonly (string Tag, FormatVersion Since)[] Added = [(TrafficTag, new FormatVersion(1, 1)), (RoadTrafficTag, new FormatVersion(1, 3)), (RailTag, new FormatVersion(1, 4)), (PollutionTag, new FormatVersion(1, 5)), (CrimeTag, new FormatVersion(1, 5)), (FireTag, new FormatVersion(1, 6))];
 
     /// <summary>Writes a city as the format's bytes.</summary>
     public static byte[] Write(CitySimulation city)
@@ -100,6 +101,7 @@ public static class BinaryCityFormat
         WriteChunk(stream, RailTag, SectionCodec.Write(save.Rail!));
         WriteChunk(stream, PollutionTag, SectionCodec.Write(save.Pollution!));
         WriteChunk(stream, CrimeTag, SectionCodec.Write(save.Crime!));
+        WriteChunk(stream, FireTag, SectionCodec.Write(save.Fire!));
         foreach (var part in kept)
         {
             WriteChunk(stream, part.Chunk, city.Kept!.Chunks[part.Chunk]);
@@ -299,13 +301,15 @@ public static class BinaryCityFormat
             Rail = chunks.TryGetValue(RailTag, out var rail) ? SectionCodec.Read<RailSave>(rail, RailTag) : null,
             Pollution = chunks.TryGetValue(PollutionTag, out var pollution) ? SectionCodec.Read<BlockMapSave>(pollution, PollutionTag) : null,
             Crime = chunks.TryGetValue(CrimeTag, out var crime) ? SectionCodec.Read<BlockMapSave>(crime, CrimeTag) : null,
+            Fire = chunks.TryGetValue(FireTag, out var fire) ? SectionCodec.Read<FireSave>(fire, FireTag) : null,
         };
     }
 
     // The map's chunk: its width and height, then a word a tile, column by column.
     private static byte[] MapBytes(CitySimulation city)
     {
-        var words = MapCodec.EncodeWords(city.Map);
+        // Every standing building is written whole; the fire part holds the holes fire left.
+        var words = MapCodec.EncodeWords(FireCodec.WholeMap(city.Map, city.Fires));
         var bytes = new byte[4 + (words.Length * 2)];
         BinaryPrimitives.WriteUInt16BigEndian(bytes, (ushort)city.Map.Width);
         BinaryPrimitives.WriteUInt16BigEndian(bytes.AsSpan(2), (ushort)city.Map.Height);

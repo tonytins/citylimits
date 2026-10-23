@@ -25,6 +25,8 @@ internal sealed class ScenarioDocument
 
     public int? Ticks { get; set; }
 
+    public bool? Disasters { get; set; }
+
     public List<ActionDocument?>? Actions { get; set; }
 
     public List<CheckDocument?>? Checks { get; set; }

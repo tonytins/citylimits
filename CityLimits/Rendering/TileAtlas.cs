@@ -63,6 +63,24 @@ public static class TileAtlas
     /// <summary>The lightning bolt that blinks over a zone with no power.</summary>
     public const int LightningBoltTile = 827;
 
+    /// <summary>The first of the fire's drawings; each frame of its animation is the next tile.</summary>
+    public const int FireTile = 56;
+
+    /// <summary>How many frames a fire is animated in.</summary>
+    public const int FireFrames = 8;
+
+    /// <summary>The first of the drawings of a building blowing apart, which an explosion plays through.</summary>
+    public const int ExplosionTile = 860;
+
+    /// <summary>How many frames an explosion lasts.</summary>
+    public const int ExplosionFrames = 8;
+
+    /// <summary>
+    /// The drawing of a fire in an animation frame. Each tile starts its flames at a frame of its own,
+    /// picked from where it is, as Micropolis starts each fire at a frame of its own.
+    /// </summary>
+    public static int FireIndexFor(int x, int y, int frame) => FireTile + ((frame + (x * 3) + (y * 5)) % FireFrames + FireFrames) % FireFrames;
+
     /// <summary>A power line under water, running down.</summary>
     private const int UnderwaterLineDownTile = 208;
 

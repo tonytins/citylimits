@@ -56,7 +56,9 @@ public static class SettingsStore
                 Read(json, nameof(GameSettings.WindowHeight), GameSettings.MinWindowHeight, GameSettings.MaxWindowHeight, defaults.WindowHeight, refused),
                 Read(json, nameof(GameSettings.Speed), GameSettings.MinSpeed, GameSettings.MaxSpeed, defaults.Speed, refused),
                 Read(json, nameof(GameSettings.AutosaveSlots), GameSettings.MinAutosaveSlots, GameSettings.MaxAutosaveSlots, defaults.AutosaveSlots, refused),
-                ReadSwitch(json, nameof(GameSettings.Fullscreen), defaults.Fullscreen, refused));
+                ReadSwitch(json, nameof(GameSettings.Fullscreen), defaults.Fullscreen, refused),
+                ReadSwitch(json, nameof(GameSettings.Disasters), defaults.Disasters, refused),
+                ReadSwitch(json, nameof(GameSettings.Fires), defaults.Fires, refused));
             if (refused.Count > 0)
             {
                 warning = $"The settings file '{path}' had {string.Join(", ", refused)}, so {(refused.Count == 1 ? "that one is" : "those are")} back to the default; the rest are kept.";

@@ -96,12 +96,12 @@ public class ParkTests
         var map = TileMap.FromTerrain(16, 16, new TileKind[256]);
         map.SetState(8, 8, new TileState(TileKind.Grass, TileUse.Road));
         var maps = new CityMaps(map);
-        maps.UpdateLandValue(new TrafficMap(map));
+        maps.UpdateLandValue(new TrafficMap(map), new Fires(map));
         var without = maps.LandValueAt(8, 8);
 
         map.SetState(parkX, parkY, new TileState(TileKind.Grass, TileUse.Park));
-        maps.UpdateLandValue(new TrafficMap(map));
-        maps.UpdateLandValue(new TrafficMap(map));
+        maps.UpdateLandValue(new TrafficMap(map), new Fires(map));
+        maps.UpdateLandValue(new TrafficMap(map), new Fires(map));
 
         Assert.True(maps.LandValueAt(8, 8) > without, $"{maps.LandValueAt(8, 8)} vs {without}");
     }
@@ -117,7 +117,7 @@ public class ParkTests
         map.SetState(fountain.X, fountain.Y, new TileState(TileKind.Grass, TileUse.Park));
         var maps = new CityMaps(map);
 
-        maps.UpdateLandValue(new TrafficMap(map));
+        maps.UpdateLandValue(new TrafficMap(map), new Fires(map));
 
         Assert.Equal(0, maps.LandValueAt(wooded.X, wooded.Y));
         Assert.True(maps.LandValueAt(fountain.X, fountain.Y) > 0);

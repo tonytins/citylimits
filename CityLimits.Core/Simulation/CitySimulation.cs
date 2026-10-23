@@ -67,6 +67,23 @@ public sealed class CitySimulation
     // Micropolis reports traffic jams when the year's traffic average is above this.
     private const int MostTrafficBeforeJams = 60;
 
+    // As Micropolis on Easy: once a cycle a disaster comes one time in 481, and is one of nine kinds,
+    // two of them a fire. The rest are floods, a tornado, an earthquake, a monster, or nothing, which
+    // CityLimits doesn't have yet, so they pass by.
+    private const int DisasterChance = 481;
+    private const int DisasterKinds = 9;
+    private const int FireKinds = 2;
+
+    // A burning tile does anything at all one visit in four, spreads to each side one time in eight,
+    // and burns out sooner the better the fire stations cover it, as in Micropolis.
+    private const int FireActsChance = 4;
+    private const int FireSpreadChance = 8;
+    private const int StrongFireCover = 100;
+    private const int SomeFireCover = 20;
+
+    // An explosion sets fire to the four tiles at the corners of its centre.
+    private static readonly (int Dx, int Dy)[] ExplosionCorners = [(-1, -1), (1, -1), (-1, 1), (1, 1)];
+
     // Micropolis reports high pollution and crime when their averages are above these.
     private const int MostPollutionBeforeComplaints = 60;
     private const int MostCrimeBeforeComplaints = 100;
@@ -89,13 +106,14 @@ public sealed class CitySimulation
         Treasury = new Treasury(funds);
         Roads = new RoadNetwork();
         Definitions = definitions ?? CityDefinitions.Base;
-        Builder = new CityBuilder(map, Treasury, Roads, Definitions);
+        Fires = new Fires(map);
+        Builder = new CityBuilder(map, Treasury, Roads, Definitions, Fires);
         Maps = new CityMaps(map);
         Services = new ServiceCoverage(map);
         Traffic = new TrafficMap(map);
         Trips = new TripPlanner(Traffic);
         Budget = new CityBudget(Definitions.Service(TileUse.FireStation).Upkeep, Definitions.Service(TileUse.PoliceStation).Upkeep);
-        _growth = new ZoneGrowth(map, Random, Trips, Definitions, Demand, Maps, Community);
+        _growth = new ZoneGrowth(map, Random, Trips, Definitions, Demand, Maps, Community, Fires);
     }
 
     /// <summary>
@@ -125,6 +143,20 @@ public sealed class CitySimulation
 
     /// <summary>Raised when the city settles a year's taxes and upkeep, with what it came to.</summary>
     public event Action<BudgetYear>? YearSettled;
+
+    /// <summary>Raised when a burning building explodes, with where, so the game can show it; the fires it set are already burning.</summary>
+    public event Action<int, int>? Exploded;
+
+    /// <summary>The fires burning on the map, and the holes they leave in buildings.</summary>
+    public Fires Fires { get; }
+
+    /// <summary>
+    /// Whether fires start on their own, as Micropolis' disasters start them. The player's settings
+    /// decide it in the game, and a scenario's file in a scenario; it isn't saved with the city. A
+    /// fire already burning spreads either way. The dice are rolled whether it is on or off, so
+    /// turning it off changes nothing else the city does.
+    /// </summary>
+    public bool RandomFires { get; set; } = true;
 
     /// <summary>The definitions the city runs on: the base game's, with any mods applied.</summary>
     public CityDefinitions Definitions { get; }
@@ -216,8 +248,8 @@ public sealed class CitySimulation
     /// 48th of the year's taxes and upkeep aside, settling the year when it comes round; phase 10 fades the traffic and checks the city's messages,
     /// phase 11 traces power from the plants, phase 12 works out land value and pollution, phase 13
     /// spreads the police stations' coverage and works out crime, and phase 14 population density
-    /// and the city's centre. Phase 15 spreads the fire stations' coverage, and is where fire and
-    /// disasters will run.
+    /// and the city's centre. Phase 15 spreads the fire stations' coverage and rolls for a disaster.
+    /// The scan also visits each burning tile, which may spread its fire or burn out.
     /// </summary>
     public void Tick()
     {
@@ -269,7 +301,7 @@ public sealed class CitySimulation
         }
         else if (phase == LandValuePhase)
         {
-            Maps.UpdateLandValue(Traffic);
+            Maps.UpdateLandValue(Traffic, Fires);
         }
         else if (phase == PolicePhase)
         {
@@ -279,11 +311,113 @@ public sealed class CitySimulation
         else if (phase == FirePhase)
         {
             Services.SpreadFire();
+            RollForDisaster();
         }
         else if (phase == DensityPhase)
         {
             Maps.UpdateDensity(Definitions);
         }
+    }
+
+    // As in Micropolis' fire: one visit in four, the fire may spread to each side, one time in eight,
+    // and then may burn out: one time in two where fire stations cover it well, in three where
+    // they cover it some, in four where they barely do, and in eleven where they don't.
+    private void VisitFire(int x, int y)
+    {
+        if (Random.NextInt(0, FireActsChance) != 0)
+        {
+            return;
+        }
+
+        foreach (var (_, dx, dy) in Sides.All)
+        {
+            if (Random.NextInt(0, FireSpreadChance) == 0 && Fires.CanBurn(x + dx, y + dy))
+            {
+                Ignite(x + dx, y + dy);
+            }
+        }
+
+        var cover = Services.FireCoverageAt(x, y);
+        var odds = cover > StrongFireCover ? 1 : cover > SomeFireCover ? 2 : cover != 0 ? 3 : 10;
+        if (Random.NextInt(0, odds + 1) == 0)
+        {
+            Fires.PutOut(x, y);
+        }
+    }
+
+    // A building whose centre catches may explode: as in Micropolis, industry with a building,
+    // power plants, and fire and police stations do.
+    private void Ignite(int x, int y)
+    {
+        if (Fires.Ignite(x, y) is not { } building)
+        {
+            return;
+        }
+
+        var explodes = building.Use switch
+        {
+            TileUse.Industrial => building.Development > 0,
+            TileUse.CoalPowerPlant or TileUse.NuclearPowerPlant or TileUse.FireStation or TileUse.PoliceStation => true,
+            _ => false,
+        };
+        if (explodes)
+        {
+            Explode(x, y);
+        }
+    }
+
+    // The explosion sets fire to the tiles at the centre's corners that can burn, or are bare
+    // ground, but never to another building's centre. It does so at once, as Tony Bark chose;
+    // Micropolis waits for its drawing of the explosion to finish.
+    private void Explode(int x, int y)
+    {
+        foreach (var (dx, dy) in ExplosionCorners)
+        {
+            var (cx, cy) = (x + dx, y + dy);
+            var state = Map.StateAtOrDefault(cx, cy, new TileState(TileKind.Water));
+            var bare = state.Use == TileUse.None && state.Kind == TileKind.Grass;
+            if (!state.IsBuildingCenter && (bare || Fires.CanBurn(cx, cy)))
+            {
+                Fires.Ignite(cx, cy);
+            }
+        }
+
+        MessageSent?.Invoke(CityMessage.ExplosionReported);
+        Exploded?.Invoke(x, y);
+    }
+
+    // As Micropolis does at the end of each cycle: a disaster one time in 481, and then which kind.
+    // Only fires exist yet. Where a fire would start is picked whether fires may start or not, so
+    // the switch never changes the dice anything else rolls.
+    private void RollForDisaster()
+    {
+        if (Random.NextInt(0, DisasterChance) != 0)
+        {
+            return;
+        }
+
+        if (Random.NextInt(0, DisasterKinds) < FireKinds)
+        {
+            var (x, y) = (Random.NextInt(0, Map.Width), Random.NextInt(0, Map.Height));
+            if (RandomFires && IsArsonable(x, y))
+            {
+                Ignite(x, y);
+                MessageSent?.Invoke(CityMessage.FireReported);
+            }
+        }
+    }
+
+    // A fire starts only on an outer tile of a building with something on it, as Micropolis' does:
+    // a house, a zone's building or a shop's or a factory's lot, a plant, a station, a hospital, or a church.
+    private bool IsArsonable(int x, int y)
+    {
+        var state = Map.StateAt(x, y);
+        if (!state.HasFootprint || state.IsBuildingCenter)
+        {
+            return false;
+        }
+
+        return state.Use != TileUse.Residential || state.HasHouse || Map.ZoneStateAt(x, y).Development > 0;
     }
 
     // As in Micropolis, a 48th of the year's budget is set aside each count, and the year is
@@ -391,6 +525,12 @@ public sealed class CitySimulation
         {
             for (var x = first; x < end; x++)
             {
+                if (Fires.IsBurning(x, y))
+                {
+                    VisitFire(x, y);
+                    continue;
+                }
+
                 var state = Map.StateAt(x, y);
                 if (state.IsRoad)
                 {
@@ -491,7 +631,7 @@ public sealed class CitySimulation
         Funds = Treasury.Funds,
         Definitions = DefinitionWriter.Write(Definitions),
         Mods = [.. Definitions.AppliedMods.Select(mod => new ModSave { Id = mod.Id, Name = mod.Name, Version = mod.Version })],
-        Map = MapCodec.Encode(Map),
+        Map = MapCodec.Encode(FireCodec.WholeMap(Map, Fires)),
         Budget = Budget.Capture(),
         Census = Census.Capture(),
         Demand = Demand.Capture(),
@@ -511,6 +651,7 @@ public sealed class CitySimulation
         Rail = RailCodec.Capture(Map, RailTiles, _budgetedRailTiles),
         Pollution = Maps.CapturePollution(),
         Crime = Maps.CaptureCrime(),
+        Fire = FireCodec.Capture(Map, Fires),
     };
 
     /// <summary>Makes a city from a save, checking each part as it goes.</summary>
@@ -557,6 +698,7 @@ public sealed class CitySimulation
         city.Maps.Restore(save.CityMaps ?? throw new InvalidSave("cityMaps: missing."));
         city.Maps.RestorePollution(save.Pollution ?? throw new InvalidSave("pollution: missing."));
         city.Maps.RestoreCrime(save.Crime ?? throw new InvalidSave("crime: missing."));
+        FireCodec.Apply(map, city.Fires, save.Fire ?? throw new InvalidSave("fire: missing."));
         var cycle = save.Cycle ?? throw new InvalidSave("cycle: missing.");
         city.RoadTiles = SaveChecks.InRange(cycle.RoadTiles, 0, int.MaxValue, "cycle.roadTiles");
         city._budgetedRoadTiles = SaveChecks.InRange(cycle.BudgetedRoadTiles, 0, int.MaxValue, "cycle.budgetedRoadTiles");

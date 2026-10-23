@@ -18,6 +18,9 @@ public static class Theme
     /// <summary>The color of rubble.</summary>
     public static readonly Color Rubble = new() { R = 128, G = 126, B = 120, A = 255 };
 
+    /// <summary>A fire, for a missing sheet and the overview map.</summary>
+    public static readonly Color Fire = new() { R = 255, G = 110, B = 20, A = 255 };
+
     /// <summary>The color of the tile grid.</summary>
     public static readonly Color Grid = new() { R = 255, G = 255, B = 255, A = 28 };
 

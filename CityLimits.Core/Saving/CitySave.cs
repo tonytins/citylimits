@@ -74,6 +74,9 @@ internal sealed class CitySave
     /// <summary>The crime on the map, and its average; from format 1.5, and none for a city upgraded from before.</summary>
     public BlockMapSave? Crime { get; set; }
 
+    /// <summary>The fires on the map, and the holes they left in buildings; from format 1.6, and none for a city upgraded from before.</summary>
+    public FireSave? Fire { get; set; }
+
     /// <summary>
     /// A newer save's sections this version doesn't know, caught as they are so they can be checked
     /// against the parts list and written back. Unknown fields inside a known section are still refused.
@@ -352,6 +355,14 @@ internal sealed class RailSave
 
     /// <summary>The rail tiles the budget last counted.</summary>
     public required int BudgetedTiles { get; set; }
+}
+
+/// <summary>The fires on the map, as <see cref="FireCodec"/> writes them.</summary>
+[System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(SectionCodec.ModelMembers)]
+internal sealed class FireSave
+{
+    /// <summary>Each row of the map, a character a tile: '.' for none, 'f' for a fire, 'x' for a hole fire left in a building, and 'b' for a hole still burning.</summary>
+    public required string[] Tiles { get; set; }
 }
 
 /// <summary>One of the city's maps on 2 by 2 tile blocks, such as pollution or crime, and its average.</summary>

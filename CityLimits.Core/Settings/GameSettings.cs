@@ -29,10 +29,11 @@ public sealed record GameSettings
 
     /// <summary>
     /// Creates settings, rejecting values the game cannot honour. A settings file from before
-    /// autosave has no slots, and gets one; one from before fullscreen is windowed.
+    /// autosave has no slots, and gets one; one from before fullscreen is windowed; and one from before
+    /// disasters has them on, as Micropolis starts.
     /// </summary>
     /// <exception cref="ArgumentOutOfRangeException">A value is outside its allowed range.</exception>
-    public GameSettings(int windowWidth, int windowHeight, int speed, int autosaveSlots = 1, bool fullscreen = false)
+    public GameSettings(int windowWidth, int windowHeight, int speed, int autosaveSlots = 1, bool fullscreen = false, bool disasters = true, bool fires = true)
     {
         ArgumentOutOfRangeException.ThrowIfLessThan(windowWidth, MinWindowWidth);
         ArgumentOutOfRangeException.ThrowIfGreaterThan(windowWidth, MaxWindowWidth);
@@ -48,6 +49,8 @@ public sealed record GameSettings
         Speed = speed;
         AutosaveSlots = autosaveSlots;
         Fullscreen = fullscreen;
+        Disasters = disasters;
+        Fires = fires;
     }
 
     /// <summary>The width of the window, in pixels.</summary>
@@ -67,6 +70,18 @@ public sealed record GameSettings
     /// width and height stay the size it goes back to.
     /// </summary>
     public bool Fullscreen { get; init; }
+
+    /// <summary>
+    /// Whether disasters happen on their own at all; each has its own switch as well, such as
+    /// <see cref="Fires"/>. It is the player's, kept here and never in a city, so every city follows it.
+    /// </summary>
+    public bool Disasters { get; init; }
+
+    /// <summary>Whether fires start on their own, when <see cref="Disasters"/> are on too.</summary>
+    public bool Fires { get; init; }
+
+    /// <summary>Whether fires start on their own: both switches are on.</summary>
+    public bool RandomFires => Disasters && Fires;
 
     /// <summary>The settings the game starts with when there are none.</summary>
     public static GameSettings Default { get; } = new(1280, 720, 1);

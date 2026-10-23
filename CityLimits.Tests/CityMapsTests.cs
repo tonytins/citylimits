@@ -14,7 +14,7 @@ public class CityMapsTests
         var map = Flat(16, 16);
         var maps = new CityMaps(map);
 
-        maps.UpdateLandValue(new TrafficMap(map));
+        maps.UpdateLandValue(new TrafficMap(map), new Fires(map));
 
         Assert.Equal(0, maps.LandValueAt(8, 8));
     }
@@ -27,7 +27,7 @@ public class CityMapsTests
         map.SetState(8, 8, new TileState(TileKind.Grass, TileUse.Road));
         var maps = new CityMaps(map);
 
-        maps.UpdateLandValue(new TrafficMap(map));
+        maps.UpdateLandValue(new TrafficMap(map), new Fires(map));
 
         Assert.Equal(34 * 4, maps.LandValueAt(8, 8));
         Assert.Equal(34 * 4, maps.LandValueAt(9, 9));
@@ -42,7 +42,7 @@ public class CityMapsTests
         map.SetState(0, 0, new TileState(TileKind.Grass, TileUse.Road));
         var maps = new CityMaps(map);
 
-        maps.UpdateLandValue(new TrafficMap(map));
+        maps.UpdateLandValue(new TrafficMap(map), new Fires(map));
 
         // (70, 64) is 3 blocks across from the centre's block; (0, 0) is more than 32 away.
         Assert.Equal((34 - 3) * 4, maps.LandValueAt(70, 64));
@@ -58,11 +58,11 @@ public class CityMapsTests
         map.SetState(9, 8, new TileState(TileKind.Water));
         var maps = new CityMaps(map);
 
-        maps.UpdateLandValue(new TrafficMap(map));
+        maps.UpdateLandValue(new TrafficMap(map), new Fires(map));
         Assert.Equal(136, maps.LandValueAt(8, 8));
 
         // Two natural tiles in the 4 by 4 block, 15 each, kept at half after smoothing.
-        maps.UpdateLandValue(new TrafficMap(map));
+        maps.UpdateLandValue(new TrafficMap(map), new Fires(map));
         Assert.Equal(136 + 15, maps.LandValueAt(8, 8));
     }
 
@@ -73,7 +73,7 @@ public class CityMapsTests
         map.SetState(8, 8, new TileState(TileKind.Rubble));
         var maps = new CityMaps(map);
 
-        maps.UpdateLandValue(new TrafficMap(map));
+        maps.UpdateLandValue(new TrafficMap(map), new Fires(map));
 
         Assert.Equal(0, maps.LandValueAt(8, 8));
     }
@@ -88,7 +88,7 @@ public class CityMapsTests
         new CitySimulation(map, 1).Builder.Apply(BuildAction.CoalPowerPlant, 5, 5);
         var maps = new CityMaps(map);
 
-        maps.UpdateLandValue(new TrafficMap(map));
+        maps.UpdateLandValue(new TrafficMap(map), new Fires(map));
 
         Assert.Equal(174, maps.PollutionAt(4, 4));
         Assert.Equal(174, maps.PollutionAt(7, 7));
@@ -103,9 +103,9 @@ public class CityMapsTests
         new CitySimulation(map, 1).Builder.Apply(BuildAction.CoalPowerPlant, 9, 9);
         var maps = new CityMaps(map);
 
-        maps.UpdateLandValue(new TrafficMap(map));
+        maps.UpdateLandValue(new TrafficMap(map), new Fires(map));
         var clean = maps.LandValueAt(8, 8);
-        maps.UpdateLandValue(new TrafficMap(map));
+        maps.UpdateLandValue(new TrafficMap(map), new Fires(map));
 
         Assert.Equal(Math.Max(clean - maps.PollutionAt(8, 8), 1), maps.LandValueAt(8, 8));
         Assert.True(maps.LandValueAt(8, 8) < clean);
@@ -118,11 +118,11 @@ public class CityMapsTests
         new CitySimulation(map, 1).Builder.Apply(BuildAction.ZoneIndustrial, 8, 8);
         var maps = new CityMaps(map);
 
-        maps.UpdateLandValue(new TrafficMap(map));
+        maps.UpdateLandValue(new TrafficMap(map), new Fires(map));
         Assert.Equal(0, maps.PollutionAt(8, 8));
 
         map.SetState(8, 8, new TileState(TileKind.Grass, TileUse.Industrial, development: 1));
-        maps.UpdateLandValue(new TrafficMap(map));
+        maps.UpdateLandValue(new TrafficMap(map), new Fires(map));
         Assert.True(maps.PollutionAt(8, 8) > 0);
     }
 
@@ -158,7 +158,7 @@ public class CityMapsTests
         map.SetState(0, 0, new TileState(TileKind.Grass, TileUse.Road));
         var maps = new CityMaps(map);
 
-        maps.UpdateLandValue(new TrafficMap(map));
+        maps.UpdateLandValue(new TrafficMap(map), new Fires(map));
         maps.UpdateCrime(new ServiceCoverage(map));
 
         Assert.Equal(0, maps.CrimeAt(64, 64));
@@ -183,11 +183,11 @@ public class CityMapsTests
         var maps = new CityMaps(map);
 
         maps.UpdateDensity(CityDefinitions.Base);
-        maps.UpdateLandValue(new TrafficMap(map));
+        maps.UpdateLandValue(new TrafficMap(map), new Fires(map));
         Assert.Equal(8, maps.LandValueAt(0, 0));
         maps.UpdateCrime(new ServiceCoverage(map));
         Assert.True(maps.CrimeAt(0, 0) > 190, $"crime {maps.CrimeAt(0, 0)}");
-        maps.UpdateLandValue(new TrafficMap(map));
+        maps.UpdateLandValue(new TrafficMap(map), new Fires(map));
 
         Assert.Equal(1, maps.LandValueAt(0, 0));
     }

@@ -120,7 +120,7 @@ public class PollutionAndCrimeTests
 
         Assert.Equal(0, upgraded.Maps.PollutionAverage);
         Assert.All(Enumerable.Range(0, 40), x => Assert.Equal(0, upgraded.Maps.PollutionAt(x, 1)));
-        Assert.Equal("1.5", JsonNode.Parse(FlatCityFormat.Write(upgraded))!["format"]!.GetValue<string>());
+        Assert.Equal("1.6", JsonNode.Parse(FlatCityFormat.Write(upgraded))!["format"]!.GetValue<string>());
 
         RunCounts(upgraded, 1);
         Assert.Equal(city.Maps.PollutionAt(35, 2), upgraded.Maps.PollutionAt(35, 2));

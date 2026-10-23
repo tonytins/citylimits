@@ -54,7 +54,7 @@ public sealed class ScenarioRunner
         ArgumentOutOfRangeException.ThrowIfLessThan(end, LatestTick(scenario), nameof(ticks));
 
         var map = TileMapGenerator.Generate(scenario.Seed, scenario.MapWidth, scenario.MapHeight);
-        var city = new CitySimulation(map, scenario.Seed, scenario.Funds);
+        var city = new CitySimulation(map, scenario.Seed, scenario.Funds) { RandomFires = scenario.Disasters };
         var plan = new BuildPlan();
         var actions = scenario.Actions.OrderBy(a => a.Tick).ThenBy(a => a.Index).ToList();
         var checks = scenario.Checks.OrderBy(c => c.Tick).ThenBy(c => c.Index).ToList();

@@ -1,5 +1,38 @@
 # CityLimits Changelog
 
+## 0.3.110
+
+Fire has come to your city, as in Micropolis. Now and then a fire breaks
+out in a building, and the news ticker says so in red. It spreads to
+whatever can burn beside it, trees included, and burns down to rubble.
+Fire stations nearby put fires out much sooner. A building that loses a
+tile keeps standing, and rebuilds the burned part as it grows; when fire
+reaches a building's heart, the building is lost. Burning factories,
+power plants, and stations explode. You can't bulldoze a fire, but you
+can clear what's around it so it has nowhere to go.
+
+The ticker also warns you when your city is at risk: when much of it is
+beyond the reach of a fire engine, when fire funding has been cut, or
+when homes stand right against the woods.
+
+If you'd rather not have disasters, turn them off on the Gameplay tab of
+the settings, or turn off fires alone on the new Disasters tab. It's your
+setting, not your city's, so every city you play follows it.
+
+Fullscreen now takes effect the next time the game starts, since
+switching back to a window while playing could leave the window filling
+the screen.
+
+For developers and agents: saves are format 1.6, with fires in a part of
+their own (`"fire"`, and the `FIRE` chunk) and every building written
+whole in the map, so older versions open the city as if it had been
+repaired. Scenarios are format 1.2, with `"disasters": true` to let fires
+start on their own and `Refused:OnFire` for a burning tile.
+`settings.json` gains `Disasters` and `Fires`. The headless run's
+monthly line gives the fires burning. The new disaster roll shifts the
+city's later rolls, so growth timings move and `demo-town` ends at
+$16,572.
+
 ## 0.3.109
 
 There's a settings window now. Open it from Settings on the start menu,

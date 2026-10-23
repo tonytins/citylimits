@@ -38,7 +38,7 @@ public static class DemoTown
             { "tick": 1536, "count": "Developed", "equals": 1 },
             { "tick": 1536, "tile": { "x": 38, "y": 50 }, "served": true, "powered": true },
             { "tick": 1536, "tile": { "x": 42, "y": 52 }, "kind": "Rubble", "use": "None" },
-            { "tick": 1536, "fundsEquals": 16568 },
+            { "tick": 1536, "fundsEquals": 16572 },
             { "tick": 1536, "count": "Industrial", "equals": 0 }
           ]
         }

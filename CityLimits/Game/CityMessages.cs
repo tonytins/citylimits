@@ -3,6 +3,9 @@ namespace CityLimits.Game;
 /// <summary>What the city's messages say to the player, in the game's own words.</summary>
 public static class CityMessages
 {
+    /// <summary>Tells whether a message reports a disaster as it starts, which the ticker shows in red.</summary>
+    public static bool IsDisaster(CityMessage message) => message is CityMessage.FireReported or CityMessage.ExplosionReported;
+
     /// <summary>The line the game shows, and the log writes, for a message.</summary>
     public static string Describe(CityMessage message) => message switch
     {
@@ -18,6 +21,8 @@ public static class CityMessages
         CityMessage.NeedRail => "Inadequate rail system",
         CityMessage.HighPollution => "Pollution very high",
         CityMessage.HighCrime => "Crime very high",
+        CityMessage.FireReported => "Fire reported!",
+        CityMessage.ExplosionReported => "Explosion reported!",
         CityMessage.Brownouts => "Brownouts: the power plants can't keep up, so build another",
         _ => message.ToString(),
     };

@@ -180,7 +180,7 @@ public sealed class StartMenu
         Raylib.EndDrawing();
     }
 
-    // A change applies at once, fullscreen included; the game writes the settings once the window closes.
+    // The game writes the settings once the window closes; fullscreen waits for the next start.
     private Choice UpdateSettings()
     {
         var mouse = Raylib.GetMousePosition();
@@ -194,7 +194,6 @@ public sealed class StartMenu
         {
             case SettingsPanel.Outcome.Changed:
                 Settings = _settings.Current;
-                Display.Apply(Settings.Fullscreen);
                 return Choice.None;
             case SettingsPanel.Outcome.Closed:
                 _settingsOpen = false;

@@ -53,6 +53,11 @@ internal static class SaveParts
         // or kept stale; land value reads a stale one for a cycle at most.
         new() { Name = "pollution", Chunk = "POLL", Since = "1.5", Ignorable = true, Keepable = true },
         new() { Name = "crime", Chunk = "CRIM", Since = "1.5", Ignorable = true, Keepable = true },
+
+        // The map holds every standing building whole, so a game that doesn't know fire opens the
+        // city as if its fires had burned out and its buildings been repaired, as Tony Bark chose. It
+        // can't keep the fires, since it may build where they were.
+        new() { Name = "fire", Chunk = "FIRE", Since = "1.6", Ignorable = true, Keepable = false },
     ];
 
     /// <summary>

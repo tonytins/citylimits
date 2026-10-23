@@ -9,6 +9,7 @@ public sealed class CityBuilder
     private readonly Treasury _treasury;
     private readonly RoadNetwork _roads;
     private readonly CityDefinitions _definitions;
+    private readonly Fires? _fires;
 
     // Apply works the stroke out again here, so a preview the player saw earlier can't go stale.
     private readonly BuildPlan _applying = new();
@@ -16,9 +17,13 @@ public sealed class CityBuilder
     // The water a road stroke has still to bridge; kept so planning every frame doesn't allocate.
     private readonly List<(int X, int Y)> _water = [];
 
-    /// <summary>Creates a builder that works on the given map, at the prices its definitions set: the base game's when none are given.</summary>
+    /// <summary>
+    /// Creates a builder that works on the given map, at the prices its definitions set: the base
+    /// game's when none are given. With the city's fires, it leaves burning tiles and the holes fire
+    /// leaves in buildings alone.
+    /// </summary>
     /// <exception cref="ArgumentNullException">One of the parts of the city is null.</exception>
-    public CityBuilder(TileMap map, Treasury treasury, RoadNetwork roads, CityDefinitions? definitions = null)
+    public CityBuilder(TileMap map, Treasury treasury, RoadNetwork roads, CityDefinitions? definitions = null, Fires? fires = null)
     {
         ArgumentNullException.ThrowIfNull(map);
         ArgumentNullException.ThrowIfNull(treasury);
@@ -28,6 +33,7 @@ public sealed class CityBuilder
         _treasury = treasury;
         _roads = roads;
         _definitions = definitions ?? CityDefinitions.Base;
+        _fires = fires;
     }
 
     /// <summary>
@@ -139,6 +145,11 @@ public sealed class CityBuilder
             return BuildResult.Refused(BuildRefusal.CannotBuildHere);
         }
 
+        if (plan.SkippedBecause(BuildRefusal.OnFire) > 0)
+        {
+            return BuildResult.Refused(BuildRefusal.OnFire);
+        }
+
         if (plan.SkippedBecause(BuildRefusal.PartOfAZone) > 0)
         {
             return BuildResult.Refused(BuildRefusal.PartOfAZone);
@@ -161,6 +172,11 @@ public sealed class CityBuilder
             for (var x = bounds.X; x < bounds.X + bounds.Width; x++)
             {
                 var state = _map.StateAt(x, y);
+                if (Blocked(x, y, plan))
+                {
+                    continue;
+                }
+
                 if (state.HasRoad)
                 {
                     plan.Skip(BuildRefusal.AlreadyDone);
@@ -204,6 +220,11 @@ public sealed class CityBuilder
             for (var x = bounds.X; x < bounds.X + bounds.Width; x++)
             {
                 var state = _map.StateAt(x, y);
+                if (Blocked(x, y, plan))
+                {
+                    continue;
+                }
+
                 if (state.HasPowerLine)
                 {
                     plan.Skip(BuildRefusal.AlreadyDone);
@@ -246,6 +267,11 @@ public sealed class CityBuilder
             for (var x = bounds.X; x < bounds.X + bounds.Width; x++)
             {
                 var state = _map.StateAt(x, y);
+                if (Blocked(x, y, plan))
+                {
+                    continue;
+                }
+
                 if (state.IsRail)
                 {
                     plan.Skip(BuildRefusal.AlreadyDone);
@@ -361,6 +387,11 @@ public sealed class CityBuilder
             for (var x = bounds.X; x < bounds.X + bounds.Width; x++)
             {
                 var state = _map.StateAt(x, y);
+                if (Blocked(x, y, plan))
+                {
+                    continue;
+                }
+
                 if (state.Use == TileUse.Park)
                 {
                     plan.Skip(BuildRefusal.AlreadyDone);
@@ -407,7 +438,13 @@ public sealed class CityBuilder
             for (var column = 0; column < size; column++)
             {
                 var state = _map.StateAt(left + column, top + row);
-                if (state.Use != TileUse.None || !TileRules.CanZone(state.Kind))
+                if (_fires?.IsBurning(left + column, top + row) == true)
+                {
+                    plan.Skip(BuildRefusal.OnFire);
+                    return;
+                }
+
+                if (state.Use != TileUse.None || !TileRules.CanZone(state.Kind) || _fires?.IsHole(left + column, top + row) == true)
                 {
                     plan.Skip(BuildRefusal.CannotBuildHere);
                     return;
@@ -439,6 +476,12 @@ public sealed class CityBuilder
             for (var x = bounds.X; x < bounds.X + bounds.Width; x++)
             {
                 var state = _map.StateAt(x, y);
+                if (_fires?.IsBurning(x, y) == true)
+                {
+                    plan.Skip(BuildRefusal.OnFire);
+                    continue;
+                }
+
                 if (state.HasFootprint)
                 {
                     var (centerX, centerY) = _map.ZoneCenterOf(x, y);
@@ -473,18 +516,46 @@ public sealed class CityBuilder
                     continue;
                 }
 
+                // A tile already burning goes on burning: the bulldozer can't clear fire, as in Micropolis.
                 var size = Footprint.SizeOf(center.Use);
                 for (var dy = -1; dy < size - 1; dy++)
                 {
                     for (var dx = -1; dx < size - 1; dx++)
                     {
-                        plan.Change(x + dx, y + dy, new TileState(TileKind.Rubble), 0);
+                        if (_fires?.IsBurning(x + dx, y + dy) != true)
+                        {
+                            plan.Change(x + dx, y + dy, new TileState(TileKind.Rubble), 0);
+                        }
                     }
                 }
 
                 plan.AddCost(TileCosts.Bulldoze);
             }
         }
+    }
+
+    // Nothing is built on a burning tile, or in the hole fire left in a building; the bulldozer
+    // decides for itself, since it may clear a hole's rubble but never a fire.
+    private bool Blocked(int x, int y, BuildPlan plan)
+    {
+        if (_fires is null)
+        {
+            return false;
+        }
+
+        if (_fires.IsBurning(x, y))
+        {
+            plan.Skip(BuildRefusal.OnFire);
+            return true;
+        }
+
+        if (_fires.IsHole(x, y))
+        {
+            plan.Skip(BuildRefusal.CannotBuildHere);
+            return true;
+        }
+
+        return false;
     }
 
     private static int ClearingCost(TileState state) =>

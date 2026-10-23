@@ -41,4 +41,10 @@ public enum CityMessage
 
     /// <summary>The city's average crime is above 100.</summary>
     HighCrime,
+
+    /// <summary>A fire has broken out.</summary>
+    FireReported,
+
+    /// <summary>A burning building has exploded.</summary>
+    ExplosionReported,
 }

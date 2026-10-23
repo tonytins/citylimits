@@ -16,9 +16,10 @@ public static class ScenarioLoader
 
     /// <summary>
     /// The newest scenario format this version reads. A file of an older minor version reads too;
-    /// one written as a whole number, such as <c>1</c>, is 1.0. 1.1 added the Rail tool and the Rail count.
+    /// one written as a whole number, such as <c>1</c>, is 1.0. 1.1 added the Rail tool and the Rail count,
+    /// and 1.2 the <c>disasters</c> switch and the OnFire refusal.
     /// </summary>
-    public static readonly FormatVersion Format = new(1, 1);
+    public static readonly FormatVersion Format = new(1, 2);
 
     /// <summary>The most actions, and the most checks, a scenario may hold.</summary>
     public const int MaxEntries = 10_000;
@@ -174,7 +175,7 @@ public static class ScenarioLoader
             checks.Add(ValidateCheck(checkDocuments[i], i, ticks, width, height));
         }
 
-        return new Scenario(name, description, seed, width, height, funds, ticks, actions, checks);
+        return new Scenario(name, description, seed, width, height, funds, ticks, actions, checks, document.Disasters ?? false);
     }
 
     private static ScenarioAction ValidateAction(ActionDocument? action, int index, int ticks)

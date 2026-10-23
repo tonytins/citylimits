@@ -18,6 +18,15 @@ public sealed class GameLoop : IDisposable
 
     // The train runs at the traffic's pace, with a generator of its own, so it never changes the city.
     private readonly Train _train = new();
+
+    // The fires' animation frame, and the explosions playing: where, and how many animation steps
+    // each has run. An explosion moves on a frame every other step, as Micropolis plays its own,
+    // and the few at once there could be share a buffer, so a frame never allocates.
+    private const int MostExplosions = 8;
+    private const int StepsPerExplosionFrame = 2;
+    private readonly (int X, int Y, int Steps)[] _explosions = new (int, int, int)[MostExplosions];
+    private int _explosionCount;
+    private int _fireFrame;
     private readonly Random _trainRandom = new();
     private readonly GameAssets _assets;
     private readonly CitySimulation _simulation;
@@ -122,9 +131,11 @@ public sealed class GameLoop : IDisposable
         }
 
         _simulation.MessageSent += ShowMessage;
+        _simulation.RandomFires = settings.RandomFires;
         _simulation.YearSettled += OnYearSettled;
 
-        _mapRenderer = new MapRenderer(map, assets, _simulation.Traffic);
+        _mapRenderer = new MapRenderer(map, assets, _simulation.Traffic, _simulation.Fires);
+        _simulation.Exploded += ShowExplosion;
         Logger.Info(_mapRenderer.IsCached ? "The map is drawn from cached chunks" : "The map is drawn tile by tile");
         _toolPaletteView = new ToolPaletteView(assets, definitions);
         _overview = new OverviewMap(_simulation);
@@ -221,6 +232,9 @@ public sealed class GameLoop : IDisposable
             _train.Step(_simulation.Map, _simulation.Demand.TaxablePopulation, _trainRandom);
         }
 
+        _fireFrame = (_fireFrame + steps) % TileAtlas.FireFrames;
+        AdvanceExplosions(steps);
+
         // The news stands still while the city does, a panel holding it included. Its first line
         // starts a third of the way across, so a city opened paused still shows the news.
         _ticker.Update(_settings.Speed > 0 && _modal == Modal.None ? elapsed : 0f, Raylib.GetScreenWidth(), 1f / 3f);
@@ -253,8 +267,13 @@ public sealed class GameLoop : IDisposable
         var mouse = Raylib.GetMousePosition();
 
         Raylib.BeginMode2D(_camera.ToRaylib());
-        _mapRenderer.Draw(_camera, _trafficAnimation.Frame);
+        _mapRenderer.Draw(_camera, _trafficAnimation.Frame, _fireFrame);
         DrawTrain();
+        for (var i = 0; i < _explosionCount; i++)
+        {
+            _mapRenderer.DrawExplosion(_explosions[i].X, _explosions[i].Y, _explosions[i].Steps / StepsPerExplosionFrame);
+        }
+
         _mapRenderer.DrawUnpowered(_camera, Raylib.GetTime());
         if (_stroke is not null)
         {
@@ -308,7 +327,7 @@ public sealed class GameLoop : IDisposable
         }
         else if (_tools.Selected == Tool.Inspect && onMap && _modal == Modal.None && !IsOverInterface(mouse))
         {
-            Hud.DrawPointerHint(mouse, $"Tile {tileX}, {tileY}", TileInfo.Describe(_simulation.Map, tileX, tileY, _simulation.Definitions));
+            Hud.DrawPointerHint(mouse, $"Tile {tileX}, {tileY}", TileInfo.Describe(_simulation.Map, tileX, tileY, _simulation.Definitions, _simulation.Fires));
         }
 
         switch (_modal)
@@ -573,10 +592,11 @@ public sealed class GameLoop : IDisposable
         switch (_settingsPanel.Update())
         {
             case SettingsPanel.Outcome.Changed:
+                // Fullscreen is kept for the next start; the rest apply now.
                 var chosen = _settingsPanel.Current;
-                Display.Apply(chosen.Fullscreen);
-                _settings = _settings with { Fullscreen = chosen.Fullscreen, AutosaveSlots = chosen.AutosaveSlots };
-                Logger.Info("Settings changed: fullscreen {Fullscreen}, {Slots} autosaves", chosen.Fullscreen, chosen.AutosaveSlots);
+                _settings = _settings with { Fullscreen = chosen.Fullscreen, AutosaveSlots = chosen.AutosaveSlots, Disasters = chosen.Disasters, Fires = chosen.Fires };
+                _simulation.RandomFires = _settings.RandomFires;
+                Logger.Info("Settings changed: fullscreen {Fullscreen} from the next start, {Slots} autosaves, disasters {Disasters}, fires {Fires}", chosen.Fullscreen, chosen.AutosaveSlots, chosen.Disasters, chosen.Fires);
                 return;
             case SettingsPanel.Outcome.Closed:
                 if (!SettingsStore.TrySave(_folders.SettingsFile, Settings, out var error))
@@ -924,6 +944,7 @@ public sealed class GameLoop : IDisposable
         BuildStatus.Built => $"Zoned {Count(result.TilesChanged / ZoneLayout.Parts, "zone")} for ${result.Cost}",
         BuildStatus.Unchanged when result.Reason == BuildRefusal.AlreadyDone => "The land is already like that",
         BuildStatus.Refused when result.Reason == BuildRefusal.PartOfAZone => "Bulldoze its centre to clear it",
+        BuildStatus.Refused when result.Reason == BuildRefusal.OnFire => "It's on fire: wait for it to burn out",
         BuildStatus.Unchanged => "There was nothing to clear",
         BuildStatus.Refused when result.Reason == BuildRefusal.NotEnoughFunds => $"Not enough money, it costs ${result.Cost}",
         BuildStatus.Refused when result.Reason == BuildRefusal.CannotBuildHere => "That ground cannot be built on",
@@ -931,15 +952,23 @@ public sealed class GameLoop : IDisposable
         _ => "The work was refused",
     };
 
-    // A message from the city goes on the ticker as an advisory, and to the log.
+    // A message from the city goes on the ticker as an advisory, and to the log. A disaster goes in
+    // red the moment it starts, every time, since each one is news.
     private void ShowMessage(CityMessage message)
     {
+        var text = CityMessages.Describe(message);
+        if (CityMessages.IsDisaster(message))
+        {
+            _ticker.Post(new NewsItem(text, NewsKind.Disaster));
+            Logger.Warn(text);
+            return;
+        }
+
         if (!_messages.ShouldPass(message, _simulation.CityTime))
         {
             return;
         }
 
-        var text = CityMessages.Describe(message);
         _ticker.Advise(text);
         Logger.Warn(text);
     }
@@ -981,6 +1010,33 @@ public sealed class GameLoop : IDisposable
     private int DemandPanelTop() => _toolPaletteView.Bottom() + 8;
 
     // The train is drawn over the map, centred on where it is, 32 pixels square as Micropolis' is.
+    // A new explosion takes the oldest one's place when the buffer is full.
+    private void ShowExplosion(int x, int y)
+    {
+        if (_explosionCount == MostExplosions)
+        {
+            Array.Copy(_explosions, 1, _explosions, 0, MostExplosions - 1);
+            _explosionCount--;
+        }
+
+        _explosions[_explosionCount++] = (x, y, 0);
+    }
+
+    private void AdvanceExplosions(int steps)
+    {
+        var kept = 0;
+        for (var i = 0; i < _explosionCount; i++)
+        {
+            var explosion = _explosions[i] with { Steps = _explosions[i].Steps + steps };
+            if (explosion.Steps < TileAtlas.ExplosionFrames * StepsPerExplosionFrame)
+            {
+                _explosions[kept++] = explosion;
+            }
+        }
+
+        _explosionCount = kept;
+    }
+
     private void DrawTrain()
     {
         if (_train.IsRunning && _assets.TrainFrameFor(_train.Frame) is { } frame)

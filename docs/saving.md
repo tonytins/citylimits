@@ -110,6 +110,7 @@ size of the same city as `.fcl`.
 | `RTRF` | The traffic each road shows, and the year's average; from format 1.3 |
 | `RAIL` | The rail on the map, and the scan's count of it; from format 1.4 |
 | `POLL`, `CRIM` | The pollution and the crime on each 2 by 2 block, and each one's average; from format 1.5 |
+| `FIRE` | The fires on the map, and the holes they left in buildings; from format 1.6 |
 
 Each tile's word holds, from its lowest bit: the ground (2 bits), the use
 (4 bits), the footprint part (4 bits), power (1 bit), and 5 bits more: a
@@ -191,7 +192,7 @@ arrays of numbers sit on one line each.
 | `map` | The map: see below |
 | `budget`, `census`, `demand`, `power`, `services`, `community`, `cityMaps` | Each part of the simulation's state |
 | `cycle` | The road tiles counted this cycle, and what the last count set aside for the budget |
-| `parts`, `traffic`, `roadTraffic`, `rail`, `pollution`, `crime` | The parts list and the parts later versions added, each from the version the table under Versions gives |
+| `parts`, `traffic`, `roadTraffic`, `rail`, `pollution`, `crime`, `fire` | The parts list and the parts later versions added, each from the version the table under Versions gives |
 
 ### The map
 
@@ -257,6 +258,7 @@ baseline that adds to the city takes the next minor version.
 | 1.3 | The traffic each road shows and the year's traffic average: `"roadTraffic"`, and the `RTRF` chunk | The roads show no traffic until the scan passes them, within a cycle, and the average is 0 until the year ends |
 | 1.4 | Rail: `"rail"`, and the `RAIL` chunk | A city from before has no rail |
 | 1.5 | Pollution and crime: `"pollution"` and `"crime"`, and the `POLL` and `CRIM` chunks | A city from before has none until phases 12 and 13 work them out, within a cycle |
+| 1.6 | Fire: `"fire"`, and the `FIRE` chunk | A city from before has nothing burning, and its buildings whole |
 - **Growing the binary format.** New state goes in new chunks, not new
   fields in old ones, so a minor version stays an addition.
 - **The flat format** writes its version as a string, `"1.0"`, so 1.10
@@ -291,6 +293,27 @@ map, so they are ignorable and keepable: a version that doesn't know
 them opens the city without them, and one that kept them stale writes
 them back, which costs the newer game a cycle of land value worked out
 from old figures.
+
+## Fire
+
+From format 1.6, the city's fires are saved as a part of their own,
+`"fire"` in `.fcl` and the `FIRE` chunk in `.cl` (`Saving/FireCodec.cs`).
+When a tile burns, what stood there is lost, so the city holds rubble
+beneath the fire; an outer tile of a building that burns leaves the
+building standing with a hole. The part holds, for each row of the map,
+a character a tile: `.` for nothing, `f` for a fire, `x` for a hole fire
+left in a standing building, and `b` for a hole still burning.
+
+The map in the save holds every standing building whole: a hole is
+written as the building's own tile, with nothing on it, and the part
+says it is a hole. A version that doesn't know fire leaves the part out,
+as the parts list allows, and opens the city as if its fires had burned
+out and its buildings had been repaired, as Tony Bark chose; before 1.6,
+every version refuses a building that isn't whole, so a map with holes
+in it would have stopped older versions opening the city at all. It
+can't keep the part, since it may build where the fires were. Reading
+refuses a fire on anything but rubble, a hole that isn't an outer tile of
+a building, or any other character, and says where.
 
 ## Opening a newer save
 

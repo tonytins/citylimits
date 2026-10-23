@@ -30,6 +30,7 @@ public sealed class CityMaps
     private const int CoalPlantPollution = 100;
     private const int LightTrafficPollution = 50;
     private const int HeavyTrafficPollution = 75;
+    private const int FirePollution = 90;
     private const int MostBlockPollution = 255;
 
     // Micropolis' crime: 128 less land value, plus population density, no more than 300, less
@@ -120,12 +121,15 @@ public sealed class CityMaps
     /// <see cref="MaxLandValue"/>; a block with nothing built on it has none. The terrain's worth,
     /// the pollution, and the crime it reads are as of the last time each was worked out; a wooded
     /// park counts as trees, not as something built, and a fountain counts as built. Pollution is
-    /// what the block's industry, coal plants, and busy roads give off, smoothed twice.
+    /// what the block's industry, coal plants, busy roads, and fires give off, smoothed twice; a
+    /// burning tile is rubble, not something built.
     /// </summary>
     /// <param name="traffic">The traffic each road shows, which pollutes.</param>
-    public void UpdateLandValue(TrafficMap traffic)
+    /// <param name="fires">The fires burning, which pollute.</param>
+    public void UpdateLandValue(TrafficMap traffic, Fires fires)
     {
         ArgumentNullException.ThrowIfNull(traffic);
+        ArgumentNullException.ThrowIfNull(fires);
 
         Array.Clear(_terrainScratch);
         long total = 0;
@@ -141,6 +145,12 @@ public sealed class CityMaps
                     for (var x = blockX * 2; x <= (blockX * 2) + 1; x++)
                     {
                         var state = _map.StateAtOrDefault(x, y, new TileState(TileKind.Grass));
+                        if (fires.IsBurning(x, y))
+                        {
+                            pollution += FirePollution;
+                            continue;
+                        }
+
                         var natural = state.Use == TileUse.None
                             ? state.Kind is TileKind.Trees or TileKind.Water
                             : state.Use == TileUse.Park && Parks.IsWoodedAt(x, y);

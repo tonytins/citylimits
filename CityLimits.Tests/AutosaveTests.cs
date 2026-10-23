@@ -130,4 +130,30 @@ public class AutosaveTests
             Directory.Delete(folder, recursive: true);
         }
     }
+
+    [Fact]
+    public void DisastersAndFiresAreOnUnlessTurnedOffAndBothAreKept()
+    {
+        var folder = Directory.CreateTempSubdirectory().FullName;
+        try
+        {
+            var path = Path.Combine(folder, "settings.json");
+            File.WriteAllText(path, """{ "WindowWidth": 1280, "WindowHeight": 720, "Speed": 1 }""");
+            var settings = SettingsStore.Load(path, out _);
+            Assert.True(settings.Disasters && settings.Fires && settings.RandomFires);
+
+            Assert.True(SettingsStore.TrySave(path, settings with { Fires = false }, out _));
+            settings = SettingsStore.Load(path, out var warning);
+            Assert.Null(warning);
+            Assert.True(settings.Disasters);
+            Assert.False(settings.Fires);
+            Assert.False(settings.RandomFires);
+
+            Assert.False((GameSettings.Default with { Disasters = false }).RandomFires);
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+    }
 }

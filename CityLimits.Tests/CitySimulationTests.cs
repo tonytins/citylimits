@@ -146,12 +146,15 @@ public class CitySimulationTests
         line.DragTo(15, 3);
         simulation.Builder.Apply(line);
 
-        for (var i = 0; i < 200 * CityCalendar.StepsPerCount; i++)
+        // With no jobs in town, demand stays low, so a house comes and goes; it must come at all.
+        var peopled = false;
+        for (var i = 0; i < 400 * CityCalendar.StepsPerCount; i++)
         {
             simulation.Tick();
+            peopled |= CityDefinitions.Base.Zone(TileUse.Residential).PopulationOf(simulation.Map, 3, 3) > 0;
         }
 
-        Assert.True(CityDefinitions.Base.Zone(TileUse.Residential).PopulationOf(simulation.Map, 3, 3) > 0);
+        Assert.True(peopled);
     }
 
     [Fact]

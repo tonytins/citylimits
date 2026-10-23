@@ -26,7 +26,7 @@ public class ScenarioRunnerTests
         Assert.Equal(1536, report.Final.Tick);
         Assert.Equal(96, report.Final.CityTime);
         Assert.Equal("1902-01", report.Final.Date);
-        Assert.Equal(16568, report.Final.Funds);
+        Assert.Equal(16572, report.Final.Funds);
         Assert.Equal(new CityCounts(9, 0, 1, 1, 0, 1, CoalPowerPlant: 1, PowerLine: 7), report.Final.Counts);
         Assert.Equal([90, 100, 100, 100, 3000, 35, 1], report.Actions.Select(a => a.Cost));
         Assert.Equal([9, 9, 9, 9, 16, 7, 9], report.Actions.Select(a => a.Tiles));

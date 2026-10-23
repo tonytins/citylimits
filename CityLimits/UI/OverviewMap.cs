@@ -196,6 +196,12 @@ public sealed class OverviewMap : IDisposable
     // The city in flat colours; an overlay shows its values over the city dimmed.
     private Color ColorAt(int x, int y)
     {
+        // A fire shows in every mode, so it can be found whatever the map shows.
+        if (_city.Fires.IsBurning(x, y))
+        {
+            return Theme.Fire;
+        }
+
         var state = _city.Map.StateAt(x, y);
         var city = state.Use == TileUse.None ? Theme.For(state.Kind) : Theme.For(state.Use);
         return Mode switch

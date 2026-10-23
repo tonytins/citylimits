@@ -43,9 +43,10 @@ public sealed class CommunityBuildings
 
     /// <summary>
     /// Counts the hospital or church whose centre the scan has reached, and, when the city has too
-    /// many of its kind, now and then turns it back into an empty residential zone.
+    /// many of its kind, now and then turns it back into an empty residential zone. With the city's
+    /// fires, a building with any tile burning stays as it is, as a Micropolis zone can't be redrawn then.
     /// </summary>
-    public void Visit(TileMap map, DeterministicRandom random, int x, int y)
+    public void Visit(TileMap map, DeterministicRandom random, int x, int y, Fires? fires = null)
     {
         ArgumentNullException.ThrowIfNull(map);
         ArgumentNullException.ThrowIfNull(random);
@@ -60,29 +61,28 @@ public sealed class CommunityBuildings
 
         if (tooMany && random.NextInt(0, TooManyChance) == 0)
         {
-            Replace(map, x, y, TileUse.Residential, center.Powered);
+            Replace(map, fires, x, y, TileUse.Residential, center.Powered);
         }
     }
 
     /// <summary>
     /// Turns the empty residential zone centred on a tile into a hospital when the city needs one,
-    /// or else a church when it needs one, and tells whether it did.
+    /// or else a church when it needs one, and tells whether it did. A zone with any tile burning can't
+    /// be redrawn, so it stays as it is.
     /// </summary>
-    public bool TryBuildIn(TileMap map, int x, int y)
+    public bool TryBuildIn(TileMap map, int x, int y, Fires? fires = null)
     {
         ArgumentNullException.ThrowIfNull(map);
 
         var powered = map.StateAt(x, y).Powered;
-        if (HospitalNeed > 0)
+        if (HospitalNeed > 0 && Replace(map, fires, x, y, TileUse.Hospital, powered))
         {
-            Replace(map, x, y, TileUse.Hospital, powered);
             HospitalNeed = 0;
             return true;
         }
 
-        if (ChurchNeed > 0)
+        if (ChurchNeed > 0 && Replace(map, fires, x, y, TileUse.Church, powered))
         {
-            Replace(map, x, y, TileUse.Church, powered);
             ChurchNeed = 0;
             return true;
         }
@@ -102,15 +102,22 @@ public sealed class CommunityBuildings
         return ChurchNeed < 0;
     }
 
-    // The nine tiles become the new use, the centre keeping its power until the scan looks again.
-    private static void Replace(TileMap map, int x, int y, TileUse use, bool powered)
+    // The nine tiles become the new use, the centre keeping its power until the scan looks again;
+    // a hole fire left is redrawn with the rest. Nothing changes while any of them burns.
+    private static bool Replace(TileMap map, Fires? fires, int x, int y, TileUse use, bool powered)
     {
+        if (fires?.AnyBurningIn(x, y) == true)
+        {
+            return false;
+        }
+
         for (var part = 0; part < ZoneLayout.Parts; part++)
         {
             var (dx, dy) = ZoneLayout.OffsetFromCenter(part);
-            var state = map.StateAt(x + dx, y + dy);
-            map.SetState(x + dx, y + dy, new TileState(state.Kind, use, zonePart: part, powered: part == ZoneLayout.CenterPart && powered));
+            map.SetState(x + dx, y + dy, new TileState(TileKind.Grass, use, zonePart: part, powered: part == ZoneLayout.CenterPart && powered));
         }
+
+        return true;
     }
 
     internal CommunitySave Capture() => new()

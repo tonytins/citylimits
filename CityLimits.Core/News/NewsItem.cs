@@ -9,7 +9,7 @@ public enum NewsKind
     /// <summary>The game or the city's advisers telling the player something, shown in yellow: saves, warnings, and the city's messages.</summary>
     Advisory,
 
-    /// <summary>A disaster, shown in red. The city has none until disasters exist.</summary>
+    /// <summary>A disaster, shown in red the moment it starts, such as a fire or an explosion.</summary>
     Disaster,
 }
 

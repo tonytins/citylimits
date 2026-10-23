@@ -154,6 +154,23 @@ public static class Headlines
         [
             "Firefighters Rescue Cat From Tree; Cat Unimpressed",
         ]),
+
+        // Fire risk, hinted at ahead of a fire, as Tony Bark asked after SimCity 3000.
+        new(FireRisk.ZonesOutOfReach,
+        [
+            "Fire Chief Warns Whole Neighbourhoods Are Beyond Reach Of An Engine",
+            "Residents Ask Why The Nearest Fire Station Is A Bus Ride Away",
+        ]),
+        new(FireRisk.FundingIsCut,
+        [
+            "Firefighters Say Budget Cuts Leave Engines Short Of Crews",
+            "Fire Station Holds Bake Sale To Pay For New Hoses",
+        ]),
+        new(FireRisk.HomesAgainstWoods,
+        [
+            "Homeowners By The Woods Worry About Stray Sparks",
+            "Fire Chief Urges {city} To Clear Brush Away From Homes",
+        ]),
         new(city => city.Services.PoliceStations > 0,
         [
             "Police Recover Stolen Bicycle, Return It With Fresh Air In Tyres",

@@ -10,7 +10,7 @@ namespace CityLimits.Core.Saving;
 internal static class SaveUpgrades
 {
     /// <summary>The save model's version, which both save formats write.</summary>
-    public static readonly FormatVersion Current = new(1, 5);
+    public static readonly FormatVersion Current = new(1, 6);
 
     /// <summary>Upgrades a save in place, from whatever older 1.x version it is.</summary>
     public static void ToCurrent(CitySave save)
@@ -37,6 +37,11 @@ internal static class SaveUpgrades
             AddPollutionAndCrime(save);
         }
 
+        if (save.Format < new FormatVersion(1, 6))
+        {
+            AddFire(save);
+        }
+
         save.Format = Current;
     }
 
@@ -56,6 +61,15 @@ internal static class SaveUpgrades
         if (save.Map is { Width: >= 1 and <= MapCodec.MaxSide, Height: >= 1 and <= MapCodec.MaxSide } map)
         {
             save.Rail ??= new RailSave { Track = [.. Enumerable.Repeat(new string('.', map.Width), map.Height)], Tiles = 0, BudgetedTiles = 0 };
+        }
+    }
+
+    // 1.6 added fire. A city from before has none burning, and its buildings are whole.
+    private static void AddFire(CitySave save)
+    {
+        if (save.Map is { Width: >= 1 and <= MapCodec.MaxSide, Height: >= 1 and <= MapCodec.MaxSide } map)
+        {
+            save.Fire ??= new FireSave { Tiles = [.. Enumerable.Repeat(new string('.', map.Width), map.Height)] };
         }
     }
 

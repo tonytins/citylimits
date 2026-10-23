@@ -1,6 +1,6 @@
 # CityLimits roadmap
 
-> **Last reviewed:** 2026-10-21 · **Last updated:** 2026-10-22 · **Change:** minor (a settings window, and the Escape menu as a column of buttons) · **Stage:** alpha
+> **Last reviewed:** 2026-10-21 · **Last updated:** 2026-10-22 · **Change:** minor (Deadwood, D2: fire) · **Stage:** alpha
 
 Forward-looking: where CityLimits stands, what blocks the next milestone,
 and what comes next. Verified status and evidence are in the
@@ -45,10 +45,10 @@ unsupported things in imported cities becoming bare ground.
 
 Next, in order:
 
-1. **Deadwood: fire, then floods and earthquakes**, in the phases Tony
-   Bark settled (D2 and D3). D1, pollution and crime, is in, so police
-   coverage and land value have their effects; fire coverage gets its
-   with D2. Radial, traffic and rail, is complete.
+1. **Deadwood, D3: floods and earthquakes**, the last of the phases Tony
+   Bark settled. D1, pollution and crime, and D2, fire, are in, so both
+   coverage maps and land value have their effects. Radial, traffic and
+   rail, is complete.
 
 ## Milestones
 
@@ -63,17 +63,16 @@ Next, in order:
 | Kowloon: Simulation core | 100% | 0 | Time runs as in Micropolis: the 16-phase cycle, the 48ths-of-a-year calendar, and its pace. Scenarios run from files and from the command line. Zones grow and decline one by one, with population, demand, and trips. The heart of the game |
 | Joffburg: Services and economy | 100% | 0 | Meets the baseline: power, taxes and the budget, services (stations, coverage, parks, hospitals, and churches), and the overview map with its power, coverage, land value, and density modes, as in Micropolis |
 | Radial: Traffic and commuting | 100% | 0 | Meets the baseline: versioned file formats with schemas, read without reflection, the traffic map trips leave and what it shows and costs, and rail, with tunnels, crossings, trips along it, its upkeep and message, and the commuter train |
-| Deadwood: Land value, pollution, disasters | 40% | 7–11 | D1 is in: pollution and crime, as in Micropolis, with their effects on land value and growth, their messages, and overview modes. Fire (D2) and floods and earthquakes (D3) are left |
+| Deadwood: Land value, pollution, disasters | 60% | 3–5 | D1 and D2 are in: pollution and crime, and fire, as in Micropolis, with the ticker's fire-risk hints and the settings' disaster switches. Floods and earthquakes (D3) are left |
 | Happy Isle: Player-facing game | 50% | 6–10 | The palette, laid out as Micropolis', and the HUD, with its bar along the bottom over a news ticker after Tony Bark's mock-up, are in; the budget, demand, and city panels and the overview's power mode are too, and cities save, load, autosave, and import from Micropolis. The city score and map size on the start screen are left |
 | Yokohama: Polish and release | 0% | 10–20 | Nothing yet |
-| | **Total** | **≈ 23–41** | |
+| | **Total** | **≈ 19–35** | |
 
 ## Upcoming work, ranked
 
 | Rank | Work | Milestone | Estimate (h) |
 |---|---|---|---|
-| 1 | Deadwood, D2: fire, with the ticker's fire-risk hints | Deadwood | 4–6 |
-| 2 | Deadwood, D3: floods and earthquakes | Deadwood | 3–5 |
+| 1 | Deadwood, D3: floods and earthquakes | Deadwood | 3–5 |
 
 Every row of the alpha gate passes, and CityLimits is an alpha since 0.3.100.
 
@@ -235,8 +234,11 @@ would bring them does nothing. Every disaster is reported in red on the
 news ticker the moment it starts. Fire also gets hints ahead of time,
 which Tony Bark asked for after SimCity 3000: flavour headlines when the
 city's fire risk runs high, which read the city and never decide a fire.
-Damage is repaired as in Micropolis, at no cost: stations and plants
-rebuild their own damaged tiles, and the player clears rubble.
+Damage is repaired as in Micropolis, at no cost: a zone redraws its
+burned tiles as it next grows or declines, and the player clears rubble.
+Starting a disaster on demand, as Micropolis' Disasters menu does, waits
+for a new set of palette art from Tony Bark, since the interface follows
+later games, where such tools live in the palette.
 
 - [x] D1: land value, from a set of desirability factors, with an
   overlay. Closeness to the centre, terrain, pollution, and crime, as in
@@ -250,8 +252,15 @@ rebuild their own damaged tiles, and the player clears rubble.
   and a message. Its numbers are constants until the definitions format
   can grow without stopping older versions opening new saves. Saved from
   format 1.5, as two parts older versions may leave out or keep.
-- [ ] D2: fire. Fires start, spread to buildings, and are answered by
-  the fire service, with hints on the ticker when the risk runs high.
+- [x] D2: fire. Fires start, spread to buildings, and are answered by
+  the fire service, with hints on the ticker when the risk runs high,
+  as in Micropolis (`World/Fires.cs`). A building keeps standing with the
+  holes fire leaves, and is redrawn as it grows; a burning centre takes
+  the building's tiles with something on them, as Tony Bark chose;
+  explosions set their fires at once. Fires start on their own only when
+  the player's Disasters and Fires switches allow, and the dice are
+  rolled either way. Saved from format 1.6 with every building written
+  whole, so older versions open the city repaired.
 - [ ] D3: earthquakes and floods, from Micropolis' disaster roll,
   reported as they start.
 - [ ] D2 and D3: damage and recovery, as in Micropolis: stations and
@@ -362,6 +371,7 @@ baseline's growth depends on.
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-22 | minor | Deadwood, D2, as in Micropolis: fire. A disaster roll each cycle (1 in 481 on Easy, a fire 2 times in 9) starts a fire on a building's outer tile; it spreads one visit in four to each side one time in eight, burns out sooner under fire coverage, leaves holes in buildings that are redrawn as they grow, and takes a building's furnished tiles when it reaches the centre, as Tony Bark chose; industry, plants, and stations explode, at once. The ticker reports fires and explosions in red, and, as Tony Bark asked after SimCity 3000, hints at zones out of an engine's reach, cut fire funding, and homes against the woods. The settings gain a Disasters switch on Gameplay and a Disasters tab with Fires, the player's and never a city's; the dice are rolled either way. Fullscreen now applies only at launch, after Tony Bark found going back to a window at runtime left a screen-sized window. Saves move to 1.6 with fire a part of its own and buildings written whole; scenarios to 1.2 with `disasters`, off by default. The new roll shifts every later one, so the demo town ends $4 richer. Deadwood is at 60%; 19–35 h left in total, 746 tests. |
 | 2026-10-22 | minor | A detour before Deadwood's D2, at Tony Bark's request: a movable settings window with tabs, from the start menu or the Escape menu, holding fullscreen (a borderless window the size of the monitor) and autosave (now with Off), applied at once and written when it closes; the Escape menu becomes a single column of buttons with Save, Load, and Settings added. Fullscreen is now really saved, which the foundation's checklist had claimed. The disasters switch Tony Bark wants, a player's setting rather than a city's, comes with D2, when it has something to switch. 724 tests. |
 | 2026-10-22 | minor | Deadwood, D1, as in Micropolis: pollution from industry, coal plants, and busy roads, every tile of a building counting as in Micropolis' core (Tony Bark's choice over the Java port), lowering land value and homes' worth and stopping homes above 128; crime from land value, density, and police coverage, taking 20 off land value above 190; messages above averages of 60 and 100; Pollution and Crime overview modes. Saves move to format 1.5 with two parts older versions may leave out or keep, and 0.3.106 opened one. Tony Bark settled Deadwood's phases: fire (D2, with SimCity 3000-style hints on the ticker), then floods and earthquakes (D3); no tornado, monster, or meltdown yet; no warnings before a disaster beyond fire's hints; Micropolis' free repairs. The built-in scenarios' and the headless town's coal plants moved up power lines out of their homes' pollution; small town's industry now holds back its neighbours. Deadwood is at 40%; 23–41 h left in total, 722 tests. |
 | 2026-10-22 | patch | A save that kept a newer save's parts but fell back to this version opens again with them; before, the flat format refused it and the binary one dropped them. 0.3.100 to 0.3.102 got backports that open saves from 0.3.103 on, 0.3.100.1 to 0.3.102.1, on release branches, and a save from each is a fixture. 705 tests. |

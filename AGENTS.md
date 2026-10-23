@@ -30,9 +30,9 @@ CityLimits.Core/              engine-free library: the world and the simulation,
   CityLimits.Core.csproj        the project file; it must never reference Raylib-cs
   GlobalUsings.cs               global usings shared by the project
   Randomness/                   namespace CityLimits.Core.Randomness: the seeded generator the simulation owns
-  World/                        namespace CityLimits.Core.World: the map and its default size, the tiles and their footprints, the terrain and its edges, the tile rules, the build actions, roads, rail, power lines
+  World/                        namespace CityLimits.Core.World: the map and its default size, the tiles and their footprints, the terrain and its edges, the tile rules, the build actions, roads, rail, power lines, and the fires burning on the map
   Sprites/                      namespace CityLimits.Core.Sprites: the things that move over the map without being part of it, such as the train
-  Simulation/                   namespace CityLimits.Core.Simulation: the clock, the calendar, the tick and its cycle, the census, demand, growth, trips, traffic and its animation, the city maps, the power grid, service coverage, the city's messages
+  Simulation/                   namespace CityLimits.Core.Simulation: the clock, the calendar, the tick and its cycle, the census, demand, growth, trips, traffic and its animation, the city maps, the power grid, service coverage, fire risk, the city's messages
   Economy/                      namespace CityLimits.Core.Economy: the treasury, the costs, the budget
   News/                         namespace CityLimits.Core.News: the news ticker's queue, its headlines and the desk that picks them, and the loading screen's phrases
   Settings/                     namespace CityLimits.Core.Settings: the settings that survive a session, and the folders the game keeps its files in
@@ -143,8 +143,8 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   records the census and sets a 48th of the year's taxes and upkeep
   aside, settling the year when it comes round, 10 fades the traffic and checks the city's messages, 11 traces power, 12
   works out land value and pollution, 13 spreads police coverage and works
-  out crime, 14 population density, and 15 fire coverage; 15 is also where
-  fire and disasters will run.
+  out crime, 14 population density, and 15 fire coverage and the roll for a
+  disaster; the scan also visits each burning tile.
   `CityCalendar` turns the count into a month: 4 counts a month, 48 a
   year, from January 1900. At Normal speed a step runs every quarter of a
   second, so a month takes 16 seconds and a year about 3 minutes; Fast is
@@ -184,9 +184,8 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   1 000), halved without power and halved again without a road along its
   edge. Phase 13 spreads the police map and phase 15 the fire map, each
   smoothed three times: a block keeps half of itself plus an eighth of
-  each neighbour. Police coverage lowers crime; fire coverage acts on
-  fires, which come with Deadwood's D2, and until then nothing answers to
-  it. The city says when more
+  each neighbour. Police coverage lowers crime, and fire coverage burns
+  fires out sooner. The city says when more
   than 60 people have no fire station or no police station, and when
   either is funded below 70%. An unpowered station blinks the bolt, as a
   zone does.
@@ -298,6 +297,39 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   population density, no more than 300, less police coverage, from 0 to
   250. Each keeps its average over the blocks that have any, and the city
   says pollution is very high above an average of 60 and crime above 100.
+  A burning tile pollutes 90.
+- **Fire.** As in Micropolis, `World/Fires.cs` keeps which tiles burn; the
+  map holds rubble beneath each, since what stood there is lost. When the
+  scan reaches a burning tile, one visit in four it may spread to each
+  side, one time in eight, to anything built on land or trees (never
+  water, bare ground, or rubble), and then may burn out, from one time in
+  two where fire stations cover it well to one in eleven where they
+  don't. A building that loses an outer tile keeps standing with a hole,
+  which nothing can be built in (`Fires.IsHole`, worked out from the map,
+  not kept); it can't grow or decline while any of it burns, and when it
+  next does it is redrawn whole, as Micropolis' zones are, and a house
+  never goes in a hole. When fire reaches a centre, the building is lost:
+  its tiles with something on them catch (a house, a zone's building, any
+  tile of a plant, a station, a hospital, or a church), and its empty
+  lots go bare, which Tony Bark chose because Micropolis' loose pieces
+  have no place in CityLimits' map. Industry with a building, power
+  plants, and stations explode, setting the four tiles at the centre's
+  corners alight at once (Micropolis waits for its drawing to finish), and
+  the game plays Micropolis' explosion drawing there alone. In phase 15,
+  as on Micropolis' Easy, a disaster comes one time in 481 and is a fire
+  two times in nine; it starts on an outer tile of a building with
+  something on it. The other kinds pass by until D3 adds floods and
+  earthquakes. Fires start on their own only when the player's settings
+  allow (`CitySimulation.RandomFires`, never saved with a city); the dice
+  are rolled either way, so the switch changes nothing else the city
+  does. Stations and plants don't repair their holes, as in Micropolis,
+  where repair skips rubble. The bulldozer can't clear a fire, and goes
+  round one when it knocks a building down. The ticker reports a fire or
+  an explosion in red as it starts, and, as Tony Bark asked after
+  SimCity 3000, hints at fire risk ahead of a fire (`FireRisk`): zones out
+  of an engine's reach, fire funding cut, homes against the woods. The
+  game draws each fire from the sheet's eight flame frames over the cached
+  map, still while paused.
   Their numbers are constants for now, not specs, as Tony Bark chose,
   because a spec field would make every save refuse to open in older
   versions until the definitions format can grow without that.
@@ -395,8 +427,8 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   SimCity 3000's ticker. Each line is coloured by its kind (`NewsKind`):
   white for headlines from the city's world, yellow for advisories (the
   game's notices, such as a save, an autosave, a failure, or what opening
-  a city came to, and the city's messages), and red for disasters, which
-  don't exist yet. Lines wait in a `NewsQueue`, disasters and advisories
+  a city came to, and the city's messages), and red for disasters, a fire
+  or an explosion, each passed on as it starts. Lines wait in a `NewsQueue`, disasters and advisories
   ahead of headlines, a line already waiting isn't queued twice, and it
   holds 16. When nothing waits, `NewsDesk` picks a headline
   (`Headlines`): a population milestone the city has just passed or a
@@ -439,7 +471,7 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   on it moves the view there. A row of buttons under it switches it
   between the city, power (a building lit or dark by what its centre
   last had, and the lines grey), fire and police coverage, land value,
-  population density, traffic, pollution, and crime, each map in four bands of its own colours over
+  population density, traffic, pollution, and crime, a fire showing in every mode, each map in four bands of its own colours over
   the city dimmed. It reads the simulation and never writes it, and it is
   drawn into its own texture, redrawn when a tile changes, the mode
   changes, or a count begins; without the texture it is drawn straight to
@@ -471,9 +503,13 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   menu or the in-game menu, and moves by its title like the other
   windows. Its tabs, as Tony Bark chose, group the settings: Graphics
   holds fullscreen, a borderless window the size of the monitor
-  (`Rendering/Display.cs`), and Gameplay holds autosave, off, one, or
-  two. A change applies at once, and closing the window, with its x or
-  Escape, writes `settings.json`, so a crash later can't lose it.
+  (`Rendering/Display.cs`), applied only when the game starts, since
+  going back to a window while running left a screen-sized window on Tony
+  Bark's desktop; Gameplay holds autosave, off, one, or two, and the
+  switch for disasters as a whole; and Disasters holds a switch for each
+  kind, fires so far. Disasters are the player's, never a city's. A
+  change applies at once otherwise, and closing the window, with its x
+  or Escape, writes `settings.json`, so a crash later can't lose it.
 - **The money.** The city starts with a treasury, and the prices are
   Micropolis' (`Economy/TileCosts.cs`, and the zones' in their
   `ZoneSpec`, `PlantSpec`, and `ServiceSpec`): $10 a road tile, $50 a bridge tile, $5 a power line tile,
@@ -493,7 +529,8 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   it. A plant or a station is placed the same way, one at a time, centred on the
   pointer. Parks are laid as a rectangle. The bulldozer clears roads, bridges, power lines, parks, trees, and rubble tile by tile,
   but a zone, a plant, or a station only through its centre, which turns all its tiles
-  to rubble. Clicking the palette picks a tool, and never builds on the map
+  to rubble. Nothing is built on a burning tile or in a hole fire left in a
+  building, and the bulldozer can't clear a fire (`BuildRefusal.OnFire`). Clicking the palette picks a tool, and never builds on the map
   under it.
 - **The tile readout.** The tile under the mouse is outlined, and with
   the Inspect tool held, the pointer's hint names it on two lines: the
@@ -554,6 +591,7 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   version wrote can't reset them all. `AutosaveSlots`, 0 to 2,
   says how many autosaves a city keeps; a settings file without it keeps
   one. `Fullscreen` is true or false, and a file without it is windowed.
+  `Disasters` and `Fires` are true or false, and on in a file without them.
 - **The headless run.** `citylimits --headless` runs the city with no
   window at all and writes a line to the console each month, so the
   simulation can be checked on a machine with no screen. It takes `--seed`
@@ -606,7 +644,7 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   and no project. It holds the parser, the dispatcher, the default
   command, the strict option reader, and the exit codes.
 - **The tests.** `CityLimits.Tests` uses xUnit 2 with the VSTest runner
-  and coverlet, and holds 724 tests over pollution and crime, rail and the train, the news ticker's queue, its headlines, and the loading phrases, opening newer saves and the backports' saves, traffic and its animation, saving, loading, autosave, importing Micropolis cities, format versions and schemas, with a city
+  and coverlet, and holds 746 tests over fire and its hints, pollution and crime, rail and the train, the news ticker's queue, its headlines, and the loading phrases, opening newer saves and the backports' saves, traffic and its animation, saving, loading, autosave, importing Micropolis cities, format versions and schemas, with a city
   the owner built in both formats in `CityLimits.Tests/Assets/`, the generator, the terrain edges, the power plants, lines, and grid, the budget, the stations and their coverage, parks, hospitals and churches, the map, the
   calendar, the clock, the simulation, the settings, the tile rules, the
   build actions, the road network, the treasury, the scenario loader and
@@ -787,13 +825,18 @@ without reflection.
   number from before, `1`, reads as `1.0`. A binary save keeps its major
   version in the header and its minor in the `VERS` chunk, and new state
   goes in new chunks, never new fields in old ones. The scenario report's
-  `format` stays a whole number, since scripts read it. Saves are at 1.5:
+  `format` stays a whole number, since scripts read it. Saves are at 1.6:
   1.1 added traffic, 1.2 the parts list, 1.3 the traffic each road
   shows and the year's average, 1.4 rail, in a part of its own
   (`RailCodec`) with the map holding what lies beneath it, so a version
   that doesn't know rail opens the city as if it had none, and 1.5
-  pollution and crime, two parts an older version may leave out or keep. Scenarios are
-  at 1.1, which added the Rail tool and the Rail count.
+  pollution and crime, two parts an older version may leave out or keep,
+  and 1.6 fire, in a part of its own (`FireCodec`) with the map holding
+  every standing building whole, so a version that doesn't know fire
+  opens the city as if its fires had burned out and its buildings been
+  repaired, as Tony Bark chose. Scenarios are at 1.2: 1.1 added the Rail
+  tool and the Rail count, and 1.2 the `disasters` switch, off unless a
+  file turns it on, and the OnFire refusal.
 - **Older saves climb one minor version at a time,** each step a small
   function in `SaveUpgrades`, with a test from a fixture; Bridgeport's
   fixtures in `CityLimits.Tests/Assets/` stay at 1.0 for that.

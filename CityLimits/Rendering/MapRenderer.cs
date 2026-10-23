@@ -8,19 +8,21 @@ public sealed class MapRenderer : IDisposable
 
     private readonly TileMap _map;
     private readonly TrafficMap? _traffic;
+    private readonly Fires? _fires;
     private readonly Texture2D? _sheet;
     private readonly MapChunkCache? _chunks;
 
     /// <summary>
-    /// Creates a renderer for a map, with the given assets and, when the roads are to show it, the
-    /// city's traffic. Call it after the window is open.
+    /// Creates a renderer for a map, with the given assets and, when the map is to show them, the
+    /// city's traffic and fires. Call it after the window is open.
     /// </summary>
-    public MapRenderer(TileMap map, GameAssets? assets, TrafficMap? traffic = null)
+    public MapRenderer(TileMap map, GameAssets? assets, TrafficMap? traffic = null, Fires? fires = null)
     {
         ArgumentNullException.ThrowIfNull(map);
 
         _map = map;
         _traffic = traffic;
+        _fires = fires;
         _sheet = assets?.TileSheet;
         _chunks = MapChunkCache.TryCreate(map, _sheet);
     }
@@ -48,10 +50,10 @@ public sealed class MapRenderer : IDisposable
     public void Refresh() => _chunks?.Refresh();
 
     /// <summary>
-    /// Draws the map, and only the part the camera can see, with the roads' traffic in the given
-    /// animation frame. Call it inside <c>BeginMode2D</c>.
+    /// Draws the map, and only the part the camera can see, with the roads' traffic and the fires in
+    /// the given animation frames. Call it inside <c>BeginMode2D</c>.
     /// </summary>
-    public void Draw(Camera camera, int trafficFrame = 0)
+    public void Draw(Camera camera, int trafficFrame = 0, int fireFrame = 0)
     {
         var (minX, minY, maxX, maxY) = VisibleRange(_map, camera);
 
@@ -71,6 +73,7 @@ public sealed class MapRenderer : IDisposable
         }
 
         DrawTraffic(minX, minY, maxX, maxY, trafficFrame);
+        DrawFires(minX, minY, maxX, maxY, fireFrame);
 
         if (camera.Zoom >= 0.75f)
         {
@@ -138,6 +141,54 @@ public sealed class MapRenderer : IDisposable
                 var road = TileAtlas.IndexFor(state, RoadNetwork.ConnectionsAt(_map, x, y), PowerLines.ConnectionsAt(_map, x, y), RoadConnections.None, TerrainSides.None, state, x, y);
                 var destination = new Rectangle { X = x * TileSize, Y = y * TileSize, Width = TileSize, Height = TileSize };
                 Raylib.DrawTexturePro(_sheet.Value, TileAtlas.SourceFor(TileAtlas.TrafficIndexFor(road, level, frame)), destination, Vector2.Zero, 0f, Color.White);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Draws an explosion at a tile, in a frame of the sheet's drawings of a building blowing apart.
+    /// It is the game's alone: the fires it set are already burning. Call it inside <c>BeginMode2D</c>.
+    /// </summary>
+    public void DrawExplosion(int x, int y, int frame)
+    {
+        var destination = new Rectangle { X = x * TileSize, Y = y * TileSize, Width = TileSize, Height = TileSize };
+        if (_sheet is null)
+        {
+            Raylib.DrawRectangleRec(destination, Theme.Fire);
+            return;
+        }
+
+        var index = TileAtlas.ExplosionTile + Math.Clamp(frame, 0, TileAtlas.ExplosionFrames - 1);
+        Raylib.DrawTexturePro(_sheet.Value, TileAtlas.SourceFor(index), destination, Vector2.Zero, 0f, Color.White);
+    }
+
+    // Fires flicker every frame, so they are drawn over the cached map, which holds the rubble
+    // beneath them; with no sheet, a burning tile is a flat colour.
+    private void DrawFires(int minX, int minY, int maxX, int maxY, int frame)
+    {
+        if (_fires is null || _fires.Count == 0)
+        {
+            return;
+        }
+
+        for (var y = minY; y <= maxY; y++)
+        {
+            for (var x = minX; x <= maxX; x++)
+            {
+                if (!_fires.IsBurning(x, y))
+                {
+                    continue;
+                }
+
+                var destination = new Rectangle { X = x * TileSize, Y = y * TileSize, Width = TileSize, Height = TileSize };
+                if (_sheet is null)
+                {
+                    Raylib.DrawRectangleRec(destination, Theme.Fire);
+                }
+                else
+                {
+                    Raylib.DrawTexturePro(_sheet.Value, TileAtlas.SourceFor(TileAtlas.FireIndexFor(x, y, frame)), destination, Vector2.Zero, 0f, Color.White);
+                }
             }
         }
     }
