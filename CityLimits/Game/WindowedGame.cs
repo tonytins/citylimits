@@ -41,6 +41,7 @@ public static class WindowedGame
         Raylib.SetConfigFlags(ConfigFlags.ResizableWindow);
         Raylib.InitWindow(settings.WindowWidth, settings.WindowHeight, "CityLimits");
         Raylib.SetTargetFPS(60);
+        Display.Apply(settings.Fullscreen);
 
         // Escape cancels a stroke or opens the menu, so it can't also close the window.
         Raylib.SetExitKey(KeyboardKey.Null);
@@ -61,10 +62,11 @@ public static class WindowedGame
             }
 
             var menu = new StartMenu(assets);
-            menu.Show(fromLoading: true, seed, folders.CitiesFolder);
+            menu.Show(fromLoading: true, seed, folders.CitiesFolder, settings);
             while (true)
             {
-                var choice = RunMenu(menu);
+                var choice = RunMenu(menu, folders);
+                settings = menu.Settings;
                 IReadOnlyList<string> modProblems = [];
                 CitySimulation? city = choice switch
                 {
@@ -84,7 +86,7 @@ public static class WindowedGame
                     break;
                 }
 
-                menu.Show(fromLoading: false, seed, folders.CitiesFolder);
+                menu.Show(fromLoading: false, seed, folders.CitiesFolder, settings);
             }
 
             SaveSettings(folders, settings);
@@ -104,7 +106,8 @@ public static class WindowedGame
     }
 
     // Runs the start menu until the player chooses, or closes the window, which counts as quitting.
-    private static StartMenu.Choice RunMenu(StartMenu menu)
+    // Closing the settings window writes the settings, and the menu carries on.
+    private static StartMenu.Choice RunMenu(StartMenu menu, GameFolders folders)
     {
         while (!Raylib.WindowShouldClose())
         {
@@ -112,7 +115,11 @@ public static class WindowedGame
             {
                 var choice = menu.Update();
                 menu.Draw();
-                if (choice != StartMenu.Choice.None)
+                if (choice == StartMenu.Choice.SettingsClosed)
+                {
+                    SaveSettings(folders, menu.Settings);
+                }
+                else if (choice != StartMenu.Choice.None)
                 {
                     return choice;
                 }
@@ -181,9 +188,7 @@ public static class WindowedGame
 
     private static void SaveSettings(GameFolders folders, GameSettings settings)
     {
-        var width = Math.Clamp(Raylib.GetScreenWidth(), GameSettings.MinWindowWidth, GameSettings.MaxWindowWidth);
-        var height = Math.Clamp(Raylib.GetScreenHeight(), GameSettings.MinWindowHeight, GameSettings.MaxWindowHeight);
-        if (!SettingsStore.TrySave(folders.SettingsFile, settings with { WindowWidth = width, WindowHeight = height }, out var error))
+        if (!SettingsStore.TrySave(folders.SettingsFile, Display.WithWindowSize(settings), out var error))
         {
             Logger.Error("{Error}", error);
         }

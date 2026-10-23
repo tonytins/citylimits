@@ -1,5 +1,21 @@
 # CityLimits Changelog
 
+## 0.3.109
+
+There's a settings window now. Open it from Settings on the start menu,
+or press Escape in your city and choose Settings. Its Graphics tab can
+make the game fill your screen, and its Gameplay tab can turn autosave
+off, or keep one or two autosaves. A change takes effect at once, and is
+kept for next time as soon as you close the window.
+
+The menu Escape opens in your city is now a column of buttons: Resume,
+Save, Load, Settings, Main menu, and Quit, so you can save and open
+cities from it without the keyboard shortcuts.
+
+For developers and agents: `settings.json` gains `Fullscreen`, and
+`AutosaveSlots` may be `0` for no autosaves; a version from before reads
+`0` as out of range, warns, and keeps one autosave.
+
 ## 0.3.108
 
 Your city now has pollution and crime, as in Micropolis. Industry, coal

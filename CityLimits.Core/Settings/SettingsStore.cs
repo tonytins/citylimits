@@ -55,7 +55,8 @@ public static class SettingsStore
                 Read(json, nameof(GameSettings.WindowWidth), GameSettings.MinWindowWidth, GameSettings.MaxWindowWidth, defaults.WindowWidth, refused),
                 Read(json, nameof(GameSettings.WindowHeight), GameSettings.MinWindowHeight, GameSettings.MaxWindowHeight, defaults.WindowHeight, refused),
                 Read(json, nameof(GameSettings.Speed), GameSettings.MinSpeed, GameSettings.MaxSpeed, defaults.Speed, refused),
-                Read(json, nameof(GameSettings.AutosaveSlots), 1, GameSettings.MaxAutosaveSlots, defaults.AutosaveSlots, refused));
+                Read(json, nameof(GameSettings.AutosaveSlots), GameSettings.MinAutosaveSlots, GameSettings.MaxAutosaveSlots, defaults.AutosaveSlots, refused),
+                ReadSwitch(json, nameof(GameSettings.Fullscreen), defaults.Fullscreen, refused));
             if (refused.Count > 0)
             {
                 warning = $"The settings file '{path}' had {string.Join(", ", refused)}, so {(refused.Count == 1 ? "that one is" : "those are")} back to the default; the rest are kept.";
@@ -91,6 +92,23 @@ public static class SettingsStore
         }
 
         refused.Add($"{name} that isn't a whole number");
+        return fallback;
+    }
+
+    // A setting that is on or off, or its default, in the same way.
+    private static bool ReadSwitch(JsonObject json, string name, bool fallback, List<string> refused)
+    {
+        if (!json.TryGetPropertyValue(name, out var node) || node is null)
+        {
+            return fallback;
+        }
+
+        if (node is JsonValue value && value.TryGetValue<bool>(out var on))
+        {
+            return on;
+        }
+
+        refused.Add($"{name} that isn't true or false");
         return fallback;
     }
 

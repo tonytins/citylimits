@@ -57,6 +57,7 @@ public sealed class GameLoop : IDisposable
     private readonly CityPanel _cityPanel = new();
     private readonly LoadPanel _loadPanel = new();
     private readonly ConfirmPanel _confirm = new();
+    private readonly SettingsPanel _settingsPanel = new();
     private readonly GameFolders _folders;
 
     // The file the city was opened from or last saved to, and the save it was then; a city whose
@@ -172,6 +173,7 @@ public sealed class GameLoop : IDisposable
         City,
         Load,
         Confirm,
+        Settings,
     }
 
     // What a question asks before it goes ahead.
@@ -191,16 +193,7 @@ public sealed class GameLoop : IDisposable
     /// The settings as the game stands: the window's size, and the speed the city was running at,
     /// even while a panel holds it paused.
     /// </summary>
-    public GameSettings Settings
-    {
-        get
-        {
-            var width = Math.Clamp(Raylib.GetScreenWidth(), GameSettings.MinWindowWidth, GameSettings.MaxWindowWidth);
-            var height = Math.Clamp(Raylib.GetScreenHeight(), GameSettings.MinWindowHeight, GameSettings.MaxWindowHeight);
-            var speed = _modal == Modal.None ? _settings.Speed : _speedBeforeModal;
-            return _settings with { WindowWidth = width, WindowHeight = height, Speed = speed };
-        }
-    }
+    public GameSettings Settings => Display.WithWindowSize(_settings with { Speed = _modal == Modal.None ? _settings.Speed : _speedBeforeModal });
 
     /// <summary>Reads the input and advances the city.</summary>
     public void Update()
@@ -233,7 +226,8 @@ public sealed class GameLoop : IDisposable
         _ticker.Update(_settings.Speed > 0 && _modal == Modal.None ? elapsed : 0f, Raylib.GetScreenWidth(), 1f / 3f);
         _hintSeconds = Math.Max(0f, _hintSeconds - elapsed);
 
-        if (_autosave.Advance(elapsed, _settings.Speed > 0 && _modal == Modal.None))
+        // With autosave off, the time to the next one doesn't run.
+        if (_settings.AutosaveSlots > 0 && _autosave.Advance(elapsed, _settings.Speed > 0 && _modal == Modal.None))
         {
             AutosaveNow();
         }
@@ -334,6 +328,10 @@ public sealed class GameLoop : IDisposable
             case Modal.Confirm:
                 _confirm.Draw();
                 break;
+            case Modal.Settings:
+                Raylib.DrawRectangle(0, 0, Raylib.GetScreenWidth(), Raylib.GetScreenHeight(), Theme.Dim);
+                _settingsPanel.Draw();
+                break;
         }
 
         Raylib.EndDrawing();
@@ -361,9 +359,10 @@ public sealed class GameLoop : IDisposable
     private void HandleInput(float elapsed)
     {
         var mouse = Raylib.GetMousePosition();
+        // The size kept is the window's own; filling the screen keeps the one it goes back to.
         if (Raylib.IsWindowResized())
         {
-            _settings = _settings with { WindowWidth = Raylib.GetScreenWidth(), WindowHeight = Raylib.GetScreenHeight() };
+            _settings = Display.WithWindowSize(_settings);
         }
 
         if (_dragging is not null)
@@ -394,6 +393,9 @@ public sealed class GameLoop : IDisposable
                 return;
             case Modal.Confirm:
                 HandleConfirmInput();
+                return;
+            case Modal.Settings:
+                HandleSettingsInput(mouse);
                 return;
         }
 
@@ -539,6 +541,20 @@ public sealed class GameLoop : IDisposable
             case GameMenu.Choice.Resume:
                 CloseModal();
                 break;
+            case GameMenu.Choice.Save:
+                CloseModal();
+                Save(confirmed: false);
+                break;
+            case GameMenu.Choice.Load:
+                CloseModal();
+                _loadPanel.Reset(_folders.CitiesFolder);
+                OpenModal(Modal.Load);
+                break;
+            case GameMenu.Choice.Settings:
+                // The city stays paused from the menu to the settings and back.
+                _settingsPanel.Open(Settings);
+                _modal = Modal.Settings;
+                break;
             case GameMenu.Choice.MainMenu:
                 CloseModal();
                 LeaveOrAsk(Pending.LeaveToMenu);
@@ -547,6 +563,35 @@ public sealed class GameLoop : IDisposable
                 CloseModal();
                 LeaveOrAsk(Pending.LeaveToQuit);
                 break;
+        }
+    }
+
+    // A change applies at once; closing writes the settings, so a crash later can't lose them, and
+    // goes back to the menu the settings came from.
+    private void HandleSettingsInput(Vector2 mouse)
+    {
+        switch (_settingsPanel.Update())
+        {
+            case SettingsPanel.Outcome.Changed:
+                var chosen = _settingsPanel.Current;
+                Display.Apply(chosen.Fullscreen);
+                _settings = _settings with { Fullscreen = chosen.Fullscreen, AutosaveSlots = chosen.AutosaveSlots };
+                Logger.Info("Settings changed: fullscreen {Fullscreen}, {Slots} autosaves", chosen.Fullscreen, chosen.AutosaveSlots);
+                return;
+            case SettingsPanel.Outcome.Closed:
+                if (!SettingsStore.TrySave(_folders.SettingsFile, Settings, out var error))
+                {
+                    Logger.Error("{Error}", error);
+                    _ticker.Advise(error!);
+                }
+
+                _modal = Modal.Menu;
+                return;
+        }
+
+        if (Raylib.IsMouseButtonPressed(MouseButton.Left))
+        {
+            TryBeginDrag(_settingsPanel, mouse);
         }
     }
 

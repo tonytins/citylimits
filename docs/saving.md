@@ -43,10 +43,12 @@ as `.fcl`, so a newer save's parts it keeps go into its autosaves too.
 It is skipped when the city is as it was last saved, by the player or by
 an autosave. The news ticker says when one is written.
 
-- **One slot or two.** `AutosaveSlots` in `settings.json` is `1` by
-  default, or `2`: with two, `Joffburg (autosave 2).cl` joins the first,
-  and each autosave replaces the older of the two, so the one before is
-  still there if the last went wrong.
+- **Off, one slot, or two.** The Gameplay tab of the settings sets
+  `AutosaveSlots` in `settings.json`: `1` by default, `0` for no
+  autosaves, or `2`: with two, `Joffburg (autosave 2).cl` joins the
+  first, and each autosave replaces the older of the two, so the one
+  before is still there if the last went wrong. A version from before
+  0.3.109 reads `0` as out of range, warns, and keeps one.
 - **Opening one.** Load Game marks autosaves. Saving a city opened from
   its autosave goes to its own file, `Joffburg.cl`, without asking.
 - **It isn't the player saving.** Leaving a city still asks when it has

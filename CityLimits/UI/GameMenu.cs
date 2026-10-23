@@ -1,17 +1,20 @@
 namespace CityLimits.UI;
 
 /// <summary>
-/// The menu Escape opens in a city when nothing else is open: Resume, Main menu, and Quit. The game
-/// is paused while it is open, and Escape again resumes.
+/// The menu Escape opens in a city when nothing else is open: a column of buttons to resume, save,
+/// load, open the settings, leave for the main menu, or quit. The game is paused while it is open,
+/// and Escape again resumes.
 /// </summary>
 public sealed class GameMenu
 {
     private const int FontSize = 20;
     private const int Padding = 20;
     private const int Width = 260;
-    private const int ItemSpacing = 36;
+    private const int ButtonHeight = 32;
+    private const int ButtonGap = 8;
+    private const int TitleGap = 16;
 
-    private static readonly string[] Items = ["Resume", "Main menu", "Quit"];
+    private static readonly string[] Items = ["Resume", "Save", "Load", "Settings", "Main menu", "Quit"];
 
     /// <summary>What the player chose.</summary>
     public enum Choice
@@ -21,6 +24,15 @@ public sealed class GameMenu
 
         /// <summary>Back to the city.</summary>
         Resume,
+
+        /// <summary>Save the city, as Ctrl+S does.</summary>
+        Save,
+
+        /// <summary>Open a saved city, as Ctrl+O does.</summary>
+        Load,
+
+        /// <summary>Open the settings.</summary>
+        Settings,
 
         /// <summary>Leave the city for the start menu.</summary>
         MainMenu,
@@ -41,8 +53,11 @@ public sealed class GameMenu
             ? ItemAt(Raylib.GetMousePosition()) switch
             {
                 0 => Choice.Resume,
-                1 => Choice.MainMenu,
-                2 => Choice.Quit,
+                1 => Choice.Save,
+                2 => Choice.Load,
+                3 => Choice.Settings,
+                4 => Choice.MainMenu,
+                5 => Choice.Quit,
                 _ => Choice.None,
             }
             : Choice.None;
@@ -61,7 +76,10 @@ public sealed class GameMenu
         for (var i = 0; i < Items.Length; i++)
         {
             var item = ItemBounds(i);
-            Raylib.DrawText(Items[i], (int)item.X, (int)item.Y, FontSize, i == hovered ? Theme.Accent : Theme.Text);
+            Raylib.DrawRectangleRec(item, i == hovered ? Theme.PanelBorder : Theme.Panel);
+            Raylib.DrawRectangleLinesEx(item, 1f, i == hovered ? Theme.Accent : Theme.PanelBorder);
+            var x = (int)(item.X + ((item.Width - Raylib.MeasureText(Items[i], FontSize)) / 2));
+            Raylib.DrawText(Items[i], x, (int)item.Y + ((ButtonHeight - FontSize) / 2), FontSize, i == hovered ? Theme.Accent : Theme.Text);
         }
     }
 
@@ -80,14 +98,14 @@ public sealed class GameMenu
 
     private static Rectangle Bounds()
     {
-        var height = (Padding * 2) + FontSize + 16 + (Items.Length * ItemSpacing);
+        var height = (Padding * 2) + FontSize + TitleGap + (Items.Length * (ButtonHeight + ButtonGap)) - ButtonGap;
         return new Rectangle { X = (Raylib.GetScreenWidth() - Width) / 2, Y = (Raylib.GetScreenHeight() - height) / 2, Width = Width, Height = height };
     }
 
-    // Each item is as wide as the panel, so the whole row is the target.
+    // Each button is as wide as the panel, one under another.
     private static Rectangle ItemBounds(int item)
     {
         var bounds = Bounds();
-        return new Rectangle { X = bounds.X + Padding, Y = bounds.Y + Padding + FontSize + 16 + (item * ItemSpacing), Width = Width - (Padding * 2), Height = FontSize + 8 };
+        return new Rectangle { X = bounds.X + Padding, Y = bounds.Y + Padding + FontSize + TitleGap + (item * (ButtonHeight + ButtonGap)), Width = Width - (Padding * 2), Height = ButtonHeight };
     }
 }

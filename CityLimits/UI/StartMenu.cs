@@ -2,9 +2,10 @@ namespace CityLimits.UI;
 
 /// <summary>
 /// The start menu, after the owner's mock-up in <c>docs/design/</c>: the logo near the top of the
-/// blue screen, New Game, Load Game, and Quit under it, and the version in the bottom right. Coming
-/// from the loading screen, the logo glides up from the middle. New Game opens the new-city panel,
-/// and Load Game the list of saved cities, dimmed while there are none.
+/// blue screen, New Game, Load Game, Settings, and Quit under it, and the version in the bottom right.
+/// Coming from the loading screen, the logo glides up from the middle. New Game opens the new-city
+/// panel, Load Game the list of saved cities, dimmed while there are none, and Settings the settings
+/// window.
 /// </summary>
 public sealed class StartMenu
 {
@@ -14,12 +15,14 @@ public sealed class StartMenu
     private const int Margin = 16;
     private const float GlideSeconds = 0.3f;
 
-    private static readonly string[] Items = ["New Game", "Load Game", "Quit"];
+    private static readonly string[] Items = ["New Game", "Load Game", "Settings", "Quit"];
 
     private readonly Texture2D? _logo;
     private readonly NewCityPanel _newCity = new();
     private readonly LoadPanel _load = new();
+    private readonly SettingsPanel _settings = new();
     private bool _loadOpen;
+    private bool _settingsOpen;
     private string _citiesFolder = string.Empty;
     private float _glide = GlideSeconds;
     private bool _newCityOpen;
@@ -36,6 +39,9 @@ public sealed class StartMenu
 
         /// <summary>Play the saved city in <see cref="LoadedCity"/>.</summary>
         LoadCity,
+
+        /// <summary>The settings window closed; <see cref="Settings"/> holds what the player set.</summary>
+        SettingsClosed,
 
         /// <summary>Leave the game.</summary>
         Quit,
@@ -60,16 +66,22 @@ public sealed class StartMenu
     /// <summary>What importing the opened city replaced, when it came from a Micropolis city.</summary>
     public IReadOnlyList<string> LoadedNotes => _load.Notes;
 
+    /// <summary>The settings as the player has left them, changed in the settings window or not.</summary>
+    public GameSettings Settings { get; private set; } = GameSettings.Default;
+
     /// <summary>
     /// Shows the menu afresh. Coming from the loading screen, the logo glides up into place; the
     /// seed given on the command line, if any, fills in the new-city panel, and the saved cities
     /// are listed afresh from their folder.
     /// </summary>
-    public void Show(bool fromLoading, int? commandLineSeed, string citiesFolder)
+    public void Show(bool fromLoading, int? commandLineSeed, string citiesFolder, GameSettings settings)
     {
+        ArgumentNullException.ThrowIfNull(settings);
         _glide = fromLoading ? 0f : GlideSeconds;
         _newCityOpen = false;
         _loadOpen = false;
+        _settingsOpen = false;
+        Settings = settings;
         _commandLineSeed = commandLineSeed;
         _citiesFolder = citiesFolder;
         _load.Reset(citiesFolder);
@@ -79,6 +91,11 @@ public sealed class StartMenu
     public Choice Update()
     {
         _glide = Math.Min(_glide + Raylib.GetFrameTime(), GlideSeconds);
+        if (_settingsOpen)
+        {
+            return UpdateSettings();
+        }
+
         if (_loadOpen)
         {
             switch (_load.Update())
@@ -116,7 +133,8 @@ public sealed class StartMenu
         {
             0 => OpenNewCity(),
             1 => OpenLoad(),
-            2 => Choice.Quit,
+            2 => OpenSettings(),
+            3 => Choice.Quit,
             _ => Choice.None,
         };
     }
@@ -133,7 +151,7 @@ public sealed class StartMenu
         }
 
         var mouse = Raylib.GetMousePosition();
-        var hovered = _newCityOpen || _loadOpen ? -1 : ItemAt(mouse);
+        var hovered = _newCityOpen || _loadOpen || _settingsOpen ? -1 : ItemAt(mouse);
         for (var i = 0; i < Items.Length; i++)
         {
             var bounds = ItemBounds(i);
@@ -153,8 +171,49 @@ public sealed class StartMenu
         {
             _load.Draw();
         }
+        else if (_settingsOpen)
+        {
+            Raylib.DrawRectangle(0, 0, Raylib.GetScreenWidth(), Raylib.GetScreenHeight(), Theme.Dim);
+            _settings.Draw();
+        }
 
         Raylib.EndDrawing();
+    }
+
+    // A change applies at once, fullscreen included; the game writes the settings once the window closes.
+    private Choice UpdateSettings()
+    {
+        var mouse = Raylib.GetMousePosition();
+        if (_settings.IsDragging)
+        {
+            _settings.Drag(mouse, Raylib.IsMouseButtonDown(MouseButton.Left));
+            return Choice.None;
+        }
+
+        switch (_settings.Update())
+        {
+            case SettingsPanel.Outcome.Changed:
+                Settings = _settings.Current;
+                Display.Apply(Settings.Fullscreen);
+                return Choice.None;
+            case SettingsPanel.Outcome.Closed:
+                _settingsOpen = false;
+                return Choice.SettingsClosed;
+        }
+
+        if (Raylib.IsMouseButtonPressed(MouseButton.Left))
+        {
+            _settings.BeginDrag(mouse);
+        }
+
+        return Choice.None;
+    }
+
+    private Choice OpenSettings()
+    {
+        _settings.Open(Settings);
+        _settingsOpen = true;
+        return Choice.None;
     }
 
     private Choice OpenNewCity()

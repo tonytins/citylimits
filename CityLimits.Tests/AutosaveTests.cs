@@ -86,4 +86,48 @@ public class AutosaveTests
             Directory.Delete(folder, recursive: true);
         }
     }
+
+    [Fact]
+    public void AutosaveCanBeTurnedOffAndFullscreenOnAndBothAreKept()
+    {
+        var folder = Directory.CreateTempSubdirectory().FullName;
+        try
+        {
+            var path = Path.Combine(folder, "settings.json");
+            Assert.True(SettingsStore.TrySave(path, GameSettings.Default with { AutosaveSlots = 0, Fullscreen = true }, out _));
+
+            var settings = SettingsStore.Load(path, out var warning);
+
+            Assert.Null(warning);
+            Assert.Equal(0, settings.AutosaveSlots);
+            Assert.True(settings.Fullscreen);
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void ASettingsFileFromBeforeFullscreenIsWindowedAndABadSwitchFallsBackAlone()
+    {
+        var folder = Directory.CreateTempSubdirectory().FullName;
+        try
+        {
+            var path = Path.Combine(folder, "settings.json");
+            File.WriteAllText(path, """{ "WindowWidth": 1600, "WindowHeight": 900, "Speed": 2, "AutosaveSlots": 2 }""");
+            Assert.False(SettingsStore.Load(path, out var warning).Fullscreen);
+            Assert.Null(warning);
+
+            File.WriteAllText(path, """{ "WindowWidth": 1600, "WindowHeight": 900, "Speed": 2, "AutosaveSlots": 2, "Fullscreen": "yes" }""");
+            var settings = SettingsStore.Load(path, out warning);
+            Assert.False(settings.Fullscreen);
+            Assert.Equal((1600, 900, 2, 2), (settings.WindowWidth, settings.WindowHeight, settings.Speed, settings.AutosaveSlots));
+            Assert.Contains("Fullscreen that isn't true or false", warning);
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+    }
 }

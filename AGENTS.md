@@ -24,7 +24,7 @@ CityLimits/                  the game project (Raylib-cs, NLog, net10.0)
   Game/                         namespace CityLimits.Game: the game command, the window, the loop, the tools, the city's messages, the mods folder, the headless run, the log
     Commands/                   namespace CityLimits.Game.Commands: the subcommands, one class each
   Rendering/                    namespace CityLimits.Rendering: the camera, the tile drawing, the chunk cache, the tile sheet, the theme
-  UI/                           namespace CityLimits.UI: the loading screen, the start menu and its new-city panel, the HUD and its bar along the bottom, the news ticker, the pointer's hints, the tool palette, the budget, demand, city, and help panels and how windows are moved, the in-game menu, the overview map
+  UI/                           namespace CityLimits.UI: the loading screen, the start menu and its new-city panel, the HUD and its bar along the bottom, the news ticker, the pointer's hints, the tool palette, the budget, demand, city, help, and settings panels and how windows are moved, the in-game menu, the overview map
   Assets/                       the tile sheet, the tool icons, the train's drawings (sprites/), the logo, and the built-in scenarios (Scenarios/*.json), copied to the output folder
 CityLimits.Core/              engine-free library: the world and the simulation, no Raylib
   CityLimits.Core.csproj        the project file; it must never reference Raylib-cs
@@ -104,8 +104,8 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   until a key or a click; it is for show, since the game loads in well
   under a second.
   The start menu glides the logo up from the middle to a sixth of the way
-  down, with New Game, Load Game (dimmed while no city is saved), and
-  Quit under it and the version in the bottom right. New Game opens a
+  down, with New Game, Load Game (dimmed while no city is saved),
+  Settings, and Quit under it and the version in the bottom right. New Game opens a
   panel (`UI/NewCityPanel.cs`) with the city's name, "CityLimits" to
   start, and a seed, blank for any, read by `NewCity.TryRead`; `--seed`
   fills the seed in. Start, or Enter, begins the city; a blank seed is
@@ -461,10 +461,19 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   stroke all at once: the tiles that can't be built on are skipped, and
   the whole stroke is refused when it runs off the map or the city can't
   pay for all of it. Escape cancels a stroke, closes the help window or
-  the demand panel, or else opens the in-game menu (`UI/GameMenu.cs`): Resume, Main menu,
-  which leaves the city for the start menu, and Quit. The menu, the
-  budget, and the city panel each pause the city and take every key
-  and click while open.
+  the demand panel, or else opens the in-game menu (`UI/GameMenu.cs`),
+  a single column of buttons, as Tony Bark asked: Resume, Save (as
+  Ctrl+S), Load (as Ctrl+O), Settings, Main menu, which leaves the city
+  for the start menu, and Quit. The menu, the settings, the budget, and
+  the city panel each pause the city and take every key and click while
+  open; the settings go back to the menu when they close.
+- **The settings window.** `UI/SettingsPanel.cs` opens from the start
+  menu or the in-game menu, and moves by its title like the other
+  windows. Its tabs, as Tony Bark chose, group the settings: Graphics
+  holds fullscreen, a borderless window the size of the monitor
+  (`Rendering/Display.cs`), and Gameplay holds autosave, off, one, or
+  two. A change applies at once, and closing the window, with its x or
+  Escape, writes `settings.json`, so a crash later can't lose it.
 - **The money.** The city starts with a treasury, and the prices are
   Micropolis' (`Economy/TileCosts.cs`, and the zones' in their
   `ZoneSpec`, `PlantSpec`, and `ServiceSpec`): $10 a road tile, $50 a bridge tile, $5 a power line tile,
@@ -516,7 +525,7 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   `Joffburg (autosave).cl` or `.fcl`, unless
   the city is as it was last saved; `Saving/Autosave.cs` decides when and
   where, and `AutosaveSlots` in the settings keeps one or two, the newer
-  replacing the older. An autosave isn't the player saving, so leaving
+  replacing the older, or none, which turns autosave off. An autosave isn't the player saving, so leaving
   still asks. Micropolis' and SimCity Classic's `.cty` files in the Cities
   folder are listed too, and opening one imports it
   (`Saving/MicropolisCityImport.cs`), never writing it back: tiles by
@@ -535,14 +544,16 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   everything there, as development builds do. Settings an older version
   left beside a read-only executable are read once and saved to the new
   place. Without a config or Documents folder, the game falls back to
-  the executable's folder and logs why. The window size and the speed
-  are written when the game ends and read back when it starts; a damaged
+  the executable's folder and logs why. The window size, the speed, and
+  fullscreen are written when the game ends, and the settings window
+  writes them all when it closes; they are read back when it starts.
+  While the game is fullscreen, the size kept is the window's own; a damaged
   file is reported and the defaults are used. Each setting is read on
   its own: one that is the wrong type or out of range falls back to its
   default with a warning, and the rest are kept, so a value a newer
-  version wrote can't reset them all. `AutosaveSlots`, 1 or 2,
+  version wrote can't reset them all. `AutosaveSlots`, 0 to 2,
   says how many autosaves a city keeps; a settings file without it keeps
-  one.
+  one. `Fullscreen` is true or false, and a file without it is windowed.
 - **The headless run.** `citylimits --headless` runs the city with no
   window at all and writes a line to the console each month, so the
   simulation can be checked on a machine with no screen. It takes `--seed`
@@ -595,7 +606,7 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   and no project. It holds the parser, the dispatcher, the default
   command, the strict option reader, and the exit codes.
 - **The tests.** `CityLimits.Tests` uses xUnit 2 with the VSTest runner
-  and coverlet, and holds 722 tests over pollution and crime, rail and the train, the news ticker's queue, its headlines, and the loading phrases, opening newer saves and the backports' saves, traffic and its animation, saving, loading, autosave, importing Micropolis cities, format versions and schemas, with a city
+  and coverlet, and holds 724 tests over pollution and crime, rail and the train, the news ticker's queue, its headlines, and the loading phrases, opening newer saves and the backports' saves, traffic and its animation, saving, loading, autosave, importing Micropolis cities, format versions and schemas, with a city
   the owner built in both formats in `CityLimits.Tests/Assets/`, the generator, the terrain edges, the power plants, lines, and grid, the budget, the stations and their coverage, parks, hospitals and churches, the map, the
   calendar, the clock, the simulation, the settings, the tile rules, the
   build actions, the road network, the treasury, the scenario loader and

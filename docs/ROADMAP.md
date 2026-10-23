@@ -1,6 +1,6 @@
 # CityLimits roadmap
 
-> **Last reviewed:** 2026-10-21 · **Last updated:** 2026-10-22 · **Change:** minor (Deadwood, D1: pollution and crime) · **Stage:** alpha
+> **Last reviewed:** 2026-10-21 · **Last updated:** 2026-10-22 · **Change:** minor (a settings window, and the Escape menu as a column of buttons) · **Stage:** alpha
 
 Forward-looking: where CityLimits stands, what blocks the next milestone,
 and what comes next. Verified status and evidence are in the
@@ -302,6 +302,10 @@ rebuild their own damaged tiles, and the player clears rubble.
     an option for two.
   - [x] S5: importing Micropolis' `.cty` cities, reporting anything
     CityLimits doesn't have yet, which becomes bare ground. Import only.
+- [x] A settings window, added by Tony Bark: from the start menu or the
+  Escape menu, which became one column of buttons (Resume, Save, Load,
+  Settings, Main menu, Quit), with tabs for Graphics (fullscreen) and
+  Gameplay (autosave off, one, or two) (`UI/SettingsPanel.cs`).
 - [ ] A city score, rating the city the way the classic games do.
 - [ ] A start screen and a new-city flow: name, seed, and map size. The
   loading screen, the start menu, and New Game's name and seed are in
@@ -358,6 +362,7 @@ baseline's growth depends on.
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-22 | minor | A detour before Deadwood's D2, at Tony Bark's request: a movable settings window with tabs, from the start menu or the Escape menu, holding fullscreen (a borderless window the size of the monitor) and autosave (now with Off), applied at once and written when it closes; the Escape menu becomes a single column of buttons with Save, Load, and Settings added. Fullscreen is now really saved, which the foundation's checklist had claimed. The disasters switch Tony Bark wants, a player's setting rather than a city's, comes with D2, when it has something to switch. 724 tests. |
 | 2026-10-22 | minor | Deadwood, D1, as in Micropolis: pollution from industry, coal plants, and busy roads, every tile of a building counting as in Micropolis' core (Tony Bark's choice over the Java port), lowering land value and homes' worth and stopping homes above 128; crime from land value, density, and police coverage, taking 20 off land value above 190; messages above averages of 60 and 100; Pollution and Crime overview modes. Saves move to format 1.5 with two parts older versions may leave out or keep, and 0.3.106 opened one. Tony Bark settled Deadwood's phases: fire (D2, with SimCity 3000-style hints on the ticker), then floods and earthquakes (D3); no tornado, monster, or meltdown yet; no warnings before a disaster beyond fire's hints; Micropolis' free repairs. The built-in scenarios' and the headless town's coal plants moved up power lines out of their homes' pollution; small town's industry now holds back its neighbours. Deadwood is at 40%; 23–41 h left in total, 722 tests. |
 | 2026-10-22 | patch | A save that kept a newer save's parts but fell back to this version opens again with them; before, the flat format refused it and the binary one dropped them. 0.3.100 to 0.3.102 got backports that open saves from 0.3.103 on, 0.3.100.1 to 0.3.102.1, on release branches, and a save from each is a fixture. 705 tests. |
 | 2026-10-22 | minor | Radial, R3, and with it Radial, is complete, as in Micropolis: rail at $20 a tile, tunnels at $100, crossings with roads and lines, trips on road and rail alike with traffic only on roads, rail serving zones, each rail tile two road tiles of upkeep, crumbling underfunded rail, and the inadequate-rail message past 50 zones; the commuter train wanders the track, drawn by the game alone with its own generator, as Tony Bark chose. Saves move to format 1.4, with rail a part an older version can leave out, and scenarios to 1.1 for the Rail tool and count; a built-in `rail` scenario. Imports bring rail in as rail. The palette's buttons became switches and the number keys were dropped. Radial is at 100%; 28–50 h left in total, 697 tests. |
