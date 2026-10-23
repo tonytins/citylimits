@@ -1,5 +1,64 @@
 # CityLimits Changelog
 
+## 0.4.100
+
+CityLimits is now a beta. Your city lives through everything Micropolis
+put it through: traffic and rail, pollution and crime, fires, floods, and
+earthquakes, on top of the power, taxes, services, and growth the alpha
+brought. It will stay a beta for a while, whatever its version says, as
+the work turns to polish, starting with scenarios you can play from the
+start page. It still has no city score, no choice of map size, and no
+sound.
+
+### Since 0.3.100
+
+- **Traffic.** Your city's trips fill its roads, and busy roads show
+  light or heavy traffic that moves. Heavy traffic costs more upkeep,
+  and the city tells you when jams get frequent. The overview map has a
+  traffic mode.
+- **Rail.** Lay rail like a road, under water as a tunnel, across roads
+  and power lines. Trips use it as they use roads, without the jams, and
+  a commuter train wanders the track once your city has people.
+- **Pollution and crime.** Industry, coal plants, and busy roads pollute
+  the land around them, which lowers what it's worth and keeps homes from
+  growing where the air is worst. Crime is highest where land is cheap
+  and crowded, and police stations bring it down. The city tells you when
+  either is very high, and the overview map shows both.
+- **Disasters.** Now and then a fire breaks out, a river or lake floods
+  the land beside it, or an earthquake shakes the city. Fires spread, and
+  fire stations put them out sooner; floods drain away in time. Damaged
+  buildings recover on their own, at no cost: zones as they grow, and
+  plants, stations, hospitals, and churches once their ground is clear.
+  The news ticker reports each disaster in red as it happens, and warns
+  you when your city is at risk of fire.
+- **The interface.** The bar is along the bottom of the screen now, over
+  a news ticker that never stops, with headlines from your city's world,
+  some about how it's doing. A green question mark opens a help window
+  with the keys and the mouse. What your work will cost, or why it can't
+  be built, shows beside the pointer.
+- **The menu and the settings.** Escape opens a column of buttons: Resume,
+  Save, Load, Settings, Main menu, and Quit. The settings window, also on
+  the start page, can make the game fill the screen, turn autosave off or
+  keep two, and turn disasters off, all of them or one at a time.
+- **Older versions open newer cities.** A city saved by this version opens
+  in any version since 0.3.103, which leaves out what it doesn't know, and
+  0.3.100 to 0.3.102 have backports that do the same.
+- **Micropolis cities** come in with their rail.
+
+For developers, modders, and scripts:
+
+- **File formats** say their version, as major.minor, and
+  `docs/schemas/` holds a JSON Schema for each, generated from the
+  game's own readers. Saves are at 1.7, scenarios at 1.3, and mods at 1.0.
+- **Saves** list the parts each version added, with whether an older
+  version may leave each out or write it back, as PNG does with its
+  chunks; `docs/saving.md` describes every part.
+- **Scenarios** can lay rail, count it, let disasters happen with
+  `"disasters": true`, and expect `Refused:OnFire` or `Refused:Flooded`.
+- **The headless run** logs pollution, crime, fires, and floods each month.
+- **A city can start in a later year**, through `CitySimulation`'s
+  `startYear`, ready for scenarios that start in one.
+
 ## 0.3.111
 
 Floods and earthquakes have come to your city, as in Micropolis. Now and

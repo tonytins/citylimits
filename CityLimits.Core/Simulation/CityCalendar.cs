@@ -6,8 +6,11 @@ namespace CityLimits.Core.Simulation;
 /// </summary>
 public static class CityCalendar
 {
-    /// <summary>The year the city starts in.</summary>
+    /// <summary>The year the calendar counts from, and the year a city starts in unless it is told another.</summary>
     public const int StartYear = 1900;
+
+    /// <summary>The latest year a city can start in, the last the calendar's four-figure years show.</summary>
+    public const int LatestStartYear = 9999;
 
     /// <summary>The calendar counts in a month.</summary>
     public const int CountsPerMonth = 4;

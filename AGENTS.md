@@ -146,7 +146,10 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   out crime, 14 population density, and 15 fire coverage and the roll for a
   disaster; the scan also visits each burning tile.
   `CityCalendar` turns the count into a month: 4 counts a month, 48 a
-  year, from January 1900. At Normal speed a step runs every quarter of a
+  year, from January 1900. A city can start in a later year, up to 9999
+  (`CitySimulation`'s `startYear`), as Micropolis' scenarios do; it starts
+  as if every step since 1900 had run, so its count is always its steps
+  divided by 16, as every save holds, and older versions open it. At Normal speed a step runs every quarter of a
   second, so a month takes 16 seconds and a year about 3 minutes; Fast is
   5 times that and Super fast 50 times (`GameSpeed`). Space or the top
   bar's pause button pauses the game and brings back the last speed, and
@@ -677,7 +680,7 @@ Build output (`bin/`, `obj/`, `*.user`) is ignored; never commit it.
   and no project. It holds the parser, the dispatcher, the default
   command, the strict option reader, and the exit codes.
 - **The tests.** `CityLimits.Tests` uses xUnit 2 with the VSTest runner
-  and coverlet, and holds 758 tests over floods and earthquakes, fire and its hints, pollution and crime, rail and the train, the news ticker's queue, its headlines, and the loading phrases, opening newer saves and the backports' saves, traffic and its animation, saving, loading, autosave, importing Micropolis cities, format versions and schemas, with a city
+  and coverlet, and holds 764 tests over a later start year, floods and earthquakes, fire and its hints, pollution and crime, rail and the train, the news ticker's queue, its headlines, and the loading phrases, opening newer saves and the backports' saves, traffic and its animation, saving, loading, autosave, importing Micropolis cities, format versions and schemas, with a city
   the owner built in both formats in `CityLimits.Tests/Assets/`, the generator, the terrain edges, the power plants, lines, and grid, the budget, the stations and their coverage, parks, hospitals and churches, the map, the
   calendar, the clock, the simulation, the settings, the tile rules, the
   build actions, the road network, the treasury, the scenario loader and

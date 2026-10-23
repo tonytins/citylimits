@@ -109,14 +109,20 @@ public sealed class CitySimulation
     private readonly ZoneGrowth _growth;
 
     /// <summary>
-    /// Creates a simulation over the given map, with the money the city starts with and the
-    /// definitions it runs on: the base game's when none are given.
+    /// Creates a simulation over the given map, with the money the city starts with, the definitions
+    /// it runs on (the base game's when none are given), and the year its calendar starts in, January
+    /// 1900 unless another is given. A city that starts later starts as if it had run every step
+    /// since 1900, so its calendar's count is always its steps divided by 16, as every save holds.
     /// </summary>
     /// <exception cref="ArgumentNullException">The map is null.</exception>
-    /// <exception cref="ArgumentOutOfRangeException">The starting money is negative.</exception>
-    public CitySimulation(TileMap map, int seed, int funds = Treasury.StartingFunds, CityDefinitions? definitions = null)
+    /// <exception cref="ArgumentOutOfRangeException">The starting money is negative, or the year is before 1900 or after 9999.</exception>
+    public CitySimulation(TileMap map, int seed, int funds = Treasury.StartingFunds, CityDefinitions? definitions = null, int startYear = CityCalendar.StartYear)
     {
         ArgumentNullException.ThrowIfNull(map);
+        ArgumentOutOfRangeException.ThrowIfLessThan(startYear, CityCalendar.StartYear);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(startYear, CityCalendar.LatestStartYear);
+        TickCount = (long)(startYear - CityCalendar.StartYear) * CityCalendar.StepsPerYear;
+        CityTime = TickCount / CityCalendar.StepsPerCount;
 
         Map = map;
         Seed = seed;
