@@ -105,6 +105,13 @@ public sealed class CityView : IDisposable
         Camera.ClampTo(_city.Map.Width * MapRenderer.TileSize, _city.Map.Height * MapRenderer.TileSize);
     }
 
+    /// <summary>Looks at a place in the world from the nearness given, as another view of the same map was.</summary>
+    public void LookAt(Vector2 target, float zoom)
+    {
+        Camera.CenterOn(target);
+        Camera.SetZoom(zoom);
+    }
+
     /// <summary>Zooms in or out by the wheel's turn, keeping the point under the pointer still.</summary>
     public void ZoomAt(Vector2 screen, float wheel) => Camera.ZoomAt(screen, wheel);
 

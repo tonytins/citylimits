@@ -70,12 +70,24 @@ public sealed class GameLoop : IDisposable
     // button is let go, and nothing else takes the pointer meanwhile.
     private IMovableWindow? _dragging;
 
+    // The scenario being edited, if any: its city is played with building free and the clock
+    // stopped, and playing tests it. While it isn't being tested, the city panel shows its draft.
+    private readonly ScenarioEdit? _editing;
+    private readonly Challenge? _draft;
+
+    // The bar's name, made again only when the city's name or the test changes, so a frame doesn't allocate it.
+    private string _barName = string.Empty;
+    private string? _barNameOf;
+    private bool _barNameTesting;
+
     /// <summary>
     /// Plays a city: a new one, or one opened from a file, which is then the file Ctrl+S saves it
     /// back to without asking; a Micropolis city it was imported from is never written. The mods
-    /// skipped when a new city was made are shown, if any, or what an import replaced.
+    /// skipped when a new city was made are shown, if any, or what an import replaced. A scenario's
+    /// city opened to edit starts paused, with building free; another view of the same map, as when
+    /// a test goes back, is looked at from where it was.
     /// </summary>
-    public GameLoop(GameSettings settings, CitySimulation city, string? cityFile, GameFolders folders, GameAssets assets, IReadOnlyList<string>? modProblems = null, IReadOnlyList<string>? openNotes = null)
+    public GameLoop(GameSettings settings, CitySimulation city, string? cityFile, GameFolders folders, GameAssets assets, IReadOnlyList<string>? modProblems = null, IReadOnlyList<string>? openNotes = null, ScenarioEdit? editing = null, (Vector2 Target, float Zoom)? lookAt = null)
     {
         ArgumentNullException.ThrowIfNull(city);
         ArgumentNullException.ThrowIfNull(folders);
@@ -122,12 +134,30 @@ public sealed class GameLoop : IDisposable
         _simulation.YearSettled += OnYearSettled;
 
         _view = new CityView(city, assets, settings.WindowWidth, settings.WindowHeight);
+        if (lookAt is { } look)
+        {
+            _view.LookAt(look.Target, look.Zoom);
+        }
+
+        _editing = editing;
+        if (editing is not null)
+        {
+            _settings = _settings with { Speed = 0 };
+            _draft = Challenge.Begin(editing.Scenario, city);
+            _ticker.Advise($"Editing {editing.Scenario.Name}: building is free, and playing tests it; Escape's menu goes back");
+        }
         Logger.Info(_view.IsCached ? "The map is drawn from cached chunks" : "The map is drawn tile by tile");
         _toolPaletteView = new ToolPaletteView(assets, city.Definitions);
     }
 
     /// <summary>The city being simulated.</summary>
     public CitySimulation Simulation => _simulation;
+
+    /// <summary>The scenario being edited, if any, which a city opened from this one carries on editing.</summary>
+    public ScenarioEdit? Editing => _editing;
+
+    /// <summary>Where the view looks, and how near, for another view of the same map to carry on from.</summary>
+    public (Vector2 Target, float Zoom) LookingAt => (_view.Camera.Target, _view.Camera.Zoom);
 
     /// <summary>The speed the game is running at, where zero is paused.</summary>
     public int Speed => _settings.Speed;
@@ -178,6 +208,8 @@ public sealed class GameLoop : IDisposable
         LeaveToMenu,
         LeaveToQuit,
         OpenCity,
+        BackToBeforePlay,
+        StartOver,
     }
 
     /// <summary>Whether, and where, the player asked to leave the city.</summary>
@@ -185,9 +217,9 @@ public sealed class GameLoop : IDisposable
 
     /// <summary>
     /// The settings as the game stands: the window's size, and the speed the city was running at,
-    /// even while a panel holds it paused.
+    /// even while a panel holds it paused, or, editing a scenario, the speed it was last played at.
     /// </summary>
-    public GameSettings Settings => Display.WithWindowSize(_settings with { Speed = _modal == Modal.None ? _settings.Speed : _speedBeforeModal });
+    public GameSettings Settings => Display.WithWindowSize(_settings with { Speed = _editing is not null ? _lastSpeed : _modal == Modal.None ? _settings.Speed : _speedBeforeModal });
 
     /// <summary>Reads the input and advances the city.</summary>
     public void Update()
@@ -197,6 +229,19 @@ public sealed class GameLoop : IDisposable
         _demandPanel.DefaultTop = DemandPanelTop();
 
         HandleInput(elapsed);
+
+        // Once the player has asked to leave, the city stands still: another may open in its place,
+        // and a scenario's test mustn't begin again on the way out.
+        if (Leaving != Leave.None)
+        {
+            return;
+        }
+
+        // Playing a scenario being edited tests it, from a checkpoint taken before its first step.
+        if (_settings.Speed > 0 && _modal == Modal.None && _editing is { IsTesting: false })
+        {
+            BeginTest();
+        }
 
         if (_settings.Speed > 0)
         {
@@ -216,7 +261,7 @@ public sealed class GameLoop : IDisposable
         _hintSeconds = Math.Max(0f, _hintSeconds - elapsed);
 
         // With autosave off, the time to the next one doesn't run.
-        if (_settings.AutosaveSlots > 0 && _autosave.Advance(elapsed, _settings.Speed > 0 && _modal == Modal.None))
+        if (_editing is null && _settings.AutosaveSlots > 0 && _autosave.Advance(elapsed, _settings.Speed > 0 && _modal == Modal.None))
         {
             AutosaveNow();
         }
@@ -242,7 +287,7 @@ public sealed class GameLoop : IDisposable
         var onMap = _view.TryGetTileAt(mouse, out var tileX, out var tileY);
 
         _hud.DrawStatus(
-            _simulation.Name,
+            BarName(),
             _simulation.Date,
             // _simulation.TickCount,
             _settings.Speed,
@@ -286,7 +331,7 @@ public sealed class GameLoop : IDisposable
                 _budgetPanel.Draw(_simulation, _budgetReason);
                 break;
             case Modal.Menu:
-                GameMenu.Draw();
+                GameMenu.Draw(_editing is not null, _editing?.IsTesting == true);
                 break;
             case Modal.City:
                 _cityPanel.Draw(_simulation);
@@ -384,6 +429,13 @@ public sealed class GameLoop : IDisposable
 
         // Ctrl+S and Ctrl+O save and open; held Control keeps the letters from panning the map.
         var control = Raylib.IsKeyDown(KeyboardKey.LeftControl) || Raylib.IsKeyDown(KeyboardKey.RightControl);
+        // A scenario's city can't be saved or swapped from its editor yet.
+        if (control && _editing is not null && (Raylib.IsKeyPressed(KeyboardKey.S) || Raylib.IsKeyPressed(KeyboardKey.O)))
+        {
+            _ticker.Advise("A scenario can't be saved yet, and no other city opens while one is edited");
+            return;
+        }
+
         if (control && Raylib.IsKeyPressed(KeyboardKey.S))
         {
             Save(confirmed: false);
@@ -519,8 +571,16 @@ public sealed class GameLoop : IDisposable
 
     private void HandleMenuInput()
     {
-        switch (GameMenu.Update())
+        switch (GameMenu.Update(_editing is not null, _editing?.IsTesting == true))
         {
+            case GameMenu.Choice.BackToBeforePlay:
+                CloseModal();
+                Ask(Pending.BackToBeforePlay, "Go back to before play?", "The city goes back to how it was when you pressed play: the test, and everything built during it, are undone.", "Go back", "Stay");
+                break;
+            case GameMenu.Choice.StartOver:
+                CloseModal();
+                Ask(Pending.StartOver, $"Start {_editing!.Scenario.Name} over?", "Its city opens again as the scenario has it, and every change since is undone.", "Start over", "Stay");
+                break;
             case GameMenu.Choice.Resume:
                 CloseModal();
                 break;
@@ -652,7 +712,8 @@ public sealed class GameLoop : IDisposable
             Pending.LeaveToQuit => "and quit",
             _ => $"for {_cityToOpen?.Name}",
         };
-        Ask(leaving, $"Leave {_simulation.Name} {where}?", "It has changes since it was last saved. Ctrl+S saves it first.", "Leave", "Stay");
+        var why = _editing is null ? "It has changes since it was last saved. Ctrl+S saves it first." : "A scenario can't be saved yet, so what you changed here will be lost.";
+        Ask(leaving, $"Leave {_simulation.Name} {where}?", why, "Leave", "Stay");
     }
 
     private void Go(Pending leaving)
@@ -669,7 +730,53 @@ public sealed class GameLoop : IDisposable
                 (OpenedCity, OpenedFile, OpenedNotes) = (_cityToOpen, _fileToOpen, _notesToOpen);
                 Leaving = Leave.Open;
                 break;
+            case Pending.BackToBeforePlay when _editing is not null:
+                Reopen(_editing.EndTest, "went back to before play");
+                break;
+            case Pending.StartOver when _editing is not null:
+                Reopen(_editing.OpenCity, "started over");
+                break;
         }
+    }
+
+    // The scenario being edited goes on in a city of its own: the one from before its test, or its
+    // own afresh. The game opens it as it would any other city, looking where it looked.
+    private void Reopen(Func<CitySimulation> open, string what)
+    {
+        try
+        {
+            (OpenedCity, OpenedFile, OpenedNotes) = (open(), null, []);
+            Leaving = Leave.Open;
+            Logger.Info("Editing {Name}: {What}", _editing!.Scenario.Name, what);
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or InvalidDataException)
+        {
+            Logger.Error("Editing {Name}: couldn't have {What}: {Problem}", _editing!.Scenario.Name, what, ex.Message);
+            _ticker.Advise(ex.Message);
+        }
+    }
+
+    // The test starts here: the city is kept as it is to go back to, and the scenario runs on it.
+    private void BeginTest()
+    {
+        _view.CancelStroke();
+        _editing!.BeginTest(_simulation);
+        _simulation.Challenge!.Finished += ShowChallengeResult;
+        Logger.Info("Testing {Name}", _editing.Scenario.Name);
+        _ticker.Advise($"Testing {_editing.Scenario.Name}: Escape's menu goes back to before play");
+    }
+
+    // The city's name in the bar, or, editing a scenario, what is being done to it.
+    private string BarName()
+    {
+        var testing = _editing?.IsTesting == true;
+        if (!ReferenceEquals(_barNameOf, _simulation.Name) || _barNameTesting != testing)
+        {
+            (_barNameOf, _barNameTesting) = (_simulation.Name, testing);
+            _barName = _editing is null ? _simulation.Name : testing ? $"Testing {_simulation.Name}" : $"Editing {_simulation.Name}";
+        }
+
+        return _barName;
     }
 
     private void Ask(Pending pending, string title, string message, string yes, string no)
@@ -908,21 +1015,22 @@ public sealed class GameLoop : IDisposable
         }
     }
 
-    private static string Describe(BuildAction action, BuildResult result) => result.Status switch
+    // What a stroke came to, beside the pointer; a scenario's editor builds for free, and says so.
+    private string Describe(BuildAction action, BuildResult result) => result.Status switch
     {
-        BuildStatus.Built when action == BuildAction.Bulldoze => $"Cleared {Count(result.TilesChanged, "tile")} for ${result.Cost}",
-        BuildStatus.Built when action == BuildAction.Road => $"Built {Count(result.TilesChanged, "tile")} of road for ${result.Cost}",
-        BuildStatus.Built when action == BuildAction.Rail => $"Laid {Count(result.TilesChanged, "tile")} of rail for ${result.Cost}",
-        BuildStatus.Built when action == BuildAction.Park => $"Laid {Count(result.TilesChanged, "tile")} of park for ${result.Cost}",
-        BuildStatus.Built when action == BuildAction.PowerLine => $"Strung {Count(result.TilesChanged, "tile")} of power line for ${result.Cost}",
-        BuildStatus.Built when action == BuildAction.CoalPowerPlant => $"Built a coal power plant for ${result.Cost}",
-        BuildStatus.Built when action == BuildAction.NuclearPowerPlant => $"Built a nuclear power plant for ${result.Cost}",
-        BuildStatus.Built when action == BuildAction.FireStation => $"Built a fire station for ${result.Cost}",
-        BuildStatus.Built when action == BuildAction.PoliceStation => $"Built a police station for ${result.Cost}",
-        BuildStatus.Built when action == BuildAction.Stadium => $"Built a stadium for ${result.Cost}",
-        BuildStatus.Built when action == BuildAction.Seaport => $"Built a seaport for ${result.Cost}",
-        BuildStatus.Built when action == BuildAction.Airport => $"Built an airport for ${result.Cost}",
-        BuildStatus.Built => $"Zoned {Count(result.TilesChanged / ZoneLayout.Parts, "zone")} for ${result.Cost}",
+        BuildStatus.Built when action == BuildAction.Bulldoze => $"Cleared {Count(result.TilesChanged, "tile")} {Price(result)}",
+        BuildStatus.Built when action == BuildAction.Road => $"Built {Count(result.TilesChanged, "tile")} of road {Price(result)}",
+        BuildStatus.Built when action == BuildAction.Rail => $"Laid {Count(result.TilesChanged, "tile")} of rail {Price(result)}",
+        BuildStatus.Built when action == BuildAction.Park => $"Laid {Count(result.TilesChanged, "tile")} of park {Price(result)}",
+        BuildStatus.Built when action == BuildAction.PowerLine => $"Strung {Count(result.TilesChanged, "tile")} of power line {Price(result)}",
+        BuildStatus.Built when action == BuildAction.CoalPowerPlant => $"Built a coal power plant {Price(result)}",
+        BuildStatus.Built when action == BuildAction.NuclearPowerPlant => $"Built a nuclear power plant {Price(result)}",
+        BuildStatus.Built when action == BuildAction.FireStation => $"Built a fire station {Price(result)}",
+        BuildStatus.Built when action == BuildAction.PoliceStation => $"Built a police station {Price(result)}",
+        BuildStatus.Built when action == BuildAction.Stadium => $"Built a stadium {Price(result)}",
+        BuildStatus.Built when action == BuildAction.Seaport => $"Built a seaport {Price(result)}",
+        BuildStatus.Built when action == BuildAction.Airport => $"Built an airport {Price(result)}",
+        BuildStatus.Built => $"Zoned {Count(result.TilesChanged / ZoneLayout.Parts, "zone")} {Price(result)}",
         BuildStatus.Unchanged when result.Reason == BuildRefusal.AlreadyDone => "The land is already like that",
         BuildStatus.Refused when result.Reason == BuildRefusal.PartOfAZone => "Bulldoze its centre to clear it",
         BuildStatus.Refused when result.Reason == BuildRefusal.OnFire => "It's on fire: wait for it to burn out",
@@ -933,6 +1041,8 @@ public sealed class GameLoop : IDisposable
         BuildStatus.Refused when result.Reason == BuildRefusal.OffTheMap => "That runs off the map",
         _ => "The work was refused",
     };
+
+    private string Price(BuildResult result) => _simulation.Builder.BuildsForFree ? "for free" : $"for ${result.Cost}";
 
     // A message from the city goes on the ticker as an advisory, and to the log. A disaster goes in
     // red the moment it starts, every time, since each one is news.
@@ -974,7 +1084,7 @@ public sealed class GameLoop : IDisposable
                 _helpOpen = !_helpOpen;
                 break;
             case Hud.BarButton.CityName:
-                _cityPanel.Reset(_simulation);
+                _cityPanel.Reset(_simulation, _editing is { IsTesting: false } ? _draft : null);
                 OpenModal(Modal.City);
                 break;
             default:

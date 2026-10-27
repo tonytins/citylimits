@@ -30,6 +30,9 @@ public sealed class BuildPlan
     /// <summary>What the stroke would cost.</summary>
     public int Cost { get; private set; }
 
+    /// <summary>Tells whether the work costs nothing because the builder builds for free, as a scenario's editor does.</summary>
+    public bool IsFree { get; private set; }
+
     /// <summary>
     /// Why the stroke would be refused as a whole: <see cref="BuildRefusal.OffTheMap"/> when it
     /// runs off the map, <see cref="BuildRefusal.NotEnoughFunds"/> when the city can't pay for all
@@ -138,6 +141,7 @@ public sealed class BuildPlan
         Array.Clear(_skipped);
         Bounds = bounds;
         Cost = 0;
+        IsFree = false;
         Refusal = BuildRefusal.None;
     }
 
@@ -149,6 +153,12 @@ public sealed class BuildPlan
     }
 
     internal void AddCost(int cost) => Cost += cost;
+
+    internal void Waive()
+    {
+        Cost = 0;
+        IsFree = true;
+    }
 
     internal void Skip(BuildRefusal reason) => _skipped[(int)reason]++;
 

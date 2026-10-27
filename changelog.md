@@ -1,5 +1,24 @@
 # CityLimits Changelog
 
+## 0.4.107
+
+Scenarios can be edited in the game. Pick one in the Scenarios list and
+press Edit: its city opens in the usual game view, paused, and the bar
+says you're editing it. Everything is free to build. Press play to test
+the scenario as a player would meet it, with its disasters on their
+dates and its goals judged at the end. When you've seen enough, the
+Escape menu's Back to before play puts the city back as it was when you
+pressed play, and Start over opens the scenario afresh. Scenarios can't
+be saved from the game yet; that comes next.
+
+For developers and agents: `ScenarioEdit`, in `CityLimits.Core`, holds
+the scenario being edited and the test's checkpoint, kept as a flat
+save. `CityBuilder.BuildsForFree` makes building cost nothing, and a
+`BuildPlan` says when it is free. `GameLoop` takes the scenario being
+edited, and the game opens the checkpoint or the scenario afresh as it
+opens any other city, looking where it looked. `ConfirmPanel` wraps a
+long message.
+
 ## 0.4.106
 
 The city panel no longer lists mods. When you play a challenge, a

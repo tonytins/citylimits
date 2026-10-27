@@ -5,7 +5,8 @@ namespace CityLimits.UI;
 /// to edit: Enter renames the city, and closing drops an edit that wasn't entered. Under it, the
 /// city at a glance: its date and age, population, demand, and money. A city played as a challenge
 /// has a second column beside it, with the challenge's name, its end, how it stands, and the
-/// disasters still to come, and its goals under both, each with how the city measures up. At the
+/// disasters still to come, and its goals under both, each with how the city measures up; a
+/// scenario being edited shows its draft there, which nothing acts on until it is tested. At the
 /// bottom, the seed its map grew from, which a click copies. The game is paused while it is open,
 /// and the player moves it by its title.
 /// </summary>
@@ -43,6 +44,10 @@ public sealed class CityPanel : IMovableWindow
     // How many goals the city's challenge has, which sets the panel's height; none for a free city.
     private int _goalRows;
     private bool _isChallenge;
+
+    // The challenge the panel shows: the city's own, or, while its scenario is edited, the draft.
+    private Challenge? _challenge;
+    private bool _isDraft;
 
     // The disasters to come, laid out when the panel opens, since the city is paused while it is.
     private readonly List<string> _events = [];
@@ -82,16 +87,21 @@ public sealed class CityPanel : IMovableWindow
     /// <inheritdoc />
     public void Drag(Vector2 point, bool held) => _placement.Drag(point, held, new Vector2(Width, Height));
 
-    /// <summary>Opens the panel on the city as it is.</summary>
-    public void Reset(CitySimulation city)
+    /// <summary>
+    /// Opens the panel on the city as it is, with its challenge, or, when it has none, the draft of
+    /// the scenario being edited, if any, which nothing acts on yet.
+    /// </summary>
+    public void Reset(CitySimulation city, Challenge? draft = null)
     {
         ArgumentNullException.ThrowIfNull(city);
         _name.Text = city.Name;
-        _isChallenge = city.Challenge is not null;
-        _goalRows = city.Challenge?.Goals.Count ?? 0;
+        _challenge = city.Challenge ?? draft;
+        _isDraft = city.Challenge is null && draft is not null;
+        _isChallenge = _challenge is not null;
+        _goalRows = _challenge?.Goals.Count ?? 0;
         _events.Clear();
         _moreEvents = 0;
-        foreach (var (date, disaster) in city.Challenge?.UpcomingEvents ?? [])
+        foreach (var (date, disaster) in _challenge?.UpcomingEvents ?? [])
         {
             if (_events.Count < EventRoom)
             {
@@ -176,7 +186,7 @@ public sealed class CityPanel : IMovableWindow
         y += SmallSize + 12;
 
         DrawCity(city, x, y);
-        if (city.Challenge is { } challenge)
+        if (_challenge is { } challenge)
         {
             DrawChallenge(challenge, x + LeftColumn + ColumnGap, y);
             DrawGoals(city, challenge, x, (int)bounds.Y + BaseHeight - Padding - LineHeight - 8);
@@ -242,7 +252,7 @@ public sealed class CityPanel : IMovableWindow
     // disasters still to come, with their dates.
     private void DrawChallenge(Challenge challenge, int x, int y)
     {
-        Raylib.DrawText("Challenge", x, y, SmallSize, Theme.TextDim);
+        Raylib.DrawText(_isDraft ? "Scenario" : "Challenge", x, y, SmallSize, Theme.TextDim);
         y += SmallSize + 6;
         Raylib.DrawText(challenge.Name, x, y, FontSize, Theme.Text);
         y += LineHeight;
@@ -250,6 +260,7 @@ public sealed class CityPanel : IMovableWindow
         y += LineHeight;
         var (state, stateColor) = challenge.Won switch
         {
+            _ when _isDraft => ("Being edited", Theme.TextDim),
             true => ("Won", Theme.Accent),
             false => ("Lost", Theme.Error),
             null => ("Under way", Theme.TextDim),

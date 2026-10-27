@@ -4,8 +4,8 @@ namespace CityLimits.UI;
 /// The challenges a player can pick from the start menu, laid out like Load Game's list: the game's
 /// own, then the player's, each with its dates and how many goals it has. A click picks one, and
 /// its briefing shows under the list: what it's about, and the goals to meet by its end. Play, or
-/// Enter, starts it; Back or Escape leaves. A scenario that can't be read is listed with why, and
-/// can't be played.
+/// Enter, starts it; Edit opens it in the game to edit; Back or Escape leaves. A scenario that can't
+/// be read is listed with why, and can't be played or edited.
 /// </summary>
 public sealed class ScenarioPanel
 {
@@ -47,10 +47,24 @@ public sealed class ScenarioPanel
 
         /// <summary>The player went back.</summary>
         Back,
+
+        /// <summary>The player opened the scenario to edit, in <see cref="Editing"/>, whose city is in <see cref="City"/>.</summary>
+        Edit,
     }
 
-    /// <summary>The challenge's city, being played, once the outcome is <see cref="Outcome.Play"/>.</summary>
+    // The buttons along the bottom right, counted from the right.
+    private const int BackButton = 0;
+    private const int PlayButton = 1;
+    private const int EditButton = 2;
+
+    /// <summary>
+    /// The challenge's city, being played, once the outcome is <see cref="Outcome.Play"/>, or the
+    /// scenario's city to edit, once it is <see cref="Outcome.Edit"/>.
+    /// </summary>
     public CitySimulation? City { get; private set; }
+
+    /// <summary>The scenario being edited, once the outcome is <see cref="Outcome.Edit"/>.</summary>
+    public ScenarioEdit? Editing { get; private set; }
 
     /// <summary>Tells whether any challenge, readable or not, was found.</summary>
     public bool HasScenarios => _listings.Count > 0;
@@ -76,6 +90,7 @@ public sealed class ScenarioPanel
         _first = 0;
         SetProblem(problem);
         City = null;
+        Editing = null;
         Select(-1);
     }
 
@@ -104,14 +119,19 @@ public sealed class ScenarioPanel
         }
 
         var mouse = Raylib.GetMousePosition();
-        if (Raylib.CheckCollisionPointRec(mouse, ButtonBounds(1)))
+        if (Raylib.CheckCollisionPointRec(mouse, ButtonBounds(BackButton)))
         {
             return Outcome.Back;
         }
 
-        if (Raylib.CheckCollisionPointRec(mouse, ButtonBounds(0)))
+        if (Raylib.CheckCollisionPointRec(mouse, ButtonBounds(PlayButton)))
         {
             return TryPlay();
+        }
+
+        if (Raylib.CheckCollisionPointRec(mouse, ButtonBounds(EditButton)))
+        {
+            return TryEdit();
         }
 
         for (var row = 0; row < Rows && _first + row < _listings.Count; row++)
@@ -170,8 +190,9 @@ public sealed class ScenarioPanel
             y += BriefingLineHeight;
         }
 
-        DrawButton(ButtonBounds(0), "Play", CanPlay, mouse);
-        DrawButton(ButtonBounds(1), "Back", enabled: true, mouse);
+        DrawButton(ButtonBounds(EditButton), "Edit", CanPlay, mouse);
+        DrawButton(ButtonBounds(PlayButton), "Play", CanPlay, mouse);
+        DrawButton(ButtonBounds(BackButton), "Back", enabled: true, mouse);
     }
 
     private bool CanPlay => _selected >= 0 && _listings[_selected].Scenario is not null;
@@ -237,6 +258,31 @@ public sealed class ScenarioPanel
         }
     }
 
+    // Editing reads the scenario's saved city afresh too, as playing does.
+    private Outcome TryEdit()
+    {
+        if (!CanPlay)
+        {
+            return Outcome.Open;
+        }
+
+        var listing = _listings[_selected];
+        try
+        {
+            var editing = new ScenarioEdit(listing.Scenario!, listing.Path);
+            City = editing.OpenCity();
+            Editing = editing;
+            Logger.Info("Editing the scenario '{Name}' from {File}", listing.Scenario!.Name, listing.Path);
+            return Outcome.Edit;
+        }
+        catch (InvalidDataException ex)
+        {
+            Logger.Warn("{File} couldn't be opened to edit: {Problem}", listing.Path, ex.Message);
+            SetProblem(ex.Message);
+            return Outcome.Open;
+        }
+    }
+
     private static void DrawButton(Rectangle bounds, string text, bool enabled, Vector2 mouse)
     {
         Raylib.DrawRectangleRec(bounds, Theme.PanelBorder);
@@ -278,11 +324,11 @@ public sealed class ScenarioPanel
         return new Rectangle { X = bounds.X + Padding, Y = bounds.Y + ListTop + (row * RowHeight), Width = Width - (Padding * 2), Height = RowHeight - 2 };
     }
 
-    // Play, then Back, along the bottom right.
+    // Edit, Play, then Back, along the bottom right; a button is counted from the right.
     private static Rectangle ButtonBounds(int button)
     {
         var bounds = Bounds();
         var right = bounds.X + Width - Padding - ButtonWidth;
-        return new Rectangle { X = right - ((1 - button) * (ButtonWidth + 8)), Y = bounds.Y + Height - Padding - ButtonHeight, Width = ButtonWidth, Height = ButtonHeight };
+        return new Rectangle { X = right - (button * (ButtonWidth + 8)), Y = bounds.Y + Height - Padding - ButtonHeight, Width = ButtonWidth, Height = ButtonHeight };
     }
 }

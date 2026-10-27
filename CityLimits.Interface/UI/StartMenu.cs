@@ -47,6 +47,9 @@ public sealed class StartMenu
         /// <summary>Play the challenge whose city is in <see cref="ChallengeCity"/>.</summary>
         PlayScenario,
 
+        /// <summary>Edit the scenario in <see cref="Editing"/>, whose city is in <see cref="ChallengeCity"/>.</summary>
+        EditScenario,
+
         /// <summary>The settings window closed; <see cref="Settings"/> holds what the player set.</summary>
         SettingsClosed,
 
@@ -75,8 +78,14 @@ public sealed class StartMenu
     /// <summary>What importing the opened city replaced, when it came from a Micropolis city.</summary>
     public IReadOnlyList<string> LoadedNotes => _load.Notes;
 
-    /// <summary>The challenge's city, being played, once the choice is <see cref="Choice.PlayScenario"/>.</summary>
+    /// <summary>
+    /// The challenge's city, being played, once the choice is <see cref="Choice.PlayScenario"/>, or the
+    /// scenario's city to edit, once it is <see cref="Choice.EditScenario"/>.
+    /// </summary>
     public CitySimulation? ChallengeCity => _scenarios.City;
+
+    /// <summary>The scenario to edit, once the choice is <see cref="Choice.EditScenario"/>.</summary>
+    public ScenarioEdit? Editing => _scenarios.Editing;
 
     /// <summary>The settings as the player has left them, changed in the settings window or not.</summary>
     public GameSettings Settings { get; private set; } = GameSettings.Default;
@@ -118,6 +127,8 @@ public sealed class StartMenu
             {
                 case ScenarioPanel.Outcome.Play:
                     return Choice.PlayScenario;
+                case ScenarioPanel.Outcome.Edit:
+                    return Choice.EditScenario;
                 case ScenarioPanel.Outcome.Back:
                     _scenariosOpen = false;
                     break;

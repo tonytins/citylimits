@@ -2,7 +2,8 @@ namespace CityLimits.UI;
 
 /// <summary>
 /// A question with two answers, such as replacing a saved city or leaving one with unsaved changes.
-/// Enter gives the first answer and Escape the second, the safe one.
+/// Enter gives the first answer and Escape the second, the safe one. A long message is wrapped to
+/// the panel's width when it is asked, and the panel grows to hold it.
 /// </summary>
 public sealed class ConfirmPanel
 {
@@ -10,12 +11,13 @@ public sealed class ConfirmPanel
     private const int TextSize = 14;
     private const int Padding = 16;
     private const int Width = 480;
-    private const int Height = 150;
+    private const int LeastHeight = 150;
+    private const int LineHeight = TextSize + 4;
     private const int ButtonHeight = 30;
     private const int ButtonPadding = 14;
 
     private string _title = string.Empty;
-    private string _message = string.Empty;
+    private IReadOnlyList<string> _lines = [];
     private string _yes = "Yes";
     private string _no = "No";
 
@@ -35,7 +37,8 @@ public sealed class ConfirmPanel
     /// <summary>Sets the question and its two answers, the one that goes ahead first.</summary>
     public void Ask(string title, string message, string yes, string no)
     {
-        (_title, _message, _yes, _no) = (title, message, yes, no);
+        (_title, _yes, _no) = (title, yes, no);
+        _lines = TextWrap.Lines(message, TextSize, Width - (Padding * 2));
     }
 
     /// <summary>Takes this frame's keys and clicks.</summary>
@@ -70,7 +73,12 @@ public sealed class ConfirmPanel
         Raylib.DrawRectangleRec(bounds, Theme.Panel);
         Raylib.DrawRectangleLinesEx(bounds, 1f, Theme.PanelBorder);
         Raylib.DrawText(_title, (int)bounds.X + Padding, (int)bounds.Y + Padding, FontSize, Theme.Text);
-        Raylib.DrawText(_message, (int)bounds.X + Padding, (int)bounds.Y + Padding + FontSize + 12, TextSize, Theme.TextDim);
+        var y = (int)bounds.Y + Padding + FontSize + 12;
+        foreach (var line in _lines)
+        {
+            Raylib.DrawText(line, (int)bounds.X + Padding, y, TextSize, Theme.TextDim);
+            y += LineHeight;
+        }
 
         var mouse = Raylib.GetMousePosition();
         DrawButton(YesBounds(), _yes, mouse);
@@ -85,7 +93,9 @@ public sealed class ConfirmPanel
         Raylib.DrawText(label, (int)(bounds.X + ((bounds.Width - width) / 2)), (int)bounds.Y + 5, FontSize, color);
     }
 
-    private static Rectangle Bounds() => new()
+    private int Height => Math.Max(LeastHeight, Padding + FontSize + 12 + (_lines.Count * LineHeight) + 16 + ButtonHeight + Padding);
+
+    private Rectangle Bounds() => new()
     {
         X = (Raylib.GetScreenWidth() - Width) / 2,
         Y = (Raylib.GetScreenHeight() - Height) / 2,

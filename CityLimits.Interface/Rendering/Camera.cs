@@ -31,6 +31,9 @@ public sealed class Camera
     /// <summary>Points the camera at a place in the world.</summary>
     public void CenterOn(Vector2 worldPoint) => _target = worldPoint;
 
+    /// <summary>Sets how near the camera looks, within its limits.</summary>
+    public void SetZoom(float zoom) => Zoom = Math.Clamp(zoom, MinZoom, MaxZoom);
+
     /// <summary>Moves the camera by a distance in world units.</summary>
     public void Pan(Vector2 worldDelta) => _target += worldDelta;
 

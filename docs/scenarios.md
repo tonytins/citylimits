@@ -51,6 +51,29 @@ whether the challenge was won or lost, and which goals weren't met; the
 city plays on after, won or lost. Saving partway keeps the challenge,
 with what is still to come (`docs/saving.md`).
 
+## Editing a scenario
+
+A city builder is a map editor turned into a game, so a scenario is
+edited in the game itself, in the same view it is played in. The
+Scenarios list's Edit opens the scenario's city (`ScenarioEdit`), paused,
+with the bar saying it is being edited:
+
+- Building is free, paused or playing; the city's money is left as the
+  scenario has it.
+- The scenario's goals, actions, and events are kept aside as a draft
+  that nothing acts on; the city panel shows it, read-only for now.
+- Playing tests the scenario. The city as it stands is kept as a
+  checkpoint, and the scenario runs on it as it would for a player: its
+  actions and events come on their dates, and its goals are judged at
+  its end date.
+- The Escape menu's Back to before play puts the city back as it was at
+  the checkpoint, undoing the test and everything built during it. Start
+  over opens the scenario's city afresh, dropping every change.
+
+A test from the same checkpoint runs the same every time, as the
+simulation is deterministic. A scenario can't be saved from the game
+yet, and no other city can be opened while one is edited.
+
 ## Running a scenario
 
 ```sh

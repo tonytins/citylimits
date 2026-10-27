@@ -75,7 +75,7 @@ public static class WindowedGame
                 {
                     StartMenu.Choice.NewCity when menu.City is { } wanted => CreateCity(wanted, folders, out modProblems),
                     StartMenu.Choice.LoadCity => menu.LoadedCity,
-                    StartMenu.Choice.PlayScenario => menu.ChallengeCity,
+                    StartMenu.Choice.PlayScenario or StartMenu.Choice.EditScenario => menu.ChallengeCity,
                     _ => null,
                 };
                 if (city is null)
@@ -85,7 +85,8 @@ public static class WindowedGame
 
                 var file = choice == StartMenu.Choice.LoadCity ? menu.LoadedFile : null;
                 var notes = choice == StartMenu.Choice.LoadCity ? menu.LoadedNotes : [];
-                if (PlayCities(city, file, modProblems, notes, ref settings, folders, assets) != GameLoop.Leave.ToMenu)
+                var editing = choice == StartMenu.Choice.EditScenario ? menu.Editing : null;
+                if (PlayCities(city, file, modProblems, notes, editing, ref settings, folders, assets) != GameLoop.Leave.ToMenu)
                 {
                     break;
                 }
@@ -153,14 +154,16 @@ public static class WindowedGame
     }
 
     // Plays a city until the player leaves it, and then any city they open from it, keeping the
-    // settings each ends with. Returns how the last one was left.
-    private static GameLoop.Leave PlayCities(CitySimulation city, string? file, IReadOnlyList<string> modProblems, IReadOnlyList<string> notes, ref GameSettings settings, GameFolders folders, GameAssets assets)
+    // settings each ends with. Returns how the last one was left. A scenario being edited carries on
+    // in the city it opens, its test gone back on or its city afresh, looked at from where it was.
+    private static GameLoop.Leave PlayCities(CitySimulation city, string? file, IReadOnlyList<string> modProblems, IReadOnlyList<string> notes, ScenarioEdit? editing, ref GameSettings settings, GameFolders folders, GameAssets assets)
     {
+        (Vector2 Target, float Zoom)? lookAt = null;
         while (true)
         {
-            Logger.Info("Playing {Name}{From}", city.Name, file is null ? string.Empty : $" from {file}");
+            Logger.Info("{Doing} {Name}{From}", editing is null ? "Playing" : "Editing", city.Name, file is null ? string.Empty : $" from {file}");
             GameLoop.Leave leaving;
-            using (var game = new GameLoop(settings, city, file, folders, assets, modProblems, notes))
+            using (var game = new GameLoop(settings, city, file, folders, assets, modProblems, notes, editing, lookAt))
             {
                 while (!Raylib.WindowShouldClose() && game.Leaving == GameLoop.Leave.None)
                 {
@@ -180,6 +183,8 @@ public static class WindowedGame
                 if (leaving == GameLoop.Leave.Open && game.OpenedCity is { } opened)
                 {
                     (city, file, modProblems, notes) = (opened, game.OpenedFile, [], game.OpenedNotes);
+                    editing = game.Editing;
+                    lookAt = editing is null ? null : game.LookingAt;
                 }
             }
 

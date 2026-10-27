@@ -37,6 +37,12 @@ public sealed class CityBuilder
     }
 
     /// <summary>
+    /// Whether building costs nothing, as in a scenario's editor, where whole cities are laid out;
+    /// the city's money is left as it is. It belongs to the editor, not the city, so it isn't saved.
+    /// </summary>
+    public bool BuildsForFree { get; set; }
+
+    /// <summary>
     /// Works out what a stroke would do if it were applied now, without changing anything.
     /// A tile or zone the stroke can't change is skipped with its reason; the stroke as a whole
     /// is refused when it runs off the map or the city can't pay for all of it.
@@ -91,6 +97,11 @@ public sealed class CityBuilder
             default:
                 PlanZones(bounds, stroke.Use, plan);
                 break;
+        }
+
+        if (BuildsForFree)
+        {
+            plan.Waive();
         }
 
         if (plan.Cost > _treasury.Funds)

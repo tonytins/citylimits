@@ -238,6 +238,7 @@ public sealed class Hud
         { Refusal: BuildRefusal.OffTheMap } => "Runs off the map",
         { Refusal: BuildRefusal.NotEnoughFunds } => $"${plan.Cost} - not enough money",
         { Tiles.Count: 0 } => "Nothing to do here",
+        { IsFree: true } => "Free",
         _ => $"${plan.Cost}",
     };
 

@@ -70,9 +70,16 @@ public static class ChallengeShelf
     /// <exception cref="InvalidDataException">The scenario's saved city can't be opened any more.</exception>
     public static CitySimulation Begin(Scenario scenario)
     {
+        var city = CityFor(scenario);
+        city.Challenge = Challenge.Begin(scenario, city);
+        return city;
+    }
+
+    // The city a scenario starts with, named for it when it is made from a seed, with no challenge yet.
+    internal static CitySimulation CityFor(Scenario scenario)
+    {
         ArgumentNullException.ThrowIfNull(scenario);
         var city = ScenarioRunner.Start(scenario);
-        city.Challenge = Challenge.Begin(scenario, city);
         if (scenario.CityFile is null)
         {
             var name = scenario.Name.Length > CitySimulation.MaxNameLength ? scenario.Name[..CitySimulation.MaxNameLength] : scenario.Name;
