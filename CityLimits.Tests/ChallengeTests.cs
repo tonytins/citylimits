@@ -75,6 +75,18 @@ public class ChallengeTests
     }
 
     [Fact]
+    public void AChallengeListsTheDisastersToComeWithTheirDatesUntilTheyStrike()
+    {
+        var city = ChallengeShelf.Begin(Scenario());
+
+        Assert.Equal([(new ScenarioDate(1920, 3), Disaster.Fire)], city.Challenge!.UpcomingEvents);
+
+        Run(city, (3 * CityCalendar.StepsPerMonth) + 1);
+
+        Assert.Empty(city.Challenge.UpcomingEvents);
+    }
+
+    [Fact]
     public void AChallengeSavedPartwayCarriesOnAsIfItHadntBeen()
     {
         var unsaved = ChallengeShelf.Begin(Scenario());

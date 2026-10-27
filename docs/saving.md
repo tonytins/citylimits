@@ -81,7 +81,9 @@ game is paused:
   churches, land value, population density, the terrain's worth, and the
   commercial rate, each as the simulation last left it;
 - the stadiums, seaports, and airports, this cycle's count of them, and
-  the demand held back for want of one, from format 1.9.
+  the demand held back for want of one, from format 1.9;
+- the year the city was founded, which the city panel counts its age
+  from, from format 1.10.
 
 The road network is not saved; it is worked out again from the map.
 
@@ -116,6 +118,7 @@ size of the same city as `.fcl`.
 | `FLOD` | The floods on the map, and how long the water spreads for; from format 1.7 |
 | `CHAL` | The scenario being played, for a city that is a challenge; from format 1.8, and only in such a city |
 | `FCLT` | The stadiums, seaports, and airports, the scan's counts of them, and the demand held back for want of one; from format 1.9 |
+| `FNDG` | The year the city was founded; from format 1.10 |
 
 Each tile's word holds, from its lowest bit: the ground (2 bits), the use
 (4 bits), the footprint part (4 bits), power (1 bit), and 5 bits more: a
@@ -198,7 +201,7 @@ arrays of numbers sit on one line each.
 | `map` | The map: see below |
 | `budget`, `census`, `demand`, `power`, `services`, `community`, `cityMaps` | Each part of the simulation's state |
 | `cycle` | The road tiles counted this cycle, and what the last count set aside for the budget |
-| `parts`, `traffic`, `roadTraffic`, `rail`, `pollution`, `crime`, `fire`, `flood`, `challenge`, `facilities` | The parts list and the parts later versions added, each from the version the table under Versions gives |
+| `parts`, `traffic`, `roadTraffic`, `rail`, `pollution`, `crime`, `fire`, `flood`, `challenge`, `facilities`, `founding` | The parts list and the parts later versions added, each from the version the table under Versions gives |
 
 ### The map
 
@@ -268,6 +271,7 @@ baseline that adds to the city takes the next minor version.
 | 1.7 | Floods: `"flood"`, and the `FLOD` chunk | A city from before has no flood |
 | 1.8 | A challenge: `"challenge"`, and the `CHAL` chunk, only in a city being played as one | A city from before isn't one |
 | 1.9 | Stadiums, seaports, and airports: `"facilities"`, and the `FCLT` chunk | A city from before has none, and no demand held back until the city next checks |
+| 1.10 | The year the city was founded: `"founding"`, and the `FNDG` chunk | A city from before is counted from 1900, as it was; one that started later can't be told apart |
 - **Growing the binary format.** New state goes in new chunks, not new
   fields in old ones, so a minor version stays an addition.
 - **The flat format** writes its version as a string, `"1.0"`, so 1.10
@@ -378,6 +382,18 @@ can't keep the part, since it may build where they stood. Reading refuses
 a use that isn't one of the three, a building that runs off the map or
 onto another, a tile under one that isn't bare ground (or rubble, at a
 hole), or a hole that isn't an outer part, and says where.
+
+
+## The founding year
+
+From format 1.10, the year the city was founded is saved as a part of its
+own, `"founding"` in `.fcl` and the `FNDG` chunk in `.cl`: `{ "year":
+1906 }`. A city started in a later year, as a scenario may start one,
+counts its age from it. It only says how old the city is, so it is
+ignorable and keepable: a version that doesn't know it counts the age
+from 1900, as it always did, and writes the part back as it was. A city
+saved before 1.10 is counted from 1900. Reading refuses a year before
+1900 or after the city's own date, and says so.
 
 ## Opening a newer save
 

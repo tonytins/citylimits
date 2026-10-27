@@ -1,3 +1,4 @@
+using System.Text.Json.Nodes;
 using CityLimits.Core.Economy;
 using CityLimits.Core.Saving;
 using CityLimits.Core.Simulation;
@@ -64,6 +65,38 @@ public class StartYearTests
 
         Assert.Equal(city.Date, flat.Date);
         Assert.Equal(city.TickCount, binary.TickCount);
+        Assert.Equal(1944, flat.FoundedYear);
+        Assert.Equal(1944, binary.FoundedYear);
+    }
+
+    [Fact]
+    public void ACitysAgeCountsFromTheYearItWasFounded()
+    {
+        Assert.Equal(1906, Town(1906).FoundedYear);
+        Assert.Equal(CityCalendar.StartYear, Town(CityCalendar.StartYear).FoundedYear);
+    }
+
+    [Fact]
+    public void ACitySavedBeforeTheFoundingYearWasKeptIsCountedFrom1900()
+    {
+        var save = JsonNode.Parse(FlatCityFormat.Write(Town(1906)))!.AsObject();
+        save.Remove("founding");
+        save["format"] = "1.9";
+
+        Assert.True(FlatCityFormat.TryRead(save.ToJsonString(), out var city, out var problem), problem);
+        Assert.Equal(CityCalendar.StartYear, city.FoundedYear);
+    }
+
+    [Theory]
+    [InlineData(1899)]
+    [InlineData(1907)]
+    public void AFoundingYearBefore1900OrAfterTheCitysDateIsRefused(int year)
+    {
+        var save = JsonNode.Parse(FlatCityFormat.Write(Town(1906)))!.AsObject();
+        save["founding"]!["year"] = year;
+
+        Assert.False(FlatCityFormat.TryRead(save.ToJsonString(), out _, out var problem));
+        Assert.StartsWith("founding.year", problem);
     }
 
     [Theory]

@@ -2,10 +2,12 @@ namespace CityLimits.UI;
 
 /// <summary>
 /// The city panel, opened by a click on the city's name in the bar. At the top, the name, ready
-/// to edit: Enter renames the city, and closing drops an edit that wasn't entered. Under it, two
-/// columns: the city at a glance (its date and age, population, demand, and money) and the mods it
-/// was made with. At the bottom, the seed its map grew from, which a click copies. The game is
-/// paused while it is open, and the player moves it by its title.
+/// to edit: Enter renames the city, and closing drops an edit that wasn't entered. Under it, the
+/// city at a glance: its date and age, population, demand, and money. A city played as a challenge
+/// has a second column beside it, with the challenge's name, its end, how it stands, and the
+/// disasters still to come, and its goals under both, each with how the city measures up. At the
+/// bottom, the seed its map grew from, which a click copies. The game is paused while it is open,
+/// and the player moves it by its title.
 /// </summary>
 public sealed class CityPanel : IMovableWindow
 {
@@ -13,7 +15,10 @@ public sealed class CityPanel : IMovableWindow
     private const int SmallSize = 10;
     private const int TitleSize = 20;
     private const int Padding = 14;
-    private const int Width = 580;
+
+    // A free city's panel holds the city's column; a challenge's is wide enough for a second.
+    private const int NarrowWidth = 360;
+    private const int WideWidth = 580;
     private const int BaseHeight = 340;
 
     // A challenge's section: its heading, a line a goal, and a gap above the seed.
@@ -24,6 +29,9 @@ public sealed class CityPanel : IMovableWindow
     private const int TitleStrip = Padding + TitleSize + 6;
     private const int ColumnGap = 24;
     private const int LeftColumn = 330;
+
+    // How many of the disasters to come the challenge's column lists before saying how many more.
+    private const int EventRoom = 4;
     private const double NoteSeconds = 2.0;
 
     private readonly WindowPlacement _placement = new(TitleStrip);
@@ -35,6 +43,12 @@ public sealed class CityPanel : IMovableWindow
     // How many goals the city's challenge has, which sets the panel's height; none for a free city.
     private int _goalRows;
     private bool _isChallenge;
+
+    // The disasters to come, laid out when the panel opens, since the city is paused while it is.
+    private readonly List<string> _events = [];
+    private int _moreEvents;
+
+    private int Width => _isChallenge ? WideWidth : NarrowWidth;
 
     private int Height => BaseHeight + (_isChallenge ? ChallengeHeading + (_goalRows * LineHeight) + ChallengeGap : 0);
 
@@ -75,6 +89,20 @@ public sealed class CityPanel : IMovableWindow
         _name.Text = city.Name;
         _isChallenge = city.Challenge is not null;
         _goalRows = city.Challenge?.Goals.Count ?? 0;
+        _events.Clear();
+        _moreEvents = 0;
+        foreach (var (date, disaster) in city.Challenge?.UpcomingEvents ?? [])
+        {
+            if (_events.Count < EventRoom)
+            {
+                _events.Add($"{disaster}, {date}");
+            }
+            else
+            {
+                _moreEvents++;
+            }
+        }
+
         _problem = null;
         _renamedAt = double.NegativeInfinity;
         _copiedAt = double.NegativeInfinity;
@@ -148,10 +176,10 @@ public sealed class CityPanel : IMovableWindow
         y += SmallSize + 12;
 
         DrawCity(city, x, y);
-        DrawMods(city.Definitions, x + LeftColumn + ColumnGap, y);
         if (city.Challenge is { } challenge)
         {
-            DrawChallenge(city, challenge, x, (int)bounds.Y + BaseHeight - Padding - LineHeight - 8);
+            DrawChallenge(challenge, x + LeftColumn + ColumnGap, y);
+            DrawGoals(city, challenge, x, (int)bounds.Y + BaseHeight - Padding - LineHeight - 8);
         }
 
         var seed = SeedBounds();
@@ -168,7 +196,7 @@ public sealed class CityPanel : IMovableWindow
         y += SmallSize + 6;
 
         var date = city.Date;
-        var age = date.Year - CityCalendar.StartYear;
+        var age = date.Year - city.FoundedYear;
         var ageText = age switch
         {
             0 => "founded this year",
@@ -210,20 +238,52 @@ public sealed class CityPanel : IMovableWindow
         Raylib.DrawText(lastText, x, y, FontSize, last is { CashFlow: < 0 } ? Theme.Error : Theme.Text);
     }
 
-    // The challenge the city is being played as: its name and end, how it stands, and each goal with
-    // what the city measures now, met or not yet, or, once judged, met or missed.
-    private void DrawChallenge(CitySimulation city, Challenge challenge, int x, int y)
+    // The challenge the city is being played as: its name, its end, how it stands, and the
+    // disasters still to come, with their dates.
+    private void DrawChallenge(Challenge challenge, int x, int y)
+    {
+        Raylib.DrawText("Challenge", x, y, SmallSize, Theme.TextDim);
+        y += SmallSize + 6;
+        Raylib.DrawText(challenge.Name, x, y, FontSize, Theme.Text);
+        y += LineHeight;
+        Raylib.DrawText($"Ends {challenge.Ends}", x, y, FontSize, Theme.Text);
+        y += LineHeight;
+        var (state, stateColor) = challenge.Won switch
+        {
+            true => ("Won", Theme.Accent),
+            false => ("Lost", Theme.Error),
+            null => ("Under way", Theme.TextDim),
+        };
+        Raylib.DrawText(state, x, y, FontSize, stateColor);
+        y += LineHeight + 6;
+
+        Raylib.DrawText("Disasters to come", x, y, SmallSize, Theme.TextDim);
+        y += SmallSize + 6;
+        if (_events.Count == 0)
+        {
+            Raylib.DrawText("None", x, y, FontSize, Theme.TextDim);
+            return;
+        }
+
+        foreach (var line in _events)
+        {
+            Raylib.DrawText(line, x, y, FontSize, Theme.Text);
+            y += LineHeight;
+        }
+
+        if (_moreEvents > 0)
+        {
+            Raylib.DrawText($"and {_moreEvents} more", x, y, FontSize, Theme.TextDim);
+        }
+    }
+
+    // The challenge's goals across the panel, each with what the city measures now, met or not
+    // yet, or, once judged, met or missed.
+    private void DrawGoals(CitySimulation city, Challenge challenge, int x, int y)
     {
         var right = x + Width - (Padding * 2);
         Raylib.DrawLine(x, y - 4, right, y - 4, Theme.PanelBorder);
-        Raylib.DrawText($"Challenge: {challenge.Name}, by {challenge.Ends}", x, y + 2, FontSize, Theme.Text);
-        var (state, stateColor) = challenge.Won switch
-        {
-            true => ("won", Theme.Accent),
-            false => ("lost", Theme.Error),
-            null => ("under way", Theme.TextDim),
-        };
-        Raylib.DrawText(state, right - Raylib.MeasureText(state, FontSize), y + 2, FontSize, stateColor);
+        Raylib.DrawText($"Goals by {challenge.Ends}", x, y + 2, FontSize, Theme.Text);
         y += ChallengeHeading;
 
         foreach (var goal in challenge.Goals)
@@ -236,35 +296,6 @@ public sealed class CityPanel : IMovableWindow
             Raylib.DrawText(goal.Text, x + 8, y + 2, SmallSize + 2, Theme.Text);
             Raylib.DrawText(status, right - Raylib.MeasureText(status, SmallSize + 2), y + 2, SmallSize + 2, met ? Theme.Accent : Theme.TextDim);
             y += LineHeight;
-        }
-    }
-
-    // The mods in the order they were applied; a list too long for the panel ends with how many more.
-    private static void DrawMods(CityDefinitions definitions, int x, int y)
-    {
-        Raylib.DrawText("Mods", x, y, SmallSize, Theme.TextDim);
-        y += SmallSize + 6;
-
-        var mods = definitions.AppliedMods;
-        if (mods.Count == 0)
-        {
-            Raylib.DrawText("No mods", x, y, FontSize, Theme.TextDim);
-            return;
-        }
-
-        const int Room = 6;
-        var shown = mods.Count > Room ? Room - 1 : mods.Count;
-        for (var i = 0; i < shown; i++)
-        {
-            var mod = mods[i];
-            var text = mod.Version is null ? mod.Name : $"{mod.Name} {mod.Version}";
-            Raylib.DrawText(text, x, y, FontSize, Theme.Text);
-            y += LineHeight;
-        }
-
-        if (shown < mods.Count)
-        {
-            Raylib.DrawText($"and {mods.Count - shown} more", x, y, FontSize, Theme.TextDim);
         }
     }
 

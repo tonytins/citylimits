@@ -72,6 +72,10 @@ internal static class SaveParts
         // from one lies there as rubble, so a game that doesn't know them opens the city as if they had
         // never been built. It can't keep them, since it may build where they stood.
         new() { Name = "facilities", Chunk = "FCLT", Since = "1.9", Ignorable = true, Keepable = false },
+
+        // The year the city was founded only says how old it is, so a game that doesn't know it counts
+        // the age from 1900, as it always did, and may write it back as it was.
+        new() { Name = "founding", Chunk = "FNDG", Since = "1.10", Ignorable = true, Keepable = true },
     ];
 
     /// <summary>

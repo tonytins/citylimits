@@ -131,6 +131,7 @@ public sealed class CitySimulation
         ArgumentOutOfRangeException.ThrowIfGreaterThan(startYear, CityCalendar.LatestStartYear);
         TickCount = (long)(startYear - CityCalendar.StartYear) * CityCalendar.StepsPerYear;
         CityTime = TickCount / CityCalendar.StepsPerCount;
+        FoundedYear = startYear;
 
         Map = map;
         Seed = seed;
@@ -235,6 +236,9 @@ public sealed class CitySimulation
 
     /// <summary>The current month, from the calendar's count.</summary>
     public GameDate Date => CityCalendar.DateAt(CityTime);
+
+    /// <summary>The year the city was founded, which its age is counted from: its calendar's first year.</summary>
+    public int FoundedYear { get; private set; }
 
     /// <summary>How many 48ths of a year have passed since the city started.</summary>
     public long CityTime { get; private set; }
@@ -921,6 +925,7 @@ public sealed class CitySimulation
         Fire = FireCodec.Capture(Map, Hazards),
         Flood = FloodCodec.Capture(Map, Floods),
         Facilities = FacilityCodec.Capture(Map, Hazards, Facilities),
+        Founding = new FoundingSave { Year = FoundedYear },
         Challenge = Challenge?.Capture(),
     };
 
@@ -971,6 +976,8 @@ public sealed class CitySimulation
         city.Maps.RestoreCrime(save.Crime ?? throw new InvalidSave("crime: missing."));
         FireCodec.Apply(map, city.Fires, save.Fire ?? throw new InvalidSave("fire: missing."));
         FloodCodec.Apply(map, city.Hazards, save.Flood ?? throw new InvalidSave("flood: missing."));
+        var founding = save.Founding ?? throw new InvalidSave("founding: missing.");
+        city.FoundedYear = SaveChecks.InRange(founding.Year, CityCalendar.StartYear, city.Date.Year, "founding.year");
         city.Challenge = save.Challenge is { } challenge ? Scenarios.Challenge.Restore(challenge) : null;
         var cycle = save.Cycle ?? throw new InvalidSave("cycle: missing.");
         city.RoadTiles = SaveChecks.InRange(cycle.RoadTiles, 0, int.MaxValue, "cycle.roadTiles");

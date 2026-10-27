@@ -10,7 +10,7 @@ namespace CityLimits.Core.Saving;
 internal static class SaveUpgrades
 {
     /// <summary>The save model's version, which both save formats write.</summary>
-    public static readonly FormatVersion Current = new(1, 9);
+    public static readonly FormatVersion Current = new(1, 10);
 
     /// <summary>Upgrades a save in place, from whatever older 1.x version it is.</summary>
     public static void ToCurrent(CitySave save)
@@ -53,6 +53,11 @@ internal static class SaveUpgrades
             AddFacilities(save);
         }
 
+        if (save.Format < new FormatVersion(1, 10))
+        {
+            AddFounding(save);
+        }
+
         save.Format = Current;
     }
 
@@ -88,6 +93,11 @@ internal static class SaveUpgrades
             IndustrialCapped = false,
             Buildings = [],
         };
+
+    // 1.10 added the year the city was founded. A city from before is counted from 1900, as it was;
+    // one that started later can't be told apart from one that has run since.
+    private static void AddFounding(CitySave save) =>
+        save.Founding ??= new FoundingSave { Year = CityCalendar.StartYear };
 
     // 1.7 added floods. A city from before has none.
     private static void AddFlood(CitySave save)

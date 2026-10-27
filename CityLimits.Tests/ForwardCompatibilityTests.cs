@@ -7,7 +7,7 @@ using CityLimits.Core.World;
 
 namespace CityLimits.Tests;
 
-// A newer CityLimits's save, made by hand: format 1.10, with a "weather" part this version doesn't
+// A newer CityLimits's save, made by hand: format 1.11, with a "weather" part this version doesn't
 // know, listed in its parts list with the flags each test gives it.
 public class ForwardCompatibilityTests
 {
@@ -26,7 +26,7 @@ public class ForwardCompatibilityTests
     {
         ["name"] = name,
         ["chunk"] = chunk,
-        ["since"] = "1.10",
+        ["since"] = "1.11",
         ["ignorable"] = ignorable,
         ["keepable"] = keepable,
     };
@@ -35,7 +35,7 @@ public class ForwardCompatibilityTests
     private static string FutureFlat(bool ignorable, bool keepable, bool listed = true, bool noise = false)
     {
         var save = JsonNode.Parse(FlatCityFormat.Write(City()))!.AsObject();
-        save["format"] = "1.10";
+        save["format"] = "1.11";
         save["weather"] = new JsonObject { ["levels"] = new JsonArray(1, 2, 3) };
         if (listed)
         {
@@ -58,15 +58,15 @@ public class ForwardCompatibilityTests
 
         Assert.Equal(
             [
-                "A newer CityLimits saved this city, in format 1.10; this version reads up to 1.9.",
-                "Its weather, from 1.10, is kept as it was when you save it.",
+                "A newer CityLimits saved this city, in format 1.11; this version reads up to 1.10.",
+                "Its weather, from 1.11, is kept as it was when you save it.",
             ],
             notes);
         var written = JsonNode.Parse(FlatCityFormat.Write(city))!.AsObject();
-        Assert.Equal("1.10", written["format"]!.GetValue<string>());
+        Assert.Equal("1.11", written["format"]!.GetValue<string>());
         Assert.Equal("[1,2,3]", written["weather"]!["levels"]!.ToJsonString());
         Assert.Contains(written["parts"]!.AsArray(), part => part!["name"]!.GetValue<string>() == "weather");
-        Assert.EndsWith("city-save.v1.10.schema.json", written["$schema"]!.GetValue<string>());
+        Assert.EndsWith("city-save.v1.11.schema.json", written["$schema"]!.GetValue<string>());
 
         // Written back, it opens the same way again.
         Assert.True(FlatCityFormat.TryRead(written.ToJsonString(), out _, out problem, out _), problem);
@@ -77,9 +77,9 @@ public class ForwardCompatibilityTests
     {
         Assert.True(FlatCityFormat.TryRead(FutureFlat(ignorable: true, keepable: false), out var city, out var problem, out var notes), problem);
 
-        Assert.Equal("Its weather, from 1.10, will be left out when you save it, and the newer version will rebuild it.", notes[1]);
+        Assert.Equal("Its weather, from 1.11, will be left out when you save it, and the newer version will rebuild it.", notes[1]);
         var written = JsonNode.Parse(FlatCityFormat.Write(city))!.AsObject();
-        Assert.Equal("1.9", written["format"]!.GetValue<string>());
+        Assert.Equal("1.10", written["format"]!.GetValue<string>());
         Assert.Null(written["weather"]);
         Assert.DoesNotContain(written["parts"]!.AsArray(), part => part!["name"]!.GetValue<string>() == "weather");
     }
@@ -90,7 +90,7 @@ public class ForwardCompatibilityTests
         Assert.False(FlatCityFormat.TryRead(FutureFlat(ignorable: false, keepable: true), out var city, out var problem));
 
         Assert.Null(city);
-        Assert.Equal("format: this is format 1.10; this version of CityLimits reads up to 1.9, and the file's weather, from 1.10, can't be left out.", problem);
+        Assert.Equal("format: this is format 1.11; this version of CityLimits reads up to 1.10, and the file's weather, from 1.11, can't be left out.", problem);
     }
 
     [Fact]
@@ -105,7 +105,7 @@ public class ForwardCompatibilityTests
     public void AnUnknownPartInASaveOfThisVersionIsRefusedUnlessItsPartsListNamesIt()
     {
         var save = JsonNode.Parse(FutureFlat(ignorable: true, keepable: true, listed: false))!.AsObject();
-        save["format"] = "1.9";
+        save["format"] = "1.10";
 
         Assert.False(FlatCityFormat.TryRead(save.ToJsonString(), out _, out var problem));
 
@@ -115,12 +115,12 @@ public class ForwardCompatibilityTests
     [Fact]
     public void AKeptPartGoesIntoASaveOfThisVersionAndOpensAgain()
     {
-        // Noise can't be kept, so the save falls back to 1.9, but the weather still goes in, named in
+        // Noise can't be kept, so the save falls back to 1.10, but the weather still goes in, named in
         // the parts list, so the newer game gets it back and this one opens its own save again.
         Assert.True(FlatCityFormat.TryRead(FutureFlat(ignorable: true, keepable: true, noise: true), out var city, out var problem, out _), problem);
 
         var written = JsonNode.Parse(FlatCityFormat.Write(city))!.AsObject();
-        Assert.Equal("1.9", written["format"]!.GetValue<string>());
+        Assert.Equal("1.10", written["format"]!.GetValue<string>());
         Assert.Null(written["noise"]);
         Assert.Equal("[1,2,3]", written["weather"]!["levels"]!.ToJsonString());
         Assert.Contains(written["parts"]!.AsArray(), part => part!["name"]!.GetValue<string>() == "weather");
@@ -149,10 +149,10 @@ public class ForwardCompatibilityTests
 
         Assert.True(BinaryCityFormat.TryRead(future, out var city, out var problem, out var notes), problem);
 
-        Assert.Equal("Its weather, from 1.10, is kept as it was when you save it.", notes[1]);
+        Assert.Equal("Its weather, from 1.11, is kept as it was when you save it.", notes[1]);
         var written = BinaryCityFormat.Write(city);
         var chunks = Chunks(written);
-        Assert.Equal([0, 10], chunks.Single(chunk => chunk.Tag == "VERS").Payload);
+        Assert.Equal([0, 11], chunks.Single(chunk => chunk.Tag == "VERS").Payload);
         Assert.Equal([7, 8, 9], chunks.Single(chunk => chunk.Tag == "WTHR").Payload);
         Assert.True(BinaryCityFormat.TryRead(written, out _, out problem, out _), problem);
     }
@@ -162,7 +162,7 @@ public class ForwardCompatibilityTests
     {
         Assert.False(BinaryCityFormat.TryRead(FutureBinary(ignorable: false, keepable: false), out _, out var problem, out _));
 
-        Assert.Equal("format: this is format 1.10; this version of CityLimits reads up to 1.9, and the file's weather, from 1.10, can't be left out.", problem);
+        Assert.Equal("format: this is format 1.11; this version of CityLimits reads up to 1.10, and the file's weather, from 1.11, can't be left out.", problem);
     }
 
     [Fact]
@@ -172,7 +172,7 @@ public class ForwardCompatibilityTests
 
         var chunks = Chunks(BinaryCityFormat.Write(city));
 
-        Assert.Equal([0, 9], chunks.Single(chunk => chunk.Tag == "VERS").Payload);
+        Assert.Equal([0, 10], chunks.Single(chunk => chunk.Tag == "VERS").Payload);
         Assert.DoesNotContain(chunks, chunk => chunk.Tag == "WTHR");
     }
 
@@ -183,7 +183,7 @@ public class ForwardCompatibilityTests
 
         var written = BinaryCityFormat.Write(city);
         var chunks = Chunks(written);
-        Assert.Equal([0, 9], chunks.Single(chunk => chunk.Tag == "VERS").Payload);
+        Assert.Equal([0, 10], chunks.Single(chunk => chunk.Tag == "VERS").Payload);
         Assert.Equal([7, 8, 9], chunks.Single(chunk => chunk.Tag == "WTHR").Payload);
         Assert.DoesNotContain(chunks, chunk => chunk.Tag == "NOIS");
 
@@ -209,7 +209,7 @@ public class ForwardCompatibilityTests
 
         Assert.Empty(notes);
         Assert.Equal(0, city.RailTiles);
-        Assert.Equal("1.9", JsonNode.Parse(FlatCityFormat.Write(city))!["format"]!.GetValue<string>());
+        Assert.Equal("1.10", JsonNode.Parse(FlatCityFormat.Write(city))!["format"]!.GetValue<string>());
     }
 
     [Fact]
@@ -229,7 +229,7 @@ public class ForwardCompatibilityTests
         {
             var changed = tag switch
             {
-                "VERS" => [0, 10],
+                "VERS" => [0, 11],
                 "PART" => [.. AddParts(payload, ignorable, keepable, noise)],
                 _ => payload,
             };
@@ -261,7 +261,7 @@ public class ForwardCompatibilityTests
     }
 
     private static byte[] PartBytes(string name, string chunk, bool ignorable, bool keepable) =>
-        [1, .. Text(name), .. Text(chunk), .. Text("1.10"), (byte)(ignorable ? 1 : 0), (byte)(keepable ? 1 : 0)];
+        [1, .. Text(name), .. Text(chunk), .. Text("1.11"), (byte)(ignorable ? 1 : 0), (byte)(keepable ? 1 : 0)];
 
     private static byte[] Varint(long value)
     {

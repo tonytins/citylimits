@@ -1,12 +1,10 @@
 namespace CityLimits.Game;
 
-/// <summary>The game: it owns the clock, the camera, the tools, and the city being simulated.</summary>
+/// <summary>The game: it owns the clock, the tools, the windows, and the city being simulated, which it shows through a <see cref="CityView"/>.</summary>
 public sealed class GameLoop : IDisposable
 {
     /// <summary>The seed the starting city is built from.</summary>
     public const int DefaultSeed = 2000;
-
-    private const float PanSpeed = 600f;
 
     // How long what a stroke came to stays beside the pointer once it is let go.
     private const float HintSeconds = 3f;
@@ -14,35 +12,11 @@ public sealed class GameLoop : IDisposable
     private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
 
     private readonly GameClock _clock = new();
-    private readonly TrafficAnimation _trafficAnimation = new();
-
-    // The train runs at the traffic's pace, with a generator of its own, so it never changes the city.
-    private readonly Train _train = new();
-
-    // The fires' animation frame, and the explosions playing: where, and how many animation steps
-    // each has run. An explosion moves on a frame every other step, as Micropolis plays its own,
-    // and the few at once there could be share a buffer, so a frame never allocates.
-    private const int MostExplosions = 8;
-    private const int StepsPerExplosionFrame = 2;
-    private readonly (int X, int Y, int Steps)[] _explosions = new (int, int, int)[MostExplosions];
-    private int _explosionCount;
-    private int _fireFrame;
-
-    // An earthquake shakes the map's drawing from side to side for a moment, as the Java port does;
-    // the city itself isn't moved.
-    private const float ShakeSeconds = 1.5f;
-    private const float ShakePixels = 4f;
-    private const float ShakesPerSecond = 18f;
-    private float _shakeLeft;
-    private readonly Random _trainRandom = new();
-    private readonly GameAssets _assets;
     private readonly CitySimulation _simulation;
-    private readonly Camera _camera = new();
+    private readonly CityView _view;
     private readonly ToolPalette _tools = new();
-    private readonly MapRenderer _mapRenderer;
     private readonly Hud _hud = new();
     private readonly ToolPaletteView _toolPaletteView;
-    private readonly OverviewMap _overview;
     private readonly BudgetPanel _budgetPanel = new();
     private readonly DemandPanel _demandPanel = new();
     private readonly HelpPanel _helpPanel = new();
@@ -95,8 +69,6 @@ public sealed class GameLoop : IDisposable
     // The window the player is dragging by its title, if any; it follows the pointer until the
     // button is let go, and nothing else takes the pointer meanwhile.
     private IMovableWindow? _dragging;
-    private readonly BuildPlan _preview = new();
-    private BuildStroke? _stroke;
 
     /// <summary>
     /// Plays a city: a new one, or one opened from a file, which is then the file Ctrl+S saves it
@@ -110,14 +82,11 @@ public sealed class GameLoop : IDisposable
         _settings = settings;
         _lastSpeed = settings.Speed == 0 ? 1 : settings.Speed;
         _folders = folders;
-        _assets = assets;
         _simulation = city;
         _cityFile = cityFile;
 
         // An opened city starts saved; a new or an imported one has nothing saved yet.
         _savedText = cityFile is null || CityFiles.IsImport(cityFile) ? null : FlatCityFormat.Write(city);
-        var map = city.Map;
-        var definitions = city.Definitions;
 
         // The news runs on headlines from the city whenever the game has nothing to say. They are
         // picked with a generator of their own, so they never change what the city does.
@@ -152,15 +121,9 @@ public sealed class GameLoop : IDisposable
         ApplyDisasters(settings);
         _simulation.YearSettled += OnYearSettled;
 
-        _mapRenderer = new MapRenderer(map, assets, _simulation.Traffic, _simulation.Fires, _simulation.Floods);
-        _simulation.Exploded += ShowExplosion;
-        _simulation.EarthquakeStruck += () => _shakeLeft = ShakeSeconds;
-        Logger.Info(_mapRenderer.IsCached ? "The map is drawn from cached chunks" : "The map is drawn tile by tile");
-        _toolPaletteView = new ToolPaletteView(assets, definitions);
-        _overview = new OverviewMap(_simulation);
-
-        _camera.SetScreenSize(settings.WindowWidth, settings.WindowHeight);
-        _camera.CenterOn(new Vector2(map.Width * MapRenderer.TileSize / 2f, map.Height * MapRenderer.TileSize / 2f));
+        _view = new CityView(city, assets, settings.WindowWidth, settings.WindowHeight);
+        Logger.Info(_view.IsCached ? "The map is drawn from cached chunks" : "The map is drawn tile by tile");
+        _toolPaletteView = new ToolPaletteView(assets, city.Definitions);
     }
 
     /// <summary>The city being simulated.</summary>
@@ -230,7 +193,7 @@ public sealed class GameLoop : IDisposable
     public void Update()
     {
         var elapsed = Raylib.GetFrameTime();
-        _camera.SetScreenSize(Raylib.GetScreenWidth(), Raylib.GetScreenHeight());
+        _view.FitScreen();
         _demandPanel.DefaultTop = DemandPanelTop();
 
         HandleInput(elapsed);
@@ -245,21 +208,12 @@ public sealed class GameLoop : IDisposable
             }
         }
 
-        _simulation.Roads.EnsureCurrent(_simulation.Map);
-        var steps = _trafficAnimation.Advance(elapsed, _modal == Modal.None ? _settings.Speed : GameSpeed.Paused);
-        for (var i = 0; i < steps; i++)
-        {
-            _train.Step(_simulation.Map, _simulation.Demand.TaxablePopulation, _trainRandom);
-        }
-
-        _fireFrame = (_fireFrame + steps) % TileAtlas.FireFrames;
-        AdvanceExplosions(steps);
+        _view.Animate(elapsed, _modal == Modal.None ? _settings.Speed : GameSpeed.Paused);
 
         // The news stands still while the city does, a panel holding it included. Its first line
         // starts a third of the way across, so a city opened paused still shows the news.
         _ticker.Update(_settings.Speed > 0 && _modal == Modal.None ? elapsed : 0f, Raylib.GetScreenWidth(), 1f / 3f);
         _hintSeconds = Math.Max(0f, _hintSeconds - elapsed);
-        _shakeLeft = Math.Max(0f, _shakeLeft - elapsed);
 
         // With autosave off, the time to the next one doesn't run.
         if (_settings.AutosaveSlots > 0 && _autosave.Advance(elapsed, _settings.Speed > 0 && _modal == Modal.None))
@@ -267,58 +221,25 @@ public sealed class GameLoop : IDisposable
             AutosaveNow();
         }
 
-        // The preview is worked out every frame, so it keeps up with the city growing under it.
-        if (_stroke is not null)
-        {
-            _simulation.Builder.Plan(_stroke, _preview);
-        }
-        _camera.ClampTo(_simulation.Map.Width * MapRenderer.TileSize, _simulation.Map.Height * MapRenderer.TileSize);
+        _view.Update();
     }
 
     /// <summary>Draws the game.</summary>
     public void Draw()
     {
         // Chunks and the overview are redrawn into their own textures, which can't happen inside the frame's camera.
-        _mapRenderer.Refresh();
-        _overview.Refresh();
+        _view.Refresh();
 
         Raylib.BeginDrawing();
         Raylib.ClearBackground(new Color { R = 12, G = 14, B = 18, A = 255 });
 
         var mouse = Raylib.GetMousePosition();
 
-        var view = _camera.ToRaylib();
-        if (_shakeLeft > 0f)
-        {
-            var sway = MathF.Sin(_shakeLeft * ShakesPerSecond * MathF.Tau) * ShakePixels * (_shakeLeft / ShakeSeconds);
-            view.Offset = view.Offset with { X = view.Offset.X + sway };
-        }
-
-        Raylib.BeginMode2D(view);
-        _mapRenderer.Draw(_camera, _trafficAnimation.Frame, _fireFrame);
-        _mapRenderer.DrawStadiumGames(_camera, _simulation.CityTime, _fireFrame);
-        DrawTrain();
-        for (var i = 0; i < _explosionCount; i++)
-        {
-            _mapRenderer.DrawExplosion(_explosions[i].X, _explosions[i].Y, _explosions[i].Steps / StepsPerExplosionFrame);
-        }
-
-        _mapRenderer.DrawUnpowered(_camera, Raylib.GetTime());
-        if (_stroke is not null)
-        {
-            _mapRenderer.DrawPreview(_preview, _camera);
-        }
-        else
-        {
-            _mapRenderer.DrawHover(_camera, mouse);
-        }
-
-        Raylib.EndMode2D();
+        _view.DrawMap(mouse);
 
         _toolPaletteView.Draw(_tools, mouse);
 
-        var world = _camera.ScreenToWorld(mouse);
-        var onMap = MapRenderer.TryGetTileAt(_simulation.Map, world, out var tileX, out var tileY, out _);
+        var onMap = _view.TryGetTileAt(mouse, out var tileX, out var tileY);
 
         _hud.DrawStatus(
             _simulation.Name,
@@ -330,7 +251,7 @@ public sealed class GameLoop : IDisposable
             _simulation.Demand,
             _simulation.Treasury.Funds,
             Raylib.GetFPS());
-        _overview.Draw(_camera);
+        _view.DrawOverview();
         _ticker.Draw(Raylib.GetScreenHeight() - NewsTicker.Height, Raylib.GetScreenWidth());
 
         // Windows go over the rest of the interface, wherever the player has moved them.
@@ -346,9 +267,9 @@ public sealed class GameLoop : IDisposable
 
         // Beside the pointer: what the stroke being dragged would cost, what the last one came to,
         // or, with the Inspect tool, what the tile under the pointer is, when it isn't over the interface.
-        if (_stroke is not null)
+        if (_view.IsStroking)
         {
-            Hud.DrawPointerHint(mouse, Hud.StrokeHint(_preview));
+            Hud.DrawPointerHint(mouse, Hud.StrokeHint(_view.Preview));
         }
         else if (_hintSeconds > 0 && _hint is not null)
         {
@@ -392,8 +313,7 @@ public sealed class GameLoop : IDisposable
     /// <summary>Releases what the game holds on the graphics card. Call it before the window closes.</summary>
     public void Dispose()
     {
-        _overview.Dispose();
-        _mapRenderer.Dispose();
+        _view.Dispose();
     }
 
     /// <summary>Records a failure, tells the player on the ticker, and keeps the game running.</summary>
@@ -491,7 +411,7 @@ public sealed class GameLoop : IDisposable
         var wheel = Raylib.GetMouseWheelMove();
         if (wheel != 0f)
         {
-            _camera.ZoomAt(mouse, wheel);
+            _view.ZoomAt(mouse, wheel);
         }
 
         var pan = Vector2.Zero;
@@ -521,7 +441,7 @@ public sealed class GameLoop : IDisposable
 
         if (pan != Vector2.Zero)
         {
-            _camera.Pan(pan * (PanSpeed * elapsed / _camera.Zoom));
+            _view.Pan(pan, elapsed);
         }
 
         if (Raylib.IsKeyPressed(KeyboardKey.Space))
@@ -541,9 +461,9 @@ public sealed class GameLoop : IDisposable
 
         if (Raylib.IsKeyPressed(KeyboardKey.Escape))
         {
-            if (_stroke is not null)
+            if (_view.IsStroking)
             {
-                _stroke = null;
+                _view.CancelStroke();
             }
             else if (_helpOpen)
             {
@@ -867,7 +787,7 @@ public sealed class GameLoop : IDisposable
         _budgetReason = budgetReason;
         _speedBeforeModal = _settings.Speed;
         _settings = _settings with { Speed = 0 };
-        _stroke = null;
+        _view.CancelStroke();
     }
 
     private void CloseModal()
@@ -881,20 +801,20 @@ public sealed class GameLoop : IDisposable
     // when it is let go, as in Micropolis. The pointer leaving the map stops the stretch there.
     private void HandleStroke(Vector2 mouse)
     {
-        var onMap = MapRenderer.TryGetTileAt(_simulation.Map, _camera.ScreenToWorld(mouse), out var tileX, out var tileY, out _);
+        var onMap = _view.TryGetTileAt(mouse, out var tileX, out var tileY);
 
         if (_draggingOverview)
         {
             _draggingOverview = Raylib.IsMouseButtonDown(MouseButton.Left);
             if (_draggingOverview)
             {
-                _overview.HandlePointer(mouse, _camera, pressed: false);
+                _view.Overview.HandlePointer(mouse, _view.Camera, pressed: false);
             }
 
             return;
         }
 
-        if (_stroke is null)
+        if (!_view.IsStroking)
         {
             if (!Raylib.IsMouseButtonPressed(MouseButton.Left))
             {
@@ -941,10 +861,10 @@ public sealed class GameLoop : IDisposable
             }
 
             // A press on the overview picks a mode or moves the view, and never reaches the map.
-            if (_overview.Contains(mouse))
+            if (_view.Overview.Contains(mouse))
             {
                 _draggingOverview = true;
-                _overview.HandlePointer(mouse, _camera, pressed: true);
+                _view.Overview.HandlePointer(mouse, _view.Camera, pressed: true);
                 return;
             }
 
@@ -955,7 +875,7 @@ public sealed class GameLoop : IDisposable
                 if (picked is not null)
                 {
                     _tools.Toggle(picked.Value);
-                    _stroke = null;
+                    _view.CancelStroke();
                 }
 
                 return;
@@ -964,8 +884,7 @@ public sealed class GameLoop : IDisposable
             var tool = _tools.Selected is { } held ? ToolActions.ActionFor(held) : null;
             if (tool is not null && onMap)
             {
-                _stroke = new BuildStroke(tool.Value, tileX, tileY);
-                _simulation.Builder.Plan(_stroke, _preview);
+                _view.BeginStroke(tool.Value, tileX, tileY);
                 _hintSeconds = 0;
             }
 
@@ -976,17 +895,17 @@ public sealed class GameLoop : IDisposable
         {
             if (onMap)
             {
-                _stroke.DragTo(tileX, tileY);
+                _view.StretchStroke(tileX, tileY);
             }
 
             return;
         }
 
-        var result = _simulation.Builder.Apply(_stroke);
-        var applied = _stroke.Action;
-        _stroke = null;
-        _hint = Describe(applied, result);
-        _hintSeconds = HintSeconds;
+        if (_view.TryFinishStroke(out var applied, out var result))
+        {
+            _hint = Describe(applied, result);
+            _hintSeconds = HintSeconds;
+        }
     }
 
     private static string Describe(BuildAction action, BuildResult result) => result.Status switch
@@ -1072,7 +991,6 @@ public sealed class GameLoop : IDisposable
 
     private int DemandPanelTop() => _toolPaletteView.Bottom() + 8;
 
-    // The train is drawn over the map, centred on where it is, 32 pixels square as Micropolis' is.
     // The goals are judged on the challenge's last step; the pop-up says how it went, and pauses the
     // city until the player has read it. The city plays on after, won or lost.
     private void ShowChallengeResult(IReadOnlyList<GoalReport> goals)
@@ -1096,46 +1014,11 @@ public sealed class GameLoop : IDisposable
         _simulation.RandomEarthquakes = settings.RandomEarthquakes;
     }
 
-    // A new explosion takes the oldest one's place when the buffer is full.
-    private void ShowExplosion(int x, int y)
-    {
-        if (_explosionCount == MostExplosions)
-        {
-            Array.Copy(_explosions, 1, _explosions, 0, MostExplosions - 1);
-            _explosionCount--;
-        }
-
-        _explosions[_explosionCount++] = (x, y, 0);
-    }
-
-    private void AdvanceExplosions(int steps)
-    {
-        var kept = 0;
-        for (var i = 0; i < _explosionCount; i++)
-        {
-            var explosion = _explosions[i] with { Steps = _explosions[i].Steps + steps };
-            if (explosion.Steps < TileAtlas.ExplosionFrames * StepsPerExplosionFrame)
-            {
-                _explosions[kept++] = explosion;
-            }
-        }
-
-        _explosionCount = kept;
-    }
-
-    private void DrawTrain()
-    {
-        if (_train.IsRunning && _assets.TrainFrameFor(_train.Frame) is { } frame)
-        {
-            Raylib.DrawTexture(frame, _train.X - (frame.Width / 2), _train.Y - (frame.Height / 2), Color.White);
-        }
-    }
-
     // Whether the pointer is over the palette, the overview, the bar, the ticker, or an open window, rather than the map.
     private bool IsOverInterface(Vector2 mouse) =>
         Hud.IsOnBottom(mouse)
         || _toolPaletteView.Contains(mouse)
-        || _overview.Contains(mouse)
+        || _view.Overview.Contains(mouse)
         || (_demandOpen && Raylib.CheckCollisionPointRec(mouse, _demandPanel.Bounds))
         || (_helpOpen && Raylib.CheckCollisionPointRec(mouse, _helpPanel.Bounds));
 

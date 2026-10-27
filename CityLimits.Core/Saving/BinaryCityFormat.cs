@@ -57,6 +57,7 @@ public static class BinaryCityFormat
     private const string FloodTag = "FLOD";
     private const string ChallengeTag = "CHAL";
     private const string FacilitiesTag = "FCLT";
+    private const string FoundingTag = "FNDG";
 
     private static readonly string[] Required = [CityTag, DefinitionsTag, MapTag, BudgetTag, CensusTag, DemandTag, PowerTag, ServicesTag, CommunityTag, CityMapsTag, CycleTag];
 
@@ -64,7 +65,7 @@ public static class BinaryCityFormat
     private static readonly string[] Optional = [ChallengeTag];
 
     // The chunks each minor version added, required from that version on; an older file goes without.
-    private static readonly (string Tag, FormatVersion Since)[] Added = [(TrafficTag, new FormatVersion(1, 1)), (RoadTrafficTag, new FormatVersion(1, 3)), (RailTag, new FormatVersion(1, 4)), (PollutionTag, new FormatVersion(1, 5)), (CrimeTag, new FormatVersion(1, 5)), (FireTag, new FormatVersion(1, 6)), (FloodTag, new FormatVersion(1, 7)), (FacilitiesTag, new FormatVersion(1, 9))];
+    private static readonly (string Tag, FormatVersion Since)[] Added = [(TrafficTag, new FormatVersion(1, 1)), (RoadTrafficTag, new FormatVersion(1, 3)), (RailTag, new FormatVersion(1, 4)), (PollutionTag, new FormatVersion(1, 5)), (CrimeTag, new FormatVersion(1, 5)), (FireTag, new FormatVersion(1, 6)), (FloodTag, new FormatVersion(1, 7)), (FacilitiesTag, new FormatVersion(1, 9)), (FoundingTag, new FormatVersion(1, 10))];
 
     /// <summary>Writes a city as the format's bytes.</summary>
     public static byte[] Write(CitySimulation city)
@@ -110,6 +111,7 @@ public static class BinaryCityFormat
         WriteChunk(stream, FireTag, SectionCodec.Write(save.Fire!));
         WriteChunk(stream, FloodTag, SectionCodec.Write(save.Flood!));
         WriteChunk(stream, FacilitiesTag, SectionCodec.Write(save.Facilities!));
+        WriteChunk(stream, FoundingTag, SectionCodec.Write(save.Founding!));
         if (save.Challenge is { } challenge)
         {
             WriteChunk(stream, ChallengeTag, SectionCodec.Write(challenge));
@@ -316,6 +318,7 @@ public static class BinaryCityFormat
             Fire = chunks.TryGetValue(FireTag, out var fire) ? SectionCodec.Read<FireSave>(fire, FireTag) : null,
             Flood = chunks.TryGetValue(FloodTag, out var flood) ? SectionCodec.Read<FloodSave>(flood, FloodTag) : null,
             Facilities = chunks.TryGetValue(FacilitiesTag, out var facilities) ? SectionCodec.Read<FacilitiesSave>(facilities, FacilitiesTag) : null,
+            Founding = chunks.TryGetValue(FoundingTag, out var founding) ? SectionCodec.Read<FoundingSave>(founding, FoundingTag) : null,
             Challenge = chunks.TryGetValue(ChallengeTag, out var challenge) ? SectionCodec.Read<ChallengeSave>(challenge, ChallengeTag) : null,
         };
     }

@@ -51,6 +51,10 @@ public sealed class Challenge
     /// <summary>How many strokes and disasters are still to come.</summary>
     public int Pending => _actions.Count + _events.Count;
 
+    /// <summary>The disasters still to come, in order, each with the date it strikes.</summary>
+    public IEnumerable<(ScenarioDate Date, Disaster Disaster)> UpcomingEvents =>
+        _events.Select(e => (ScenarioDate.AtCount(e.Step / CityCalendar.StepsPerCount), e.Disaster));
+
     /// <summary>Starts a scenario's challenge on the city it starts with, which is at the scenario's first step.</summary>
     public static Challenge Begin(Scenario scenario, CitySimulation city)
     {

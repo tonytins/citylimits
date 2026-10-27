@@ -1,5 +1,24 @@
 # CityLimits Changelog
 
+## 0.4.106
+
+The city panel no longer lists mods. When you play a challenge, a
+second column shows the challenge instead: its name, when it ends,
+whether it's under way, won, or lost, and the disasters still to come,
+with their dates. A free city's panel shows the city alone, and is
+narrower. A city that starts in a later year, as a scenario's may, now
+counts its age from that year instead of from 1900.
+
+For developers and agents: `CityView`, in `CityLimits.Interface/UI/`,
+now holds what the map needs to be seen and worked on: the camera, the
+map's drawing and the overview, traffic, the train, fires, explosions,
+and an earthquake's shake, and the stroke being dragged with its
+preview. `GameLoop` draws the map through it, so the scenario editor can
+share it. `Challenge.UpcomingEvents` lists the disasters still to come
+with their dates. Saves are 1.10, adding the `founding` part (`FNDG` in
+`.cl`), the year the city was founded, which `CitySimulation.FoundedYear`
+holds; older versions leave it out, and older saves count from 1900.
+
 ## 0.4.105
 
 Finally removed the tick counter from the HUD. Now that they're

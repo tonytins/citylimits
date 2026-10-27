@@ -87,6 +87,12 @@ internal sealed class CitySave
     public FacilitiesSave? Facilities { get; set; }
 
     /// <summary>
+    /// The year the city was founded, which its age is counted from; from format 1.10, and 1900 for a
+    /// city upgraded from before.
+    /// </summary>
+    public FoundingSave? Founding { get; set; }
+
+    /// <summary>
     /// The scenario being played in the city, if any: its goals, when they are judged, and what is still
     /// to come; from format 1.8. A city that isn't a challenge leaves it out, so its save is as before.
     /// </summary>
@@ -358,6 +364,14 @@ internal sealed class TrafficSave
 {
     /// <summary>Each 2 by 2 block's traffic, row by row.</summary>
     public required int[] Density { get; set; }
+}
+
+/// <summary>When the city was founded.</summary>
+[System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(SectionCodec.ModelMembers)]
+internal sealed class FoundingSave
+{
+    /// <summary>The year the city's calendar started in.</summary>
+    public required int Year { get; set; }
 }
 
 /// <summary>The stadiums, seaports, and airports, as <see cref="FacilityCodec"/> writes them.</summary>
