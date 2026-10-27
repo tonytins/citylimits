@@ -1,10 +1,10 @@
 # Scenarios
 
-> **Status:** format 2.1 is built: `CityLimits.Core/Scenarios/` and
+> **Status:** format 2.2 is built: `CityLimits.Core/Scenarios/` and
 > `citylimits scenario`, with `demo-town`, the built-in scenarios
 > `bridges`, `rail`, `zones-and-bulldozer`, and `small-town`, and the
 > example challenge `first-town`, each run as a test, all written in 2.0,
-> which 2.1 reads, since none needs what 2.1 added.
+> which 2.2 reads, since none needs what 2.1 and 2.2 added.
 > Files in format 1, which counted time in ticks, are still read. A
 > challenge can be [played in the game](#playing-a-scenario). It follows the Micropolis
 > baseline: tools are strokes, zones are 3 by 3, the bulldozer refunds
@@ -62,7 +62,20 @@ with the bar saying it is being edited:
 - Building is free, paused or playing; the city's money is left as the
   scenario has it.
 - The scenario's goals, actions, and events are kept aside as a draft
-  that nothing acts on; the city panel shows it, read-only for now.
+  that nothing acts on; the city panel shows it, with an Edit scenario
+  button under its goals.
+- Edit scenario opens the scenario's details in three columns: its
+  name, start year, end, starting money, and description; its goals;
+  and its disasters, each of which may repeat. Nothing changes until
+  Apply, which checks the details as a file would be read
+  (`ScenarioEdit.TryChange`, through `ScenarioWriter`), and says what is
+  wrong without closing; Cancel drops every edit. Moving the start year
+  of a scenario made from a seed moves its city's founding there
+  (`CitySimulation.MoveFounding`), everything built on it kept, since
+  the map grows from the seed alone and never from the year; the
+  scenario's own strokes and checks move with it. A scenario that
+  starts from a saved city takes its start and its money from the city,
+  so the window only shows them.
 - Playing tests the scenario. The city as it stands is kept as a
   checkpoint, and the scenario runs on it as it would for a player: its
   actions and events come on their dates, and its goals are judged at
@@ -72,8 +85,9 @@ with the bar saying it is being edited:
   over opens the scenario's city afresh, dropping every change.
 
 A test from the same checkpoint runs the same every time, as the
-simulation is deterministic. A scenario can't be saved from the game
-yet, and no other city can be opened while one is edited.
+simulation is deterministic. A scenario's details can't be changed
+while it is tested. A scenario can't be saved from the game yet, and no
+other city can be opened while one is edited.
 
 ## Running a scenario
 
@@ -139,10 +153,10 @@ report gives each time as both a date and a tick. A tick is one step of
 the simulation, one phase of Micropolis' cycle, the same unit as
 `citylimits --headless --ticks`; `CityCalendar` holds these numbers.
 
-## The file, version 2.1
+## The file, version 2.2
 
-2.1 adds the `Stadium`, `Seaport`, and `Airport` tools and counts to 2.0;
-a 2.0 file reads as it did.
+2.1 adds the `Stadium`, `Seaport`, and `Airport` tools and counts to 2.0,
+and 2.2 a disaster that repeats; a 2.0 or 2.1 file reads as it did.
 
 ```json
 {
@@ -200,7 +214,7 @@ A challenge has goals, and may start later and have a disaster:
 | Field | Required | Meaning |
 |---|---|---|
 | `$schema` | no | The scenario's schema, `docs/schemas/scenario.v2.0.schema.json`, for editors to check the file against; the game ignores it |
-| `format` | yes | The file format version, `"2.1"` or `"2.0"`. A file of format 1, such as `"1.3"`, is read as [format 1](#format-1). A newer minor version, or another major one, is refused with a message saying which this version reads |
+| `format` | yes | The file format version, `"2.2"`, `"2.1"`, or `"2.0"`. A file of format 1, such as `"1.3"`, is read as [format 1](#format-1). A newer minor version, or another major one, is refused with a message saying which this version reads |
 | `name` | yes | A display name, 1 to 80 characters |
 | `description` | no | One or two sentences, up to 500 characters |
 | `seed` | yes, without `city` | The seed the map and the simulation are built from: any 32-bit integer |
@@ -293,6 +307,7 @@ anywhere to strike.
 |---|---|---|
 | `at`, `week` | yes, `week` no | The date it strikes, after the actions then and before the checks |
 | `disaster` | yes | `Fire`, a fire on something that can burn, as Micropolis' Disasters menu starts one; `Flood`, the water rising from a shore onto the land beside it, which a map with no shore can't have; or `Earthquake`, which shakes the whole city (`CitySimulation.Strike`) |
+| `repeat` | no | From 2.2, the disaster strikes again: `{ "weeks": 10, "times": 4 }` strikes four times in all, the first at `at`, then every 10 weeks, as Micropolis' Hamburg is fire-bombed. Both are whole numbers from 1, not words, and the last strike must come by `ends`. Each strike is reported on its own, with the event's index |
 
 ### Goals
 
@@ -381,7 +396,7 @@ and earthquakes among the disasters. Their schemas are
 
 ## The schema
 
-`docs/schemas/scenario.v2.1.schema.json` describes the file (`scenario.v2.0.schema.json` 2.0, which differs only in its name), and the files for 1.0 to 1.3 format 1: its fields
+`docs/schemas/scenario.v2.2.schema.json` describes the file (`scenario.v2.1.schema.json` 2.1, without `repeat`, and `scenario.v2.0.schema.json` 2.0, which differs from 2.1 only in its name), and the files for 1.0 to 1.3 format 1: its fields
 and their types, with no others. Name it in `"$schema"`, as the built-in
 scenarios do, and an editor such as VS Code checks the file and suggests
 its fields as you write. The schema is generated from the loader's own

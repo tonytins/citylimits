@@ -23,9 +23,9 @@ CityLimits is a SimCity-style city building engine designed by Tony Bark and wri
 
 ### Micropolis
 
-CityLimits uses [`micropolis-activity`](https://github.com/sugarlabs/micropolis-activity) and [`micropolis-java`](https://github.com/SimHacker/micropolis/tree/master/micropolis-java), the official OLPC and Java ports of SimCity, resepctively, both of which are open source, licensed under the GPL, as the baseline reference. 
-[`MicropolisCore`](https://github.com/SimHacker/MicropolisCore), a more up-to-date version of the code, is used as a simple cross-reference to ensure fidelity in traffic simulation, zone demand calculation, citizen behaviour patterns, or elsewhere.
+CityLimits uses [`micropolis-activity`](https://github.com/sugarlabs/micropolis-activity) and [`micropolis-java`](https://github.com/SimHacker/micropolis/tree/master/micropolis-java), the official OLPC and Java ports of SimCity, respectively, both of which are open source, licensed under the GPL, as the baseline reference. [`MicropolisCore`](https://github.com/SimHacker/MicropolisCore), a more up-to-date version of the code, is used as a simple cross-reference to ensure fidelity in traffic simulation, zone demand calculation, citizen behaviour patterns, or elsewhere.
 
+If there is any disagreement between any version of Micropolis, the project's own design decisions wins.
 
 ## Common Commands
 
@@ -74,7 +74,7 @@ Scenarios are suited for:
 - Feature validation (does the new traffic system behave as intended?)
 - Deterministic playback (same scenario, same ticks = same result)
 
-A headless scenario is *not* a substitute for actual gameplay. They validate specific new mechanics in isolation using a preexisting feature; they don't catch emergent issues, can't balance problems during normal gameplay, and it can't account for how the user interface is supposed to look and behave in normal game play.
+A headless scenario is _not_ a substitute for actual gameplay. They validate specific new mechanics in isolation using a preexisting feature; they don't catch emergent issues, can't balance problems during normal gameplay, and it can't account for how the user interface is supposed to look and behave in normal game play.
 
 ## Golden rules
 
@@ -217,7 +217,7 @@ restarts it. Fix a crash before building on top of it.
 There are plenty of valid reasons to play.
 
 - **To play as mayor**. As early as SimCity's SNES port, the player became both the architect and mayor of their own city.
-- **To fulfill an urban planner's dream**. Designing efficient transportation networks, balance residential and commercial zones, and solve real-world city planning problems in a low-stakes  environment.
+- **To fulfill an urban planner's dream**. Designing efficient transportation networks, balance residential and commercial zones, and solve real-world city planning problems in a low-stakes environment.
 - **To build something from nothing**. Transform an empty plot of land into a thriving metropolis with someone's own vision and aesthetic.
 - **To experiment with city layouts and infrastructure**. What if you made all streets diagonal? What happens if you zone only residential areas? A city building game offers a approx answer to these questions.
 - **For creative expression**. Some like to make themed districts, design unique skylines, and craft cities that reflect your personal style and imagination.

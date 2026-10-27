@@ -19,9 +19,10 @@ public static class ScenarioLoader
     /// The newest scenario format this version reads. Format 2 names its times as the game's dates, a
     /// month and a week of it, rather than ticks; it starts a city in a year of its own or from a saved
     /// city, and adds goals and disasters on dates. 2.1 added the Stadium, Seaport, and Airport tools and
-    /// counts. The built-in scenarios are written in 2.0, since none of them needs what 2.1 added.
+    /// counts, and 2.2 a disaster that repeats. The built-in scenarios are written in 2.0, since none of
+    /// them needs what came after.
     /// </summary>
-    public static readonly FormatVersion Format = new(2, 1);
+    public static readonly FormatVersion Format = new(2, 2);
 
     /// <summary>
     /// The newest format 1 this version still reads, its times in ticks: 1.1 added the Rail tool
@@ -298,7 +299,8 @@ public static class ScenarioLoader
         {
             var happening = eventDocuments[i] ?? throw new InvalidScenario($"events[{i}]: needs an event, not null.");
             var disaster = EnumNamed<Disaster>(Required(happening.Disaster, $"events[{i}].disaster"), $"events[{i}].disaster");
-            events.Add(new ScenarioEvent(i, TickAt(happening.At, happening.Week, $"events[{i}]"), disaster));
+            var tick = TickAt(happening.At, happening.Week, $"events[{i}]");
+            events.Add(new ScenarioEvent(i, tick, disaster, Repeat(happening.Repeat, $"events[{i}]", tick, ticks, ends)));
         }
 
         return new Scenario(name, description, seed, width, height, funds, ticks, actions, checks, document.Disasters ?? false)
@@ -309,6 +311,28 @@ public static class ScenarioLoader
             Goals = goals,
             Events = events,
         };
+    }
+
+    // A repeat strikes every so many weeks, as many times as it says, the first included; its last
+    // strike must come by the scenario's end. Both are counted no further than a scenario can run,
+    // so working out the last strike can't overflow.
+    private static EventRepeat? Repeat(RepeatDocument? repeat, string where, int first, int ticks, ScenarioDate ends)
+    {
+        if (repeat is null)
+        {
+            return null;
+        }
+
+        const int MostWeeks = Scenario.MaxTicks / CityCalendar.StepsPerCount;
+        var weeks = InRange(Required(repeat.Weeks, $"{where}.repeat.weeks"), 1, MostWeeks, $"{where}.repeat.weeks");
+        var times = InRange(Required(repeat.Times, $"{where}.repeat.times"), 1, MostWeeks, $"{where}.repeat.times");
+        var last = first + ((long)(times - 1) * weeks * CityCalendar.StepsPerCount);
+        if (last > ticks)
+        {
+            throw new InvalidScenario($"{where}.repeat: striking {times} times, {weeks} weeks apart, runs past the scenario's end, {ends}.");
+        }
+
+        return new EventRepeat(weeks, times);
     }
 
     private static (string Name, string? Description) NameAndDescription(string? givenName, string? givenDescription)
@@ -405,7 +429,7 @@ public static class ScenarioLoader
     }
 
     // How a goal reads to a player when its file gives no words of its own.
-    private static string GoalText(GoalMeasure measure, int? atLeast, int? atMost)
+    internal static string GoalText(GoalMeasure measure, int? atLeast, int? atMost)
     {
         static string Number(int value) => value.ToString("N0", System.Globalization.CultureInfo.InvariantCulture);
         static string Money(int value) => value < 0 ? $"-${Number(-value)}" : $"${Number(value)}";

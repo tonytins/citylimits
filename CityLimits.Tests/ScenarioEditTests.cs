@@ -158,4 +158,114 @@ public class ScenarioEditTests
         edit.BeginTest(city);
         Assert.Throws<InvalidOperationException>(() => edit.BeginTest(city));
     }
+
+    [Fact]
+    public void DetailsChangedAreCheckedAsAFileIsAndTakenWhole()
+    {
+        var edit = Edit();
+        var city = edit.OpenCity();
+        var details = ScenarioDetails.Of(edit.Scenario) with
+        {
+            Name = "Renamed",
+            Description = "A new briefing.",
+            Funds = 5000,
+            Ends = new ScenarioDate(1921, 1),
+            Goals = [new GoalDetails(GoalMeasure.Funds, 0, null, "Stay out of debt")],
+            Events = [new EventDetails(new ScenarioDate(1920, 2, 3), Disaster.Flood, new EventRepeat(8, 3))],
+        };
+
+        Assert.True(edit.TryChange(details, out var changed, out var problem), problem);
+        edit.Accept(changed, city);
+
+        Assert.Equal("Renamed", edit.Scenario.Name);
+        Assert.Equal("A new briefing.", edit.Scenario.Description);
+        Assert.Equal(new ScenarioDate(1921, 1), edit.Scenario.DateAt(edit.Scenario.Ticks));
+        Assert.Equal("Stay out of debt", Assert.Single(edit.Scenario.Goals).Text);
+        Assert.Equal(new EventRepeat(8, 3), Assert.Single(edit.Scenario.Events).Repeat);
+        Assert.Equal(new ScenarioDate(1920, 2, 3), edit.Scenario.DateAt(edit.Scenario.Events[0].Tick));
+        Assert.Equal(5000, city.Treasury.Funds);
+
+        // The scenario's own stroke is kept as it was.
+        Assert.Single(edit.Scenario.Actions);
+        var back = ScenarioDetails.Of(edit.Scenario);
+        Assert.Equal(details with { Goals = [], Events = [] }, back with { Goals = [], Events = [] });
+        Assert.Equal(details.Goals, back.Goals);
+        Assert.Equal(details.Events, back.Events);
+    }
+
+    [Fact]
+    public void AMovedStartYearMovesTheCitysFoundingWithEverythingOnItKept()
+    {
+        var edit = Edit();
+        var city = edit.OpenCity();
+        var (x, y) = DryLand(city.Map, 4);
+        city.Builder.Apply(BuildAction.CoalPowerPlant, x, y);
+        var details = ScenarioDetails.Of(edit.Scenario) with
+        {
+            StartYear = 1950,
+            Ends = new ScenarioDate(1951, 1),
+            Events = [new EventDetails(new ScenarioDate(1950, 6), Disaster.Fire, null)],
+        };
+
+        Assert.True(edit.TryChange(details, out var changed, out var problem), problem);
+        edit.Accept(changed, city);
+
+        Assert.Equal(new GameDate(1950, 1), city.Date);
+        Assert.Equal(1950, city.FoundedYear);
+        Assert.Equal(TileUse.CoalPowerPlant, city.Map.StateAt(x, y).Use);
+        Assert.Equal(new ScenarioDate(1950, 1), edit.Scenario.DateAt(Assert.Single(edit.Scenario.Actions).Tick));
+        Assert.Equal(new ScenarioDate(1950, 6), edit.Scenario.DateAt(Assert.Single(edit.Scenario.Events).Tick));
+    }
+
+    [Fact]
+    public void AMovedCityIsAsOneFoundedInItsNewYear()
+    {
+        var map = TileMapGenerator.Generate(7, 32, 32);
+        var moved = new CitySimulation(TileMapGenerator.Generate(7, 32, 32), 7, startYear: 1920);
+        var founded = new CitySimulation(map, 7, startYear: 1975);
+
+        moved.MoveFounding(1975);
+
+        Assert.Equal(FlatCityFormat.Write(founded), FlatCityFormat.Write(moved));
+        for (var i = 0; i < CityCalendar.StepsPerYear; i++)
+        {
+            moved.Tick();
+            founded.Tick();
+        }
+
+        Assert.Equal(FlatCityFormat.Write(founded), FlatCityFormat.Write(moved));
+    }
+
+    [Fact]
+    public void OnlyACityAtItsFoundingMoves()
+    {
+        var city = new CitySimulation(TileMapGenerator.Generate(7, 32, 32), 7, startYear: 1920);
+        city.Tick();
+
+        Assert.False(city.IsAtFounding);
+        Assert.Throws<InvalidOperationException>(() => city.MoveFounding(1930));
+        Assert.Equal(1920, city.FoundedYear);
+    }
+
+    [Fact]
+    public void DetailsThatCantBeAFileAreRefusedWithWhy()
+    {
+        var edit = Edit();
+        var details = ScenarioDetails.Of(edit.Scenario) with { Ends = new ScenarioDate(1919, 1) };
+
+        Assert.False(edit.TryChange(details, out _, out var problem));
+        Assert.Equal("ends: 1919-01 is before the scenario starts, in 1920-01.", problem);
+        Assert.Equal(new ScenarioDate(1920, 7), edit.Scenario.DateAt(edit.Scenario.Ticks));
+    }
+
+    [Fact]
+    public void DetailsCantChangeWhileATestIsUnderWay()
+    {
+        var edit = Edit();
+        var city = edit.OpenCity();
+        Assert.True(edit.TryChange(ScenarioDetails.Of(edit.Scenario), out var changed, out var problem), problem);
+        edit.BeginTest(city);
+
+        Assert.Throws<InvalidOperationException>(() => edit.Accept(changed, city));
+    }
 }

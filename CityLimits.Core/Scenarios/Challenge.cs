@@ -68,7 +68,7 @@ public sealed class Challenge
             scenario.Goals,
             start + scenario.Ticks,
             [.. scenario.Actions.OrderBy(a => a.Tick).ThenBy(a => a.Index).Select(a => (start + a.Tick, a))],
-            [.. scenario.Events.OrderBy(e => e.Tick).ThenBy(e => e.Index).Select(e => (start + e.Tick, e.Disaster))],
+            [.. scenario.Strikes().Select(e => (start + e.Tick, e.Disaster))],
             won: null);
     }
 

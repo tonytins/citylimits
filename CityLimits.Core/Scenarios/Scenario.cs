@@ -41,6 +41,9 @@ public sealed record Scenario(
     /// <summary>The disasters that strike, whatever the player's settings, in file order.</summary>
     public IReadOnlyList<ScenarioEvent> Events { get; init; } = [];
 
+    /// <summary>Every strike of every event, repeats spelled out, in order of when, then of the file.</summary>
+    public IReadOnlyList<ScenarioEvent> Strikes() => [.. Events.SelectMany(e => e.Strikes()).OrderBy(e => e.Tick).ThenBy(e => e.Index)];
+
     /// <summary>Tells whether the scenario is a challenge for a player, with goals to meet, rather than only checks.</summary>
     public bool HasGoals => Goals.Count > 0;
 
@@ -75,11 +78,32 @@ public enum GoalMeasure
 /// <param name="Text">How the goal reads to a player.</param>
 public sealed record ScenarioGoal(int Index, GoalMeasure Measure, int? AtLeast, int? AtMost, string Text);
 
-/// <summary>A disaster that strikes during a scenario, at a random place, as Micropolis' scenarios' do.</summary>
+/// <summary>
+/// A disaster that strikes during a scenario, at a random place, as Micropolis' scenarios' do; once,
+/// or again and again, as Micropolis' Hamburg is fire-bombed.
+/// </summary>
 /// <param name="Index">Where the event is in the file, from 0.</param>
-/// <param name="Tick">It strikes after this many ticks, after that tick's actions and before its checks.</param>
+/// <param name="Tick">It first strikes after this many ticks, after that tick's actions and before its checks.</param>
 /// <param name="Disaster">What strikes.</param>
-public sealed record ScenarioEvent(int Index, int Tick, Disaster Disaster);
+/// <param name="Repeat">How often it strikes again, and how many times in all; none strikes once.</param>
+public sealed record ScenarioEvent(int Index, int Tick, Disaster Disaster, EventRepeat? Repeat = null)
+{
+    /// <summary>Each strike, in order: the first, then one every so many weeks, as many times as it repeats.</summary>
+    public IEnumerable<ScenarioEvent> Strikes()
+    {
+        var times = Repeat?.Times ?? 1;
+        var every = (Repeat?.Weeks ?? 0) * CityCalendar.StepsPerCount;
+        for (var i = 0; i < times; i++)
+        {
+            yield return new ScenarioEvent(Index, Tick + (i * every), Disaster);
+        }
+    }
+}
+
+/// <summary>How a scenario's disaster repeats.</summary>
+/// <param name="Weeks">The weeks, quarter-months of the calendar, from one strike to the next.</param>
+/// <param name="Times">How many times it strikes in all, the first included.</param>
+public sealed record EventRepeat(int Weeks, int Times);
 
 /// <summary>A tool stroke a scenario makes: the tool pressed on one tile and dragged to another, after a number of ticks.</summary>
 /// <param name="Index">Where the action is in the file, from 0.</param>

@@ -36,7 +36,7 @@ public sealed class ScenarioRunner
             latest = Math.Max(latest, check.Tick);
         }
 
-        foreach (var happening in scenario.Events)
+        foreach (var happening in scenario.Strikes())
         {
             latest = Math.Max(latest, happening.Tick);
         }
@@ -70,7 +70,7 @@ public sealed class ScenarioRunner
         city.RandomEarthquakes = scenario.Disasters;
         var plan = new BuildPlan();
         var actions = scenario.Actions.OrderBy(a => a.Tick).ThenBy(a => a.Index).ToList();
-        var events = scenario.Events.OrderBy(e => e.Tick).ThenBy(e => e.Index).ToList();
+        var events = scenario.Strikes();
         var checks = scenario.Checks.OrderBy(c => c.Tick).ThenBy(c => c.Index).ToList();
         var actionReports = new List<ActionReport>(actions.Count);
         var eventReports = new List<EventReport>(events.Count);

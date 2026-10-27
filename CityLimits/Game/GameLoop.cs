@@ -49,6 +49,7 @@ public sealed class GameLoop : IDisposable
     private readonly ConfirmPanel _confirm = new();
     private readonly SettingsPanel _settingsPanel = new();
     private readonly NoticePanel _notice = new();
+    private readonly ScenarioWindow _scenarioWindow = new();
     private readonly GameFolders _folders;
 
     // The file the city was opened from or last saved to, and the save it was then; a city whose
@@ -73,7 +74,7 @@ public sealed class GameLoop : IDisposable
     // The scenario being edited, if any: its city is played with building free and the clock
     // stopped, and playing tests it. While it isn't being tested, the city panel shows its draft.
     private readonly ScenarioEdit? _editing;
-    private readonly Challenge? _draft;
+    private Challenge? _draft;
 
     // The bar's name, made again only when the city's name or the test changes, so a frame doesn't allocate it.
     private string _barName = string.Empty;
@@ -206,6 +207,7 @@ public sealed class GameLoop : IDisposable
         Confirm,
         Settings,
         Notice,
+        Scenario,
     }
 
     // What a question asks before it goes ahead.
@@ -358,6 +360,9 @@ public sealed class GameLoop : IDisposable
                 Raylib.DrawRectangle(0, 0, Raylib.GetScreenWidth(), Raylib.GetScreenHeight(), Theme.Dim);
                 _notice.Draw();
                 break;
+            case Modal.Scenario:
+                _scenarioWindow.Draw();
+                break;
         }
 
         Raylib.EndDrawing();
@@ -433,6 +438,9 @@ public sealed class GameLoop : IDisposable
                     TryBeginDrag(_notice, mouse);
                 }
 
+                return;
+            case Modal.Scenario:
+                HandleScenarioInput(mouse);
                 return;
         }
 
@@ -872,12 +880,64 @@ public sealed class GameLoop : IDisposable
             case CityPanel.Outcome.Closed:
                 CloseModal();
                 return;
+            case CityPanel.Outcome.EditScenario when _editing is { IsTesting: false }:
+                // The city stays paused from the city panel to the details and back.
+                _scenarioWindow.Open(_editing.Scenario);
+                _modal = Modal.Scenario;
+                return;
         }
 
         if (Raylib.IsMouseButtonPressed(MouseButton.Left))
         {
             TryBeginDrag(_cityPanel, mouse);
         }
+    }
+
+    // The details are taken whole when they read as a scenario, a moved start year moving the city's
+    // founding with everything on it kept; then, or on Cancel, the city panel the window came from
+    // opens again. A problem keeps the window open, saying why.
+    private void HandleScenarioInput(Vector2 mouse)
+    {
+        switch (_scenarioWindow.Update())
+        {
+            case ScenarioWindow.Outcome.Cancel:
+                BackToCityPanel();
+                return;
+            case ScenarioWindow.Outcome.Apply:
+                var editing = _editing!;
+                if (!editing.TryChange(_scenarioWindow.Details!, out var changed, out var problem))
+                {
+                    _scenarioWindow.ShowProblem(problem);
+                    return;
+                }
+
+                try
+                {
+                    editing.Accept(changed, _simulation);
+                }
+                catch (InvalidOperationException ex)
+                {
+                    _scenarioWindow.ShowProblem(ex.Message);
+                    return;
+                }
+
+                _draft = Challenge.Begin(changed, _simulation);
+                Logger.Info("Editing {Name}: its details changed", changed.Name);
+                _ticker.Advise($"{changed.Name}: its details are applied");
+                BackToCityPanel();
+                return;
+        }
+
+        if (Raylib.IsMouseButtonPressed(MouseButton.Left))
+        {
+            TryBeginDrag(_scenarioWindow, mouse);
+        }
+    }
+
+    private void BackToCityPanel()
+    {
+        _cityPanel.Reset(_simulation, _editing is { IsTesting: false } ? _draft : null);
+        _modal = Modal.City;
     }
 
     private bool TryBeginDrag(IMovableWindow window, Vector2 mouse)

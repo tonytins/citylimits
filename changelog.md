@@ -1,5 +1,29 @@
 # CityLimits Changelog
 
+## 0.4.109
+
+A scenario's details can be edited in the game. While editing one, the
+city panel has an Edit scenario button under its goals, which opens a
+window of three columns: the scenario's name, start year, end, starting
+money, and description; its goals; and its disasters. Add a goal or a
+disaster with its column's Add, take one out with its x, and click a
+goal's measure or a disaster's kind to change it. A disaster can now
+repeat: every so many weeks, so many times. Nothing changes until you
+press Apply, and the window says what's wrong if the details don't add
+up; Cancel drops your edits. Moving the start year of a scenario made
+from a seed just moves its city's date: the map and everything built on
+it stay.
+
+For developers and agents: scenarios are 2.2, adding `repeat` to an
+event, `{ "weeks": 10, "times": 4 }`; each strike is reported on its
+own. `ScenarioWriter` writes a scenario as a 2.2 file the loader reads
+back the same, and every built-in scenario is tested that way.
+`ScenarioEdit.TryChange` checks a `ScenarioDetails` through it, and
+`CitySimulation.MoveFounding` moves a city still at its founding to
+another year, leaving it as one founded then.
+`ButtonRow`, `TextArea`, and a smaller `TextField` are new in the
+interface library, for any window to use.
+
 ## 0.4.108
 
 The Scenarios and Load windows show more of what you pick. Under the

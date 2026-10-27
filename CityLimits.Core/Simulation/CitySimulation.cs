@@ -240,6 +240,30 @@ public sealed class CitySimulation
     /// <summary>The year the city was founded, which its age is counted from: its calendar's first year.</summary>
     public int FoundedYear { get; private set; }
 
+    /// <summary>Tells whether the city is at the moment it was founded, not yet having taken a step.</summary>
+    public bool IsAtFounding => TickCount == (long)(FoundedYear - CityCalendar.StartYear) * CityCalendar.StepsPerYear;
+
+    /// <summary>
+    /// Moves the city's founding to another year, as a scenario's editor does when its start year
+    /// changes: the calendar moves by whole years, and the map and everything else stay as they are,
+    /// so the city is as one founded in that year would be. Only a city at its founding can move.
+    /// </summary>
+    /// <exception cref="ArgumentOutOfRangeException">The year is before 1900 or after 9999.</exception>
+    /// <exception cref="InvalidOperationException">The city has taken a step since it was founded.</exception>
+    public void MoveFounding(int year)
+    {
+        ArgumentOutOfRangeException.ThrowIfLessThan(year, CityCalendar.StartYear);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(year, CityCalendar.LatestStartYear);
+        if (!IsAtFounding)
+        {
+            throw new InvalidOperationException("Only a city at its founding can move to another year.");
+        }
+
+        TickCount = (long)(year - CityCalendar.StartYear) * CityCalendar.StepsPerYear;
+        CityTime = TickCount / CityCalendar.StepsPerCount;
+        FoundedYear = year;
+    }
+
     /// <summary>How many 48ths of a year have passed since the city started.</summary>
     public long CityTime { get; private set; }
 

@@ -166,6 +166,57 @@ public class ScenarioFormat2Tests
     }
 
     [Fact]
+    public void ARepeatingEventStrikesEverySoManyWeeksAsManyTimesAsItSays()
+    {
+        // Hamburg's fire bombs, as Micropolis has them: four raids, ten weeks apart.
+        var scenario = Load(File("""
+            "ends": "1901-01",
+            "actions": [ { "at": "1900-01", "tool": "ZoneCommercial", "from": { "x": 1, "y": 1 }, "to": { "x": 30, "y": 30 } } ],
+            "events": [ { "at": "1900-02", "disaster": "Fire", "repeat": { "weeks": 10, "times": 4 } } ]
+            """));
+
+        var report = new ScenarioRunner().Run(scenario, "test");
+
+        Assert.Equal(new EventRepeat(10, 4), scenario.Events[0].Repeat);
+        Assert.Equal(["1900-02", "1900-04 week 3", "1900-07", "1900-09 week 3"], report.Events.Select(e => e.Date));
+        Assert.All(report.Events, e => Assert.Equal(0, e.Index));
+    }
+
+    [Fact]
+    public void AChallengeStrikesEachRepeatOnItsDate()
+    {
+        var scenario = Load(File("""
+            "ends": "1901-06",
+            "goals": [ { "measure": "Funds", "atLeast": 1 } ],
+            "events": [ { "at": "1900-02", "disaster": "Earthquake", "repeat": { "weeks": 24, "times": 3 } } ]
+            """));
+        var city = ChallengeShelf.Begin(scenario);
+
+        Assert.Equal(
+            [new ScenarioDate(1900, 2), new ScenarioDate(1900, 8), new ScenarioDate(1901, 2)],
+            city.Challenge!.UpcomingEvents.Select(e => e.Date));
+    }
+
+    [Theory]
+    [InlineData("{ \"weeks\": 0, \"times\": 4 }", "events[0].repeat.weeks: needs a number from 1 to 6250, not 0.")]
+    [InlineData("{ \"weeks\": 10, \"times\": 0 }", "events[0].repeat.times: needs a number from 1 to 6250, not 0.")]
+    [InlineData("{ \"weeks\": 10 }", "events[0].repeat.times: is required.")]
+    [InlineData("{ \"weeks\": 20, \"times\": 4 }", "events[0].repeat: striking 4 times, 20 weeks apart, runs past the scenario's end, 1901-01.")]
+    public void ARepeatThatCantBeKeptIsRefused(string repeat, string expected)
+    {
+        Assert.Equal(expected, Refusal(File($"\"ends\": \"1901-01\", \"events\": [ {{ \"at\": \"1900-02\", \"disaster\": \"Fire\", \"repeat\": {repeat} }} ]")));
+    }
+
+    [Fact]
+    public void ARepeatWrittenAsWordsIsRefused()
+    {
+        Assert.StartsWith("events[0].repeat.weeks", Refusal(File("""
+            "ends": "1901-01",
+            "events": [ { "at": "1900-02", "disaster": "Fire", "repeat": { "weeks": "10", "times": "4" } } ]
+            """)));
+    }
+
+    [Fact]
     public void AFloodWithNoShoreFindsNowhereToStrike()
     {
         var city = new CitySimulation(TileMap.FromTerrain(16, 16, new TileKind[256]), 1);

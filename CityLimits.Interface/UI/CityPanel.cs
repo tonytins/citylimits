@@ -6,7 +6,8 @@ namespace CityLimits.UI;
 /// city at a glance: its date and age, population, demand, and money. A city played as a challenge
 /// has a second column beside it, with the challenge's name, its end, how it stands, and the
 /// disasters still to come, and its goals under both, each with how the city measures up; a
-/// scenario being edited shows its draft there, which nothing acts on until it is tested. At the
+/// scenario being edited shows its draft there, which nothing acts on until it is tested, with an
+/// Edit under its goals that opens the scenario's details. At the
 /// bottom, the seed its map grew from, which a click copies. The game is paused while it is open,
 /// and the player moves it by its title.
 /// </summary>
@@ -32,7 +33,7 @@ public sealed class CityPanel : IMovableWindow
     private const int LeftColumn = 330;
 
     // How many of the disasters to come the challenge's column lists before saying how many more.
-    private const int EventRoom = 4;
+    private const int EventRoom = 3;
     private const double NoteSeconds = 2.0;
 
     private readonly WindowPlacement _placement = new(TitleStrip);
@@ -55,7 +56,11 @@ public sealed class CityPanel : IMovableWindow
 
     private int Width => _isChallenge ? WideWidth : NarrowWidth;
 
-    private int Height => BaseHeight + (_isChallenge ? ChallengeHeading + (_goalRows * LineHeight) + ChallengeGap : 0);
+    // The Edit button's row, under a draft's goals.
+    private const int EditRow = 34;
+    private const int EditWidth = 140;
+
+    private int Height => BaseHeight + (_isChallenge ? ChallengeHeading + (_goalRows * LineHeight) + ChallengeGap : 0) + (_isDraft ? EditRow : 0);
 
     /// <summary>What a frame of the panel came to.</summary>
     public enum Outcome
@@ -68,6 +73,9 @@ public sealed class CityPanel : IMovableWindow
 
         /// <summary>The player closed the panel.</summary>
         Closed,
+
+        /// <summary>The player asked to edit the details of the scenario being edited.</summary>
+        EditScenario,
     }
 
     /// <summary>The name the player entered, once the outcome is <see cref="Outcome.Renamed"/>, trimmed.</summary>
@@ -130,6 +138,11 @@ public sealed class CityPanel : IMovableWindow
             return Outcome.Closed;
         }
 
+        if (pressed && _isDraft && Raylib.CheckCollisionPointRec(mouse, EditBounds()))
+        {
+            return Outcome.EditScenario;
+        }
+
         if (pressed && Raylib.CheckCollisionPointRec(mouse, SeedBounds()))
         {
             Raylib.SetClipboardText(city.Seed.ToString(CultureInfo.InvariantCulture));
@@ -190,6 +203,15 @@ public sealed class CityPanel : IMovableWindow
         {
             DrawChallenge(challenge, x + LeftColumn + ColumnGap, y);
             DrawGoals(city, challenge, x, (int)bounds.Y + BaseHeight - Padding - LineHeight - 8);
+        }
+
+        if (_isDraft)
+        {
+            var edit = EditBounds();
+            Raylib.DrawRectangleRec(edit, Theme.PanelBorder);
+            const string Label = "Edit scenario";
+            var color = Raylib.CheckCollisionPointRec(Raylib.GetMousePosition(), edit) ? Theme.Accent : Theme.Text;
+            Raylib.DrawText(Label, (int)(edit.X + ((edit.Width - Raylib.MeasureText(Label, FontSize)) / 2)), (int)edit.Y + 7, FontSize, color);
         }
 
         var seed = SeedBounds();
@@ -324,6 +346,13 @@ public sealed class CityPanel : IMovableWindow
     {
         var bounds = Bounds;
         return new Rectangle { X = bounds.X + Width - CloseSize - 6, Y = bounds.Y + 6, Width = CloseSize, Height = CloseSize };
+    }
+
+    // Under the goals, at the right, just above the seed.
+    private Rectangle EditBounds()
+    {
+        var seed = SeedBounds();
+        return new Rectangle { X = Bounds.X + Width - Padding - EditWidth, Y = seed.Y - 10 - EditRow + 4, Width = EditWidth, Height = EditRow - 8 };
     }
 
     private Rectangle SeedBounds()

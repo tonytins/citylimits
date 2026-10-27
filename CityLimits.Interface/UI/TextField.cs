@@ -9,21 +9,27 @@ namespace CityLimits.UI;
 /// </summary>
 public sealed class TextField
 {
-    private const int FontSize = 20;
+    private const int DefaultFontSize = 20;
     private const int Padding = 6;
 
     private readonly StringBuilder _text = new();
     private readonly int _maxLength;
     private readonly Func<char, bool> _accepts;
+    private readonly int _fontSize;
 
-    /// <summary>Creates a field holding the given text, taking at most the given number of characters that the check accepts.</summary>
-    /// <exception cref="ArgumentOutOfRangeException">The length isn't positive.</exception>
-    public TextField(string text, int maxLength, Func<char, bool> accepts)
+    /// <summary>
+    /// Creates a field holding the given text, taking at most the given number of characters that
+    /// the check accepts, drawn at the font size given: 20 unless a denser window asks for less.
+    /// </summary>
+    /// <exception cref="ArgumentOutOfRangeException">The length or the size isn't positive.</exception>
+    public TextField(string text, int maxLength, Func<char, bool> accepts, int fontSize = DefaultFontSize)
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maxLength);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(fontSize);
         ArgumentNullException.ThrowIfNull(accepts);
         _maxLength = maxLength;
         _accepts = accepts;
+        _fontSize = fontSize;
         Text = text;
     }
 
@@ -41,8 +47,14 @@ public sealed class TextField
         }
     }
 
-    /// <summary>The height a field is drawn at.</summary>
-    public static int Height => FontSize + (Padding * 2);
+    /// <summary>How many characters the field holds, without making its text.</summary>
+    public int Length => _text.Length;
+
+    /// <summary>The height a field of the usual size is drawn at.</summary>
+    public static int Height => DefaultFontSize + (Padding * 2);
+
+    /// <summary>The height this field is drawn at.</summary>
+    public int BoxHeight => _fontSize + (Padding * 2);
 
     /// <summary>Takes this frame's typing, and tells whether the text changed. Call it only for the field that has focus.</summary>
     public bool Update()
@@ -73,13 +85,13 @@ public sealed class TextField
         var text = Text;
         var x = (int)bounds.X + Padding;
         var y = (int)bounds.Y + Padding;
-        Raylib.DrawText(text, x, y, FontSize, Theme.Text);
+        Raylib.DrawText(text, x, y, _fontSize, Theme.Text);
 
         // The caret blinks twice a second.
         if (focused && (int)(Raylib.GetTime() * 2) % 2 == 0)
         {
-            var caretX = x + Raylib.MeasureText(text, FontSize) + 2;
-            Raylib.DrawRectangle(caretX, y, 2, FontSize, Theme.Text);
+            var caretX = x + Raylib.MeasureText(text, _fontSize) + 2;
+            Raylib.DrawRectangle(caretX, y, 2, _fontSize, Theme.Text);
         }
     }
 

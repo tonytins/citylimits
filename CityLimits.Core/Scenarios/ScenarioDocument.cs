@@ -176,6 +176,15 @@ internal sealed class EventDocument
     public int? Week { get; set; }
 
     public string? Disaster { get; set; }
+
+    public RepeatDocument? Repeat { get; set; }
+}
+
+internal sealed class RepeatDocument
+{
+    public int? Weeks { get; set; }
+
+    public int? Times { get; set; }
 }
 
 // The documents' code is generated at build time, so reading them needs no reflection and
