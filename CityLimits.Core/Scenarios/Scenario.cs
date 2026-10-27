@@ -47,6 +47,9 @@ public sealed record Scenario(
     /// <summary>Tells whether the scenario is a challenge for a player, with goals to meet, rather than only checks.</summary>
     public bool HasGoals => Goals.Count > 0;
 
+    /// <summary>Tells whether the scenario is a draft from the editor, with neither goals nor checks yet: not a challenge, nor an agent's test.</summary>
+    public bool IsDraft => Goals.Count == 0 && Checks.Count == 0;
+
     /// <summary>The date on the calendar a tick of the scenario falls in.</summary>
     public ScenarioDate DateAt(long tick) => ScenarioDate.AtCount((StartStep + tick) / CityCalendar.StepsPerCount);
 }

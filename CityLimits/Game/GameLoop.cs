@@ -446,16 +446,16 @@ public sealed class GameLoop : IDisposable
 
         // Ctrl+S and Ctrl+O save and open; held Control keeps the letters from panning the map.
         var control = Raylib.IsKeyDown(KeyboardKey.LeftControl) || Raylib.IsKeyDown(KeyboardKey.RightControl);
-        // A scenario's city can't be saved or swapped from its editor yet.
-        if (control && _editing is not null && (Raylib.IsKeyPressed(KeyboardKey.S) || Raylib.IsKeyPressed(KeyboardKey.O)))
+        // A scenario being edited saves as a scenario, and no other city opens while it is edited.
+        if (control && _editing is not null && Raylib.IsKeyPressed(KeyboardKey.O))
         {
-            _ticker.Advise("A scenario can't be saved yet, and no other city opens while one is edited");
+            _ticker.Advise("No other city opens while a scenario is edited");
             return;
         }
 
         if (control && Raylib.IsKeyPressed(KeyboardKey.S))
         {
-            Save(confirmed: false);
+            SaveOrSaveScenario(confirmed: false);
             return;
         }
 
@@ -603,7 +603,7 @@ public sealed class GameLoop : IDisposable
                 break;
             case GameMenu.Choice.Save:
                 CloseModal();
-                Save(confirmed: false);
+                SaveOrSaveScenario(confirmed: false);
                 break;
             case GameMenu.Choice.Load:
                 CloseModal();
@@ -706,7 +706,7 @@ public sealed class GameLoop : IDisposable
         switch (pending)
         {
             case Pending.Overwrite:
-                Save(confirmed: true);
+                SaveOrSaveScenario(confirmed: true);
                 break;
             default:
                 Go(pending);
@@ -729,8 +729,7 @@ public sealed class GameLoop : IDisposable
             Pending.LeaveToQuit => "and quit",
             _ => $"for {_cityToOpen?.Name}",
         };
-        var why = _editing is null ? "It has changes since it was last saved. Ctrl+S saves it first." : "A scenario can't be saved yet, so what you changed here will be lost.";
-        Ask(leaving, $"Leave {_simulation.Name} {where}?", why, "Leave", "Stay");
+        Ask(leaving, $"Leave {_simulation.Name} {where}?", "It has changes since it was last saved. Ctrl+S saves it first.", "Leave", "Stay");
     }
 
     private void Go(Pending leaving)
@@ -835,7 +834,56 @@ public sealed class GameLoop : IDisposable
             ? FlatCityFormat.Extension
             : BinaryCityFormat.Extension;
 
-    private bool HasUnsavedChanges() => _savedText is null || FlatCityFormat.Write(_simulation) != _savedText;
+    // A scenario being edited has changes when it or its city reads differently from its last save.
+    private bool HasUnsavedChanges() => _editing is not null
+        ? _editing.HasChanges(_simulation)
+        : _savedText is null || FlatCityFormat.Write(_simulation) != _savedText;
+
+    private void SaveOrSaveScenario(bool confirmed)
+    {
+        if (_editing is null)
+        {
+            Save(confirmed);
+        }
+        else
+        {
+            SaveScenario(confirmed);
+        }
+    }
+
+    // A scenario saves to the player's own scenarios folder under its name, its city beside it.
+    // Saving over its own file is plain saving; replacing another scenario of the same name asks first.
+    private void SaveScenario(bool confirmed)
+    {
+        var editing = _editing!;
+        string path;
+        try
+        {
+            path = editing.SavePath();
+        }
+        catch (ArgumentException ex)
+        {
+            _ticker.Advise(ex.Message);
+            return;
+        }
+
+        if (!confirmed && File.Exists(path) && !string.Equals(Path.GetFullPath(path), Path.GetFullPath(editing.Path), StringComparison.Ordinal))
+        {
+            Ask(Pending.Overwrite, "Replace a saved scenario?", $"{Path.GetFileName(path)} already holds a scenario, and saving would replace it and its city.", "Replace", "Cancel");
+            return;
+        }
+
+        if (!editing.TrySave(_simulation, out var problem))
+        {
+            Logger.Error("{Problem}", problem);
+            _ticker.Advise(problem);
+            return;
+        }
+
+        _draft = Challenge.Begin(editing.Scenario, _simulation);
+        Logger.Info("Saved the scenario {Name} to {Path}", editing.Scenario.Name, editing.Path);
+        _ticker.Advise($"Saved {editing.Scenario.Name} to {Path.GetFileName(editing.Path)}");
+    }
 
     // A city is saved under its name, in the binary format unless it came from a flat file. Saving
     // over its own file is plain saving, an autosave's city counting as its own; replacing another
@@ -882,7 +930,7 @@ public sealed class GameLoop : IDisposable
                 return;
             case CityPanel.Outcome.EditScenario when _editing is { IsTesting: false }:
                 // The city stays paused from the city panel to the details and back.
-                _scenarioWindow.Open(_editing.Scenario);
+                _scenarioWindow.Open(_editing.Scenario, _editing.CanMoveStart(_simulation));
                 _modal = Modal.Scenario;
                 return;
         }
@@ -905,7 +953,7 @@ public sealed class GameLoop : IDisposable
                 return;
             case ScenarioWindow.Outcome.Apply:
                 var editing = _editing!;
-                if (!editing.TryChange(_scenarioWindow.Details!, out var changed, out var problem))
+                if (!editing.TryChange(_scenarioWindow.Details!, _simulation, out var changed, out var problem))
                 {
                     _scenarioWindow.ShowProblem(problem);
                     return;

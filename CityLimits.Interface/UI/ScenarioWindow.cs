@@ -9,8 +9,8 @@ namespace CityLimits.UI;
 /// which may repeat. A goal or a disaster is added with its column's Add and taken out with its x;
 /// a click on a goal's measure or a disaster's kind moves it to the next one. Nothing changes until
 /// Apply, or Enter, and Cancel, or Escape, drops every edit. What can't be read, or what the
-/// scenario can't hold, is said under the columns, and the window stays open. A scenario that
-/// starts from a saved city takes its start and its money from the city, so those only show.
+/// scenario can't hold, is said under the columns, and the window stays open. A scenario whose saved
+/// city has run since its founding takes its start and its money from the city, so those only show.
 /// Tab moves to the next field. The player moves the window by its title.
 /// </summary>
 public sealed partial class ScenarioWindow : IMovableWindow
@@ -91,12 +91,15 @@ public sealed partial class ScenarioWindow : IMovableWindow
     /// <inheritdoc />
     public void Drag(Vector2 point, bool held) => _placement.Drag(point, held, new Vector2(Width, Height));
 
-    /// <summary>Opens the window on a scenario's details as they stand.</summary>
-    public void Open(Scenario scenario)
+    /// <summary>
+    /// Opens the window on a scenario's details as they stand; its start and money can be changed
+    /// unless <paramref name="canMoveStart"/> says its city keeps its own.
+    /// </summary>
+    public void Open(Scenario scenario, bool canMoveStart)
     {
         ArgumentNullException.ThrowIfNull(scenario);
         var details = ScenarioDetails.Of(scenario);
-        _startFromCity = scenario.CityFile is not null;
+        _startFromCity = !canMoveStart;
         _cityStart = _startFromCity ? $"{scenario.DateAt(0)}, set by its city" : null;
         _name.Text = details.Name;
         _start.Text = details.StartYear.ToString(CultureInfo.InvariantCulture);

@@ -19,15 +19,25 @@ public sealed class MapPreview : IDisposable
     public void Show(CitySimulation city)
     {
         ArgumentNullException.ThrowIfNull(city);
-        Clear();
+        Paint(city.Map, (x, y) => OverviewMap.CityColorAt(city, x, y));
+    }
 
-        var map = city.Map;
+    /// <summary>Shows a map with no city on it yet, such as one just grown from a seed, as <see cref="Show(CitySimulation)"/> does.</summary>
+    public void Show(TileMap map)
+    {
+        ArgumentNullException.ThrowIfNull(map);
+        Paint(map, (x, y) => OverviewMap.MapColorAt(map, x, y));
+    }
+
+    private void Paint(TileMap map, Func<int, int, Color> colorAt)
+    {
+        Clear();
         var image = Raylib.GenImageColor(map.Width, map.Height, Color.Blank);
         for (var y = 0; y < map.Height; y++)
         {
             for (var x = 0; x < map.Width; x++)
             {
-                Raylib.ImageDrawPixel(ref image, x, y, OverviewMap.CityColorAt(city, x, y));
+                Raylib.ImageDrawPixel(ref image, x, y, colorAt(x, y));
             }
         }
 

@@ -186,6 +186,7 @@ public sealed class StartMenu : IDisposable
     {
         _scenarios.Dispose();
         _load.Dispose();
+        _newCity.Dispose();
     }
 
     /// <summary>Draws the menu as a whole frame.</summary>

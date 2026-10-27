@@ -2,9 +2,9 @@ namespace CityLimits.UI;
 
 /// <summary>
 /// The menu Escape opens in a city when nothing else is open: a column of buttons to resume, save,
-/// load, open the settings, leave for the main menu, or quit. Editing a scenario, save and load make
-/// way for going back to before the test was played, which is dimmed with no test under way, and for
-/// starting over. The game is paused while it is open, and Escape again resumes.
+/// load, open the settings, leave for the main menu, or quit. Editing a scenario, save saves the
+/// scenario, which is dimmed while it is tested, and load makes way for going back to before the
+/// test was played, which is dimmed with no test under way, and for starting over. The game is paused while it is open, and Escape again resumes.
 /// </summary>
 public sealed class GameMenu
 {
@@ -28,6 +28,7 @@ public sealed class GameMenu
     private static readonly (string Text, Choice Choice)[] EditItems =
     [
         ("Resume", Choice.Resume),
+        ("Save", Choice.Save),
         ("Back to before play", Choice.BackToBeforePlay),
         ("Start over", Choice.StartOver),
         ("Settings", Choice.Settings),
@@ -107,8 +108,13 @@ public sealed class GameMenu
         }
     }
 
-    // Going back to before play needs a test to go back from.
-    private static bool IsEnabled(Choice choice, bool testing) => choice != Choice.BackToBeforePlay || testing;
+    // Going back to before play needs a test to go back from; saving a scenario needs none under way.
+    private static bool IsEnabled(Choice choice, bool testing) => choice switch
+    {
+        Choice.BackToBeforePlay => testing,
+        Choice.Save => !testing,
+        _ => true,
+    };
 
     private static int ItemAt(Vector2 point, int count)
     {

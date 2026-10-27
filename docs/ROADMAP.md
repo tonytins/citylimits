@@ -2,24 +2,24 @@
 
 > **Last reviewed:** 2026-10-21 · **Last updated:** 2026-10-27 · **Change:** minor (Kyoto, K3: the scenario's details, edited in a window of their own, and disasters that repeat) · **Stage:** beta
 
-Forward-looking: where CityLimits stands, what blocks the next milestone,
-and what comes next. Verified status and evidence are in the
+Forward-looking: where CityLimits stands, what blocks the next milestone,  
+and what comes next. Verified status and evidence are in the  
 [scorecard](./scorecard.md).
 
-Keep it current: when work lands, update its milestone row and checklist,
+Keep it current: when work lands, update its milestone row and checklist,  
 re-estimate what remains, and add a line to the revision history.
 
-Milestones are named after Micropolis scenarios. The names are labels, not
-a release order: the owner may re-order or re-cut them as the design
-settles. Estimates are rough hours for one developer and are re-measured
+Milestones are named after Micropolis scenarios. The names are labels, not  
+a release order: the owner may re-order or re-cut them as the design  
+settles. Estimates are rough hours for one developer and are re-measured  
 when a milestone lands.
 
 ## Alpha gate
 
-Alpha means CityLimits is a playable little city: a player can start a
-game, lay out a town, and watch it grow and misbehave in ways it can read.
-A row blocks alpha only when the player cannot complete that workflow at
-all. Missing depth or a clumsy path is `partial, not blocking`, which makes
+Alpha means CityLimits is a playable little city: a player can start a  
+game, lay out a town, and watch it grow and misbehave in ways it can read.  
+A row blocks alpha only when the player cannot complete that workflow at  
+all. Missing depth or a clumsy path is `partial, not blocking`, which makes  
 it a later milestone.
 
 | Core workflow | Works end to end? | Evidence | Hours to pass (est.) |
@@ -29,41 +29,42 @@ it a later milestone.
 | Read the city's state: money, power, demand, and problems | yes | The HUD shows the date, the tick, the speed, the funds, and what the held tool costs, and the tile readout names what is on the tile. The status bar shows the population and a panel shows demand; unpowered zones blink a lightning bolt, the readout says when a zone has no power, and brownouts and blackouts show as messages. The budget panel shows the year's taxes and upkeep and opens by itself on a deficit. The overview map shows the whole city, and power, coverage, land value, and population density over it (UI-2, ECON-1, ECON-3, ECON-5) | 0 |
 | Keep the city running for a long session without a crash | yes | The frame loop catches and reports, the tick loop runs, and the settings survive a session, a packaged game's too (REL-1, CORE-8). A city saves with Ctrl+S and loads from the start menu or Ctrl+O, running on exactly as it would have, and a damaged save is refused with the reason (UI-5) | 0 |
 
-**Result: alpha, and now beta.** Every row passes: with saving in, each
-core workflow works end to end. The owner marked CityLimits an alpha with
-0.3.100, and Tony Bark marked it a beta with 0.4.100, once Deadwood was
-complete; it stays a beta for a while, whatever its version, as the
+**Result: alpha, and now beta.** Every row passes: with saving in, each  
+core workflow works end to end. The owner marked CityLimits an alpha with  
+0.3.100, and Tony Bark marked it a beta with 0.4.100, once Deadwood was  
+complete; it stays a beta for a while, whatever its version, as the  
 focus turns to polish.
 
 ## Current focus
 
-The engine plays like Micropolis: the baseline refactor (tool strokes,
-roads and zones, time, growth, and terrain) is done, and Joffburg (power,
-taxes and the budget, services, and the overview map) was built to the
-baseline from the start and is complete. With saving finished, every row
-of the alpha gate passes, and 0.3.100 is the alpha. The owner's liberties
-so far are the always-automatic budget, parks' look chosen by their place,
-Micropolis' hospital-then-church quirk fixed, the demand panel, and
+The engine plays like Micropolis: the baseline refactor (tool strokes,  
+roads and zones, time, growth, and terrain) is done, and Joffburg (power,  
+taxes and the budget, services, and the overview map) was built to the  
+baseline from the start and is complete. With saving finished, every row  
+of the alpha gate passes, and 0.3.100 is the alpha. The owner's liberties  
+so far are the always-automatic budget, parks' look chosen by their place,  
+Micropolis' hospital-then-church quirk fixed, the demand panel, and  
 unsupported things in imported cities becoming bare ground.
 
 Next, in order:
 
-1. **Scenarios to play**, the polish Tony Bark chose first: P1, a city's
-   calendar starting in a later year, and P2, scenario format 2.0, are in.
-   In the order Tony Bark settled, the interface split out into a
-   library of its own and P3, playing a challenge from the start menu,
-   with its goals, its result, and saving partway, are in, and the
-   demo-town fallback is dropped. Kyoto, the scenario editor, is under
-   way: K0, the stadium, the seaport, and the airport the alpha missed,
-   is in, and K1, a city view shared by play and the editor, is next;
-   then P4, the first built-in challenges, made with the editor.
-2. **Happy Isle's last items**: the city score, and map size on the
-   start screen. Deadwood (pollution, crime, fire, floods, and
+1. **Scenarios to play**, the polish Tony Bark chose first: P1, a city's  
+   calendar starting in a later year, and P2, scenario format 2.0, are in.  
+   In the order Tony Bark settled, the interface split out into a  
+   library of its own and P3, playing a challenge from the start menu,  
+   with its goals, its result, and saving partway, are in, and the  
+   demo-town fallback is dropped. Kyoto, the scenario editor, is  
+   complete: K0 to K4, editing a scenario in the game, its details in a  
+   window of their own, and saving it, with a New City window. Then P4,  
+   the first built-in challenges, made with the editor, and Senri, a  
+   small milestone for the interface and packaging before online play.
+2. **Happy Isle's last item**: map size on the start screen; Tony Bark  
+   dropped the city score. Deadwood (pollution, crime, fire, floods, and  
    earthquakes) and Radial (traffic and rail) are complete.
 
 ## Milestones
 
-"Done" is the share of the milestone's checklist below that is complete.
+"Done" is the share of the milestone's checklist below that is complete.  
 "Remaining" estimates the open items only.
 
 | Milestone | Done | Remaining (h, est.) | Notes |
@@ -75,18 +76,19 @@ Next, in order:
 | Joffburg: Services and economy | 100% | 0 | Meets the baseline: power, taxes and the budget, services (stations, coverage, parks, hospitals, and churches), and the overview map with its power, coverage, land value, and density modes, as in Micropolis |
 | Radial: Traffic and commuting | 100% | 0 | Meets the baseline: versioned file formats with schemas, read without reflection, the traffic map trips leave and what it shows and costs, and rail, with tunnels, crossings, trips along it, its upkeep and message, and the commuter train |
 | Deadwood: Land value, pollution, disasters | 100% | 0 | Meets the baseline: pollution and crime, fire with the ticker's fire-risk hints, floods, and earthquakes, as in Micropolis, with free repair and the settings' disaster switches |
-| Happy Isle: Player-facing game | 50% | 8–14 | The palette, laid out as Micropolis', and the HUD, with its bar along the bottom over a news ticker after Tony Bark's mock-up, are in; the budget, demand, and city panels, the overview's power mode, and the settings window are too, and cities save, load, autosave, and import from Micropolis. Scenarios to play (P1 to P3 of four in, with one example challenge), the city score, and map size on the start screen are left |
-| Kyoto: The scenario editor | 85% | 2–4 | The interface library it shares with play, the stadium, the seaport, and the airport the alpha missed, with the demand they hold back, the shared city view, editing a scenario in the game, tested by playing, and its details, are in; saving it, with a New City window, is left |
-| Yokohama: Polish and release | 0% | 10–20 | Nothing yet |
-| | **Total** | **≈ 28–50** | |
+| Happy Isle: Player-facing game | 60% | 4–8 | The palette, laid out as Micropolis', and the HUD, with its bar along the bottom over a news ticker after Tony Bark's mock-up, are in; the budget, demand, and city panels, the overview's power mode, and the settings window are too, and cities save, load, autosave, and import from Micropolis. Scenarios to play (P1 to P3 of four in, with one example challenge) and map size on the start screen are left |
+| Kyoto: The scenario editor | 100% | 0 | The interface library it shares with play, the stadium, the seaport, and the airport the alpha missed, with the demand they hold back, the shared city view, editing a scenario in the game, tested by playing, its details, and saving it, with a New City window |
+| Senri: Interface and packaging | 0% | 6–12 | Nothing yet: a unified title bar, an Editing scenarios help page, packaging for each platform, and what turns up before online play |
+| Yokohama: Online play | 0% | unestimated | Nothing yet: a Network Edition-style shared city, hosted by `CityLimits.Server`. Its checklist is a draft, settled when it starts |
+| | **Total** | **≈ 10–20, Yokohama unestimated** | |
 
 ## Upcoming work, ranked
 
 | Rank | Work | Milestone | Estimate (h) |
 |---|---|---|---|
-| 1 | Kyoto: the scenario editor, K4, saving, with a New City window | Kyoto | 2–4 |
-| 2 | Scenarios, P4: the first built-in challenges, made with the editor | Happy Isle | 2–4 |
-| 3 | Happy Isle: the city score and map size on the start screen | Happy Isle | 6–10 |
+| 1 | Scenarios, P4: the first built-in challenges, made with the editor | Happy Isle | 2–4 |
+| 2 | Senri: the unified title bar, the help page, and packaging | Senri | 6–12 |
+| 3 | Happy Isle: map size on the start screen | Happy Isle | 2–4 |
 
 Every row of the alpha gate passes, and CityLimits is an alpha since 0.3.100.
 
@@ -94,381 +96,413 @@ Every row of the alpha gate passes, and CityLimits is an alpha since 0.3.100.
 
 ### New Dullsville: Foundation
 
-- [x] A solution with the game project, the core library, and the test
+- [x] A solution with the game project, the core library, and the test  
   project, each in its own folder.
-- [x] The test project references the core library, and the game project
+- [x] The test project references the core library, and the game project  
   has the folders the workspace map names.
 - [x] A window that opens and closes cleanly.
 - [x] The window carries the game's name and can be resized.
-- [x] A fixed-timestep loop: the simulation ticks at a fixed rate, the
+- [x] A fixed-timestep loop: the simulation ticks at a fixed rate, the  
   renderer draws once per frame, and the tick size never changes.
-- [x] Speed control: pause, Normal, Fast, and Super fast, changing how many ticks run
+- [x] Speed control: pause, Normal, Fast, and Super fast, changing how many ticks run  
   per frame and nothing else.
-- [x] Input: the mouse position in world space, keyboard shortcuts, and a
+- [x] Input: the mouse position in world space, keyboard shortcuts, and a  
   selected tool.
 - [x] A camera: pan, zoom, and clamping to the map bounds.
 - [x] One seeded PRNG, owned by the simulation, so a run is reproducible.
-- [x] Settings (window size, fullscreen, speed) saved to disk and read
+- [x] Settings (window size, fullscreen, speed) saved to disk and read  
   back on start, with a bad file reported rather than fatal.
 - [x] A test project that builds and runs.
 - [x] A first real test: the same seed gives the same sequence.
 
 ### Neat Map: Terrain and the tile grid
 
-- [x] A tile grid of a fixed size, stored as arrays, not as one object per
+- [x] A tile grid of a fixed size, stored as arrays, not as one object per  
   tile, in `CityLimits.Core/World/`.
-- [x] Terrain generation: water, trees, and grass, from the seed, so the
+- [x] Terrain generation: water, trees, and grass, from the seed, so the  
   same seed gives the same map.
-- [x] Terrain rendering from a tile atlas, with no per-frame allocation.
-  `CityLimits/Assets/tiles.png` is drawn from `Rendering/TileAtlas.cs`, and
+- [x] Terrain rendering from a tile atlas, with no per-frame allocation.  
+  `CityLimits/Assets/tiles.png` is drawn from `Rendering/TileAtlas.cs`, and  
   the sheet is loaded once at startup.
-- [x] A hover highlight and a readout of the tile under the mouse. The
+- [x] A hover highlight and a readout of the tile under the mouse. The  
   readout names the ground and says what can be done with it.
-- [x] The map edge is defined: the world outside the map is not a tile
+- [x] The map edge is defined: the world outside the map is not a tile  
   that can be built on.
-- [x] Terrain like the baseline's: meandering rivers, lakes, sometimes an
-  island, and patches of trees, with shores and forest edges smoothed by
-  the sheet's edge tiles, and no rock, on a map of 120 by 100 tiles, the
-  size Micropolis uses. `CityLimits.Core/World/TileMapGenerator.cs` lays
-  it out, `TerrainEdges` reads the edges from the map, and `TileAtlas`
+- [x] Terrain like the baseline's: meandering rivers, lakes, sometimes an  
+  island, and patches of trees, with shores and forest edges smoothed by  
+  the sheet's edge tiles, and no rock, on a map of 120 by 100 tiles, the  
+  size Micropolis uses. `CityLimits.Core/World/TileMapGenerator.cs` lays  
+  it out, `TerrainEdges` reads the edges from the map, and `TileAtlas`  
   picks the sheet's shore and wood-edge drawings from them.
 
 ### Line City: Roads and zoning
 
 - [x] Draw roads, with a cost, and a refusal when the player cannot pay.
-- [x] Roads are drawn from the sheet, with the drawing chosen from the
+- [x] Roads are drawn from the sheet, with the drawing chosen from the  
   sides that join another road.
-- [x] Buildings are drawn from the tile's own state, not from a second
+- [x] Buildings are drawn from the tile's own state, not from a second  
   list of buildings.
-- [x] Tools are strokes, as in the baseline: pressing starts one,
-  dragging stretches it, a preview shows its tiles and its total cost,
-  and releasing applies it, skipping the tiles that can't be built on and
-  refusing it whole when it runs off the map or the city can't pay for
-  all of it. Escape cancels it. `CityLimits.Core/World/BuildStroke.cs`,
+- [x] Tools are strokes, as in the baseline: pressing starts one,  
+  dragging stretches it, a preview shows its tiles and its total cost,  
+  and releasing applies it, skipping the tiles that can't be built on and  
+  refusing it whole when it runs off the map or the city can't pay for  
+  all of it. Escape cancels it. `CityLimits.Core/World/BuildStroke.cs`,  
   `BuildPlan.cs`, and `CityBuilder.Plan` and `Apply`.
-- [x] Roads snap to a straight line, cross water as bridges at $50 a
-  tile, started from a road beside them, and clear trees and rubble for
+- [x] Roads snap to a straight line, cross water as bridges at $50 a  
+  tile, started from a road beside them, and clear trees and rubble for  
   $1 more.
-- [x] Zones are 3 by 3 with a centre, laid as a grid by dragging, refused
+- [x] Zones are 3 by 3 with a centre, laid as a grid by dragging, refused  
   unless their tiles are clear, at $100 a zone, and drawn from the sheet.
 - [x] A zone is served when a road runs along its edge, not at a corner.
-- [x] The bulldozer costs $1 a tile and refunds nothing, and clears a
+- [x] The bulldozer costs $1 a tile and refunds nothing, and clears a  
   zone only through its centre, leaving rubble.
 
 ### Kowloon: Simulation core
 
-- [x] A tick that advances the date and updates the world, and does the
-  same thing every time given the same inputs, in
+- [x] A tick that advances the date and updates the world, and does the  
+  same thing every time given the same inputs, in  
   `CityLimits.Core/Simulation/`.
-- [x] The baseline's calendar and cycle: the year counted in 48ths from
-  January 1900, each count run as 16 phases with the map scanned in 8
-  bands, at about 3 minutes a year at Normal speed, with Fast and Super
-  fast at 5 and 50 times that. `CityCalendar`, `GameSpeed`, and
+- [x] The baseline's calendar and cycle: the year counted in 48ths from  
+  January 1900, each count run as 16 phases with the map scanned in 8  
+  bands, at about 3 minutes a year at Normal speed, with Fast and Super  
+  fast at 5 and 50 times that. `CityCalendar`, `GameSpeed`, and  
   `CitySimulation.Tick`.
-- [x] Population: people, jobs, and migration between zones, through the
+- [x] Population: people, jobs, and migration between zones, through the  
   census, demand, and each zone's growth and decline.
-- [x] Demand: residential, commercial, and industrial, shown as three
-  values the player can read: `CityCensus`, `CityDemand`, and the HUD's
+- [x] Demand: residential, commercial, and industrial, shown as three  
+  values the player can read: `CityCensus`, `CityDemand`, and the HUD's  
   demand panel.
-- [x] Development per zone, as in the baseline: a zone needs a traffic
-  trip, and its score (demand plus its own worth) decides whether it
-  grows, declines, or stays (`ZoneGrowth`), with land value and density
+- [x] Development per zone, as in the baseline: a zone needs a traffic  
+  trip, and its score (demand plus its own worth) decides whether it  
+  grows, declines, or stays (`ZoneGrowth`), with land value and density  
   from `CityMaps`. A zone without power never grows, since Joffburg's grid.
-- [x] Housing capacity by development level, so population follows
-  density: single houses, then building levels, with each level's
+- [x] Housing capacity by development level, so population follows  
+  density: single houses, then building levels, with each level's  
   population in the zone's spec.
-- [x] A determinism test, in `CityLimits.Tests/`: the same seed and the
-  same actions give the same city after a fixed number of ticks. It covers
+- [x] A determinism test, in `CityLimits.Tests/`: the same seed and the  
+  same actions give the same city after a fixed number of ticks. It covers  
   the tiles and the money today, and it grows with the population model.
-- [x] Scenarios, phase 1, as [docs/scenarios.md](./scenarios.md)
-  specifies. A scenario file holds a seed, timed tool strokes, and
-  checks, and `CityLimits.Core/Scenarios/` loads and runs it.
-  `citylimits scenario` runs it with no window, logs it, and writes a
-  versioned JSON report with `--json`. The built-in scenarios live in
-  `CityLimits/Assets/Scenarios/`, and each one runs as a test.
-  `demo-town` is defined in code as the fallback, and falling back is
+- [x] Scenarios, phase 1, as [docs/scenarios.md](./scenarios.md)  
+  specifies. A scenario file holds a seed, timed tool strokes, and  
+  checks, and `CityLimits.Core/Scenarios/` loads and runs it.  
+  `citylimits scenario` runs it with no window, logs it, and writes a  
+  versioned JSON report with `--json`. The built-in scenarios live in  
+  `CityLimits/Assets/Scenarios/`, and each one runs as a test.  
+  `demo-town` is defined in code as the fallback, and falling back is  
   always reported.
 
 ### Joffburg: Services and economy
 
-- [x] Power plants and a power grid, with each tile either powered or
-  unserved. `Footprint`, `PowerLines`, and `PowerGrid`; plants are a
+- [x] Power plants and a power grid, with each tile either powered or  
+  unserved. `Footprint`, `PowerLines`, and `PowerGrid`; plants are a  
   `PlantSpec`.
-- [x] Power demand that follows the grid, and a visible brownout when
-  demand outruns supply. As in Micropolis, every
-  zone and line tile a plant powers draws on it, whether anyone lives
-  there or not, so a coal plant carries about 50 zones; the owner chose
-  this over demand by population. A brownout is a message, and the zones
+- [x] Power demand that follows the grid, and a visible brownout when  
+  demand outruns supply. As in Micropolis, every  
+  zone and line tile a plant powers draws on it, whether anyone lives  
+  there or not, so a coal plant carries about 50 zones; the owner chose  
+  this over demand by population. A brownout is a message, and the zones  
   left dark blink the bolt.
-- [x] Taxes, a budget, and a deficit the player has to answer.
-  `CityBudget` and `UI/BudgetPanel.cs`; the budget is always automatic,
+- [x] Taxes, a budget, and a deficit the player has to answer.  
+  `CityBudget` and `UI/BudgetPanel.cs`; the budget is always automatic,  
   and its panel opens by itself on a deficit or a cut.
-- [x] Services: police, fire, and parks, with a coverage effect. Stations
-  and their coverage maps (`ServiceCoverage`) and parks (`Parks`) are in;
-  as in Micropolis, coverage acts on crime and fires, which come with
+- [x] Services: police, fire, and parks, with a coverage effect. Stations  
+  and their coverage maps (`ServiceCoverage`) and parks (`Parks`) are in;  
+  as in Micropolis, coverage acts on crime and fires, which come with  
   Deadwood, and parks raise land value.
-- [x] A budget panel and a power overlay that show what the simulation
-  actually thinks. `UI/BudgetPanel.cs`, and `UI/OverviewMap.cs`, the
-  overview map as in Micropolis, with modes for power, fire and police
+- [x] A budget panel and a power overlay that show what the simulation  
+  actually thinks. `UI/BudgetPanel.cs`, and `UI/OverviewMap.cs`, the  
+  overview map as in Micropolis, with modes for power, fire and police  
   coverage, land value, and population density.
 
 ### Radial: Traffic and commuting
 
-Built to the Micropolis baseline, in the phases Tony Bark settled. The
-earlier plan's congestion feeding back into demand and land value isn't
-Micropolis, and Tony Bark dropped it; traffic reaches land value through
+Built to the Micropolis baseline, in the phases Tony Bark settled. The  
+earlier plan's congestion feeding back into demand and land value isn't  
+Micropolis, and Tony Bark dropped it; traffic reaches land value through  
 pollution, in Deadwood.
 
-- [x] R0: files that say their version and survive trimming. Saves,
-  scenarios, and mod files carry major.minor format versions, every JSON
-  format reads through generated code with reflection-based JSON off, the
-  binary codec's model is kept for the trimmer, and `docs/schemas/` holds
+- [x] R0: files that say their version and survive trimming. Saves,  
+  scenarios, and mod files carry major.minor format versions, every JSON  
+  format reads through generated code with reflection-based JSON off, the  
+  binary codec's model is kept for the trimmer, and `docs/schemas/` holds  
   schemas generated from the readers (`docs/saving.md`).
-- [x] R1: the traffic map. A trip that arrives leaves traffic on every
-  other road tile it passed, on 2 by 2 blocks, fading each cycle, capped
-  at 240 (where Micropolis caps it only one time in six, Tony Bark chose
+- [x] R1: the traffic map. A trip that arrives leaves traffic on every  
+  other road tile it passed, on 2 by 2 blocks, fading each cycle, capped  
+  at 240 (where Micropolis caps it only one time in six, Tony Bark chose  
   always). Saved from format 1.1, with 1.0 saves upgraded.
-- [x] R2: what traffic shows and costs. Animated light and heavy traffic
-  on roads, heavy traffic counting twice toward road upkeep, the yearly
-  traffic average and its message, and a traffic mode on the overview
+- [x] R2: what traffic shows and costs. Animated light and heavy traffic  
+  on roads, heavy traffic counting twice toward road upkeep, the yearly  
+  traffic average and its message, and a traffic mode on the overview  
   map. Saved from format 1.3.
-- [x] R3: rail, as in Micropolis: a rail tool, rail crossing roads and
-  power lines, tunnels, and trips along rail as well as roads, with
-  rail's upkeep, its message, and the commuter train, drawn by the game
-  alone as Tony Bark chose. Saved from format 1.4 as a part an older
-  version can leave out. The palette's buttons became switches and its
+- [x] R3: rail, as in Micropolis: a rail tool, rail crossing roads and  
+  power lines, tunnels, and trips along rail as well as roads, with  
+  rail's upkeep, its message, and the commuter train, drawn by the game  
+  alone as Tony Bark chose. Saved from format 1.4 as a part an older  
+  version can leave out. The palette's buttons became switches and its  
   number keys were dropped, as Tony Bark chose.
 
 ### Deadwood: Land value, pollution, disasters
 
-Built to the Micropolis baseline, in the phases Tony Bark settled. Of
-Micropolis' disasters, fire, floods, and earthquakes are in Deadwood; its
-tornado, monster, and meltdown are left for later, and the roll that
-would bring them does nothing. Every disaster is reported in red on the
-news ticker the moment it starts. Fire also gets hints ahead of time,
-which Tony Bark asked for after SimCity 3000: flavour headlines when the
-city's fire risk runs high, which read the city and never decide a fire.
-Damage is repaired as in Micropolis, at no cost: a zone redraws its
-damaged tiles as it next grows or declines, plants, stations, hospitals,
-and churches redraw those that are bare ground now and then, and the
-player clears rubble.
-Starting a disaster on demand, as Micropolis' Disasters menu does, waits
-for a new set of palette art from Tony Bark, since the interface follows
+Built to the Micropolis baseline, in the phases Tony Bark settled. Of  
+Micropolis' disasters, fire, floods, and earthquakes are in Deadwood; its  
+tornado, monster, and meltdown are left for later, and the roll that  
+would bring them does nothing. Every disaster is reported in red on the  
+news ticker the moment it starts. Fire also gets hints ahead of time,  
+which Tony Bark asked for after SimCity 3000: flavour headlines when the  
+city's fire risk runs high, which read the city and never decide a fire.  
+Damage is repaired as in Micropolis, at no cost: a zone redraws its  
+damaged tiles as it next grows or declines, plants, stations, hospitals,  
+and churches redraw those that are bare ground now and then, and the  
+player clears rubble.  
+Starting a disaster on demand, as Micropolis' Disasters menu does, waits  
+for a new set of palette art from Tony Bark, since the interface follows  
 later games, where such tools live in the palette.
 
-- [x] D1: land value, from a set of desirability factors, with an
-  overlay. Closeness to the centre, terrain, pollution, and crime, as in
-  Micropolis; the overview's Value mode shows it, and Crime has a mode of
-  its own. Crime is 128 less land value plus density, less police
+- [x] D1: land value, from a set of desirability factors, with an  
+  overlay. Closeness to the centre, terrain, pollution, and crime, as in  
+  Micropolis; the overview's Value mode shows it, and Crime has a mode of  
+  its own. Crime is 128 less land value plus density, less police  
   coverage, and takes 20 off land value above 190.
-- [x] D1: pollution from industry and traffic, and its effect on land
-  value. As Micropolis' core counts it, every tile of a building, as Tony
-  Bark chose over the Java port's centre alone; it lowers land value and
-  homes' worth, stops homes growing above 128, and has an overview mode
-  and a message. Its numbers are constants until the definitions format
-  can grow without stopping older versions opening new saves. Saved from
+- [x] D1: pollution from industry and traffic, and its effect on land  
+  value. As Micropolis' core counts it, every tile of a building, as Tony  
+  Bark chose over the Java port's centre alone; it lowers land value and  
+  homes' worth, stops homes growing above 128, and has an overview mode  
+  and a message. Its numbers are constants until the definitions format  
+  can grow without stopping older versions opening new saves. Saved from  
   format 1.5, as two parts older versions may leave out or keep.
-- [x] D2: fire. Fires start, spread to buildings, and are answered by
-  the fire service, with hints on the ticker when the risk runs high,
-  as in Micropolis (`World/Fires.cs`). A building keeps standing with the
-  holes fire leaves, and is redrawn as it grows; a burning centre takes
-  the building's tiles with something on them, as Tony Bark chose;
-  explosions set their fires at once. Fires start on their own only when
-  the player's Disasters and Fires switches allow, and the dice are
-  rolled either way. Saved from format 1.6 with every building written
+- [x] D2: fire. Fires start, spread to buildings, and are answered by  
+  the fire service, with hints on the ticker when the risk runs high,  
+  as in Micropolis (`World/Fires.cs`). A building keeps standing with the  
+  holes fire leaves, and is redrawn as it grows; a burning centre takes  
+  the building's tiles with something on them, as Tony Bark chose;  
+  explosions set their fires at once. Fires start on their own only when  
+  the player's Disasters and Fires switches allow, and the dice are  
+  rolled either way. Saved from format 1.6 with every building written  
   whole, so older versions open the city repaired.
-- [x] D3: earthquakes and floods, from Micropolis' disaster roll,
-  reported as they start (`World/Floods.cs`). A flood rises from a shore,
-  spreads for 30 cycles, and drains to bare ground; one reaching a centre
-  floods the whole building, as Tony Bark chose. An earthquake shakes
-  300 to 1 000 tiles and wrecks the outer tiles of buildings among them,
-  to rubble or to a fire of its own, and the view shakes. Each has its own switch on the
-  settings' Disasters tab. Saved from format 1.7, floods as a part of
-  their own. With them came a small pop-up window (`UI/NoticePanel.cs`),
-  which Tony Bark asked for, first used to say fullscreen waits for a
+- [x] D3: earthquakes and floods, from Micropolis' disaster roll,  
+  reported as they start (`World/Floods.cs`). A flood rises from a shore,  
+  spreads for 30 cycles, and drains to bare ground; one reaching a centre  
+  floods the whole building, as Tony Bark chose. An earthquake shakes  
+  300 to 1 000 tiles and wrecks the outer tiles of buildings among them,  
+  to rubble or to a fire of its own, and the view shakes. Each has its own switch on the  
+  settings' Disasters tab. Saved from format 1.7, floods as a part of  
+  their own. With them came a small pop-up window (`UI/NoticePanel.cs`),  
+  which Tony Bark asked for, first used to say fullscreen waits for a  
   restart.
-- [x] D2 and D3: damage and recovery, as in Micropolis: zones redraw
-  their holes as they grow, plants, stations, hospitals, and churches
-  redraw holes of bare ground every 8 or 16 counts, and the player clears
+- [x] D2 and D3: damage and recovery, as in Micropolis: zones redraw  
+  their holes as they grow, plants, stations, hospitals, and churches  
+  redraw holes of bare ground every 8 or 16 counts, and the player clears  
   rubble (`World/Hazards.cs`).
 
 ### Happy Isle: Player-facing game
 
-- [x] A tool palette that holds every tool. Laid out as Micropolis'
-  (`UI/ToolPaletteView.cs`); its buttons are switches, and since Radial's
+- [x] A tool palette that holds every tool. Laid out as Micropolis'  
+  (`UI/ToolPaletteView.cs`); its buttons are switches, and since Radial's  
   R3 there are no number keys, as Tony Bark chose.
-- [x] A HUD: population, funds, date, speed, and the demand bars
-  (`UI/Hud.cs`). The bar follows Tony Bark's mock-up in
-  `docs/design/`, along the bottom, with pause and speed buttons, the
-  city's name, a demand meter that opens the demand panel
-  (`UI/DemandPanel.cs`), and a help button that opens the help window
-  (`UI/HelpPanel.cs`). Under it, a news ticker (`UI/NewsTicker.cs`)
-  carries the game's notices, the city's messages, and headlines from
+- [x] A HUD: population, funds, date, speed, and the demand bars  
+  (`UI/Hud.cs`). The bar follows Tony Bark's mock-up in  
+  `docs/design/`, along the bottom, with pause and speed buttons, the  
+  city's name, a demand meter that opens the demand panel  
+  (`UI/DemandPanel.cs`), and a help button that opens the help window  
+  (`UI/HelpPanel.cs`). Under it, a news ticker (`UI/NewsTicker.cs`)  
+  carries the game's notices, the city's messages, and headlines from  
   the city's world; build hints show beside the pointer.
-- [ ] Panels for the budget, power, and the city score. The budget panel
-  (`UI/BudgetPanel.cs`) and power, as the overview map's power mode
-  (`UI/OverviewMap.cs`), are in; the score is not.
-- [x] Save and load: a city serializes to disk and reloads exactly, and a
-  corrupt file is reported, not fatal, since S2c (`docs/saving.md`). The
-  phases after it add formats and autosave. The owner settled the plan: one
-  save model in `CityLimits.Core`, holding everything, the cycle's
-  half-done figures included, so a city saves at any moment and loads
-  back exactly; three formats over it; saves in
+- [x] Panels for the budget and power: the budget panel  
+  (`UI/BudgetPanel.cs`), and power as the overview map's power mode  
+  (`UI/OverviewMap.cs`). The city score was dropped by Tony Bark, since  
+  CityLimits rates a city by ideas of its own.
+- [x] Save and load: a city serializes to disk and reloads exactly, and a  
+  corrupt file is reported, not fatal, since S2c (`docs/saving.md`). The  
+  phases after it add formats and autosave. The owner settled the plan: one  
+  save model in `CityLimits.Core`, holding everything, the cycle's  
+  half-done figures included, so a city saves at any moment and loads  
+  back exactly; three formats over it; saves in  
   `Documents/CityLimits/Cities`, listed in the game, with no file dialog.
-  - [x] S1: per-user folders. Settings in the config folder, mods and
-    saves under `Documents/CityLimits`, so a packaged game such as the
+  - [x] S1: per-user folders. Settings in the config folder, mods and  
+    saves under `Documents/CityLimits`, so a packaged game such as the  
     AppImage can write them (`GameFolders`).
-  - [x] S2a: the loading screen and the start menu, after the owner's
-    mock-up, with New Game naming the city and the in-game menu leading
+  - [x] S2a: the loading screen and the start menu, after the owner's  
+    mock-up, with New Game naming the city and the in-game menu leading  
     back. Load Game is dimmed until S2c.
-  - [x] S2b: the city panel, added by the owner: a click on the name
-    shows the city at a glance, its mods, and its seed, which a click
-    copies, and renames the city on Enter. The windows share
+  - [x] S2b: the city panel, added by the owner: a click on the name  
+    shows the city at a glance, its mods, and its seed, which a click  
+    copies, and renames the city on Enter. The windows share  
     `IMovableWindow`.
-  - [x] S2c: the save model and `.fcl`, its flat JSON form, checked
-    strictly; Ctrl+S to save and Ctrl+O to open, asking before
-    overwriting; Load Game's list; and a test that a loaded city runs on
+  - [x] S2c: the save model and `.fcl`, its flat JSON form, checked  
+    strictly; Ctrl+S to save and Ctrl+O to open, asking before  
+    overwriting; Load Game's list; and a test that a loaded city runs on  
     tick for tick like one never saved.
-  - [x] S3: `.cl`, the binary form, after Micropolis' city files, with
-    tagged, checksummed chunks for CityLimits' own state; Ctrl+S writes
+  - [x] S3: `.cl`, the binary form, after Micropolis' city files, with  
+    tagged, checksummed chunks for CityLimits' own state; Ctrl+S writes  
     it unless a city came from `.fcl`.
-  - [x] S4: autosave every 15 minutes of play, skipped when nothing
-    changed, written whole through a temporary file; one autosave, with
+  - [x] S4: autosave every 15 minutes of play, skipped when nothing  
+    changed, written whole through a temporary file; one autosave, with  
     an option for two.
-  - [x] S5: importing Micropolis' `.cty` cities, reporting anything
+  - [x] S5: importing Micropolis' `.cty` cities, reporting anything  
     CityLimits doesn't have yet, which becomes bare ground. Import only.
-- [x] A settings window, added by Tony Bark: from the start menu or the
-  Escape menu, which became one column of buttons (Resume, Save, Load,
-  Settings, Main menu, Quit), with tabs for Graphics (fullscreen) and
+- [x] A settings window, added by Tony Bark: from the start menu or the  
+  Escape menu, which became one column of buttons (Resume, Save, Load,  
+  Settings, Main menu, Quit), with tabs for Graphics (fullscreen) and  
   Gameplay (autosave off, one, or two) (`UI/SettingsPanel.cs`).
-- [ ] Scenarios to play, in the phases Tony Bark settled. Format 2.0
-  counts time in the game's dates, a month with an optional week, not
-  ticks, and still reads 1.x files; a scenario starts from a seed and
-  strokes or a saved city, can start in a later year, has goals judged
-  at an end date and disasters on dates, and is listed on the start page
-  when it has goals, so agents' tests stay on the command line. Saving
-  partway keeps the scenario; at the end a pop-up says won or lost, and
+- [ ] Scenarios to play, in the phases Tony Bark settled. Format 2.0  
+  counts time in the game's dates, a month with an optional week, not  
+  ticks, and still reads 1.x files; a scenario starts from a seed and  
+  strokes or a saved city, can start in a later year, has goals judged  
+  at an end date and disasters on dates, and is listed on the start page  
+  when it has goals, so agents' tests stay on the command line. Saving  
+  partway keeps the scenario; at the end a pop-up says won or lost, and  
   the city plays on. The first challenges are written fresh.
-  - [x] P1: a city's calendar can start in a later year
-    (`CitySimulation`'s `startYear`), counted from 1900 in steps so
+  - [x] P1: a city's calendar can start in a later year  
+    (`CitySimulation`'s `startYear`), counted from 1900 in steps so  
     saves don't change.
-  - [x] P2: scenario format 2.0: dates in place of ticks, a start year
-    or a saved city to start from, disasters on dates, and goals judged at
-    the end, reported as `won` apart from `passed`; format 1 still read,
+  - [x] P2: scenario format 2.0: dates in place of ticks, a start year  
+    or a saved city to start from, disasters on dates, and goals judged at  
+    the end, reported as `won` apart from `passed`; format 1 still read,  
     and the built-ins rewritten.
-  - [x] P3: playing a challenge from the start menu's Scenarios
-    (`UI/ScenarioPanel.cs`, `ChallengeShelf`), the game's own and the
-    player's from `Documents/CityLimits/Scenarios`; its actions and
-    disasters made on their dates, its goals in the city panel, a pop-up
-    with the result, and the challenge saved with its city (save 1.8).
+  - [x] P3: playing a challenge from the start menu's Scenarios  
+    (`UI/ScenarioPanel.cs`, `ChallengeShelf`), the game's own and the  
+    player's from `Documents/CityLimits/Scenarios`; its actions and  
+    disasters made on their dates, its goals in the city panel, a pop-up  
+    with the result, and the challenge saved with its city (save 1.8).  
     The demo-town fallback is dropped, and `first-town` is an example.
   - [ ] P4: the first built-in challenges.
-- [ ] A city score, rating the city the way the classic games do.
-- [ ] A start screen and a new-city flow: name, seed, and map size. The
-  loading screen, the start menu, and New Game's name and seed are in
-  (S2a), and clicking the name in the top bar renames the city; map size
+- [ ] A start screen and a new-city flow: name, seed, and map size. The  
+  loading screen, the start menu, and New Game's name and seed are in  
+  (S2a), and clicking the name in the top bar renames the city; map size  
   waits for a second size to choose.
 
 ### Kyoto: The scenario editor
 
-A city builder is a level editor turned into a game, as Tony Bark put it,
-so CityLimits gets a built-in editor for scenarios, sharing what play
-draws and how the player works it. It saves what format 2.0 reads: a
+A city builder is a level editor turned into a game, as Tony Bark put it,  
+so CityLimits gets a built-in editor for scenarios, sharing what play  
+draws and how the player works it. It saves what format 2.0 reads: a  
 scenario file and the city it starts from beside it.
 
-- [x] The interface split out of the game into `CityLimits.Interface`, a
+- [x] The interface split out of the game into `CityLimits.Interface`, a  
   library of its own the editor can share with play.
-- [x] K0: the buildings the alpha missed, which Tony Bark brought in so
-  the palette is whole before the editor shares it: a stadium, a
-  seaport, and an airport, at Micropolis' sizes and prices, with
-  Micropolis' demand caps, which hold residential, industrial, or
-  commercial demand at zero in a big city without one
-  (`Simulation/Facilities.cs`), saved from format 1.9 in a part of their
-  own, imported from Micropolis' cities, and placeable by scenarios from
-  format 2.1. Their prices are constants for now, and Micropolis' ship,
+- [x] K0: the buildings the alpha missed, which Tony Bark brought in so  
+  the palette is whole before the editor shares it: a stadium, a  
+  seaport, and an airport, at Micropolis' sizes and prices, with  
+  Micropolis' demand caps, which hold residential, industrial, or  
+  commercial demand at zero in a big city without one  
+  (`Simulation/Facilities.cs`), saved from format 1.9 in a part of their  
+  own, imported from Micropolis' cities, and placeable by scenarios from  
+  format 2.1. Their prices are constants for now, and Micropolis' ship,  
   planes, and helicopters come later, as Tony Bark chose.
-- [x] K1: a city view, the map's drawing, the camera, the palette's
-  strokes, and the overview, pulled out of `GameLoop` into the interface
-  library (`UI/CityView.cs`), for play and the editor to share; play is
-  unchanged. The city panel's mods column made way for the challenge's,
-  as Tony Bark chose: a challenge's name, end, standing, and disasters
-  to come beside the city, read-only in play; a free city's panel has
+- [x] K1: a city view, the map's drawing, the camera, the palette's  
+  strokes, and the overview, pulled out of `GameLoop` into the interface  
+  library (`UI/CityView.cs`), for play and the editor to share; play is  
+  unchanged. The city panel's mods column made way for the challenge's,  
+  as Tony Bark chose: a challenge's name, end, standing, and disasters  
+  to come beside the city, read-only in play; a free city's panel has  
   the city alone.
-- [x] K2: editing a scenario in the game itself, as Tony Bark put it,
-  opened from the Scenarios panel's Edit: the same view as play, paused,
-  with everything free, paused or playing. Playing tests the scenario
-  from a checkpoint, its actions, events, and goals running as for a
-  player; the Escape menu goes back to before play, or starts over from
-  the scenario's city (`Scenarios/ScenarioEdit.cs`). Terrain tools wait
+- [x] K2: editing a scenario in the game itself, as Tony Bark put it,  
+  opened from the Scenarios panel's Edit: the same view as play, paused,  
+  with everything free, paused or playing. Playing tests the scenario  
+  from a checkpoint, its actions, events, and goals running as for a  
+  player; the Escape menu goes back to before play, or starts over from  
+  the scenario's city (`Scenarios/ScenarioEdit.cs`). Terrain tools wait  
   for Tony Bark's own icons.
-- [x] K2b: a row under the Scenarios and Load lists, as Tony Bark
-  sketched it: the briefing, or a saved city's stats, beside a map of
-  the city (`UI/MapPreview.cs`, in the overview's colours), made once
-  when one is picked. The Load window now picks a city first and opens
+- [x] K2b: a row under the Scenarios and Load lists, as Tony Bark  
+  sketched it: the briefing, or a saved city's stats, beside a map of  
+  the city (`UI/MapPreview.cs`, in the overview's colours), made once  
+  when one is picked. The Load window now picks a city first and opens  
   it with Open, Enter, or a second click; both windows are taller.
-- [x] K3: the scenario's details, as Tony Bark laid them out: the city
-  panel's Edit scenario opens a window of three columns, its name,
-  dates, money, and description; its goals; and its disasters, with
-  Apply and Cancel (`UI/ScenarioWindow.cs`, `ScenarioDetails`). Apply
-  checks them as a file would be read, through a writer of format 2.2
-  (`ScenarioWriter`); moving a seeded scenario's start year moves its
-  city's founding there, everything built kept, as Tony Bark suggested,
-  since the map doesn't depend on the year. A disaster can repeat, `"repeat": { "weeks": 10,
-  "times": 4 }` (format 2.2). The button row, the text area, and the
+- [x] K3: the scenario's details, as Tony Bark laid them out: the city  
+  panel's Edit scenario opens a window of three columns, its name,  
+  dates, money, and description; its goals; and its disasters, with  
+  Apply and Cancel (`UI/ScenarioWindow.cs`, `ScenarioDetails`). Apply  
+  checks them as a file would be read, through a writer of format 2.2  
+  (`ScenarioWriter`); moving a seeded scenario's start year moves its  
+  city's founding there, everything built kept, as Tony Bark suggested,  
+  since the map doesn't depend on the year. A disaster can repeat, `"repeat": { "weeks": 10,  
+  "times": 4 }` (format 2.2). The button row, the text area, and the  
   smaller text field are made to be used again.
-- [ ] K4: saving the scenario in format 2.x with its city beside it as
-  `.fcl`, as Tony Bark chose, opening it again to edit, and the
-  Scenarios panel's New, for a scenario from a seed, sharing a New City
-  window that shows the seed's map and grows another with Generate, as
-  the OLPC port's terrain editor does. Trying it from the editor came
-  with K2.
-- [ ] After K4: an Editing scenarios page in the Help window, and a
-  unified title bar whose title the city panel can edit, as Tony Bark
-  asked.
+- [x] K4: saving the scenario in format 2.2 to the player's  
+  `Documents/CityLimits/Scenarios`, its city beside it as `.fcl`, as Tony  
+  Bark chose, a game's own scenario saved as a copy; Ctrl+S, or the  
+  Escape menu's Save, saves, and leaving asks only with changes since.  
+  The Scenarios panel's New starts one from a seed in the New City  
+  window, which New Game shares: the seed's map beside it, and Generate  
+  for another, as the OLPC port's terrain editor does. A draft, with no  
+  goals yet, is listed to edit, not to play. A saved city's start and  
+  money move too while it is at its founding. Trying it from the editor  
+  came with K2.
+### Senri: Interface and packaging
 
-### Yokohama: Polish and release
+A small milestone between the editor and online play, as Tony Bark set
+it out: mostly internal, it scaffolds the interface and catches what was
+missed before the work on online play begins.
 
-- [ ] A visual pass: one tile atlas, one palette, and no stray colors in
-  the draw code.
-- [ ] Sound effects and music.
-- [ ] Performance: the frame rate holds with a large city.
-- [ ] Documented builds for Linux and Windows.
-- [ ] A release build the owner can hand to a friend.
+- [ ] A unified title bar for every window, macOS-style, whose title can
+  be edited where a window turns that on, as the city panel does for the
+  city's name; off by default. An Editing scenarios page in the Help
+  window.
+  - [ ] Packaging for each platform from one place, after Photocraft's
+    `packaging/`: a shared setup that reads the version once, then
+    Linux's AppImage (in already), Windows, and macOS, so one release
+    goes out before networking.
+- [ ] Oversights found on the way, fixed before Yokohama starts.
+
+### Yokohama: Online play
+
+A shared city for two to four players, after SimCity 2000 Network  
+Edition (2KNet): each a commissioner of their own district, on land  
+they own, with their own budget beside the city's. Tony Bark swapped the  
+polish checklist for it. This is a draft, settled when the milestone  
+starts.
+
+- [ ] `CityLimits.Server`: the city run headless on a host, taking  
+  strokes, steps, queries, and saves as JSON lines and answering in  
+  kind, with a digest of the city every so many steps, so two runs can  
+  be compared and a client that drifts is caught. SimsCraft's oracles  
+  are the starting point, since they are proven. Bots may drive the  
+  server, never the client.
+- [ ] Land ownership: plots bought from the city by dragging, built on  
+  only by their owner, and sold back to it.
+- [ ] Each player's district budget and taxes, beside the city's own,  
+  settled yearly.
+- [ ] Hosting and joining over a network, clients sending their strokes;  
+  the library or protocol is Tony Bark's to approve.
+- [ ] The host's controls: speed, disasters, saving and loading, and the  
+  players.
+- [ ] Chat, and contracts sharing services for a fee (police and fire  
+  by coverage, power by the grid, hospitals citywide), and sending money.
 
 ## Critical path
 
-New Dullsville, Neat Map, Line City, and Kowloon are done: the loop, the
-map, the tools, and a simulation that grows a city as Micropolis does,
-proven on ordinary .NET through `CityLimits.Core` and its tests. Joffburg
+New Dullsville, Neat Map, Line City, and Kowloon are done: the loop, the  
+map, the tools, and a simulation that grows a city as Micropolis does,  
+proven on ordinary .NET through `CityLimits.Core` and its tests. Joffburg  
 is nearly done; its power overlay is the last piece.
 
-Alpha now waits on Happy Isle's saving, and saving waits on the owner's
-choice of format. Radial and Deadwood hang off the simulation's data
-model, which is settled: trips already record their routes for traffic,
-and the coverage maps and land value are ready for crime, pollution, and
+Alpha now waits on Happy Isle's saving, and saving waits on the owner's  
+choice of format. Radial and Deadwood hang off the simulation's data  
+model, which is settled: trips already record their routes for traffic,  
+and the coverage maps and land value are ready for crime, pollution, and  
 fire. Happy Isle's remaining panels can be built alongside them.
 
-The long poles are now Radial and Deadwood. If they run long, cut scope
-inside Deadwood's disasters first, not inside traffic or crime, which the
+The long poles are now Radial and Deadwood. If they run long, cut scope  
+inside Deadwood's disasters first, not inside traffic or crime, which the  
 baseline's growth depends on.
 
 ## Risks most likely to push estimates up
 
-- The tick is the design center of the game. A demand model, a growth
-  model, and an economy that all read one set of numbers is a shape
+- The tick is the design center of the game. A demand model, a growth  
+  model, and an economy that all read one set of numbers is a shape  
   decision, and shape decisions cost more than code.
-- A city builder grows faster than it can be drawn. The chunk cache draws
-  a 120 by 100 map at 60 FPS today; overlays and animated tiles are drawn
+- A city builder grows faster than it can be drawn. The chunk cache draws  
+  a 120 by 100 map at 60 FPS today; overlays and animated tiles are drawn  
   over it, and each has to stay off the per-frame allocation path.
-- The rule that the simulation never touches Raylib is easy to state and
-  easy to break. A single `Raylib.GetFrameTime()` in the tick code makes
+- The rule that the simulation never touches Raylib is easy to state and  
+  easy to break. A single `Raylib.GetFrameTime()` in the tick code makes  
   every test flaky.
-- Determinism is cheap to keep and expensive to recover: one
-  `Random.Shared` call in the simulation makes saved cities irreproducible
+- Determinism is cheap to keep and expensive to recover: one  
+  `Random.Shared` call in the simulation makes saved cities irreproducible  
   and tests unreliable.
-- Art is a hidden cost. The tile sheet and the tool icons are the
-  Micropolis art under the GPL, so CityLimits is under the GPL too; new art
-  has to be the owner's own work or GPL-compatible, and the owner may want
+- Art is a hidden cost. The tile sheet and the tool icons are the  
+  Micropolis art under the GPL, so CityLimits is under the GPL too; new art  
+  has to be the owner's own work or GPL-compatible, and the owner may want  
   to redo what is here more than once.
 - Everything here is one person's evenings. Estimates assume that.
 
@@ -476,6 +510,10 @@ baseline's growth depends on.
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-27 | minor | Tony Bark made Senri a small milestone of its own, between Kyoto and Yokohama: the unified title bar, the Editing scenarios help page, and packaging within that phase, and room for oversights before online play. Kyoto is complete. |
+| 2026-10-27 | minor | Kyoto, K4: a scenario saves to the player's scenarios folder with its city beside it, a game's own as a copy, and then starts from that city; New starts one from a seed in the New City window, which New Game shares, with the seed's map and Generate. Drafts without goals are listed to edit. A saved city's start and money move while it is at its founding. Kyoto is complete, 867 tests. |
+| 2026-10-27 | minor | Tony Bark swapped Yokohama's polish checklist for online play after SimCity 2000 Network Edition, hosted by a `CityLimits.Server` that starts from SimsCraft's oracles; the old polish items are dropped, and packaging for each platform, after Photocraft's, goes after K4 in Kyoto, so one release can go out before networking. Its checklist is a draft. Milestones from here are named after Japanese cities and towns. |
+| 2026-10-27 | minor | Tony Bark dropped the city score from the roadmap, as from scenario goals: CityLimits rates a city by ideas of its own. Happy Isle is at 60%, with map size on the start screen and P4's challenges left. |
 | 2026-10-27 | minor | Kyoto, K3: the scenario's details in a window of three columns, from the city panel's Edit scenario, with Apply and Cancel, checked through a new writer of scenario format 2.2; a seeded scenario's start year moves its city's founding, keeping what is built, as Tony Bark suggested. Scenarios are 2.2, with a disaster that repeats. Tony Bark asked for a New City window like the OLPC port's, for K4, and a Help page and a unified title bar after it. 861 tests. |
 | 2026-10-27 | minor | Kyoto, K2b, added by Tony Bark: the Scenarios and Load windows show what is picked under their lists, the briefing or a city's stats beside a map of its city, and the Load window picks before it opens. A scenario's editor keeps the tool in hand when it goes back or starts over. After reading the OLPC port's scenarios, Tony Bark chose repeating disasters for K3, no city score as a goal, and our own challenges rather than importing Classic's, whose details are written into its code. 839 tests. |
 | 2026-10-27 | minor | Kyoto, K2, as Tony Bark clarified it: a scenario is edited in the game itself, the view play uses, as SimCity began as a map editor turned into a game. The Scenarios panel's Edit opens its city paused, with everything free; playing tests it from a checkpoint, the scenario's actions, events, and goals running as for a player, and the Escape menu goes back to before play or starts over. K4's trying it came with it. The confirm panel wraps a long message. Kyoto is at 65%, 839 tests. |

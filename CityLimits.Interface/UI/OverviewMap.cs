@@ -210,7 +210,14 @@ public sealed class OverviewMap : IDisposable
             return Theme.Flood;
         }
 
-        var state = city.Map.StateAt(x, y);
+        return MapColorAt(city.Map, x, y);
+    }
+
+    /// <summary>A tile of a map, with no city on it yet, in the City mode's colours: what is built, or the ground.</summary>
+    public static Color MapColorAt(TileMap map, int x, int y)
+    {
+        ArgumentNullException.ThrowIfNull(map);
+        var state = map.StateAt(x, y);
         return state.Use == TileUse.None ? Theme.For(state.Kind) : Theme.For(state.Use);
     }
 

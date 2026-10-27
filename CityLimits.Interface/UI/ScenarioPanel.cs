@@ -4,9 +4,10 @@ namespace CityLimits.UI;
 /// The challenges a player can pick from the start menu, laid out like Load Game's list: the game's
 /// own, then the player's, each with its dates and how many goals it has. A click picks one, and
 /// its briefing shows under the list, what it's about and the goals to meet by its end, beside a
-/// map of the city it starts with. Play, or
-/// Enter, starts it; Edit opens it in the game to edit; Back or Escape leaves. A scenario that can't
-/// be read is listed with why, and can't be played or edited.
+/// map of the city it starts with. Play, or Enter, starts it; Edit opens it in the game to edit;
+/// New opens the New City window to start a scenario from a seed; Back or Escape leaves. A scenario
+/// that can't be read is listed with why, and can't be played or edited. What is edited is saved to
+/// the player's own folder, the last of those listed.
 /// </summary>
 public sealed class ScenarioPanel : IDisposable
 {
@@ -42,6 +43,12 @@ public sealed class ScenarioPanel : IDisposable
     private readonly List<string> _problemLines = [];
     private readonly MapPreview _preview = new();
     private int _first;
+
+    // The New City window, open over the list while a new scenario is being named and seeded, and
+    // the player's own scenarios folder, where a new one is saved.
+    private readonly NewCityPanel _newScenario = new();
+    private bool _newOpen;
+    private string _saveFolder = string.Empty;
     private int _selected = -1;
     private string? _problem;
 
@@ -65,6 +72,7 @@ public sealed class ScenarioPanel : IDisposable
     private const int BackButton = 0;
     private const int PlayButton = 1;
     private const int EditButton = 2;
+    private const int NewButton = 3;
 
     /// <summary>
     /// The challenge's city, being played, once the outcome is <see cref="Outcome.Play"/>, or the
@@ -82,6 +90,8 @@ public sealed class ScenarioPanel : IDisposable
     public void Reset(IReadOnlyList<string> folders)
     {
         _listings = ChallengeShelf.List(folders, out var problem);
+        _saveFolder = folders.Count > 0 ? folders[^1] : string.Empty;
+        _newOpen = false;
         if (problem is not null)
         {
             Logger.Warn("{Problem}", problem);
@@ -91,7 +101,7 @@ public sealed class ScenarioPanel : IDisposable
         foreach (var listing in _listings)
         {
             var details = listing.Scenario is { } scenario
-                ? $"{scenario.DateAt(0)} to {scenario.DateAt(scenario.Ticks)}   {Count(scenario.Goals.Count, "goal")}"
+                ? $"{scenario.DateAt(0)} to {scenario.DateAt(scenario.Ticks)}   {(scenario.HasGoals ? Count(scenario.Goals.Count, "goal") : "a draft, with no goals yet: edit it to add some")}"
                 : $"Can't be played: {listing.Problem}";
             _rows.Add((listing.Scenario?.Name ?? System.IO.Path.GetFileName(listing.Path), Shorten(details, Width - (Padding * 2) - 12), listing.Scenario is not null));
         }
@@ -116,11 +126,20 @@ public sealed class ScenarioPanel : IDisposable
         return outcome;
     }
 
-    /// <summary>Lets go of the map. Call it before the window closes.</summary>
-    public void Dispose() => _preview.Dispose();
+    /// <summary>Lets go of the maps. Call it before the window closes.</summary>
+    public void Dispose()
+    {
+        _preview.Dispose();
+        _newScenario.Dispose();
+    }
 
     private Outcome Choose()
     {
+        if (_newOpen)
+        {
+            return ChooseNew();
+        }
+
         if (Raylib.IsKeyPressed(KeyboardKey.Escape))
         {
             return Outcome.Back;
@@ -156,6 +175,13 @@ public sealed class ScenarioPanel : IDisposable
         if (Raylib.CheckCollisionPointRec(mouse, ButtonBounds(EditButton)))
         {
             return TryEdit();
+        }
+
+        if (Raylib.CheckCollisionPointRec(mouse, ButtonBounds(NewButton)) && _saveFolder.Length > 0)
+        {
+            _newScenario.Reset(null, "New scenario", "New Scenario");
+            _newOpen = true;
+            return Outcome.Open;
         }
 
         for (var row = 0; row < Rows && _first + row < _listings.Count; row++)
@@ -215,12 +241,20 @@ public sealed class ScenarioPanel : IDisposable
             y += BriefingLineHeight;
         }
 
-        DrawButton(ButtonBounds(EditButton), "Edit", CanPlay, mouse);
+        DrawButton(ButtonBounds(NewButton), "New", _saveFolder.Length > 0, mouse);
+        DrawButton(ButtonBounds(EditButton), "Edit", CanEdit, mouse);
         DrawButton(ButtonBounds(PlayButton), "Play", CanPlay, mouse);
         DrawButton(ButtonBounds(BackButton), "Back", enabled: true, mouse);
+        if (_newOpen)
+        {
+            _newScenario.Draw();
+        }
     }
 
-    private bool CanPlay => _selected >= 0 && _listings[_selected].Scenario is not null;
+    // A draft, with no goals yet, can be edited but not played.
+    private bool CanEdit => _selected >= 0 && _listings[_selected].Scenario is not null;
+
+    private bool CanPlay => CanEdit && _listings[_selected].Scenario!.HasGoals;
 
     private void SetProblem(string? problem)
     {
@@ -301,10 +335,41 @@ public sealed class ScenarioPanel : IDisposable
         }
     }
 
+    // The New City window takes the frame while it is open: starting makes the scenario, from the seed
+    // given or one picked now, and opens it to edit; going back returns to the list.
+    private Outcome ChooseNew()
+    {
+        switch (_newScenario.Update())
+        {
+            case NewCityPanel.Outcome.Back:
+                _newOpen = false;
+                return Outcome.Open;
+            case NewCityPanel.Outcome.Start:
+                _newOpen = false;
+                var wanted = _newScenario.City!;
+                try
+                {
+                    var editing = ScenarioEdit.New(wanted.Name, wanted.Seed ?? Random.Shared.Next(), _saveFolder);
+                    City = editing.OpenCity();
+                    Editing = editing;
+                    Logger.Info("A new scenario, {Name}, from seed {Seed}", editing.Scenario.Name, editing.Scenario.Seed);
+                    return Outcome.Edit;
+                }
+                catch (ArgumentException ex)
+                {
+                    SetProblem(ex.Message);
+                    return Outcome.Open;
+                }
+
+            default:
+                return Outcome.Open;
+        }
+    }
+
     // Editing reads the scenario's saved city afresh too, as playing does.
     private Outcome TryEdit()
     {
-        if (!CanPlay)
+        if (!CanEdit)
         {
             return Outcome.Open;
         }
@@ -312,7 +377,7 @@ public sealed class ScenarioPanel : IDisposable
         var listing = _listings[_selected];
         try
         {
-            var editing = new ScenarioEdit(listing.Scenario!, listing.Path);
+            var editing = new ScenarioEdit(listing.Scenario!, listing.Path, _saveFolder);
             City = editing.OpenCity();
             Editing = editing;
             Logger.Info("Editing the scenario '{Name}' from {File}", listing.Scenario!.Name, listing.Path);
@@ -367,7 +432,7 @@ public sealed class ScenarioPanel : IDisposable
         return new Rectangle { X = bounds.X + Padding, Y = bounds.Y + ListTop + (row * RowHeight), Width = Width - (Padding * 2), Height = RowHeight - 2 };
     }
 
-    // Edit, Play, then Back, along the bottom right; a button is counted from the right.
+    // New, Edit, Play, then Back, along the bottom right; a button is counted from the right.
     private static Rectangle ButtonBounds(int button)
     {
         var bounds = Bounds();

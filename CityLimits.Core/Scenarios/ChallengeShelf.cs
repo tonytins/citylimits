@@ -10,8 +10,9 @@ public sealed record ScenarioListing(string Path, Scenario? Scenario, string? Pr
 
 /// <summary>
 /// The challenges a player can pick: the scenarios with goals in the game's own folder and the
-/// player's, in that order and each in name order. A scenario with only checks is an agent's test
-/// and isn't listed. A file that can't be read is listed with why, so the player can tell it's
+/// player's, in that order and each in name order, and drafts, with neither goals nor checks yet,
+/// which can be edited but not played. A scenario with only checks is an agent's test and isn't
+/// listed. A file that can't be read is listed with why, so the player can tell it's
 /// there; it can't be played. Nothing ever falls back to another scenario in its place.
 /// </summary>
 public static class ChallengeShelf
@@ -52,7 +53,7 @@ public static class ChallengeShelf
                 {
                     listings.Add(new ScenarioListing(file, null, error));
                 }
-                else if (scenario.HasGoals)
+                else if (scenario.HasGoals || scenario.IsDraft)
                 {
                     listings.Add(new ScenarioListing(file, scenario, null));
                 }

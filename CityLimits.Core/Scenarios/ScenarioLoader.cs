@@ -114,7 +114,15 @@ public static class ScenarioLoader
         TryParse(json, folder: null, out scenario, out error);
 
     /// <summary>Reads a scenario from its JSON text, and checks it, reading a saved city it starts from in the given folder.</summary>
-    public static bool TryParse(string json, string? folder, [NotNullWhen(true)] out Scenario? scenario, out string error)
+    public static bool TryParse(string json, string? folder, [NotNullWhen(true)] out Scenario? scenario, out string error) =>
+        TryParse(json, folder, null, out scenario, out error);
+
+    /// <summary>
+    /// Reads a scenario as <see cref="TryParse(string, string?, out Scenario?, out string)"/> does,
+    /// with the city it starts from given rather than read from its file, as an editor holds it before
+    /// it is saved: its seed, map, money, and date are the given city's, and its file is still named.
+    /// </summary>
+    internal static bool TryParse(string json, string? folder, CitySimulation? city, [NotNullWhen(true)] out Scenario? scenario, out string error)
     {
         ArgumentNullException.ThrowIfNull(json);
         scenario = null;
@@ -151,7 +159,7 @@ public static class ScenarioLoader
                 throw new InvalidScenario($"format: {problem}");
             }
 
-            scenario = Validate(JsonSerializer.Deserialize(json, (JsonTypeInfo<ScenarioDocument2>)Options.GetTypeInfo(typeof(ScenarioDocument2)))!, folder);
+            scenario = Validate(JsonSerializer.Deserialize(json, (JsonTypeInfo<ScenarioDocument2>)Options.GetTypeInfo(typeof(ScenarioDocument2)))!, folder, city);
             return true;
         }
         catch (JsonException ex)
@@ -205,7 +213,7 @@ public static class ScenarioLoader
 
     // Format 2: times as the game's dates, from a city made from a seed in a year of its own, or
     // from a saved city beside the scenario, which brings its own seed, map, money, and date.
-    private static Scenario Validate(ScenarioDocument2 document, string? folder)
+    private static Scenario Validate(ScenarioDocument2 document, string? folder, CitySimulation? givenCity)
     {
         var (name, description) = NameAndDescription(document.Name, document.Description);
 
@@ -223,7 +231,8 @@ public static class ScenarioLoader
             }
 
             cityFile = CityPath(city, folder);
-            if (!CityFiles.TryRead(cityFile, out var saved, out var problem, out _))
+            CitySimulation? saved = givenCity;
+            if (saved is null && !CityFiles.TryRead(cityFile, out saved, out var problem, out _))
             {
                 throw new InvalidScenario($"city: '{city}' couldn't be opened: {problem}");
             }

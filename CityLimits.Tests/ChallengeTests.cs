@@ -171,25 +171,28 @@ public class ChallengeTests
     }
 
     [Fact]
-    public void TheShelfListsChallengesAndUnreadableFilesButNotTests()
+    public void TheShelfListsChallengesDraftsAndUnreadableFilesButNotTests()
     {
         var builtIn = Directory.CreateTempSubdirectory().FullName;
         var player = Directory.CreateTempSubdirectory().FullName;
         try
         {
-            File.WriteAllText(Path.Combine(builtIn, "b-test.json"), """{ "format": "2.0", "name": "A test", "seed": 1, "ends": "1900-02" }""");
+            File.WriteAllText(Path.Combine(builtIn, "b-test.json"), """{ "format": "2.0", "name": "A test", "seed": 1, "ends": "1900-02", "checks": [ { "at": "1900-01", "fundsAtLeast": 0 } ] }""");
             File.WriteAllText(Path.Combine(builtIn, "a-challenge.json"), Json);
             File.WriteAllText(Path.Combine(player, "broken.json"), "{ not json");
             File.WriteAllText(Path.Combine(player, "mine.json"), Json.Replace("Little Challenge", "My Own"));
+            File.WriteAllText(Path.Combine(player, "nearly.json"), """{ "format": "2.2", "name": "Nearly", "seed": 1, "ends": "1910-01" }""");
 
             var listings = ChallengeShelf.List([builtIn, player, Path.Combine(player, "missing")], out var problem);
 
             Assert.Null(problem);
-            Assert.Equal(["a-challenge.json", "broken.json", "mine.json"], listings.Select(l => Path.GetFileName(l.Path)));
+            Assert.Equal(["a-challenge.json", "broken.json", "mine.json", "nearly.json"], listings.Select(l => Path.GetFileName(l.Path)));
             Assert.Equal("Little Challenge", listings[0].Scenario!.Name);
             Assert.Null(listings[1].Scenario);
             Assert.NotNull(listings[1].Problem);
             Assert.Equal("My Own", listings[2].Scenario!.Name);
+            Assert.True(listings[3].Scenario!.IsDraft);
+            Assert.False(listings[3].Scenario!.HasGoals);
         }
         finally
         {

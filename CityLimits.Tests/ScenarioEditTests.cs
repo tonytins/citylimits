@@ -5,8 +5,11 @@ using CityLimits.Core.World;
 
 namespace CityLimits.Tests;
 
-public class ScenarioEditTests
+public sealed class ScenarioEditTests : IDisposable
 {
+    // The player's scenarios folder, a fresh one for each test.
+    private readonly string _folder = Directory.CreateTempSubdirectory("citylimits-edit").FullName;
+
     // A small scenario: a road in its first month, a fire in its third, a goal by mid-year.
     private const string Json = """
         { "format": "2.0", "name": "Little Edit", "seed": 5, "map": { "width": 32, "height": 32 },
@@ -16,10 +19,12 @@ public class ScenarioEditTests
           "goals": [ { "measure": "Population", "atLeast": 1000000 } ] }
         """;
 
-    private static ScenarioEdit Edit()
+    public void Dispose() => Directory.Delete(_folder, recursive: true);
+
+    private ScenarioEdit Edit()
     {
         Assert.True(ScenarioLoader.TryParse(Json, out var scenario, out var error), error);
-        return new ScenarioEdit(scenario, "little-edit.json");
+        return new ScenarioEdit(scenario, Path.Combine(AppContext.BaseDirectory, "little-edit.json"), _folder);
     }
 
     private static void Run(CitySimulation city, long steps)
@@ -174,7 +179,7 @@ public class ScenarioEditTests
             Events = [new EventDetails(new ScenarioDate(1920, 2, 3), Disaster.Flood, new EventRepeat(8, 3))],
         };
 
-        Assert.True(edit.TryChange(details, out var changed, out var problem), problem);
+        Assert.True(edit.TryChange(details, city, out var changed, out var problem), problem);
         edit.Accept(changed, city);
 
         Assert.Equal("Renamed", edit.Scenario.Name);
@@ -207,7 +212,7 @@ public class ScenarioEditTests
             Events = [new EventDetails(new ScenarioDate(1950, 6), Disaster.Fire, null)],
         };
 
-        Assert.True(edit.TryChange(details, out var changed, out var problem), problem);
+        Assert.True(edit.TryChange(details, city, out var changed, out var problem), problem);
         edit.Accept(changed, city);
 
         Assert.Equal(new GameDate(1950, 1), city.Date);
@@ -251,9 +256,10 @@ public class ScenarioEditTests
     public void DetailsThatCantBeAFileAreRefusedWithWhy()
     {
         var edit = Edit();
+        var city = edit.OpenCity();
         var details = ScenarioDetails.Of(edit.Scenario) with { Ends = new ScenarioDate(1919, 1) };
 
-        Assert.False(edit.TryChange(details, out _, out var problem));
+        Assert.False(edit.TryChange(details, city, out _, out var problem));
         Assert.Equal("ends: 1919-01 is before the scenario starts, in 1920-01.", problem);
         Assert.Equal(new ScenarioDate(1920, 7), edit.Scenario.DateAt(edit.Scenario.Ticks));
     }
@@ -263,9 +269,122 @@ public class ScenarioEditTests
     {
         var edit = Edit();
         var city = edit.OpenCity();
-        Assert.True(edit.TryChange(ScenarioDetails.Of(edit.Scenario), out var changed, out var problem), problem);
+        Assert.True(edit.TryChange(ScenarioDetails.Of(edit.Scenario), city, out var changed, out var problem), problem);
         edit.BeginTest(city);
 
         Assert.Throws<InvalidOperationException>(() => edit.Accept(changed, city));
+    }
+
+    [Fact]
+    public void SavingWritesTheScenarioAndItsCityToThePlayersFolderAndStartsFromThatCity()
+    {
+        var edit = Edit();
+        var city = edit.OpenCity();
+        var (x, y) = DryLand(city.Map, 4);
+        city.Builder.Apply(BuildAction.CoalPowerPlant, x, y);
+        Assert.True(edit.HasChanges(city));
+
+        Assert.True(edit.TrySave(city, out var problem), problem);
+
+        Assert.Equal(Path.Combine(_folder, "Little Edit.json"), edit.Path);
+        Assert.True(File.Exists(Path.Combine(_folder, "Little Edit.fcl")));
+        Assert.Equal(Path.Combine(_folder, "Little Edit.fcl"), edit.Scenario.CityFile);
+        Assert.False(edit.HasChanges(city));
+
+        // Read again as any scenario is, it starts from the city built, on its date, its stroke kept.
+        Assert.True(ScenarioLoader.TryLoadFile(edit.Path, out var saved, out var error), error);
+        var reopened = ChallengeShelf.Begin(saved);
+        Assert.Equal(TileUse.CoalPowerPlant, reopened.Map.StateAt(x, y).Use);
+        Assert.Equal(new GameDate(1920, 1), reopened.Date);
+        Assert.Equal(100, reopened.Treasury.Funds);
+        Assert.Single(saved.Actions);
+        Assert.Equal("Little Edit", reopened.Name);
+    }
+
+    [Fact]
+    public void AGamesOwnScenarioIsSavedAsTheGamersCopyAndTheOriginalIsLeftAlone()
+    {
+        var original = Path.Combine(_folder, "game");
+        Directory.CreateDirectory(original);
+        File.WriteAllText(Path.Combine(original, "little.json"), Json);
+        Assert.True(ScenarioLoader.TryLoadFile(Path.Combine(original, "little.json"), out var scenario, out var error), error);
+        var edit = new ScenarioEdit(scenario, Path.Combine(original, "little.json"), _folder);
+        var city = edit.OpenCity();
+        Assert.False(edit.HasChanges(city));
+
+        Assert.True(edit.TrySave(city, out var problem), problem);
+
+        Assert.Equal(Json, File.ReadAllText(Path.Combine(original, "little.json")));
+        Assert.Equal(_folder, Path.GetDirectoryName(edit.Path));
+    }
+
+    [Fact]
+    public void ANewScenarioStartsFromItsSeedAndIsUnsavedUntilSaved()
+    {
+        var edit = ScenarioEdit.New("Fresh Start", 42, _folder);
+        var city = edit.OpenCity();
+
+        Assert.Equal("Fresh Start", city.Name);
+        Assert.Equal(new GameDate(1900, 1), city.Date);
+        Assert.Equal(ScenarioEdit.NewFunds, city.Treasury.Funds);
+        Assert.Equal(new ScenarioDate(1910, 1), edit.Scenario.DateAt(edit.Scenario.Ticks));
+        Assert.Empty(edit.Scenario.Goals);
+        Assert.True(edit.HasChanges(city));
+        Assert.False(File.Exists(edit.Path));
+
+        Assert.True(edit.TrySave(city, out var problem), problem);
+        Assert.False(edit.HasChanges(city));
+    }
+
+    [Fact]
+    public void ASavedCitysStartAndMoneyMoveWhileItIsAtItsFounding()
+    {
+        var edit = Edit();
+        var city = edit.OpenCity();
+        Assert.True(edit.TrySave(city, out var problem), problem);
+        Assert.True(edit.CanMoveStart(city));
+        var details = ScenarioDetails.Of(edit.Scenario) with { StartYear = 1930, Funds = 7000, Ends = new ScenarioDate(1931, 1), Events = [] };
+
+        Assert.True(edit.TryChange(details, city, out var changed, out problem), problem);
+        edit.Accept(changed, city);
+
+        Assert.Equal(new GameDate(1930, 1), city.Date);
+        Assert.Equal(7000, city.Treasury.Funds);
+        Assert.True(edit.HasChanges(city));
+
+        // Starting over before saving again puts the changed start and money on the saved city.
+        var over = edit.OpenCity();
+        Assert.Equal(new GameDate(1930, 1), over.Date);
+        Assert.Equal(7000, over.Treasury.Funds);
+
+        Assert.True(edit.TrySave(over, out problem), problem);
+        Assert.True(ScenarioLoader.TryLoadFile(edit.Path, out var saved, out var error), error);
+        Assert.Equal(1930, saved.StartYear);
+        Assert.Equal(7000, saved.Funds);
+    }
+
+    [Fact]
+    public void ACityThatHasRunKeepsItsOwnStartAndMoney()
+    {
+        var edit = Edit();
+        var city = edit.OpenCity();
+        Assert.True(edit.TrySave(city, out var problem), problem);
+        city.Tick();
+
+        Assert.False(edit.CanMoveStart(city));
+        Assert.False(edit.TryChange(ScenarioDetails.Of(edit.Scenario) with { Funds = 1 }, city, out _, out problem));
+        Assert.Equal("Its city has run since it was founded, so its start and its money are its own.", problem);
+    }
+
+    [Fact]
+    public void AScenarioCantBeSavedWhileItIsTested()
+    {
+        var edit = Edit();
+        var city = edit.OpenCity();
+        edit.BeginTest(city);
+
+        Assert.False(edit.TrySave(city, out var problem));
+        Assert.Equal("A scenario can't be saved while it is tested: go back to before play first.", problem);
+        Assert.Empty(Directory.GetFiles(_folder));
     }
 }

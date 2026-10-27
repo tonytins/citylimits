@@ -34,8 +34,10 @@ The start menu's Scenarios opens a list of the challenges a player can
 pick (`UI/ScenarioPanel.cs`, `ChallengeShelf`): the scenarios with goals
 in the game's own folder, then those in the player's own,
 `Documents/CityLimits/Scenarios`, which the game makes. A scenario with
-only checks is a test, for agents, and isn't listed. A file that can't be
-read is listed with why, and can't be played. Picking one shows its
+only checks is a test, for agents, and isn't listed; a draft from the
+editor, with neither goals nor checks yet, is listed to edit but can't be
+played until it has a goal. A file that can't be read is listed with
+why, and can't be played. Picking one shows its
 briefing, its description and its goals, beside a map of the city it
 starts with; Play, or Enter, starts it.
 
@@ -85,9 +87,24 @@ with the bar saying it is being edited:
   over opens the scenario's city afresh, dropping every change.
 
 A test from the same checkpoint runs the same every time, as the
-simulation is deterministic. A scenario's details can't be changed
-while it is tested. A scenario can't be saved from the game yet, and no
-other city can be opened while one is edited.
+simulation is deterministic. A scenario's details can't be changed, nor
+the scenario saved, while it is tested, and no other city can be opened
+while one is edited.
+
+Ctrl+S, or the Escape menu's Save, saves the scenario to the player's
+`Documents/CityLimits/Scenarios` as `<name>.json`, with its city beside it
+as `<name>.fcl` (`ScenarioEdit.TrySave`): from then on it starts from
+that city, whatever it was made from, its strokes, goals, and disasters
+kept. A game's own scenario is saved there as a copy, and the original
+is left as it was; saving over another scenario of the same name asks
+first, and leaving asks only when something changed since the last
+save. A saved city's start year and money can still move while the city
+is at its founding, as a seed's can.
+
+The Scenarios list's New opens the New City window, titled New scenario:
+a name and a seed beside the map that seed grows, with Generate for
+another, as New Game's is. Start opens it to edit, from 1900 with
+$20,000, running ten years, with no goals or disasters yet.
 
 ## Running a scenario
 

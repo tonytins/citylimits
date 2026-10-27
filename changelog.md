@@ -1,5 +1,28 @@
 # CityLimits Changelog
 
+## 0.4.110
+
+Scenarios you edit can be saved. Press Ctrl+S, or Save in the Escape
+menu, and the scenario goes to your `Documents/CityLimits/Scenarios`
+with its city beside it, so it starts from the city you built. Editing
+one of the game's own scenarios saves your own copy and leaves the
+original alone. The Scenarios list has a New button for a scenario of
+your own, and a scenario without goals yet is listed as a draft you can
+edit but not play.
+
+New Game opens a new window: your city's name and its seed sit beside a
+map of what that seed grows, and Generate picks another seed until you
+like the land. It opens with a seed already picked, so there's always a
+map to look at.
+
+For developers and agents: `ScenarioEdit` saves (`TrySave`), starts a
+new scenario (`New`), and tells whether anything changed since the last
+save (`HasChanges`); a scenario that starts from a saved city can move
+its start and money while that city is at its founding, checked against
+a copy of it. `Scenario.IsDraft` marks one with neither goals nor
+checks, which the shelf now lists. `NewCityPanel` shows the seed's map
+through `MapPreview.Show(TileMap)`.
+
 ## 0.4.109
 
 A scenario's details can be edited in the game. While editing one, the
