@@ -36,7 +36,8 @@ in the game's own folder, then those in the player's own,
 `Documents/CityLimits/Scenarios`, which the game makes. A scenario with
 only checks is a test, for agents, and isn't listed. A file that can't be
 read is listed with why, and can't be played. Picking one shows its
-briefing, its description and its goals; Play, or Enter, starts it.
+briefing, its description and its goals, beside a map of the city it
+starts with; Play, or Enter, starts it.
 
 A played scenario is a city like any other, with its challenge
 (`Challenge`, kept by `CitySimulation.Challenge`): a city made from a

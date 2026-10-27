@@ -62,7 +62,7 @@ public static class WindowedGame
                 loading.Draw();
             }
 
-            var menu = new StartMenu(assets, VersionInfo.DisplayVersion);
+            using var menu = new StartMenu(assets, VersionInfo.DisplayVersion);
             // The game's own challenges, then the player's.
             IReadOnlyList<string> scenarioFolders = [Commands.ScenarioSubcommand.ScenarioFolder, folders.ScenariosFolder];
             menu.Show(fromLoading: true, seed, folders.CitiesFolder, settings, scenarioFolders);
@@ -155,15 +155,17 @@ public static class WindowedGame
 
     // Plays a city until the player leaves it, and then any city they open from it, keeping the
     // settings each ends with. Returns how the last one was left. A scenario being edited carries on
-    // in the city it opens, its test gone back on or its city afresh, looked at from where it was.
+    // in the city it opens, its test gone back on or its city afresh, looked at from where it was
+    // with the same tool in hand.
     private static GameLoop.Leave PlayCities(CitySimulation city, string? file, IReadOnlyList<string> modProblems, IReadOnlyList<string> notes, ScenarioEdit? editing, ref GameSettings settings, GameFolders folders, GameAssets assets)
     {
         (Vector2 Target, float Zoom)? lookAt = null;
+        Tool? tool = null;
         while (true)
         {
             Logger.Info("{Doing} {Name}{From}", editing is null ? "Playing" : "Editing", city.Name, file is null ? string.Empty : $" from {file}");
             GameLoop.Leave leaving;
-            using (var game = new GameLoop(settings, city, file, folders, assets, modProblems, notes, editing, lookAt))
+            using (var game = new GameLoop(settings, city, file, folders, assets, modProblems, notes, editing, lookAt, tool))
             {
                 while (!Raylib.WindowShouldClose() && game.Leaving == GameLoop.Leave.None)
                 {
@@ -185,6 +187,7 @@ public static class WindowedGame
                     (city, file, modProblems, notes) = (opened, game.OpenedFile, [], game.OpenedNotes);
                     editing = game.Editing;
                     lookAt = editing is null ? null : game.LookingAt;
+                    tool = editing is null ? null : game.SelectedTool;
                 }
             }
 

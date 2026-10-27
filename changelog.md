@@ -1,5 +1,21 @@
 # CityLimits Changelog
 
+## 0.4.108
+
+The Scenarios and Load windows show more of what you pick. Under the
+list, a scenario's briefing now sits beside a map of the city it starts
+with, and a saved city's date and age, population, funds, and when it
+was saved sit beside a map of it. Loading a city now takes two steps:
+click it to see it, then Open, press Enter, or click it again. Both
+windows are taller to make room. Editing a scenario, going back to
+before play or starting over keeps the tool you had in hand.
+
+For developers: `MapPreview` draws a city's map into a texture once,
+when it is picked, in the colours `OverviewMap.CityColorAt` gives the
+overview's City mode. `LoadPanel` reads a city when it is picked and
+opens what it read. `StartMenu` and `LoadPanel` are disposable, and let
+go of their maps before the window closes.
+
 ## 0.4.107
 
 Scenarios can be edited in the game. Pick one in the Scenarios list and

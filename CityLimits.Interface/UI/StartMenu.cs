@@ -7,7 +7,7 @@ namespace CityLimits.UI;
 /// the new-city panel, Load Game the list of saved cities, Scenarios the list of challenges, each
 /// dimmed while there are none, and Settings the settings window.
 /// </summary>
-public sealed class StartMenu
+public sealed class StartMenu : IDisposable
 {
     private const int FontSize = 20;
     private const int VersionSize = 10;
@@ -179,6 +179,13 @@ public sealed class StartMenu
             4 => Choice.Quit,
             _ => Choice.None,
         };
+    }
+
+    /// <summary>Lets go of the maps its windows hold. Call it before the window closes.</summary>
+    public void Dispose()
+    {
+        _scenarios.Dispose();
+        _load.Dispose();
     }
 
     /// <summary>Draws the menu as a whole frame.</summary>

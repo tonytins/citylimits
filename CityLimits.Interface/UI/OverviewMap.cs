@@ -193,22 +193,38 @@ public sealed class OverviewMap : IDisposable
         }
     }
 
-    // The city in flat colours; an overlay shows its values over the city dimmed.
-    private Color ColorAt(int x, int y)
+    /// <summary>
+    /// A tile as the overview's City mode shows it, in flat colours: fire or water over it first,
+    /// then what is built, then the ground. A map's preview draws with the same colours.
+    /// </summary>
+    public static Color CityColorAt(CitySimulation city, int x, int y)
     {
-        // A fire or a flood shows in every mode, so it can be found whatever the map shows.
-        if (_city.Fires.IsBurning(x, y))
+        ArgumentNullException.ThrowIfNull(city);
+        if (city.Fires.IsBurning(x, y))
         {
             return Theme.Fire;
         }
 
-        if (_city.Floods.IsFlooded(x, y))
+        if (city.Floods.IsFlooded(x, y))
         {
             return Theme.Flood;
         }
 
+        var state = city.Map.StateAt(x, y);
+        return state.Use == TileUse.None ? Theme.For(state.Kind) : Theme.For(state.Use);
+    }
+
+    // The city in flat colours; an overlay shows its values over the city dimmed. A fire or a flood
+    // shows in every mode, so it can be found whatever the map shows.
+    private Color ColorAt(int x, int y)
+    {
+        var city = CityColorAt(_city, x, y);
+        if (_city.Fires.IsBurning(x, y) || _city.Floods.IsFlooded(x, y))
+        {
+            return city;
+        }
+
         var state = _city.Map.StateAt(x, y);
-        var city = state.Use == TileUse.None ? Theme.For(state.Kind) : Theme.For(state.Use);
         return Mode switch
         {
             OverviewMode.Power => PowerColor(x, y, state, city),

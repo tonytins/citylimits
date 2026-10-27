@@ -85,9 +85,9 @@ public sealed class GameLoop : IDisposable
     /// back to without asking; a Micropolis city it was imported from is never written. The mods
     /// skipped when a new city was made are shown, if any, or what an import replaced. A scenario's
     /// city opened to edit starts paused, with building free; another view of the same map, as when
-    /// a test goes back, is looked at from where it was.
+    /// a test goes back, is looked at from where it was, with the tool that was in hand.
     /// </summary>
-    public GameLoop(GameSettings settings, CitySimulation city, string? cityFile, GameFolders folders, GameAssets assets, IReadOnlyList<string>? modProblems = null, IReadOnlyList<string>? openNotes = null, ScenarioEdit? editing = null, (Vector2 Target, float Zoom)? lookAt = null)
+    public GameLoop(GameSettings settings, CitySimulation city, string? cityFile, GameFolders folders, GameAssets assets, IReadOnlyList<string>? modProblems = null, IReadOnlyList<string>? openNotes = null, ScenarioEdit? editing = null, (Vector2 Target, float Zoom)? lookAt = null, Tool? tool = null)
     {
         ArgumentNullException.ThrowIfNull(city);
         ArgumentNullException.ThrowIfNull(folders);
@@ -139,6 +139,11 @@ public sealed class GameLoop : IDisposable
             _view.LookAt(look.Target, look.Zoom);
         }
 
+        if (tool is { } held)
+        {
+            _tools.Toggle(held);
+        }
+
         _editing = editing;
         if (editing is not null)
         {
@@ -158,6 +163,9 @@ public sealed class GameLoop : IDisposable
 
     /// <summary>Where the view looks, and how near, for another view of the same map to carry on from.</summary>
     public (Vector2 Target, float Zoom) LookingAt => (_view.Camera.Target, _view.Camera.Zoom);
+
+    /// <summary>The tool in hand, if any, for another view of the same map to carry on with.</summary>
+    public Tool? SelectedTool => _tools.Selected;
 
     /// <summary>The speed the game is running at, where zero is paused.</summary>
     public int Speed => _settings.Speed;
@@ -359,6 +367,7 @@ public sealed class GameLoop : IDisposable
     public void Dispose()
     {
         _view.Dispose();
+        _loadPanel.Dispose();
     }
 
     /// <summary>Records a failure, tells the player on the ticker, and keeps the game running.</summary>

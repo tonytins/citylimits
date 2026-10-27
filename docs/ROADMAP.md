@@ -1,6 +1,6 @@
 # CityLimits roadmap
 
-> **Last reviewed:** 2026-10-21 · **Last updated:** 2026-10-27 · **Change:** minor (Kyoto, K2: editing a scenario in the game, and testing it by playing) · **Stage:** beta
+> **Last reviewed:** 2026-10-21 · **Last updated:** 2026-10-27 · **Change:** minor (Kyoto, K2b: a briefing and a map under the Scenarios and Load lists) · **Stage:** beta
 
 Forward-looking: where CityLimits stands, what blocks the next milestone,
 and what comes next. Verified status and evidence are in the
@@ -76,7 +76,7 @@ Next, in order:
 | Radial: Traffic and commuting | 100% | 0 | Meets the baseline: versioned file formats with schemas, read without reflection, the traffic map trips leave and what it shows and costs, and rail, with tunnels, crossings, trips along it, its upkeep and message, and the commuter train |
 | Deadwood: Land value, pollution, disasters | 100% | 0 | Meets the baseline: pollution and crime, fire with the ticker's fire-risk hints, floods, and earthquakes, as in Micropolis, with free repair and the settings' disaster switches |
 | Happy Isle: Player-facing game | 50% | 8–14 | The palette, laid out as Micropolis', and the HUD, with its bar along the bottom over a news ticker after Tony Bark's mock-up, are in; the budget, demand, and city panels, the overview's power mode, and the settings window are too, and cities save, load, autosave, and import from Micropolis. Scenarios to play (P1 to P3 of four in, with one example challenge), the city score, and map size on the start screen are left |
-| Kyoto: The scenario editor | 65% | 5–9 | The interface library it shares with play, the stadium, the seaport, and the airport the alpha missed, with the demand they hold back, the shared city view, and editing a scenario in the game, tested by playing, are in; the scenario's details, and saving it, are left |
+| Kyoto: The scenario editor | 70% | 5–9 | The interface library it shares with play, the stadium, the seaport, and the airport the alpha missed, with the demand they hold back, the shared city view, and editing a scenario in the game, tested by playing, are in; the scenario's details, and saving it, are left |
 | Yokohama: Polish and release | 0% | 10–20 | Nothing yet |
 | | **Total** | **≈ 28–50** | |
 
@@ -401,10 +401,16 @@ scenario file and the city it starts from beside it.
   player; the Escape menu goes back to before play, or starts over from
   the scenario's city (`Scenarios/ScenarioEdit.cs`). Terrain tools wait
   for Tony Bark's own icons.
+- [x] K2b: a row under the Scenarios and Load lists, as Tony Bark
+  sketched it: the briefing, or a saved city's stats, beside a map of
+  the city (`UI/MapPreview.cs`, in the overview's colours), made once
+  when one is picked. The Load window now picks a city first and opens
+  it with Open, Enter, or a second click; both windows are taller.
 - [ ] K3: the scenario's details: its name, its description, its start
   year and end, its starting funds, its goals, and its disasters on
   dates, edited in the city panel's challenge column, which play shows
-  read-only.
+  read-only; and a disaster that repeats, `"repeat": { "weeks": 10,
+  "times": 4 }` (format 2.2), as Tony Bark chose.
 - [ ] K4: saving the scenario in format 2.x with its city beside it as
   `.fcl`, as Tony Bark chose, opening it again to edit, and the
   Scenarios panel's New, for a scenario from a seed. Trying it from the
@@ -460,6 +466,7 @@ baseline's growth depends on.
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-27 | minor | Kyoto, K2b, added by Tony Bark: the Scenarios and Load windows show what is picked under their lists, the briefing or a city's stats beside a map of its city, and the Load window picks before it opens. A scenario's editor keeps the tool in hand when it goes back or starts over. After reading the OLPC port's scenarios, Tony Bark chose repeating disasters for K3, no city score as a goal, and our own challenges rather than importing Classic's, whose details are written into its code. 839 tests. |
 | 2026-10-27 | minor | Kyoto, K2, as Tony Bark clarified it: a scenario is edited in the game itself, the view play uses, as SimCity began as a map editor turned into a game. The Scenarios panel's Edit opens its city paused, with everything free; playing tests it from a checkpoint, the scenario's actions, events, and goals running as for a player, and the Escape menu goes back to before play or starts over. K4's trying it came with it. The confirm panel wraps a long message. Kyoto is at 65%, 839 tests. |
 | 2026-10-27 | minor | Kyoto, K1: `CityView` in the interface library holds the camera, the map's drawing and the overview, what moves on the map, and the stroke with its preview, for play and the editor to share; `GameLoop` keeps what input means, the bar, and the windows. Tony Bark's new plans moved the scenario's details into the city panel: its mods column is gone, a challenge's column (name, end, standing, disasters to come) takes its place, and a free city's panel is narrower. A city that starts later counts its age from its founding year, saved from 1.10 in a `founding` part an older version leaves out. An unfinished attempt at K1 and K2 by other agents was set aside. Kyoto is at 45%, 833 tests. |
 | 2026-10-23 | minor | Kyoto's checklist, as Tony Bark settled it: K0 the buildings the alpha missed, K1 a shared city view, K2 editing a map from the Scenarios panel (free building, no terrain tools yet), K3 the scenario's details, and K4 saving it with its city as `.fcl` and trying it. K0 is in: a stadium, a seaport, and an airport, at Micropolis' sizes and prices, and Micropolis' demand caps with them, which hold a big city's residential, industrial, or commercial demand at zero until it has one. Saves are 1.9, with a `facilities` part an older version leaves out; scenarios are 2.1, with the three tools and counts; Micropolis' cities import them. The built-in scenarios' figures didn't move. Kyoto is at 33%, 28–50 h left in total, 828 tests. |

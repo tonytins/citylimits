@@ -24,7 +24,8 @@ the game lists the folder's cities itself, newest first.
   file of the same name asks first.
 - **Ctrl+O**, or **Load Game** on the start menu, lists the saved cities
   of both formats with their date, population, money, and when they were
-  saved, marking flat files. Load Game
+  saved, marking flat files. A click picks one and shows its stats
+  beside a map of it; Open, Enter, or a second click opens it. Load Game
   is dimmed while there are none. A city that can't be read says why in
   the list.
 - **Leaving a city** for the menu, for another city, or to quit asks

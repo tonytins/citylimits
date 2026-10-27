@@ -3,11 +3,12 @@ namespace CityLimits.UI;
 /// <summary>
 /// The challenges a player can pick from the start menu, laid out like Load Game's list: the game's
 /// own, then the player's, each with its dates and how many goals it has. A click picks one, and
-/// its briefing shows under the list: what it's about, and the goals to meet by its end. Play, or
+/// its briefing shows under the list, what it's about and the goals to meet by its end, beside a
+/// map of the city it starts with. Play, or
 /// Enter, starts it; Edit opens it in the game to edit; Back or Escape leaves. A scenario that can't
 /// be read is listed with why, and can't be played or edited.
 /// </summary>
-public sealed class ScenarioPanel
+public sealed class ScenarioPanel : IDisposable
 {
     private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
 
@@ -18,13 +19,20 @@ public sealed class ScenarioPanel
     private const int Width = 620;
     private const int Rows = 6;
     private const int RowHeight = 34;
-    private const int BriefingLines = 7;
     private const int BriefingLineHeight = 16;
+
+    // The row under the list: the briefing, and the map beside it, at two pixels a tile for a
+    // Micropolis-sized map.
+    private const int PreviewWidth = 240;
+    private const int PreviewHeight = 200;
+    private const int ColumnGap = 16;
+    private const int BriefingWidth = Width - (Padding * 2) - PreviewWidth - ColumnGap;
+    private const int BriefingLines = PreviewHeight / BriefingLineHeight;
     private const int ButtonWidth = 100;
     private const int ButtonHeight = 30;
     private const int ListTop = Padding + FontSize + 16;
     private const int BriefingTop = ListTop + (Rows * RowHeight) + 12;
-    private const int Height = BriefingTop + (BriefingLines * BriefingLineHeight) + 12 + ButtonHeight + Padding;
+    private const int Height = BriefingTop + PreviewHeight + 12 + ButtonHeight + Padding;
 
     private IReadOnlyList<ScenarioListing> _listings = [];
 
@@ -32,6 +40,7 @@ public sealed class ScenarioPanel
     private readonly List<(string Name, string Details, bool Playable)> _rows = [];
     private readonly List<string> _briefing = [];
     private readonly List<string> _problemLines = [];
+    private readonly MapPreview _preview = new();
     private int _first;
     private int _selected = -1;
     private string? _problem;
@@ -96,6 +105,21 @@ public sealed class ScenarioPanel
 
     /// <summary>Takes this frame's keys, clicks, and scrolling.</summary>
     public Outcome Update()
+    {
+        // Leaving the panel lets go of the map; it is made again when the panel opens.
+        var outcome = Choose();
+        if (outcome != Outcome.Open)
+        {
+            _preview.Clear();
+        }
+
+        return outcome;
+    }
+
+    /// <summary>Lets go of the map. Call it before the window closes.</summary>
+    public void Dispose() => _preview.Dispose();
+
+    private Outcome Choose()
     {
         if (Raylib.IsKeyPressed(KeyboardKey.Escape))
         {
@@ -183,6 +207,7 @@ public sealed class ScenarioPanel
 
         var y = (int)bounds.Y + BriefingTop;
         Raylib.DrawLine(x, y - 4, x + Width - (Padding * 2), y - 4, Theme.PanelBorder);
+        _preview.Draw(new Rectangle { X = x + BriefingWidth + ColumnGap, Y = y + 2, Width = PreviewWidth, Height = PreviewHeight - 4 });
         var lines = _problemLines.Count > 0 ? _problemLines : _briefing;
         for (var i = 0; i < Math.Min(lines.Count, BriefingLines); i++)
         {
@@ -203,16 +228,23 @@ public sealed class ScenarioPanel
         _problemLines.Clear();
         if (problem is not null)
         {
-            _problemLines.AddRange(TextWrap.Lines(problem, SmallSize, Width - (Padding * 2)));
+            _problemLines.AddRange(TextWrap.Lines(problem, SmallSize, BriefingWidth));
         }
     }
 
-    // The briefing is laid out once, when a scenario is picked: its description, then its goals.
+    // The briefing is laid out once, when a scenario is picked: its description, then its goals;
+    // and its city is made, or read, once, for the map beside it. Picking it again changes nothing.
     private void Select(int index)
     {
+        if (index == _selected && index >= 0)
+        {
+            return;
+        }
+
         _selected = index;
         SetProblem(null);
         _briefing.Clear();
+        _preview.Clear();
         if (index < 0)
         {
             _briefing.Add(_listings.Count > 0 ? "Pick a challenge to read what it asks of you." : string.Empty);
@@ -222,13 +254,24 @@ public sealed class ScenarioPanel
         var listing = _listings[index];
         if (listing.Scenario is not { } scenario)
         {
-            _briefing.AddRange(TextWrap.Lines($"This file can't be played: {listing.Problem}", SmallSize, Width - (Padding * 2)));
+            _briefing.AddRange(TextWrap.Lines($"This file can't be played: {listing.Problem}", SmallSize, BriefingWidth));
+            _preview.ShowNote("No map: the file can't be read");
             return;
+        }
+
+        try
+        {
+            _preview.Show(ScenarioRunner.Start(scenario));
+        }
+        catch (InvalidDataException ex)
+        {
+            Logger.Warn("{File}: no map to show: {Problem}", listing.Path, ex.Message);
+            _preview.ShowNote("No map: its city can't be read");
         }
 
         if (scenario.Description is { } description)
         {
-            _briefing.AddRange(TextWrap.Lines(description, SmallSize, Width - (Padding * 2)));
+            _briefing.AddRange(TextWrap.Lines(description, SmallSize, BriefingWidth));
         }
 
         _briefing.Add($"By {scenario.DateAt(scenario.Ticks)}:");
