@@ -52,18 +52,27 @@ public static class CityFiles
     public static bool IsImport(string path) => Path.GetExtension(path).Equals(MicropolisCityImport.Extension, StringComparison.OrdinalIgnoreCase);
 
     /// <summary>
-    /// Reads a city from a file of either format, or imports a Micropolis city, by its extension.
-    /// The notes say what was read but not used, or what an import replaced.
+    /// Reads a city from a file of either format, on the base game, or imports a Micropolis city, by
+    /// its extension. The notes say what was read but not used, or what an import replaced.
     /// </summary>
-    public static bool TryRead(string path, [NotNullWhen(true)] out CitySimulation? city, [NotNullWhen(false)] out string? problem, out IReadOnlyList<string> notes)
+    public static bool TryRead(string path, [NotNullWhen(true)] out CitySimulation? city, [NotNullWhen(false)] out string? problem, out IReadOnlyList<string> notes) =>
+        TryRead(path, Definitions.CityDefinitions.Base, out city, out problem, out notes);
+
+    /// <summary>
+    /// Reads a city from a file of either format, running on the definitions given, the base game's
+    /// with the mods installed, or imports a Micropolis city, on the base game, by its extension. The
+    /// notes say what was read but not used, what an import replaced, or that the city was played
+    /// with other mods.
+    /// </summary>
+    public static bool TryRead(string path, Definitions.CityDefinitions definitions, [NotNullWhen(true)] out CitySimulation? city, [NotNullWhen(false)] out string? problem, out IReadOnlyList<string> notes)
     {
         notes = [];
         switch (Path.GetExtension(path).ToLowerInvariant())
         {
             case BinaryCityFormat.Extension:
-                return BinaryCityFormat.TryReadFile(path, out city, out problem, out notes);
+                return BinaryCityFormat.TryReadFile(path, definitions, out city, out problem, out notes);
             case FlatCityFormat.Extension:
-                return FlatCityFormat.TryReadFile(path, out city, out problem, out notes);
+                return FlatCityFormat.TryReadFile(path, definitions, out city, out problem, out notes);
             case MicropolisCityImport.Extension:
                 return MicropolisCityImport.TryImportFile(path, out city, out problem, out notes);
             default:
@@ -73,13 +82,16 @@ public static class CityFiles
         }
     }
 
-    /// <summary>Writes a city to a file in the format its extension names; a Micropolis city is never written.</summary>
+    /// <summary>
+    /// Writes a city to a file in the format its extension names, as 2.0, or, when
+    /// <paramref name="legacy"/> asks, as 1.10, which 0.4 reads; a Micropolis city is never written.
+    /// </summary>
     /// <exception cref="ArgumentException">The extension isn't a format CityLimits writes.</exception>
-    public static bool TryWrite(CitySimulation city, string path, [NotNullWhen(false)] out string? problem) =>
+    public static bool TryWrite(CitySimulation city, string path, [NotNullWhen(false)] out string? problem, bool legacy = false) =>
         Path.GetExtension(path).ToLowerInvariant() switch
         {
-            BinaryCityFormat.Extension => BinaryCityFormat.TryWriteFile(city, path, out problem),
-            FlatCityFormat.Extension => FlatCityFormat.TryWriteFile(city, path, out problem),
+            BinaryCityFormat.Extension => BinaryCityFormat.TryWriteFile(city, path, out problem, legacy),
+            FlatCityFormat.Extension => FlatCityFormat.TryWriteFile(city, path, out problem, legacy),
             _ => throw new ArgumentException($"{Path.GetFileName(path)} isn't a city file.", nameof(path)),
         };
 

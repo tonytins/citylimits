@@ -270,7 +270,7 @@ public class FacilityTests
     public void AVersionThatDoesntKnowThemSeesBareGroundAndWhatWasLostFromThem()
     {
         // What 1.8 reads: the map, fire, and flood parts as written, without the facilities part.
-        var save = JsonNode.Parse(FlatCityFormat.Write(DamagedStadium()))!.AsObject();
+        var save = JsonNode.Parse(FlatCityFormat.Write(DamagedStadium(), legacy: true))!.AsObject();
         Assert.DoesNotContain("x", string.Concat(save["fire"]!["tiles"]!.AsArray().Select(row => row!.GetValue<string>())));
         save["format"] = "1.8";
         save.Remove("facilities");

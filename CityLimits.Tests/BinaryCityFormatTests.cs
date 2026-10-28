@@ -67,12 +67,12 @@ public class BinaryCityFormatTests
         Assert.True(BinaryCityFormat.TryRead(withExtra, out var city, out var problem, out var notes), problem);
 
         Assert.Equal("Bridgeport", city.Name);
-        Assert.Equal(["Skipped a chunk this version doesn't know: 'NEWS'."], notes);
+        Assert.Equal(["A newer CityLimits saved this city with parts this version doesn't use.", "Its NEWS part is left out, and is left out when you save it."], notes);
     }
 
     [Theory]
     [InlineData("magic", "The file isn't a binary CityLimits city")]
-    [InlineData("format", "format: this is format 9.0; this version of CityLimits reads up to 1.10.")]
+    [InlineData("format", "format: this is format 9.0; this version of CityLimits reads up to 2.0.")]
     [InlineData("checksum", "BUDG: is damaged: its checksum doesn't match.")]
     [InlineData("truncated", "The file ends partway through a chunk")]
     [InlineData("cut short", "The file ends partway through a chunk")]

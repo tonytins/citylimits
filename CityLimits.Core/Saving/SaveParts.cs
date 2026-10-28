@@ -3,11 +3,12 @@ using System.Text.Json;
 namespace CityLimits.Core.Saving;
 
 /// <summary>
-/// A part a save format version added after 1.0, as a save's parts list names it: its section in the
-/// flat format, its chunk in the binary one, the version that added it, and what an older game that
-/// doesn't know it may do with it. It follows PNG's model: an ignorable part may be left unread, so
-/// the file still opens; a keepable part may be written back unchanged after the city has changed,
-/// because nothing in it goes wrong when the rest of the city moves on.
+/// A part of a save beyond its core, as a 1.x save's parts list or a 2.0 save's features list names
+/// it: its section in the flat format, its chunk in the binary one, in format 1 the version that
+/// added it, and what a game that doesn't know it may do with it. It follows PNG's model: an
+/// ignorable part may be left unread, so the file still opens; a keepable part may be written back
+/// unchanged after the city has changed, because nothing in it goes wrong when the rest of the city
+/// moves on. In 2.0 a feature is known by its name, as HTML's are, not by the version that added it.
 /// </summary>
 [System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(SectionCodec.ModelMembers)]
 internal sealed class PartSave
@@ -18,8 +19,9 @@ internal sealed class PartSave
     /// <summary>The part's chunk in a binary save.</summary>
     public required string Chunk { get; set; }
 
-    /// <summary>The format version that added the part, such as "1.1".</summary>
-    public required string Since { get; set; }
+    /// <summary>In format 1, the version that added the part, such as "1.1"; a 2.0 feature has none.</summary>
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public string? Since { get; set; }
 
     /// <summary>Whether a game that doesn't know the part may open the file without it.</summary>
     public required bool Ignorable { get; set; }
@@ -79,8 +81,45 @@ internal static class SaveParts
     ];
 
     /// <summary>
-    /// Decides whether a save of a newer minor version may open here, from the parts it has that this
-    /// version doesn't know, and refuses it when one can't be left out. Returns what the city keeps.
+    /// Features this version knows by name and carries through as they are, without reading them,
+    /// until a later version gives them their contents: connections to neighbouring cities, which
+    /// Senri's N2 fills. A save that holds one writes it back unchanged; one that doesn't, leaves it out.
+    /// </summary>
+    public static readonly PartSave[] Reserved =
+    [
+        new() { Name = "connections", Chunk = "CONN", Ignorable = true, Keepable = true },
+    ];
+
+    /// <summary>
+    /// The features a 2.0 save names: the parts above, known by their names rather than the versions
+    /// that added them. A feature added from now on goes here, and the version doesn't move.
+    /// </summary>
+    public static IEnumerable<string> FeatureNames => Known.Select(part => part.Name);
+
+    /// <summary>Each feature's chunk in a binary save, the reserved ones' too.</summary>
+    public static IEnumerable<(string Name, string Chunk)> FeatureChunks => Known.Concat(Reserved).Select(part => (part.Name, part.Chunk));
+
+    /// <summary>
+    /// What a 2.0 save comes to with sections this version doesn't know, each by its name and where it
+    /// is (its section, or its chunk): a reserved feature is kept as it was, and any other is left out,
+    /// here and when the city is saved. A feature that can't be left out comes with a new major
+    /// version, so a 2.0 save never needs to be refused for one.
+    /// </summary>
+    public static KeptParts KeepFeatures(FormatVersion fileVersion, string format, IEnumerable<(string Name, string Chunk)> unknown)
+    {
+        var kept = new KeptParts { FileVersion = fileVersion, Format = format };
+        foreach (var (name, chunk) in unknown)
+        {
+            var reserved = Reserved.Any(part => part.Name == name);
+            kept.Parts.Add(new PartSave { Name = name, Chunk = chunk, Ignorable = true, Keepable = reserved });
+        }
+
+        return kept;
+    }
+
+    /// <summary>
+    /// Decides whether a 1.x save may open here with the parts of a newer minor version it has that this
+    /// version doesn't know, as 0.4 did. It is refused when one can't be left out. Returns what the city keeps.
     /// </summary>
     /// <exception cref="InvalidSave">A part isn't in the file's parts list, or can't be left out.</exception>
     public static KeptParts Keep(FormatVersion fileVersion, string format, PartSave[]? parts, IEnumerable<string> unknown, Func<PartSave, string> nameIn)
@@ -92,7 +131,7 @@ internal static class SaveParts
                 ?? throw new InvalidSave($"{name}: is not a part a save has, and the file's parts list doesn't name it.");
             if (!part.Ignorable)
             {
-                throw new InvalidSave($"format: this is format {fileVersion}; this version of CityLimits reads up to {SaveUpgrades.Current}, and the file's {part.Name}, from {part.Since}, can't be left out.");
+                throw new InvalidSave($"format: this is format {fileVersion}; this version of CityLimits reads up to {SaveUpgrades.Legacy}, and the file's {part.Name}, from {part.Since}, can't be left out.");
             }
 
             kept.Parts.Add(part);
@@ -109,10 +148,21 @@ internal static class SaveParts
             return [];
         }
 
+        if (kept.FileVersion.Major >= 2)
+        {
+            return
+            [
+                "A newer CityLimits saved this city with parts this version doesn't use.",
+                .. kept.Parts.Select(part => part.Keepable
+                    ? $"Its {part.Name} part is kept as it was when you save it."
+                    : $"Its {part.Name} part is left out, and is left out when you save it."),
+            ];
+        }
+
         var notes = new List<string>
         {
-            kept.FileVersion > SaveUpgrades.Current
-                ? $"A newer CityLimits saved this city, in format {kept.FileVersion}; this version reads up to {SaveUpgrades.Current}."
+            kept.FileVersion > SaveUpgrades.Legacy
+                ? $"A newer CityLimits saved this city, in format {kept.FileVersion}; this version reads up to {SaveUpgrades.Legacy}."
                 : "This city carries parts a newer CityLimits saved, which this version doesn't read.",
         };
         foreach (var part in kept.Parts)
@@ -150,19 +200,12 @@ internal sealed class KeptParts
     public Dictionary<string, byte[]> Chunks { get; } = [];
 
     /// <summary>
-    /// The parts that go back into a save of a format, and the version it writes: the newer save's,
-    /// when it had parts and every one is kept, and otherwise this version's, so the newer game
-    /// rebuilds what was left out as an upgrade does. A newer save with no parts this version doesn't
-    /// know holds nothing past this version, so it is written as this version.
+    /// The parts that go back into a 2.0 save of a format, listed as its features: the keepable ones.
+    /// A part left out is one the newer game fills in again when it opens the save, as it fills in
+    /// any feature a save doesn't hold, so the version written is always this one.
     /// </summary>
-    public (IReadOnlyList<PartSave> Parts, FormatVersion Version) ForSaving(string format)
-    {
-        if (!string.Equals(format, Format, StringComparison.OrdinalIgnoreCase))
-        {
-            return ([], SaveUpgrades.Current);
-        }
-
-        var keepable = Parts.Where(part => part.Keepable).ToList();
-        return (keepable, keepable.Count > 0 && keepable.Count == Parts.Count ? FileVersion : SaveUpgrades.Current);
-    }
+    public IReadOnlyList<PartSave> ForSaving(string format) =>
+        string.Equals(format, Format, StringComparison.OrdinalIgnoreCase)
+            ? [.. Parts.Where(part => part.Keepable).Select(part => new PartSave { Name = part.Name, Chunk = part.Chunk, Ignorable = part.Ignorable, Keepable = part.Keepable })]
+            : [];
 }

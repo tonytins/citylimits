@@ -1,6 +1,6 @@
 # CityLimits roadmap
 
-> **Last reviewed:** 2026-10-27 · **Last updated:** 2026-10-27 · **Change:** minor (Happy Isle, P4: three built-in challenges, made with the editor; 0.4 is complete) · **Stage:** beta
+> **Last reviewed:** 2026-10-27 · **Last updated:** 2026-10-27 · **Change:** minor (Senri, N1a: city saves are format 2.0, by features and mods, and can still be written for 0.4) · **Stage:** beta
 
 Forward-looking: where CityLimits stands, what blocks the next milestone,  
 and what comes next. Verified status and evidence are in the  
@@ -24,9 +24,9 @@ in the manner of Ubuntu's and .NET's, without dates.
 |---|---|---|---|
 | 0.3 | the alpha | kept | The alpha, with backports on `release/0.3.100` to `release/0.3.102` |
 | 0.4 | Happy Isle, Kyoto | current | The beta: scenarios to play and their editor. It stays playable after 0.5 |
-| 0.5 | Senri | long-term | Every format moves to a new major version, the base game becomes data a mod can change, and the game is packaged for each platform. 0.5.100 reads and writes the old formats and the new; 0.5.101 writes only the new, and reads the old for good |
-| 0.6 | Yokohama | | Online play, after SimCity 2000 Network Edition. Its new state arrives as features in the 0.5 formats, so 0.5 can open its cities single-player |
-| 0.7 | unnamed | long-term | The next long-term line |
+| 0.5 | Senri | long-term | Every format moves to a new major version, the base game becomes data a mod can change, and the game is packaged for each platform. It reads and writes the old formats and the new, the old chosen in the settings; every line after reads the old for good |
+| 0.6 | Yokohama | | Online play, after SimCity 2000 Network Edition. Its new state arrives as features in the 0.5 formats, so 0.5 can open its cities single-player. It still writes the old formats, chosen on the command line |
+| 0.7 | unnamed | long-term | The next long-term line. It drops the writers of the formats 0.4 reads, and keeps reading them |
 
 A long-term line is kept on its own branch, such as `release/0.5`, while the
 next one is built. A fix there is an ordinary patch: GitInfo counts it up,
@@ -66,12 +66,15 @@ Next, in order:
      version, a save names its features rather than counting minor
      versions, and lists its mods rather than carrying their definitions;
      the base game becomes data in `Assets/Definitions/`, with more of it
-     made specs a mod can change; and packaging for each platform. 0.5.100
-     still writes the old formats, chosen in the settings.
-   - 0.5.101 writes only the new formats.
-   - N2, the unified title bar and an Editing scenarios page in the help.
-   - N3, oversights found on the way.
-2. **Yokohama, 0.6**, online play, settled when it starts.
+     made specs a mod can change; and packaging for each platform. The old
+     formats are still written, chosen in the settings. City saves are
+     done (N1a).
+   - N2, neighbours after SimCity 3000: connections at the map's edges
+     and deals in what the game already has.
+   - N3, the unified title bar and an Editing scenarios page in the help.
+   - N4, oversights found on the way.
+2. **Yokohama, 0.6**, online play: the server first, bringing online
+   neighbours and the region view, settled when it starts.
 
 ## Milestones
 
@@ -89,17 +92,17 @@ Next, in order:
 | Deadwood: Land value, pollution, disasters | 100% | 0 | Meets the baseline: pollution and crime, fire with the ticker's fire-risk hints, floods, and earthquakes, as in Micropolis, with free repair and the settings' disaster switches |
 | Happy Isle: Player-facing game | 100% | 0 | The palette, laid out as Micropolis', and the HUD, with its bar along the bottom over a news ticker after Tony Bark's mock-up; the budget, demand, and city panels, the overview's power mode, the settings window, and the New City window; cities that save, load, autosave, and import from Micropolis; and scenarios to play, with four built-in challenges |
 | Kyoto: The scenario editor | 100% | 0 | The interface library it shares with play, the stadium, the seaport, and the airport the alpha missed, with the demand they hold back, the shared city view, editing a scenario in the game, tested by playing, its details, and saving it, with a New City window |
-| Senri (0.5, long-term): Formats, specs, and packaging | 0% | 17–30 | Nothing yet: the formats' new majors, saves by features and mods, the base game as data and more of it as specs, packaging for each platform, the unified title bar and the help page, and what turns up before online play |
+| Senri (0.5, long-term): Formats, specs, neighbours, and packaging | 15% | 22–40 | City saves are 2.0, by features and mods, and can be written for 0.4; the scenario and definitions formats, the base game as data and more of it as specs, packaging, neighbours, the unified title bar and the help page, and what turns up before online play are left |
 | Yokohama (0.6): Online play | 0% | unestimated | Nothing yet: a Network Edition-style shared city, hosted by `CityLimits.Server`. Its checklist is a draft, settled when it starts |
-| | **Total** | **≈ 17–30, Yokohama unestimated** | |
+| | **Total** | **≈ 22–40, Yokohama unestimated** | |
 
 ## Upcoming work, ranked
 
 | Rank | Work | Milestone | Estimate (h) |
 |---|---|---|---|
-| 1 | Senri, N1: the formats' new majors, saves by features and mods, the base game as data, the specs, and packaging | Senri | 12–20 |
-| 2 | Senri, 0.5.101: only the new formats written | Senri | 1–2 |
-| 3 | Senri, N2: the unified title bar and the help page | Senri | 4–8 |
+| 1 | Senri, N1: the scenario and definitions formats' new majors, the base game as data, the specs, and packaging | Senri | 9–16 |
+| 2 | Senri, N2: neighbours, connections, and deals | Senri | 8–14 |
+| 3 | Senri, N3: the unified title bar and the help page | Senri | 4–8 |
 
 Every row of the alpha gate passes, and CityLimits is an alpha since 0.3.100,
 and a beta since 0.4.100.
@@ -449,7 +452,7 @@ scenario file and the city it starts from beside it.
   goals yet, is listed to edit, not to play. A saved city's start and  
   money move too while it is at its founding. Trying it from the editor  
   came with K2.
-### Senri: Formats, specs, and packaging
+### Senri: Formats, specs, neighbours, and packaging
 
 Version 0.5, the first long-term line: a small milestone between the editor
 and online play, as Tony Bark set it out. Its formats are the ones online
@@ -459,15 +462,20 @@ play builds on, so 0.6 adds to them rather than changing them.
   - [ ] Every format rounds up to its next major version: city saves 1.10
     to 2.0, scenarios 2.2 to 3.0, and definitions and mods 1.0 to 2.0.
     Older versions refuse the new majors with a message; 0.5 reads every
-    format before them, for good.
-  - [ ] A save names its features, as HTML's do, rather than counting
-    minor versions: new state is a new feature, and the version moves
-    only for a change that breaks. Each feature says whether an older
-    version may leave it out or keep it.
-  - [ ] A save lists the mods its city was made with, not their
-    definitions; opening a city whose mods differ from those installed
-    says so. Offline, the seed is what makes a map; matching mods online
-    is the server's to manage.
+    format before them, for good. City saves are 2.0 (N1a); scenarios and
+    definitions follow.
+  - [x] A save names its features, as HTML's do, rather than counting
+    minor versions, as a plain list of names: new state is a new
+    feature, and the version moves only for a change that breaks. A part
+    an older version doesn't know is left out, here and when saving, and
+    one a save leaves out is filled in as the version that added it
+    fills it; `connections` is reserved for N2 and carried through
+    intact (N1a).
+  - [x] A save lists the mods its city was played with, not their
+    definitions, and runs on the base game and the mods installed;
+    opening a city played with other mods says so (N1a). Offline, the
+    seed is what makes a map; matching mods online is the server's to
+    manage.
   - [ ] The base game as data: its specs in `Assets/Definitions/`, read
     as a mod is, with the code's own as the fallback when they're
     missing or damaged, said so.
@@ -478,10 +486,13 @@ play builds on, so 0.6 adds to them rather than changing them.
     services' coverage, the economy's starting money and tax, and the
     terrain, with the map sizes to choose from in the New City window.
     The engine's rules, its calendar, cycle, and tick, stay in code.
-  - [ ] 0.5.100 writes the old formats as well as the new, for every
-    format, chosen by a setting in the game, so a city or a mod can still
-    go back to 0.4; 0.5.101 drops the old writers. Yokohama moves the
-    choice to the command line.
+  - [ ] The old formats written as well as the new, for every format,
+    chosen by Save for 0.4 in the settings, so a city or a mod can still
+    go back to 0.4. One save model, written as 1.10 by putting format 1's
+    definitions and parts list back, so the old writer stays thin. City
+    saves are done (N1a), checked against 0.4.111 itself; scenarios and
+    definitions follow. Yokohama moves the choice to the command line,
+    and 0.7 drops the old writers, as Tony Bark settled.
   - [ ] Packaging for each platform from one place, after Photocraft's
     `packaging/`: a shared setup that reads the version once, then
     Linux's AppImage (in already), Windows, and macOS, shipping the base
@@ -489,36 +500,43 @@ play builds on, so 0.6 adds to them rather than changing them.
 - [ ] `citylimits scenario --verbose`: the report lists every tile an
   action touched, beside the totals it gives by default, as Tony Bark
   chose; in 0.5.100.
-- [ ] N2: a unified title bar for every window, macOS-style, whose title
+- [ ] N2: neighbours, after SimCity 3000, as Tony Bark chose: the map's
+  edges border neighbouring cities, roads, rail, and power lines run to
+  an edge connect to them, and deals trade what the game already has
+  (power, and road and rail lifting demand), saved as `connections`,
+  which 0.5.100 already reserves. Yokohama's region and online
+  neighbours build on it.
+- [ ] N3: a unified title bar for every window, macOS-style, whose title
   can be edited where a window turns that on, as the city panel does for
   the city's name; off by default. An Editing scenarios page in the Help
   window.
-- [ ] N3: oversights found on the way, fixed before Yokohama starts.
+- [ ] N4: oversights found on the way, fixed before Yokohama starts.
 
 ### Yokohama: Online play
 
-Version 0.6. A shared city for two to four players, after SimCity 2000 Network  
-Edition (2KNet): each a commissioner of their own district, on land  
-they own, with their own budget beside the city's. Tony Bark swapped the  
-polish checklist for it. This is a draft, settled when the milestone  
-starts.
+Version 0.6: a region of cities, after SimCity 2000 Network Edition's way
+of playing together and the region of SimCity (2013) and Cities:
+Skylines, as Tony Bark set it out. Each player keeps a city of their
+own, and neighbouring cities meet at their edges through the connections
+Senri's N2 brings. The server comes first, and online neighbours with
+it. This is a draft, settled when the milestone starts.
 
-- [ ] `CityLimits.Server`: the city run headless on a host, taking  
-  strokes, steps, queries, and saves as JSON lines and answering in  
-  kind, with a digest of the city every so many steps, so two runs can  
-  be compared and a client that drifts is caught. SimsCraft's oracles  
-  are the starting point, since they are proven. Bots may drive the  
+- [ ] `CityLimits.Server`: cities run headless on a host, taking
+  strokes, steps, queries, and saves as JSON lines and answering in
+  kind, with a digest of each city every so many steps, so two runs can
+  be compared and a client that drifts is caught. SimsCraft's oracles
+  are the starting point, since they are proven. Bots may drive the
   server, never the client.
-- [ ] Land ownership: plots bought from the city by dragging, built on  
-  only by their owner, and sold back to it.
-- [ ] Each player's district budget and taxes, beside the city's own,  
-  settled yearly.
-- [ ] Hosting and joining over a network, clients sending their strokes;  
+- [ ] Online neighbours: other players' cities as the neighbours at a
+  city's edges, with the deals N2 makes between them.
+- [ ] The region view: neighbouring cities shown beyond a map's edges,
+  and visited by opening them; optional offline, always there online.
+- [ ] Hosting and joining over a network, clients sending their strokes;
   the library or protocol is Tony Bark's to approve.
-- [ ] The host's controls: speed, disasters, saving and loading, and the  
-  players.
-- [ ] Chat, and contracts sharing services for a fee (police and fire  
-  by coverage, power by the grid, hospitals citywide), and sending money.
+- [ ] The host's controls: speed, disasters, saving and loading, and the
+  players; and chat.
+- [ ] The formats for 0.4 written from the command line rather than the
+  settings.
 
 ## Critical path
 
@@ -528,9 +546,9 @@ first challenges are done, and 0.4 with them.
 Senri's N1 is the long pole, and the one with the most at stake: the
 formats it settles are the ones 0.5 keeps for the long term and 0.6 builds
 online play on. The save rework comes first in it, since every spec after
-it then costs a feature name, not a format version. Its dual writing is
-temporary and comes out in 0.5.101, so it should stay thin: one save model,
-written two ways.
+it then costs a feature name, not a format version. Its dual writing lasts
+through 0.6 and comes out in 0.7, so it stays thin: one save model, written
+two ways.
 
 Yokohama waits on Senri, and on Tony Bark settling its design from the
 2KNet manual.
@@ -559,6 +577,8 @@ Yokohama waits on Senri, and on Tony Bark settling its design from the
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-27 | minor | Tony Bark simplified a save's features to a list of names, with a part an older version doesn't know left out, and reserved `connections` for neighbours, which come in Senri's N2 after SimCity 3000, trading what the game already has. Yokohama becomes a region of player cities that meet at their edges, after Network Edition, SimCity (2013), and Cities: Skylines, its server first; land ownership and district budgets go. |
+| 2026-10-27 | minor | Senri, N1a, the first of 0.5: city saves are format 2.0. A save names its features rather than counting minor versions, fills in any it leaves out, lists its mods by name rather than carrying definitions, and runs on the base game and the mods installed, saying when they differ. Save for 0.4, in the settings, writes 1.10 from the same model, which 0.4.111 itself opened. Tony Bark settled that the old writers last through 0.6, on the command line there, and go in 0.7; 0.5.101 drops nothing. 875 tests. |
 | 2026-10-27 | minor | Happy Isle, P4: three built-in challenges made with the editor's machinery, Smokestack, Hard Times, and Aftershock, beside First Town; each grown on a seeded map, saved with its city, and lost when left alone. Happy Isle is complete, and with Kyoto, 0.4. 873 tests. |
 | 2026-10-27 | major | Release lines, as Tony Bark set them: 0.5, Senri, is the first long-term line, kept on its own branch with ordinary patches; 0.6 is Yokohama's online play; 0.7 the next long-term line. Senri's N1 joins the save rework and the specs, rounds every format up to its next major, writes the old formats beside the new in 0.5.100 and drops them in 0.5.101, and takes in packaging. Happy Isle's new-city flow is checked off, its map size moved to Senri's terrain spec; P4 is its last item. Milestones from Senri on are named after Japanese places. 867 tests. |
 | 2026-10-27 | minor | Tony Bark made Senri a small milestone of its own, between Kyoto and Yokohama: the unified title bar, the Editing scenarios help page, and packaging within that phase, and room for oversights before online play. Kyoto is complete. |

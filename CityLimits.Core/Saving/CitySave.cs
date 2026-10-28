@@ -18,10 +18,19 @@ internal sealed class CitySave
     public required FormatVersion Format { get; set; }
 
     /// <summary>
-    /// The parts each version after 1.0 added, and what an older game may do with each, from format
-    /// 1.2; a game that meets a part it doesn't know looks it up here.
+    /// Format 1's parts list: the parts each version after 1.0 added, and what an older game may do
+    /// with each, from format 1.2. A 2.0 save names its features instead.
     /// </summary>
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public PartSave[]? Parts { get; set; }
+
+    /// <summary>
+    /// The features a 2.0 save holds beyond its core, by name, for people and tools to see at a glance;
+    /// it may be left out. A game that meets a section it doesn't know leaves it out, unless it is one
+    /// the game reserves, which it keeps as it was.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public string[]? Features { get; set; }
 
     public required string Name { get; set; }
 
@@ -36,9 +45,14 @@ internal sealed class CitySave
 
     public required int Funds { get; set; }
 
-    /// <summary>The definitions the city runs on, in the definitions format a mod uses.</summary>
-    public required JsonElement Definitions { get; set; }
+    /// <summary>
+    /// Format 1's definitions the city ran on, in the definitions format a mod uses; a 2.0 save holds
+    /// none, and runs on those it is opened with.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public JsonElement? Definitions { get; set; }
 
+    /// <summary>The mods the city was played with, by name, so opening it with others can say so.</summary>
     public required ModSave[] Mods { get; set; }
 
     public required MapSave Map { get; set; }

@@ -148,10 +148,12 @@ restarts it. Fix a crash before building on top of it.
 - **New state goes in the save.** A field that lasts from one step to the  
   next, in any part of the simulation, is captured and restored by that  
   part's `Capture` and `Restore`, with a field in `CitySave` (which both  
-  formats write) and a line in `docs/saving.md`, and the save format's  
-  minor version goes up with an upgrade step from the one before (see  
-  File formats below); otherwise a loaded city drifts from the one that  
-  was saved. `FlatCityFormatTests` runs a saved and a loaded town in step and  
+  formats write) and a line in `docs/saving.md`. From save format 2.0 it  
+  comes as a new feature: a section of its own, named in `SaveParts` with  
+  whether an older game may leave it out or keep it, and filled in by an  
+  upgrade step when a save doesn't hold it. The version doesn't move; only  
+  a change that breaks takes a new major. Otherwise a loaded city drifts  
+  from the one that was saved. `FlatCityFormatTests` runs a saved and a loaded town in step and  
   compares them, which catches state left out as long as it changes what  
   the city does.
 

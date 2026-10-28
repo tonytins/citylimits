@@ -1,6 +1,7 @@
 using System.Buffers.Binary;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
+using CityLimits.Core.Definitions;
 using CityLimits.Core.Simulation;
 
 namespace CityLimits.Core.Saving;
@@ -21,7 +22,9 @@ public static class BinaryCityFormat
     /// <summary>
     /// The version of the format this game writes, and the newest it reads. The header holds the
     /// major version, so files from before minor versions stay valid; the minor version is in a
-    /// small <c>VERS</c> chunk, and a file without one is a .0.
+    /// small <c>VERS</c> chunk, and a file without one is a .0. A 2.0 file names its features in a
+    /// <c>FEAT</c> chunk and its mods in a <c>MODS</c> one; a 1.x file lists its parts in a
+    /// <c>PART</c> chunk and holds its definitions in a <c>DEFS</c> one.
     /// </summary>
     public static readonly FormatVersion Format = SaveUpgrades.Current;
 
@@ -37,6 +40,8 @@ public static class BinaryCityFormat
     // the minor version's.
     private const string VersionTag = "VERS";
     private const string PartsTag = "PART";
+    private const string FeaturesTag = "FEAT";
+    private const string ModsTag = "MODS";
     private const string CityTag = "CITY";
     private const string DefinitionsTag = "DEFS";
     private const string MapTag = "MAP ";
@@ -59,7 +64,10 @@ public static class BinaryCityFormat
     private const string FacilitiesTag = "FCLT";
     private const string FoundingTag = "FNDG";
 
-    private static readonly string[] Required = [CityTag, DefinitionsTag, MapTag, BudgetTag, CensusTag, DemandTag, PowerTag, ServicesTag, CommunityTag, CityMapsTag, CycleTag];
+    // The chunks every file has: the city's core, with its definitions in format 1 and its mods' names in 2.0.
+    private static readonly string[] Core = [CityTag, MapTag, BudgetTag, CensusTag, DemandTag, PowerTag, ServicesTag, CommunityTag, CityMapsTag, CycleTag];
+    private static readonly string[] Required = [.. Core, DefinitionsTag];
+    private static readonly string[] RequiredFrom2 = [.. Core, ModsTag];
 
     // The chunks a file has only when it needs them, such as the challenge of a city being played as one.
     private static readonly string[] Optional = [ChallengeTag];
@@ -67,23 +75,35 @@ public static class BinaryCityFormat
     // The chunks each minor version added, required from that version on; an older file goes without.
     private static readonly (string Tag, FormatVersion Since)[] Added = [(TrafficTag, new FormatVersion(1, 1)), (RoadTrafficTag, new FormatVersion(1, 3)), (RailTag, new FormatVersion(1, 4)), (PollutionTag, new FormatVersion(1, 5)), (CrimeTag, new FormatVersion(1, 5)), (FireTag, new FormatVersion(1, 6)), (FloodTag, new FormatVersion(1, 7)), (FacilitiesTag, new FormatVersion(1, 9)), (FoundingTag, new FormatVersion(1, 10))];
 
-    /// <summary>Writes a city as the format's bytes.</summary>
-    public static byte[] Write(CitySimulation city)
+    /// <summary>
+    /// Writes a city as the format's bytes: version 2.0, or, when <paramref name="legacy"/> asks, 1.10,
+    /// which 0.4 reads, with the city's definitions and its parts listed by version. A 1.10 file leaves
+    /// out what format 1 can't hold, such as a newer save's features kept here.
+    /// </summary>
+    public static byte[] Write(CitySimulation city, bool legacy = false)
     {
         ArgumentNullException.ThrowIfNull(city);
-        var save = city.Capture();
-
-        // A city from a newer save writes back the chunks it kept of it, and that save's version when
-        // it kept them all.
-        var (kept, version) = city.Kept?.ForSaving(Extension) ?? ([], SaveUpgrades.Current);
+        var save = FlatCityFormat.Capture(city, legacy, Extension);
+        var kept = legacy ? [] : city.Kept?.ForSaving(Extension) ?? [];
 
         using var stream = new MemoryStream();
         stream.Write(Magic);
-        WriteUInt16(stream, version.Major);
+        WriteUInt16(stream, save.Format.Major);
         var minor = new byte[2];
-        BinaryPrimitives.WriteUInt16BigEndian(minor, (ushort)version.Minor);
+        BinaryPrimitives.WriteUInt16BigEndian(minor, (ushort)save.Format.Minor);
         WriteChunk(stream, VersionTag, minor);
-        WriteChunk(stream, PartsTag, SectionCodec.Write(new PartsChunk { Parts = [.. SaveParts.Known, .. kept] }));
+        if (legacy)
+        {
+            WriteChunk(stream, PartsTag, SectionCodec.Write(new PartsChunk { Parts = save.Parts! }));
+        }
+        else
+        {
+            // The features by name, each with its chunk, the reserved ones kept from a newer save included.
+            var chunks = SaveParts.FeatureChunks.ToDictionary(feature => feature.Name, feature => feature.Chunk);
+            var entries = save.Features!.Select(name => new FeatureEntry { Name = name, Chunk = chunks[name] }).ToArray();
+            WriteChunk(stream, FeaturesTag, SectionCodec.Write(new FeaturesChunk { Features = entries }));
+        }
+
         WriteChunk(stream, CityTag, SectionCodec.Write(new CityChunk
         {
             Name = save.Name,
@@ -93,7 +113,15 @@ public static class BinaryCityFormat
             CityTime = save.CityTime,
             Funds = save.Funds,
         }));
-        WriteChunk(stream, DefinitionsTag, SectionCodec.Write(new DefinitionsChunk { Definitions = save.Definitions, Mods = save.Mods }));
+        if (legacy)
+        {
+            WriteChunk(stream, DefinitionsTag, SectionCodec.Write(new DefinitionsChunk { Definitions = save.Definitions!.Value, Mods = save.Mods }));
+        }
+        else
+        {
+            WriteChunk(stream, ModsTag, SectionCodec.Write(new ModsChunk { Mods = save.Mods }));
+        }
+
         WriteChunk(stream, MapTag, MapBytes(city));
         WriteChunk(stream, BudgetTag, SectionCodec.Write(save.Budget));
         WriteChunk(stream, CensusTag, SectionCodec.Write(save.Census));
@@ -116,6 +144,7 @@ public static class BinaryCityFormat
         {
             WriteChunk(stream, ChallengeTag, SectionCodec.Write(challenge));
         }
+
         foreach (var part in kept)
         {
             WriteChunk(stream, part.Chunk, city.Kept!.Chunks[part.Chunk]);
@@ -128,17 +157,26 @@ public static class BinaryCityFormat
     /// Reads a city from the format's bytes, or says what is wrong with them. The notes say what was
     /// read but not used, such as a chunk from a later version.
     /// </summary>
-    public static bool TryRead(ReadOnlySpan<byte> bytes, [NotNullWhen(true)] out CitySimulation? city, [NotNullWhen(false)] out string? problem, out IReadOnlyList<string> notes)
+    public static bool TryRead(ReadOnlySpan<byte> bytes, [NotNullWhen(true)] out CitySimulation? city, [NotNullWhen(false)] out string? problem, out IReadOnlyList<string> notes) =>
+        TryRead(bytes, CityDefinitions.Base, out city, out problem, out notes);
+
+    /// <summary>
+    /// Reads a city from the format's bytes, running on the definitions given, or says what is wrong
+    /// with them. The notes say what was read but not used, and whether the city was played with other mods.
+    /// </summary>
+    public static bool TryRead(ReadOnlySpan<byte> bytes, CityDefinitions definitions, [NotNullWhen(true)] out CitySimulation? city, [NotNullWhen(false)] out string? problem, out IReadOnlyList<string> notes)
     {
+        ArgumentNullException.ThrowIfNull(definitions);
         city = null;
         var skipped = new List<string>();
         notes = skipped;
         try
         {
             var save = ReadSave(bytes, skipped, out var kept);
-            city = CitySimulation.Restore(save);
+            var opened = new List<string>();
+            city = CitySimulation.Restore(save, definitions, opened);
             city.Kept = kept;
-            notes = [.. SaveParts.NotesFor(kept), .. skipped];
+            notes = [.. SaveParts.NotesFor(kept), .. skipped, .. opened];
             problem = null;
             return true;
         }
@@ -150,7 +188,11 @@ public static class BinaryCityFormat
     }
 
     /// <summary>Reads a city from a file, checking its size before reading it.</summary>
-    public static bool TryReadFile(string path, [NotNullWhen(true)] out CitySimulation? city, [NotNullWhen(false)] out string? problem, out IReadOnlyList<string> notes)
+    public static bool TryReadFile(string path, [NotNullWhen(true)] out CitySimulation? city, [NotNullWhen(false)] out string? problem, out IReadOnlyList<string> notes) =>
+        TryReadFile(path, CityDefinitions.Base, out city, out problem, out notes);
+
+    /// <summary>Reads a city from a file on the definitions given, checking its size before reading it.</summary>
+    public static bool TryReadFile(string path, CityDefinitions definitions, [NotNullWhen(true)] out CitySimulation? city, [NotNullWhen(false)] out string? problem, out IReadOnlyList<string> notes)
     {
         city = null;
         notes = [];
@@ -159,14 +201,14 @@ public static class BinaryCityFormat
             return false;
         }
 
-        return TryRead(bytes, out city, out problem, out notes);
+        return TryRead(bytes, definitions, out city, out problem, out notes);
     }
 
-    /// <summary>Writes a city to a file, through a temporary file, so a failure leaves the save before it whole.</summary>
-    public static bool TryWriteFile(CitySimulation city, string path, [NotNullWhen(false)] out string? problem)
+    /// <summary>Writes a city to a file, through a temporary file, so a failure leaves the save before it whole; as 1.10 when <paramref name="legacy"/> asks.</summary>
+    public static bool TryWriteFile(CitySimulation city, string path, [NotNullWhen(false)] out string? problem, bool legacy = false)
     {
         ArgumentNullException.ThrowIfNull(city);
-        return SaveFiles.TryWriteBytes(Write(city), path, out problem);
+        return SaveFiles.TryWriteBytes(Write(city, legacy), path, out problem);
     }
 
     /// <summary>Reads what a list of saved cities shows about one, without restoring the whole city.</summary>
@@ -205,13 +247,14 @@ public static class BinaryCityFormat
         }
 
         var major = BinaryPrimitives.ReadUInt16BigEndian(bytes[Magic.Length..]);
-        if (major != Format.Major)
+        if (major < 1 || major > Format.Major)
         {
             throw new InvalidSave($"format: {new FormatVersion(major, 0).ProblemReadingWith(Format)}");
         }
 
         var minor = 0;
         PartSave[]? parts = null;
+        FeatureEntry[]? features = null;
         var chunks = new Dictionary<string, byte[]>();
         var unknown = new Dictionary<string, byte[]>();
         var position = Magic.Length + 2;
@@ -250,7 +293,13 @@ public static class BinaryCityFormat
                 continue;
             }
 
-            if (!Required.Contains(tag) && !Added.Any(added => added.Tag == tag) && !Optional.Contains(tag))
+            if (tag == FeaturesTag)
+            {
+                features = SectionCodec.Read<FeaturesChunk>(payload, FeaturesTag).Features;
+                continue;
+            }
+
+            if (!Required.Contains(tag) && tag != ModsTag && !Added.Any(added => added.Tag == tag) && !Optional.Contains(tag))
             {
                 if (!unknown.TryAdd(tag, payload.ToArray()))
                 {
@@ -266,41 +315,62 @@ public static class BinaryCityFormat
             }
         }
 
-        // A newer minor version's unknown chunks are kept when its parts list lets them be left out, and
-        // so are those a save this version wrote from one names in its parts list. In a file this
-        // version can read whole, any other unknown chunk is skipped and noted, as it always was.
+        // A 2.0 file's unknown chunks are left out, here and when the city is saved, unless one is a
+        // feature this version reserves, by the name its features list gives it, which is kept as it
+        // was. In a 1.x file, a newer minor version's unknown chunks are kept when its parts list lets
+        // them be, as 0.4 read them; any other is skipped and noted, as it always was.
         var version = new FormatVersion(major, minor);
-        var named = version.Minor > Format.Minor ? [.. unknown.Keys] : unknown.Keys.Where(tag => parts?.Any(part => part.Chunk == tag) == true).ToList();
-        if (version.Minor > Format.Minor || named.Count > 0)
+        if (major >= 2)
         {
-            kept = SaveParts.Keep(version, Extension, parts, named, part => part.Chunk);
-            foreach (var part in kept.Parts)
+            if (unknown.Count > 0)
             {
-                kept.Chunks[part.Chunk] = unknown[part.Chunk];
+                var names = SaveParts.FeatureChunks.Concat((features ?? []).Select(feature => (feature.Name, feature.Chunk))).ToList();
+                kept = SaveParts.KeepFeatures(version, Extension, unknown.Keys.Select(tag => (names.FirstOrDefault(entry => entry.Chunk == tag).Name ?? tag.Trim(), tag)));
+                foreach (var part in kept.Parts.Where(part => part.Keepable))
+                {
+                    kept.Chunks[part.Chunk] = unknown[part.Chunk];
+                }
             }
         }
+        else
+        {
+            var legacy = SaveUpgrades.Legacy;
+            var newerLegacy = major == legacy.Major && minor > legacy.Minor;
+            var named = newerLegacy ? [.. unknown.Keys] : unknown.Keys.Where(tag => parts?.Any(part => part.Chunk == tag) == true).ToList();
+            if (newerLegacy || named.Count > 0)
+            {
+                kept = SaveParts.Keep(version, Extension, parts, named, part => part.Chunk);
+                foreach (var part in kept.Parts)
+                {
+                    kept.Chunks[part.Chunk] = unknown[part.Chunk];
+                }
+            }
 
-        skipped.AddRange(unknown.Keys.Except(named).Select(tag => $"Skipped a chunk this version doesn't know: '{tag}'."));
+            skipped.AddRange(unknown.Keys.Except(named).Select(tag => $"Skipped a chunk this version doesn't know: '{tag}'."));
+        }
 
-        var missing = Required.Concat(Added.Where(added => version >= added.Since).Select(added => added.Tag)).FirstOrDefault(tag => !chunks.ContainsKey(tag));
+        // A 2.0 file needs its core; any feature it leaves out is filled in as an upgrade fills it.
+        var needed = major >= 2 ? RequiredFrom2 : Required.Concat(Added.Where(added => version >= added.Since).Select(added => added.Tag));
+        var missing = needed.FirstOrDefault(tag => !chunks.ContainsKey(tag));
         if (missing is not null)
         {
             throw new InvalidSave($"{missing.Trim()}: the file is missing it.");
         }
 
         var head = SectionCodec.Read<CityChunk>(chunks[CityTag], CityTag);
-        var definitions = SectionCodec.Read<DefinitionsChunk>(chunks[DefinitionsTag], DefinitionsTag);
+        var definitions = major >= 2 ? null : SectionCodec.Read<DefinitionsChunk>(chunks[DefinitionsTag], DefinitionsTag);
         return new CitySave
         {
             Format = version,
+            Features = features?.Select(feature => feature.Name).ToArray(),
             Name = head.Name,
             Seed = head.Seed,
             Random = head.Random,
             Tick = head.Tick,
             CityTime = head.CityTime,
             Funds = head.Funds,
-            Definitions = definitions.Definitions,
-            Mods = definitions.Mods,
+            Definitions = definitions?.Definitions,
+            Mods = definitions?.Mods ?? SectionCodec.Read<ModsChunk>(chunks[ModsTag], ModsTag).Mods,
             Map = ReadMap(chunks[MapTag]),
             Budget = SectionCodec.Read<BudgetSave>(chunks[BudgetTag], BudgetTag),
             Census = SectionCodec.Read<CensusSave>(chunks[CensusTag], CensusTag),
@@ -406,6 +476,27 @@ public static class BinaryCityFormat
     private sealed class PartsChunk
     {
         public PartSave[] Parts { get; set; } = [];
+    }
+
+    // A 2.0 file's features, each by its name and its chunk.
+    [DynamicallyAccessedMembers(SectionCodec.ModelMembers)]
+    private sealed class FeaturesChunk
+    {
+        public FeatureEntry[] Features { get; set; } = [];
+    }
+
+    [DynamicallyAccessedMembers(SectionCodec.ModelMembers)]
+    private sealed class FeatureEntry
+    {
+        public string Name { get; set; } = string.Empty;
+
+        public string Chunk { get; set; } = string.Empty;
+    }
+
+    [DynamicallyAccessedMembers(SectionCodec.ModelMembers)]
+    private sealed class ModsChunk
+    {
+        public ModSave[] Mods { get; set; } = [];
     }
 
     [DynamicallyAccessedMembers(SectionCodec.ModelMembers)]

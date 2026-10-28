@@ -924,7 +924,6 @@ public sealed class CitySimulation
         Tick = TickCount,
         CityTime = CityTime,
         Funds = Treasury.Funds,
-        Definitions = DefinitionWriter.Write(Definitions),
         Mods = [.. Definitions.AppliedMods.Select(mod => new ModSave { Id = mod.Id, Name = mod.Name, Version = mod.Version })],
         Map = MapCodec.Encode(FireCodec.WholeMap(Map, Hazards)),
         Budget = Budget.Capture(),
@@ -953,11 +952,17 @@ public sealed class CitySimulation
         Challenge = Challenge?.Capture(),
     };
 
-    /// <summary>Makes a city from a save, checking each part as it goes.</summary>
+    /// <summary>
+    /// Makes a city from a save, checking each part as it goes. It runs on the definitions given, the
+    /// base game's and the mods installed, whatever a format 1 save held; when the city was played
+    /// with other mods, a note says so.
+    /// </summary>
     /// <exception cref="InvalidSave">Something in the save is wrong; the message says what and where.</exception>
-    internal static CitySimulation Restore(CitySave save)
+    internal static CitySimulation Restore(CitySave save, CityDefinitions definitions, List<string> notes)
     {
         ArgumentNullException.ThrowIfNull(save);
+        ArgumentNullException.ThrowIfNull(definitions);
+        ArgumentNullException.ThrowIfNull(notes);
         SaveUpgrades.ToCurrent(save);
 
         if (!IsValidName(save.Name))
@@ -976,11 +981,24 @@ public sealed class CitySimulation
             throw new InvalidSave($"cityTime: a city {tick} steps old is at count {tick / CityCalendar.StepsPerCount}, not {save.CityTime}.");
         }
 
-        var definitions = RestoreDefinitions(save);
+        var playedWith = ReadMods(save);
+        var differs = !playedWith.Select(mod => mod.Id).SequenceEqual(definitions.AppliedMods.Select(mod => mod.Id), StringComparer.Ordinal);
+        if (differs)
+        {
+            notes.Add($"It was played with {Describe(playedWith)}, and opens with {Describe(definitions.AppliedMods)}, so it may play differently.");
+        }
+
         var map = MapCodec.Decode(save.Map);
         var rail = save.Rail ?? throw new InvalidSave("rail: missing.");
         RailCodec.Apply(map, rail);
-        CheckZones(map, definitions);
+        try
+        {
+            CheckZones(map, definitions);
+        }
+        catch (InvalidSave ex) when (differs)
+        {
+            throw new InvalidSave($"{ex.Message} It was played with {Describe(playedWith)}; install them to open it.");
+        }
 
         var city = new CitySimulation(map, save.Seed, funds: 0, definitions);
         FacilityCodec.Apply(map, city.Facilities, save.Facilities ?? throw new InvalidSave("facilities: missing."));
@@ -1017,18 +1035,9 @@ public sealed class CitySimulation
 
     // The definitions are read by the same loader as the base game's, so a save can't hold a spec a
     // mod couldn't.
-    private static CityDefinitions RestoreDefinitions(CitySave save)
+    // The mods a save says the city was played with, in the order they were applied.
+    private static List<AppliedMod> ReadMods(CitySave save)
     {
-        if (save.Definitions.ValueKind != System.Text.Json.JsonValueKind.Object)
-        {
-            throw new InvalidSave("definitions: needs the definitions as an object.");
-        }
-
-        if (!DefinitionLoader.TryParseBase(save.Definitions.GetRawText(), out var definitions, out var error))
-        {
-            throw new InvalidSave($"definitions: {error}");
-        }
-
         var mods = new List<AppliedMod>();
         foreach (var mod in save.Mods ?? [])
         {
@@ -1040,8 +1049,11 @@ public sealed class CitySimulation
             mods.Add(new AppliedMod(mod.Id, mod.Name, mod.Version));
         }
 
-        return definitions.WithAppliedMods(mods);
+        return mods;
     }
+
+    private static string Describe(IReadOnlyList<AppliedMod> mods) =>
+        mods.Count == 0 ? "no mods" : string.Join(", ", mods.Select(mod => mod.Version is null ? mod.Name : $"{mod.Name} {mod.Version}"));
 
     // A zone's building can't be a level or a land-value class its spec doesn't have.
     private static void CheckZones(TileMap map, CityDefinitions definitions)

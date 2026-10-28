@@ -3,19 +3,52 @@ using CityLimits.Core.Simulation;
 namespace CityLimits.Core.Saving;
 
 /// <summary>
-/// Brings a save from an older minor version up to the current one, a version at a time, each step
-/// filling in what its version added, so a city saved by an older CityLimits loads as if it had been
-/// saved by this one. Every format reads through here, before the city is restored.
+/// Brings a save up to the current version, so a city saved by an older CityLimits loads as if it
+/// had been saved by this one. A 1.x save goes a minor version at a time, each step filling in what
+/// its version added, up to 1.10, the last; it then becomes a 2.0 save, its definitions and parts
+/// list left behind, since a 2.0 save runs on the definitions it is opened with and names its
+/// features. A 2.0 save may leave out any feature, and each one it leaves out is filled in as the
+/// step that added it fills it in. Every format reads through here, before the city is restored.
 /// </summary>
 internal static class SaveUpgrades
 {
     /// <summary>The save model's version, which both save formats write.</summary>
-    public static readonly FormatVersion Current = new(1, 10);
+    public static readonly FormatVersion Current = new(2, 0);
 
-    /// <summary>Upgrades a save in place, from whatever older 1.x version it is.</summary>
+    /// <summary>The last version of format 1, which 0.4 reads and this version still writes when asked.</summary>
+    public static readonly FormatVersion Legacy = new(1, 10);
+
+    /// <summary>Upgrades a save in place, from whatever older version it is.</summary>
     public static void ToCurrent(CitySave save)
     {
         ArgumentNullException.ThrowIfNull(save);
+        // A 1.x save had what its version had, and is upgraded from there; a part its version had
+        // and it lacks is damage, which restoring refuses.
+        if (save.Format.Major == 1)
+        {
+            ToLegacy(save);
+            save.Parts = null;
+            save.Definitions = null;
+            save.Format = Current;
+            return;
+        }
+
+        // A 2.0 save may leave out any feature, which is filled in as the version that added it would
+        // fill it; each step leaves alone what a save already has.
+        AddTraffic(save);
+        AddRoadTraffic(save);
+        AddRail(save);
+        AddPollutionAndCrime(save);
+        AddFire(save);
+        AddFlood(save);
+        AddFacilities(save);
+        AddFounding(save);
+        save.Format = Current;
+    }
+
+    // A 1.x save, up to 1.10, a minor version at a time.
+    private static void ToLegacy(CitySave save)
+    {
         if (save.Format < new FormatVersion(1, 1))
         {
             AddTraffic(save);
@@ -58,7 +91,7 @@ internal static class SaveUpgrades
             AddFounding(save);
         }
 
-        save.Format = Current;
+        save.Format = Legacy;
     }
 
     // 1.1 added traffic. A city from before has quiet roads, which its trips fill again. A map of a

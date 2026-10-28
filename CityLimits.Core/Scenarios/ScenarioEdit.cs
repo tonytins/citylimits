@@ -256,8 +256,9 @@ public sealed class ScenarioEdit
     /// Saves the scenario as it stands, with its city beside it as a flat save of the same name, to
     /// the player's scenarios folder, replacing what is there: the scenario then starts from that
     /// city, whatever it was made from. <paramref name="problem"/> says why when it can't be saved.
+    /// When <paramref name="legacy"/> asks, the city is written in the format 0.4 reads.
     /// </summary>
-    public bool TrySave(CitySimulation city, [NotNullWhen(false)] out string? problem)
+    public bool TrySave(CitySimulation city, [NotNullWhen(false)] out string? problem, bool legacy = false)
     {
         ArgumentNullException.ThrowIfNull(city);
         if (IsTesting)
@@ -306,7 +307,7 @@ public sealed class ScenarioEdit
             return false;
         }
 
-        if (!CityFiles.TryWrite(city, System.IO.Path.Combine(SaveFolder, cityName), out problem))
+        if (!CityFiles.TryWrite(city, System.IO.Path.Combine(SaveFolder, cityName), out problem, legacy))
         {
             return false;
         }

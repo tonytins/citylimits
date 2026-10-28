@@ -65,7 +65,7 @@ public static class WindowedGame
             using var menu = new StartMenu(assets, VersionInfo.DisplayVersion);
             // The game's own challenges, then the player's.
             IReadOnlyList<string> scenarioFolders = [Commands.ScenarioSubcommand.ScenarioFolder, folders.ScenariosFolder];
-            menu.Show(fromLoading: true, seed, folders.CitiesFolder, settings, scenarioFolders);
+            menu.Show(fromLoading: true, seed, folders.CitiesFolder, settings, scenarioFolders, GameMods.Load(folders.ModsFolder, out _));
             while (true)
             {
                 var choice = RunMenu(menu, folders);
@@ -91,7 +91,7 @@ public static class WindowedGame
                     break;
                 }
 
-                menu.Show(fromLoading: false, seed, folders.CitiesFolder, settings, scenarioFolders);
+                menu.Show(fromLoading: false, seed, folders.CitiesFolder, settings, scenarioFolders, GameMods.Load(folders.ModsFolder, out _));
             }
 
             SaveSettings(folders, settings);

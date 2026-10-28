@@ -248,7 +248,8 @@ public class RailTests
     [Fact]
     public void A14SaveWithoutRailIsRefused()
     {
-        var save = JsonNode.Parse(FlatCityFormat.Write(River()))!.AsObject();
+        // A 1.x save had what its version had, so one lacking a part of it is damaged.
+        var save = JsonNode.Parse(FlatCityFormat.Write(River(), legacy: true))!.AsObject();
         save.Remove("rail");
 
         Assert.False(FlatCityFormat.TryRead(save.ToJsonString(), out _, out var problem));

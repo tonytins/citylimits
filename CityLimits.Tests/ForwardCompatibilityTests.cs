@@ -1,14 +1,16 @@
 using System.Buffers.Binary;
 using System.Text;
 using System.Text.Json.Nodes;
+using CityLimits.Core.Definitions;
 using CityLimits.Core.Saving;
 using CityLimits.Core.Simulation;
 using CityLimits.Core.World;
 
 namespace CityLimits.Tests;
 
-// A newer CityLimits's save, made by hand: format 1.11, with a "weather" part this version doesn't
-// know, listed in its parts list with the flags each test gives it.
+// A newer CityLimits's save, made by hand: format 2.0 still, since a feature is known by its name,
+// not by a version. It has a "weather" part this version doesn't know, which it leaves out, and, when
+// asked, "connections", which this version reserves and carries through as it is.
 public class ForwardCompatibilityTests
 {
     private static CitySimulation City()
@@ -22,180 +24,163 @@ public class ForwardCompatibilityTests
         return city;
     }
 
-    private static JsonObject Part(bool ignorable, bool keepable, string name = "weather", string chunk = "WTHR") => new()
-    {
-        ["name"] = name,
-        ["chunk"] = chunk,
-        ["since"] = "1.11",
-        ["ignorable"] = ignorable,
-        ["keepable"] = keepable,
-    };
-
-    // With noise, the save has a second part, which can be left out but not kept.
-    private static string FutureFlat(bool ignorable, bool keepable, bool listed = true, bool noise = false)
+    private static string FutureFlat(bool connections = false, bool listed = true)
     {
         var save = JsonNode.Parse(FlatCityFormat.Write(City()))!.AsObject();
-        save["format"] = "1.11";
         save["weather"] = new JsonObject { ["levels"] = new JsonArray(1, 2, 3) };
-        if (listed)
+        save["features"]!.AsArray().Add(JsonValue.Create("weather"));
+        if (connections)
         {
-            save["parts"]!.AsArray().Add(Part(ignorable, keepable));
+            save["connections"] = new JsonObject { ["neighbours"] = new JsonArray("Riverton") };
+            save["features"]!.AsArray().Add(JsonValue.Create("connections"));
         }
 
-        if (noise)
+        if (!listed)
         {
-            save["noise"] = new JsonObject { ["levels"] = new JsonArray(4) };
-            save["parts"]!.AsArray().Add(Part(ignorable: true, keepable: false, "noise", "NOIS"));
+            save.Remove("features");
         }
 
         return save.ToJsonString();
     }
 
+    private static bool Names(JsonNode? list, string name) => list!.AsArray().Any(feature => feature!.GetValue<string>() == name);
+
     [Fact]
-    public void AKeepablePartOpensAndIsWrittenBackAsItWas()
+    public void ASaveNamesItsFeaturesAndNothingElse()
     {
-        Assert.True(FlatCityFormat.TryRead(FutureFlat(ignorable: true, keepable: true), out var city, out var problem, out var notes), problem);
+        var written = JsonNode.Parse(FlatCityFormat.Write(City()))!.AsObject();
+
+        Assert.Equal(
+            ["traffic", "roadTraffic", "rail", "pollution", "crime", "fire", "flood", "challenge", "facilities", "founding"],
+            written["features"]!.AsArray().Select(feature => feature!.GetValue<string>()));
+        Assert.EndsWith("city-save.v2.0.schema.json", written["$schema"]!.GetValue<string>());
+    }
+
+    [Fact]
+    public void APartThisVersionDoesntKnowIsLeftOutHereAndWhenSaved()
+    {
+        Assert.True(FlatCityFormat.TryRead(FutureFlat(), out var city, out var problem, out var notes), problem);
 
         Assert.Equal(
             [
-                "A newer CityLimits saved this city, in format 1.11; this version reads up to 1.10.",
-                "Its weather, from 1.11, is kept as it was when you save it.",
+                "A newer CityLimits saved this city with parts this version doesn't use.",
+                "Its weather part is left out, and is left out when you save it.",
             ],
             notes);
         var written = JsonNode.Parse(FlatCityFormat.Write(city))!.AsObject();
-        Assert.Equal("1.11", written["format"]!.GetValue<string>());
-        Assert.Equal("[1,2,3]", written["weather"]!["levels"]!.ToJsonString());
-        Assert.Contains(written["parts"]!.AsArray(), part => part!["name"]!.GetValue<string>() == "weather");
-        Assert.EndsWith("city-save.v1.11.schema.json", written["$schema"]!.GetValue<string>());
-
-        // Written back, it opens the same way again.
-        Assert.True(FlatCityFormat.TryRead(written.ToJsonString(), out _, out problem, out _), problem);
-    }
-
-    [Fact]
-    public void AnIgnorablePartThatIsntKeepableIsLeftOutAndTheSaveIsThisVersion()
-    {
-        Assert.True(FlatCityFormat.TryRead(FutureFlat(ignorable: true, keepable: false), out var city, out var problem, out var notes), problem);
-
-        Assert.Equal("Its weather, from 1.11, will be left out when you save it, and the newer version will rebuild it.", notes[1]);
-        var written = JsonNode.Parse(FlatCityFormat.Write(city))!.AsObject();
-        Assert.Equal("1.10", written["format"]!.GetValue<string>());
+        Assert.Equal("2.0", written["format"]!.GetValue<string>());
         Assert.Null(written["weather"]);
-        Assert.DoesNotContain(written["parts"]!.AsArray(), part => part!["name"]!.GetValue<string>() == "weather");
+        Assert.False(Names(written["features"], "weather"));
     }
 
     [Fact]
-    public void APartThatCantBeLeftOutRefusesTheSave()
+    public void TheFeaturesListMayBeLeftOut()
     {
-        Assert.False(FlatCityFormat.TryRead(FutureFlat(ignorable: false, keepable: true), out var city, out var problem));
+        Assert.True(FlatCityFormat.TryRead(FutureFlat(listed: false), out _, out var problem, out var notes), problem);
 
-        Assert.Null(city);
-        Assert.Equal("format: this is format 1.11; this version of CityLimits reads up to 1.10, and the file's weather, from 1.11, can't be left out.", problem);
+        Assert.Equal("Its weather part is left out, and is left out when you save it.", notes[1]);
     }
 
     [Fact]
-    public void AnUnknownPartTheListDoesntNameIsRefused()
+    public void ConnectionsAreReservedAndCarriedThroughAsTheyAre()
     {
-        Assert.False(FlatCityFormat.TryRead(FutureFlat(ignorable: true, keepable: true, listed: false), out _, out var problem));
+        Assert.True(FlatCityFormat.TryRead(FutureFlat(connections: true), out var city, out var problem, out var notes), problem);
 
-        Assert.Equal("weather: is not a part a save has, and the file's parts list doesn't name it.", problem);
-    }
-
-    [Fact]
-    public void AnUnknownPartInASaveOfThisVersionIsRefusedUnlessItsPartsListNamesIt()
-    {
-        var save = JsonNode.Parse(FutureFlat(ignorable: true, keepable: true, listed: false))!.AsObject();
-        save["format"] = "1.10";
-
-        Assert.False(FlatCityFormat.TryRead(save.ToJsonString(), out _, out var problem));
-
-        Assert.Equal("weather: is not a part a save has, and the file's parts list doesn't name it.", problem);
-    }
-
-    [Fact]
-    public void AKeptPartGoesIntoASaveOfThisVersionAndOpensAgain()
-    {
-        // Noise can't be kept, so the save falls back to 1.10, but the weather still goes in, named in
-        // the parts list, so the newer game gets it back and this one opens its own save again.
-        Assert.True(FlatCityFormat.TryRead(FutureFlat(ignorable: true, keepable: true, noise: true), out var city, out var problem, out _), problem);
-
+        Assert.Contains("Its connections part is kept as it was when you save it.", notes);
         var written = JsonNode.Parse(FlatCityFormat.Write(city))!.AsObject();
-        Assert.Equal("1.10", written["format"]!.GetValue<string>());
-        Assert.Null(written["noise"]);
-        Assert.Equal("[1,2,3]", written["weather"]!["levels"]!.ToJsonString());
-        Assert.Contains(written["parts"]!.AsArray(), part => part!["name"]!.GetValue<string>() == "weather");
+        Assert.Equal("[\"Riverton\"]", written["connections"]!["neighbours"]!.ToJsonString());
+        Assert.True(Names(written["features"], "connections"));
+        Assert.Null(written["weather"]);
 
-        Assert.True(FlatCityFormat.TryRead(written.ToJsonString(), out var reopened, out problem, out var notes), problem);
-        Assert.Equal("This city carries parts a newer CityLimits saved, which this version doesn't read.", notes[0]);
-        Assert.Equal("[1,2,3]", JsonNode.Parse(FlatCityFormat.Write(reopened))!["weather"]!["levels"]!.ToJsonString());
+        // Written back, it opens the same way again, and carries them on.
+        Assert.True(FlatCityFormat.TryRead(written.ToJsonString(), out var reopened, out problem, out _), problem);
+        Assert.Equal("[\"Riverton\"]", JsonNode.Parse(FlatCityFormat.Write(reopened))!["connections"]!["neighbours"]!.ToJsonString());
     }
 
     [Fact]
-    public void KeptPartsGoBackOnlyIntoTheirOwnFormat()
+    public void KeptFeaturesGoBackOnlyIntoTheirOwnFormat()
     {
-        Assert.True(FlatCityFormat.TryRead(FutureFlat(ignorable: true, keepable: true), out var city, out var problem, out _), problem);
+        Assert.True(FlatCityFormat.TryRead(FutureFlat(connections: true), out var city, out var problem, out _), problem);
 
         var binary = BinaryCityFormat.Write(city);
 
-        Assert.DoesNotContain("WTHR", Encoding.ASCII.GetString(binary));
+        Assert.DoesNotContain("CONN", Encoding.ASCII.GetString(binary));
         Assert.True(BinaryCityFormat.TryRead(binary, out _, out problem, out var notes), problem);
         Assert.Empty(notes);
     }
 
     [Fact]
-    public void ABinarySavesKeepablePartOpensAndIsWrittenBack()
+    public void AFileFor04IsFormat110WithItsDefinitionsAndPartsAndRunsInStepWithTheCity()
     {
-        var future = FutureBinary(ignorable: true, keepable: true);
+        var city = City();
 
-        Assert.True(BinaryCityFormat.TryRead(future, out var city, out var problem, out var notes), problem);
+        var written = JsonNode.Parse(FlatCityFormat.Write(city, legacy: true))!.AsObject();
 
-        Assert.Equal("Its weather, from 1.11, is kept as it was when you save it.", notes[1]);
+        Assert.Equal("1.10", written["format"]!.GetValue<string>());
+        Assert.EndsWith("city-save.v1.10.schema.json", written["$schema"]!.GetValue<string>());
+        Assert.Null(written["features"]);
+        Assert.Contains(written["parts"]!.AsArray(), part => part!["name"]!.GetValue<string>() == "founding");
+        Assert.All(written["parts"]!.AsArray(), part => Assert.NotNull(part!["since"]));
+        Assert.True(DefinitionLoader.TryParseBase(written["definitions"]!.ToJsonString(), out _, out var error), error);
+
+        Assert.True(FlatCityFormat.TryRead(written.ToJsonString(), out var reopened, out var problem, out _), problem);
+        for (var i = 0; i < CityCalendar.StepsPerYear; i++)
+        {
+            city.Tick();
+            reopened.Tick();
+        }
+
+        Assert.Equal(FlatCityFormat.Write(city), FlatCityFormat.Write(reopened));
+    }
+
+    [Fact]
+    public void AFileFor04LeavesOutAFeatureFormat1CantHold()
+    {
+        Assert.True(FlatCityFormat.TryRead(FutureFlat(connections: true), out var city, out var problem, out _), problem);
+
+        var written = JsonNode.Parse(FlatCityFormat.Write(city, legacy: true))!.AsObject();
+
+        Assert.Equal("1.10", written["format"]!.GetValue<string>());
+        Assert.Null(written["connections"]);
+    }
+
+    [Fact]
+    public void ABinaryFileFor04IsFormat110WithItsDefinitionsAndParts()
+    {
+        var city = City();
+
+        var written = BinaryCityFormat.Write(city, legacy: true);
+        var chunks = Chunks(written);
+
+        Assert.Equal(1, BinaryPrimitives.ReadUInt16BigEndian(written.AsSpan(6)));
+        Assert.Equal([0, 10], chunks.Single(chunk => chunk.Tag == "VERS").Payload);
+        Assert.Contains(chunks, chunk => chunk.Tag == "PART");
+        Assert.Contains(chunks, chunk => chunk.Tag == "DEFS");
+        Assert.DoesNotContain(chunks, chunk => chunk.Tag is "FEAT" or "MODS");
+        Assert.True(BinaryCityFormat.TryRead(written, out var reopened, out var problem, out _), problem);
+        Assert.Equal(FlatCityFormat.Write(city), FlatCityFormat.Write(reopened));
+    }
+
+    [Fact]
+    public void ABinarySavesUnknownChunkIsLeftOutAndItsReservedConnectionsKept()
+    {
+        Assert.True(BinaryCityFormat.TryRead(FutureBinary(), out var city, out var problem, out var notes), problem);
+
+        Assert.Contains("Its weather part is left out, and is left out when you save it.", notes);
+        Assert.Contains("Its connections part is kept as it was when you save it.", notes);
         var written = BinaryCityFormat.Write(city);
         var chunks = Chunks(written);
-        Assert.Equal([0, 11], chunks.Single(chunk => chunk.Tag == "VERS").Payload);
-        Assert.Equal([7, 8, 9], chunks.Single(chunk => chunk.Tag == "WTHR").Payload);
-        Assert.True(BinaryCityFormat.TryRead(written, out _, out problem, out _), problem);
-    }
-
-    [Fact]
-    public void ABinarySavesPartThatCantBeLeftOutRefusesIt()
-    {
-        Assert.False(BinaryCityFormat.TryRead(FutureBinary(ignorable: false, keepable: false), out _, out var problem, out _));
-
-        Assert.Equal("format: this is format 1.11; this version of CityLimits reads up to 1.10, and the file's weather, from 1.11, can't be left out.", problem);
-    }
-
-    [Fact]
-    public void ABinarySavesPartThatIsntKeepableIsLeftOut()
-    {
-        Assert.True(BinaryCityFormat.TryRead(FutureBinary(ignorable: true, keepable: false), out var city, out var problem, out _), problem);
-
-        var chunks = Chunks(BinaryCityFormat.Write(city));
-
-        Assert.Equal([0, 10], chunks.Single(chunk => chunk.Tag == "VERS").Payload);
+        Assert.Equal(2, BinaryPrimitives.ReadUInt16BigEndian(written.AsSpan(6)));
         Assert.DoesNotContain(chunks, chunk => chunk.Tag == "WTHR");
-    }
+        Assert.Equal([7, 8, 9], chunks.Single(chunk => chunk.Tag == "CONN").Payload);
 
-    [Fact]
-    public void ABinarySavesKeptPartGoesIntoASaveOfThisVersionAndOpensAgain()
-    {
-        Assert.True(BinaryCityFormat.TryRead(FutureBinary(ignorable: true, keepable: true, noise: true), out var city, out var problem, out _), problem);
-
-        var written = BinaryCityFormat.Write(city);
-        var chunks = Chunks(written);
-        Assert.Equal([0, 10], chunks.Single(chunk => chunk.Tag == "VERS").Payload);
-        Assert.Equal([7, 8, 9], chunks.Single(chunk => chunk.Tag == "WTHR").Payload);
-        Assert.DoesNotContain(chunks, chunk => chunk.Tag == "NOIS");
-
-        // Before, the reopened save skipped the chunk, and the next save lost it.
-        Assert.True(BinaryCityFormat.TryRead(written, out var reopened, out problem, out var notes), problem);
-        Assert.Equal("This city carries parts a newer CityLimits saved, which this version doesn't read.", notes[0]);
-        Assert.Equal([7, 8, 9], Chunks(BinaryCityFormat.Write(reopened)).Single(chunk => chunk.Tag == "WTHR").Payload);
+        Assert.True(BinaryCityFormat.TryRead(written, out var reopened, out problem, out _), problem);
+        Assert.Equal([7, 8, 9], Chunks(BinaryCityFormat.Write(reopened)).Single(chunk => chunk.Tag == "CONN").Payload);
     }
 
     // Bridgeport with rail, opened from 0.3.106's save in each backport (0.3.100.1, 0.3.101.1, and
     // 0.3.102.1), run for 64 steps, and saved: older versions, with the traffic they kept and their
-    // parts list, and without the rail they left out.
+    // parts list, and without the rail they left out. They open as any 1.x save does, and save as 2.0.
     [Theory]
     [InlineData("Bridgeport.from-0.3.100.1.fcl")]
     [InlineData("Bridgeport.from-0.3.100.1.cl")]
@@ -209,7 +194,7 @@ public class ForwardCompatibilityTests
 
         Assert.Empty(notes);
         Assert.Equal(0, city.RailTiles);
-        Assert.Equal("1.10", JsonNode.Parse(FlatCityFormat.Write(city))!["format"]!.GetValue<string>());
+        Assert.Equal("2.0", JsonNode.Parse(FlatCityFormat.Write(city))!["format"]!.GetValue<string>());
     }
 
     [Fact]
@@ -219,49 +204,32 @@ public class ForwardCompatibilityTests
         Assert.Equal(Path.Combine("Cities", "Joffburg.fcl"), Autosave.CityFileFor(Path.Combine("Cities", "Joffburg (autosave 2).fcl")));
     }
 
-    // The binary save as docs/saving.md lays it out: the header, then chunks, with the minor version
-    // made 10, the parts list given the weather part (and noise, when asked), and the parts' own chunks added.
-    private static byte[] FutureBinary(bool ignorable, bool keepable, bool noise = false)
+    // The binary save as docs/saving.md lays it out: the header, then chunks, with the features list
+    // given weather and connections, and their own chunks added.
+    private static byte[] FutureBinary()
     {
         var bytes = BinaryCityFormat.Write(City());
         var rebuilt = new List<byte>(bytes[..8]);
         foreach (var (tag, payload) in Chunks(bytes))
         {
-            var changed = tag switch
-            {
-                "VERS" => [0, 11],
-                "PART" => [.. AddParts(payload, ignorable, keepable, noise)],
-                _ => payload,
-            };
+            var changed = tag == "FEAT" ? [.. AddFeatures(payload)] : payload;
             rebuilt.AddRange(Chunk(tag, changed));
         }
 
-        rebuilt.AddRange(Chunk("WTHR", [7, 8, 9]));
-        if (noise)
-        {
-            rebuilt.AddRange(Chunk("NOIS", [4]));
-        }
-
+        rebuilt.AddRange(Chunk("WTHR", [1, 2, 3]));
+        rebuilt.AddRange(Chunk("CONN", [7, 8, 9]));
         return [.. rebuilt];
     }
 
-    // The parts list is a count, then each part: a byte saying it is there, and its fields in order,
-    // three texts and two yes-or-no bytes. A whole number is a zigzag varint, and a text its length
-    // as one, then its bytes.
-    private static IEnumerable<byte> AddParts(byte[] payload, bool ignorable, bool keepable, bool noise)
+    // The features list is a count, then each feature: a byte saying it is there, then its name and its
+    // chunk. A whole number is a zigzag varint, and a text its length as one, then its bytes.
+    private static IEnumerable<byte> AddFeatures(byte[] payload)
     {
         var count = payload[0] >> 1;
-        List<byte> parts = [.. Varint(count + (noise ? 2 : 1)), .. payload[1..], .. PartBytes("weather", "WTHR", ignorable, keepable)];
-        if (noise)
-        {
-            parts.AddRange(PartBytes("noise", "NOIS", ignorable: true, keepable: false));
-        }
-
-        return parts;
+        return [.. Varint(count + 2), .. payload[1..], .. FeatureBytes("weather", "WTHR"), .. FeatureBytes("connections", "CONN")];
     }
 
-    private static byte[] PartBytes(string name, string chunk, bool ignorable, bool keepable) =>
-        [1, .. Text(name), .. Text(chunk), .. Text("1.11"), (byte)(ignorable ? 1 : 0), (byte)(keepable ? 1 : 0)];
+    private static byte[] FeatureBytes(string name, string chunk) => [1, .. Text(name), .. Text(chunk)];
 
     private static byte[] Varint(long value)
     {

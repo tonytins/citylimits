@@ -1,3 +1,4 @@
+using CityLimits.Core.Definitions;
 using CityLimits.Core.Simulation;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
@@ -21,10 +22,13 @@ public static class FlatCityFormat
     public const string Extension = ".fcl";
 
     /// <summary>
-    /// The version of the format this game writes, and the newest it reads. A file of an older minor
-    /// version reads too; one written as a whole number, such as <c>1</c>, is 1.0.
+    /// The version of the format this game writes, and the newest it reads. Every older version reads
+    /// too; one written as a whole number, such as <c>1</c>, is 1.0.
     /// </summary>
     public static readonly FormatVersion Format = SaveUpgrades.Current;
+
+    /// <summary>The version written when the format 0.4 reads is asked for: 1.10, the last of format 1.</summary>
+    public static readonly FormatVersion LegacyFormat = SaveUpgrades.Legacy;
 
     /// <summary>The schema a flat city file names, for editors to check it against.</summary>
     public static string SchemaUrl => FormatSchemas.UrlFor("city-save", Format);
@@ -46,33 +50,60 @@ public static class FlatCityFormat
 
     private static JsonTypeInfo<CitySave> SaveInfo => (JsonTypeInfo<CitySave>)Options.GetTypeInfo(typeof(CitySave));
 
-    /// <summary>Writes a city as the format's text.</summary>
-    public static string Write(CitySimulation city)
+    /// <summary>
+    /// Writes a city as the format's text: version 2.0, or, when <paramref name="legacy"/> asks, 1.10,
+    /// which 0.4 reads, with the city's definitions in it and its parts listed by version. A 1.10 file
+    /// leaves out what format 1 can't hold, such as a newer save's features kept here.
+    /// </summary>
+    public static string Write(CitySimulation city, bool legacy = false)
     {
         ArgumentNullException.ThrowIfNull(city);
-        var save = city.Capture();
-
-        // A city from a newer save writes back the parts it kept of it, and that save's version when
-        // it kept them all.
-        var (kept, version) = city.Kept?.ForSaving(Extension) ?? ([], SaveUpgrades.Current);
-        save.Format = version;
-        save.Schema = FormatSchemas.UrlFor("city-save", version);
-        save.Parts = [.. SaveParts.Known, .. kept];
-        save.Unknown = kept.Count == 0 ? null : kept.ToDictionary(part => part.Name, part => city.Kept!.Sections[part.Name]);
+        var save = Capture(city, legacy, Extension);
         return JsonSerializer.Serialize(save, SaveInfo);
     }
 
-    /// <summary>Reads a city from the format's text, or says what is wrong with it.</summary>
+    // The one save model, shaped as 2.0 or as 1.10, for the format with the extension given, whose
+    // own kept features go back into it. A 1.10 save is a 2.0 save with format 1's definitions and
+    // parts list put back.
+    internal static CitySave Capture(CitySimulation city, bool legacy, string format)
+    {
+        var save = city.Capture();
+        if (legacy)
+        {
+            save.Format = SaveUpgrades.Legacy;
+            save.Schema = FormatSchemas.UrlFor("city-save", SaveUpgrades.Legacy);
+            save.Definitions = DefinitionWriter.Write(city.Definitions);
+            save.Parts = SaveParts.Known;
+            return save;
+        }
+
+        // A city from a newer save writes back the reserved features it kept of it.
+        var kept = city.Kept?.ForSaving(format) ?? [];
+        save.Format = SaveUpgrades.Current;
+        save.Schema = FormatSchemas.UrlFor("city-save", SaveUpgrades.Current);
+        save.Features = [.. SaveParts.FeatureNames, .. kept.Select(part => part.Name)];
+        // A flat save's kept sections go in beside its own; a binary save writes its kept chunks itself.
+        save.Unknown = kept.Count == 0 || format != Extension ? null : kept.ToDictionary(part => part.Name, part => city.Kept!.Sections[part.Name]);
+        return save;
+    }
+
+    /// <summary>Reads a city from the format's text on the base game, or says what is wrong with it.</summary>
     public static bool TryRead(string text, [NotNullWhen(true)] out CitySimulation? city, [NotNullWhen(false)] out string? problem) =>
-        TryRead(text, out city, out problem, out _);
+        TryRead(text, CityDefinitions.Base, out city, out problem, out _);
+
+    /// <summary>Reads a city from the format's text on the base game, or says what is wrong with it; the notes say what opening it came to.</summary>
+    public static bool TryRead(string text, [NotNullWhen(true)] out CitySimulation? city, [NotNullWhen(false)] out string? problem, out IReadOnlyList<string> notes) =>
+        TryRead(text, CityDefinitions.Base, out city, out problem, out notes);
 
     /// <summary>
-    /// Reads a city from the format's text, or says what is wrong with it. A save of a newer minor
-    /// version opens when every part it has that this version doesn't know is one its parts list says
-    /// may be left out; the notes say so, and what will be kept when the city is saved.
+    /// Reads a city from the format's text, running on the definitions given, or says what is wrong
+    /// with it. A save with features this version doesn't know opens when its features list says each
+    /// may be left out; the notes say so, what will be kept when the city is saved, and whether the
+    /// city was played with other mods.
     /// </summary>
-    public static bool TryRead(string text, [NotNullWhen(true)] out CitySimulation? city, [NotNullWhen(false)] out string? problem, out IReadOnlyList<string> notes)
+    public static bool TryRead(string text, CityDefinitions definitions, [NotNullWhen(true)] out CitySimulation? city, [NotNullWhen(false)] out string? problem, out IReadOnlyList<string> notes)
     {
+        ArgumentNullException.ThrowIfNull(definitions);
         city = null;
         notes = [];
         if (string.IsNullOrWhiteSpace(text))
@@ -91,9 +122,10 @@ public static class FlatCityFormat
         {
             var save = JsonSerializer.Deserialize(text, SaveInfo) ?? throw new InvalidSave("The file holds no city.");
             var kept = KeepUnknown(save);
-            city = CitySimulation.Restore(save);
+            var opened = new List<string>();
+            city = CitySimulation.Restore(save, definitions, opened);
             city.Kept = kept;
-            notes = SaveParts.NotesFor(kept);
+            notes = [.. SaveParts.NotesFor(kept), .. opened];
             problem = null;
             return true;
         }
@@ -110,27 +142,27 @@ public static class FlatCityFormat
         }
     }
 
-    /// <summary>Reads a city from a file, checking its size before reading it.</summary>
+    /// <summary>Reads a city from a file on the base game, checking its size before reading it.</summary>
     public static bool TryReadFile(string path, [NotNullWhen(true)] out CitySimulation? city, [NotNullWhen(false)] out string? problem) =>
-        TryReadFile(path, out city, out problem, out _);
+        TryReadFile(path, CityDefinitions.Base, out city, out problem, out _);
 
-    /// <summary>Reads a city from a file, checking its size before reading it; the notes say what a newer save's parts come to.</summary>
-    public static bool TryReadFile(string path, [NotNullWhen(true)] out CitySimulation? city, [NotNullWhen(false)] out string? problem, out IReadOnlyList<string> notes)
+    /// <summary>Reads a city from a file on the definitions given, checking its size before reading it; the notes say what opening it came to.</summary>
+    public static bool TryReadFile(string path, CityDefinitions definitions, [NotNullWhen(true)] out CitySimulation? city, [NotNullWhen(false)] out string? problem, out IReadOnlyList<string> notes)
     {
         city = null;
         notes = [];
         return SaveFiles.TryReadBytes(path, MaxBytes, out var bytes, out problem)
-            && TryRead(Encoding.UTF8.GetString(bytes), out city, out problem, out notes);
+            && TryRead(Encoding.UTF8.GetString(bytes), definitions, out city, out problem, out notes);
     }
 
     /// <summary>
     /// Writes a city to a file. It goes to a temporary file first and then takes the file's place, so
     /// a failure partway leaves the city saved before it as it was.
     /// </summary>
-    public static bool TryWriteFile(CitySimulation city, string path, [NotNullWhen(false)] out string? problem)
+    public static bool TryWriteFile(CitySimulation city, string path, [NotNullWhen(false)] out string? problem, bool legacy = false)
     {
         ArgumentNullException.ThrowIfNull(city);
-        return TryWriteFile(Write(city), path, out problem);
+        return TryWriteFile(Write(city, legacy), path, out problem);
     }
 
     /// <summary>Writes text from <see cref="Write"/> to a file, through a temporary file, as <see cref="TryWriteFile(CitySimulation, string, out string?)"/> does.</summary>
@@ -151,9 +183,10 @@ public static class FlatCityFormat
 
         try
         {
-            // A newer save of the same major version is listed too: it may open, and if it can't, opening it says why.
+            // Every version this one reads is listed, and a newer save of the same major version too:
+            // it may open, and if it can't, opening it says why.
             var save = JsonSerializer.Deserialize(bytes, SaveInfo);
-            summary = save is not null && save.Format.Major == Format.Major ? SaveFiles.Summarize(path, save) : null;
+            summary = save is not null && save.Format.Major is >= 1 && save.Format.Major <= Format.Major ? SaveFiles.Summarize(path, save) : null;
             return summary is not null;
         }
         catch (JsonException)
@@ -162,16 +195,44 @@ public static class FlatCityFormat
         }
     }
 
-    // A newer minor version's unknown sections are kept when its parts list lets them be left out, and
-    // so are those of a save this version wrote from one, which its parts list names too: a newer save
-    // with a part that can't be kept saves as this version, with the keepable parts beside it. In any
-    // other save this version can read whole, an unknown section is refused like any unknown field.
+    // In a 2.0 save, a section this version doesn't know is left out, here and when the city is saved,
+    // unless it is a feature this version reserves, which is kept as it was. In a 1.x save, a newer
+    // minor version's unknown sections are kept when its parts list lets them be, as 0.4 read them. In
+    // any other save, an unknown section is refused like any unknown field.
     private static KeptParts? KeepUnknown(CitySave save)
     {
         var unknown = save.Unknown ?? [];
         save.Unknown = null;
-        var newer = save.Format.Major == Format.Major && save.Format.Minor > Format.Minor;
-        if (!newer && save.Format.ProblemReadingWith(Format) is { } problem)
+        if (save.Format.Major > Format.Major || save.Format.Major < 1)
+        {
+            throw new InvalidSave($"format: {save.Format.ProblemReadingWith(Format)}");
+        }
+
+        if (save.Format.Major == Format.Major)
+        {
+            if (unknown.Count == 0)
+            {
+                return null;
+            }
+
+            // A feature is always a section of its own; anything else unknown is refused like any unknown field.
+            if (unknown.FirstOrDefault(entry => entry.Value.ValueKind != JsonValueKind.Object) is { Key: { } stray })
+            {
+                throw new InvalidSave($"{stray}: is not a field a save has, nor a part a newer version added.");
+            }
+
+            var features = SaveParts.KeepFeatures(save.Format, Extension, unknown.Keys.Select(name => (name, name)));
+            foreach (var part in features.Parts.Where(part => part.Keepable))
+            {
+                features.Sections[part.Name] = unknown[part.Name].Clone();
+            }
+
+            return features;
+        }
+
+        var legacy = SaveUpgrades.Legacy;
+        var newer = save.Format.Major == legacy.Major && save.Format.Minor > legacy.Minor;
+        if (!newer && save.Format.ProblemReadingWith(legacy) is { } problem)
         {
             throw new InvalidSave($"format: {problem}");
         }

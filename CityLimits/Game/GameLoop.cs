@@ -461,7 +461,7 @@ public sealed class GameLoop : IDisposable
 
         if (control && Raylib.IsKeyPressed(KeyboardKey.O))
         {
-            _loadPanel.Reset(_folders.CitiesFolder);
+            _loadPanel.Reset(_folders.CitiesFolder, InstalledDefinitions());
             OpenModal(Modal.Load);
             return;
         }
@@ -607,7 +607,7 @@ public sealed class GameLoop : IDisposable
                 break;
             case GameMenu.Choice.Load:
                 CloseModal();
-                _loadPanel.Reset(_folders.CitiesFolder);
+                _loadPanel.Reset(_folders.CitiesFolder, InstalledDefinitions());
                 OpenModal(Modal.Load);
                 break;
             case GameMenu.Choice.Settings:
@@ -643,16 +643,18 @@ public sealed class GameLoop : IDisposable
                     Fires = chosen.Fires,
                     Floods = chosen.Floods,
                     Earthquakes = chosen.Earthquakes,
+                    SaveOlderFormats = chosen.SaveOlderFormats,
                 };
                 ApplyDisasters(_settings);
                 Logger.Info(
-                    "Settings changed: fullscreen {Fullscreen} from the next start, {Slots} autosaves, disasters {Disasters}: fires {Fires}, floods {Floods}, earthquakes {Earthquakes}",
+                    "Settings changed: fullscreen {Fullscreen} from the next start, {Slots} autosaves, disasters {Disasters}: fires {Fires}, floods {Floods}, earthquakes {Earthquakes}; saving for 0.4 {Older}",
                     chosen.Fullscreen,
                     chosen.AutosaveSlots,
                     chosen.Disasters,
                     chosen.Fires,
                     chosen.Floods,
-                    chosen.Earthquakes);
+                    chosen.Earthquakes,
+                    chosen.SaveOlderFormats);
                 return;
             case SettingsPanel.Outcome.Closed:
                 if (!SettingsStore.TrySave(_folders.SettingsFile, Settings, out var error))
@@ -815,7 +817,7 @@ public sealed class GameLoop : IDisposable
 
         // An autosave follows the city's own format, so a flat city's autosave keeps a newer save's parts too.
         var path = Autosave.NextPath(_folders.CitiesFolder, _simulation.Name, _settings.AutosaveSlots, SaveExtension());
-        if (!CityFiles.TryWrite(_simulation, path, out var problem))
+        if (!CityFiles.TryWrite(_simulation, path, out var problem, _settings.SaveOlderFormats))
         {
             Logger.Error("Autosave failed: {Problem}", problem);
             _ticker.Advise($"Autosave failed: {problem}");
@@ -873,7 +875,7 @@ public sealed class GameLoop : IDisposable
             return;
         }
 
-        if (!editing.TrySave(_simulation, out var problem))
+        if (!editing.TrySave(_simulation, out var problem, _settings.SaveOlderFormats))
         {
             Logger.Error("{Problem}", problem);
             _ticker.Advise(problem);
@@ -904,7 +906,7 @@ public sealed class GameLoop : IDisposable
 
         // The flat text is what later saves are compared with, whichever format the file is in.
         var text = FlatCityFormat.Write(_simulation);
-        if (!CityFiles.TryWrite(_simulation, path, out var problem))
+        if (!CityFiles.TryWrite(_simulation, path, out var problem, _settings.SaveOlderFormats))
         {
             Logger.Error("{Problem}", problem);
             _ticker.Advise(problem);
@@ -1232,6 +1234,10 @@ public sealed class GameLoop : IDisposable
         _notice.Show(title, message);
         OpenModal(Modal.Notice);
     }
+
+    // A city opened from here runs on the base game with the mods installed now, read afresh each
+    // time, so a mod added since the game started counts; skipped mods are logged as they're read.
+    private CityDefinitions InstalledDefinitions() => GameMods.Load(_folders.ModsFolder, out _);
 
     // The player's disaster switches decide which disasters happen on their own in the city.
     private void ApplyDisasters(GameSettings settings)

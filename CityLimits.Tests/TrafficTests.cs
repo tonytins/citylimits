@@ -145,13 +145,14 @@ public class TrafficTests
         Assert.True(FlatCityFormat.TryRead(save.ToJsonString(), out var upgraded, out var problem), problem);
 
         Assert.All(Enumerable.Range(0, 20), x => Assert.Equal(0, upgraded.Traffic.DensityAt(x, 6)));
-        Assert.Equal("1.10", JsonNode.Parse(FlatCityFormat.Write(upgraded))!["format"]!.GetValue<string>());
+        Assert.Equal("2.0", JsonNode.Parse(FlatCityFormat.Write(upgraded))!["format"]!.GetValue<string>());
     }
 
     [Fact]
     public void ASave11WithoutTrafficIsRefused()
     {
-        var save = JsonNode.Parse(FlatCityFormat.Write(Street()))!.AsObject();
+        // A 1.x save had what its version had, so one lacking a part of it is damaged.
+        var save = JsonNode.Parse(FlatCityFormat.Write(Street(), legacy: true))!.AsObject();
         save.Remove("traffic");
 
         Assert.False(FlatCityFormat.TryRead(save.ToJsonString(), out _, out var problem));
@@ -331,7 +332,7 @@ public class TrafficTests
         var city = Street();
         AddTraffic(city, 12, 4);
         RunTo(city, 9);
-        var save = JsonNode.Parse(FlatCityFormat.Write(city))!.AsObject();
+        var save = JsonNode.Parse(FlatCityFormat.Write(city, legacy: true))!.AsObject();
         save.Remove("roadTraffic");
 
         Assert.False(FlatCityFormat.TryRead(save.ToJsonString(), out _, out var problem));

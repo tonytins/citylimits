@@ -30,10 +30,10 @@ public sealed record GameSettings
     /// <summary>
     /// Creates settings, rejecting values the game cannot honour. A settings file from before
     /// autosave has no slots, and gets one; one from before fullscreen is windowed; and one from before
-    /// disasters has them on, as Micropolis starts.
+    /// disasters has them on, as Micropolis starts. Saving in the formats 0.4 reads is off unless asked for.
     /// </summary>
     /// <exception cref="ArgumentOutOfRangeException">A value is outside its allowed range.</exception>
-    public GameSettings(int windowWidth, int windowHeight, int speed, int autosaveSlots = 1, bool fullscreen = false, bool disasters = true, bool fires = true, bool floods = true, bool earthquakes = true)
+    public GameSettings(int windowWidth, int windowHeight, int speed, int autosaveSlots = 1, bool fullscreen = false, bool disasters = true, bool fires = true, bool floods = true, bool earthquakes = true, bool saveOlderFormats = false)
     {
         ArgumentOutOfRangeException.ThrowIfLessThan(windowWidth, MinWindowWidth);
         ArgumentOutOfRangeException.ThrowIfGreaterThan(windowWidth, MaxWindowWidth);
@@ -53,6 +53,7 @@ public sealed record GameSettings
         Fires = fires;
         Floods = floods;
         Earthquakes = earthquakes;
+        SaveOlderFormats = saveOlderFormats;
     }
 
     /// <summary>The width of the window, in pixels.</summary>
@@ -87,6 +88,13 @@ public sealed record GameSettings
 
     /// <summary>Whether earthquakes strike, when <see cref="Disasters"/> are on too. A quake's fires are its own.</summary>
     public bool Earthquakes { get; init; }
+
+    /// <summary>
+    /// Whether cities, and scenarios' cities, are saved in the formats 0.4 reads, so they can go back
+    /// to it; whatever those formats can't hold is left out. 0.5 offers it here; 0.6 moves it to the
+    /// command line, and 0.7 drops it.
+    /// </summary>
+    public bool SaveOlderFormats { get; init; }
 
     /// <summary>Whether fires start on their own: both switches are on.</summary>
     public bool RandomFires => Disasters && Fires;

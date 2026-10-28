@@ -3,7 +3,7 @@ namespace CityLimits.UI;
 /// <summary>
 /// The settings window, opened from the start menu or the menu Escape opens in a city. Its tabs
 /// group the settings: Graphics, for fullscreen, which takes effect when the game next starts;
-/// Gameplay, for autosave and whether disasters happen at all; and Disasters, for each kind: fires,
+/// Gameplay, for autosave, whether disasters happen at all, and saving for 0.4; and Disasters, for each kind: fires,
 /// floods, and earthquakes. A
 /// change applies at once otherwise; the window's owner writes the settings when it closes. The
 /// player moves it by its title, and its x or Escape closes it. Choosing a fullscreen setting the
@@ -56,6 +56,12 @@ public sealed class SettingsPanel : IMovableWindow
                 settings => settings.Disasters ? 1 : 0,
                 (settings, choice) => settings with { Disasters = choice == 1 },
                 "Whether disasters happen on their own; the Disasters tab picks which."),
+            new(
+                "Save for 0.4",
+                ["Off", "On"],
+                settings => settings.SaveOlderFormats ? 1 : 0,
+                (settings, choice) => settings with { SaveOlderFormats = choice == 1 },
+                "Save cities so 0.4 can open them; what 0.4 can't hold is left out."),
         ],
         [
             new(

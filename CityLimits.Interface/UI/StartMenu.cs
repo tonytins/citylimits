@@ -21,6 +21,7 @@ public sealed class StartMenu : IDisposable
     private readonly string _version;
     private readonly NewCityPanel _newCity = new();
     private readonly LoadPanel _load = new();
+    private CityDefinitions _definitions = CityDefinitions.Base;
     private readonly SettingsPanel _settings = new();
     private readonly ScenarioPanel _scenarios = new();
     private bool _loadOpen;
@@ -93,11 +94,14 @@ public sealed class StartMenu : IDisposable
     /// <summary>
     /// Shows the menu afresh. Coming from the loading screen, the logo glides up into place; the
     /// seed given on the command line, if any, fills in the new-city panel, and the saved cities
-    /// are listed afresh from their folder.
+    /// are listed afresh from their folder, to open on the definitions given, the base game's with the
+    /// mods installed.
     /// </summary>
-    public void Show(bool fromLoading, int? commandLineSeed, string citiesFolder, GameSettings settings, IReadOnlyList<string> scenarioFolders)
+    public void Show(bool fromLoading, int? commandLineSeed, string citiesFolder, GameSettings settings, IReadOnlyList<string> scenarioFolders, CityDefinitions definitions)
     {
         ArgumentNullException.ThrowIfNull(settings);
+        ArgumentNullException.ThrowIfNull(definitions);
+        _definitions = definitions;
         ArgumentNullException.ThrowIfNull(scenarioFolders);
         _scenarioFolders = scenarioFolders;
         _scenariosOpen = false;
@@ -109,7 +113,7 @@ public sealed class StartMenu : IDisposable
         Settings = settings;
         _commandLineSeed = commandLineSeed;
         _citiesFolder = citiesFolder;
-        _load.Reset(citiesFolder);
+        _load.Reset(citiesFolder, definitions);
     }
 
     /// <summary>Takes this frame's input.</summary>
@@ -285,7 +289,7 @@ public sealed class StartMenu : IDisposable
 
     private Choice OpenLoad()
     {
-        _load.Reset(_citiesFolder);
+        _load.Reset(_citiesFolder, _definitions);
         _loadOpen = true;
         return Choice.None;
     }

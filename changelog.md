@@ -1,5 +1,35 @@
 # CityLimits Changelog
 
+## 0.5.100
+
+The first of 0.5, Senri, a line kept for the long term. Cities now save
+in a new format, 2.0, ready for what comes after. Every city you have
+still opens, and 0.5 keeps opening them for good.
+
+A city now opens with the mods you have installed. If you played it with
+other mods, the news ticker says so, since it may play differently. A
+city keeps the names of its mods, not the mods themselves.
+
+0.4 can't open cities saved by 0.5. To take a city back to 0.4, turn on
+Save for 0.4 in the Settings window's Gameplay tab before you save it;
+anything 0.4 can't hold is left out.
+
+For developers and agents: city saves are format 2.0, `.fcl` and `.cl`
+alike. A save names its features (`"features": ["traffic", "rail", …]`,
+the `FEAT` chunk) rather than counting minor versions: new state comes as a new feature, and the
+version moves only for a change that breaks; a feature a save leaves out
+is filled in as the version that added it fills it. A save lists its
+mods (`"mods"`, the `MODS` chunk) and holds no definitions; reading takes
+the definitions to run on (`CityFiles.TryRead`, `FlatCityFormat.TryRead`,
+and `BinaryCityFormat.TryRead` take a `CityDefinitions`, the base game's
+by default). 1.x saves still read, upgraded to 1.10 and then to 2.0.
+`Write(city, legacy: true)` writes 1.10, which 0.4.111 opens, from the
+same save model; 0.6 moves that choice to the command line, and 0.7
+drops it. A part of a save this version doesn't know is left out, here
+and when saving, apart from `connections`, which is reserved for Senri's
+neighbours and carried through as it is.
+`docs/schemas/city-save.v2.0.schema.json` is new.
+
 ## 0.4.111
 
 Three new challenges join First Town in the Scenarios list, each a town  

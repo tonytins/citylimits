@@ -5,7 +5,8 @@ runs on, step for step, as if it had never stopped. This page describes
 where saves go, how the game saves and loads them, and the two formats:
 the binary city format, `.cl`, the game's own save, and the flat city
 format, `.fcl`, which a person or an agent can read and compare. Both
-hold exactly the same city.
+hold exactly the same city. From 0.5 both are format 2.0; 0.5 still reads
+every 1.x save, and can still write 1.10, the format 0.4 reads.
 
 ## Where saves go
 
@@ -31,6 +32,16 @@ the game lists the folder's cities itself, newest first.
 - **Leaving a city** for the menu, for another city, or to quit asks
   first when the city has changes since it was last saved. A city has
   changes when its save would read differently from the last one.
+- **Opening a city** runs it on the base game with the mods installed
+  now. A city played with other mods opens anyway, and the news ticker
+  says so: `It was played with Cheap commerce 2.0, and opens with no
+  mods, so it may play differently.` A city whose buildings the installed
+  definitions can't hold, such as a level a mod added, is refused, naming
+  the mods to install.
+- **Save for 0.4**, in the Settings window's Gameplay tab, saves cities,
+  and scenarios' cities, as 1.10, the format 0.4 reads, so they can go
+  back to it. Off by default. 0.5 offers it in the game, 0.6 moves it to
+  the command line, and 0.7 drops it; every version keeps reading 1.x.
 - A save is written to a temporary file first and then takes the file's
   place, so a failure partway leaves the save before it as it was.
 
@@ -70,10 +81,12 @@ game is paused:
 - the money, and the budget: the tax rate, the funding levels and their
   effects, the year's taxes and upkeep set aside so far, last year, and
   the latest estimate;
-- the definitions the city runs on, in the same format as the base game
-  and mods ([modding](./modding/README.md)), with the mods that made them.
-  A city keeps them, so it loads the same even if the mods folder has
-  changed since;
+- the mods the city was played with, by name and version, in the order
+  they were applied. A 2.0 save holds no definitions: it runs on the base
+  game and the mods installed when it is opened, and says when those
+  differ. A 1.x save held the definitions too, in the same format as the
+  base game and mods ([modding](./modding/README.md)); 0.5 reads past
+  them, and writes them into a 1.10 save for 0.4;
 - the map, as described below;
 - the traffic on the roads, from format 1.1, and the traffic each road
   shows and the year's traffic average, from format 1.3;
@@ -97,8 +110,9 @@ meant to. At about 47 KB for a 120 by 100 city, it is around 60% the
 size of the same city as `.fcl`.
 
 - **The header:** the six bytes `CLCITY`, then the format's major version
-  as a 16-bit number: `1`. The minor version is in the `VERS` chunk, so
-  files from before minor versions, which have none, stay valid as 1.0.
+  as a 16-bit number: `2`, or `1` for a 1.x file. The minor version is in
+  the `VERS` chunk, so files from before minor versions, which have none,
+  stay valid as 1.0.
 - **The chunks**, one after another to the end of the file: a four-letter
   tag, the payload's length as a 32-bit number, the payload, and a
   CRC-32 of the tag and the payload.
@@ -106,12 +120,14 @@ size of the same city as `.fcl`.
 | Tag | What it holds |
 |---|---|
 | `VERS` | The format's minor version, as a 16-bit number; written first, and read as 0 when it is missing |
+| `FEAT` | The features list, each feature's name and its chunk's tag (see Opening a newer save); from 2.0, written after `VERS` |
 | `CITY` | The name, the seed, the generator, the steps, the calendar's count, and the money |
-| `DEFS` | The definitions, as definitions-format JSON text, and the mods applied |
+| `MODS` | The mods the city was played with; from 2.0 |
+| `DEFS` | In format 1 only: the definitions, as definitions-format JSON text, and the mods applied |
 | `MAP ` | The width and the height, then a word a tile |
 | `BUDG`, `CENS`, `DEMD`, `POWR`, `SERV`, `COMM`, `CMAP`, `CYCL` | The budget, the census, demand, power, services, hospitals and churches, the city maps, and the cycle's counts |
 | `TRAF` | The traffic on each 2 by 2 block; from format 1.1 |
-| `PART` | The parts list (see Opening a newer save); from format 1.2, written after `VERS` |
+| `PART` | In format 1 only: the parts list (see Opening a newer save); from 1.2, written after `VERS` |
 | `RTRF` | The traffic each road shows, and the year's average; from format 1.3 |
 | `RAIL` | The rail on the map, and the scan's count of it; from format 1.4 |
 | `POLL`, `CRIM` | The pollution and the crime on each 2 by 2 block, and each one's average; from format 1.5 |
@@ -120,6 +136,10 @@ size of the same city as `.fcl`.
 | `CHAL` | The scenario being played, for a city that is a challenge; from format 1.8, and only in such a city |
 | `FCLT` | The stadiums, seaports, and airports, the scan's counts of them, and the demand held back for want of one; from format 1.9 |
 | `FNDG` | The year the city was founded; from format 1.10 |
+
+In a 2.0 file, the chunks from `TRAF` on are its features: each may be
+left out, and is then filled in as the version that added it fills it.
+In a 1.x file, each is required from the version that added it.
 
 Each tile's word holds, from its lowest bit: the ground (2 bits), the use
 (4 bits), the footprint part (4 bits), power (1 bit), and 5 bits more: a
@@ -193,16 +213,19 @@ arrays of numbers sit on one line each.
 
 | Field | What it is |
 |---|---|
-| `$schema` | The schema the file follows, `docs/schemas/city-save.v1.0.schema.json`, for editors; the game ignores it |
-| `format` | The format's version, `"1.0"`; a save written before versions had minor numbers says `1`, which reads as 1.0 |
+| `$schema` | The schema the file follows, such as `docs/schemas/city-save.v2.0.schema.json`, for editors; the game ignores it |
+| `format` | The format's version, `"2.0"`, or a 1.x version such as `"1.10"`; a save written before versions had minor numbers says `1`, which reads as 1.0 |
+| `features` | From 2.0, the names of the features the save holds beyond its core, such as `["traffic", "rail"]`, for people and tools to see; it may be left out |
 | `name`, `seed`, `random` | The city's name, its seed, and the generator state |
 | `tick`, `cityTime` | The steps run, and the calendar's count |
 | `funds` | The money, which may be below zero |
-| `definitions`, `mods` | The definitions, in the definitions format, and the mods applied, in order |
+| `mods` | The mods the city was played with, in order |
+| `definitions` | In format 1 only: the definitions the city ran on, in the definitions format |
 | `map` | The map: see below |
 | `budget`, `census`, `demand`, `power`, `services`, `community`, `cityMaps` | Each part of the simulation's state |
 | `cycle` | The road tiles counted this cycle, and what the last count set aside for the budget |
-| `parts`, `traffic`, `roadTraffic`, `rail`, `pollution`, `crime`, `fire`, `flood`, `challenge`, `facilities`, `founding` | The parts list and the parts later versions added, each from the version the table under Versions gives |
+| `traffic`, `roadTraffic`, `rail`, `pollution`, `crime`, `fire`, `flood`, `challenge`, `facilities`, `founding` | The features, each from the version the table under Versions gives; a 2.0 save may leave any out |
+| `parts` | In format 1 only: the parts list, from 1.2 |
 
 ### The map
 
@@ -245,20 +268,29 @@ was doing and shows the reason.
 
 ## Versions
 
-Each format has a version, major and minor, such as 1.0. A minor version
-only adds: 1.1 brings something new, such as traffic, and a game that
-reads 1.1 reads 1.0 too, starting what 1.0 didn't have empty. A major
-version breaks with the one before. Each new edition of the Micropolis
-baseline that adds to the city takes the next minor version.
+Each format has a version, major and minor, such as 2.0. From 2.0, a save
+names its features, as HTML does, rather than counting minor versions:
+new state comes as a new feature, a section in `.fcl` and a chunk in
+`.cl`, named in the save's features list, and the version moves only for
+a change that breaks. A major version breaks with the one before.
 
-- **Reading.** A save of the game's own major version and of its minor
-  version or an older one loads; a newer one is refused with a message
-  saying which this version reads, such as `this is format 1.2; this
-  version of CityLimits reads up to 1.1.`
-- **Upgrading.** An older save climbs to the current version one minor
-  version at a time, each step filling in what that version added
-  (`SaveUpgrades`). Bridgeport's fixtures stay at 1.0, so the steps stay
-  tested.
+- **Reading.** A save of any version up to the game's own major version
+  loads; a newer major is refused with a message saying which this
+  version reads, such as `this is format 3.0; this version of CityLimits
+  reads up to 2.0.` A save with features this version doesn't know opens
+  as its features list allows (see Opening a newer save).
+- **Upgrading.** A 1.x save climbs to 1.10 one minor version at a time,
+  each step filling in what that version added (`SaveUpgrades`), then
+  becomes 2.0: its definitions and parts list are left behind. A 2.0
+  save that leaves out a feature has it filled in by the same step.
+  Bridgeport's fixtures stay at 1.0, so the steps stay tested.
+- **Writing for 0.4.** With Save for 0.4 on, a city is written as 1.10:
+  the same save model, with its definitions and its parts list put back
+  (`FlatCityFormat.Write` and `BinaryCityFormat.Write` with `legacy`).
+  Anything 1.10 can't hold, such as a newer save's features kept here,
+  is left out. A test runs a city written as 1.10 and read back in step
+  with the city itself, and 0.4.111 itself was checked to open such
+  files. 0.7 drops the 1.10 writer, and keeps reading 1.x.
 
 | Version | What it added | Upgrading from the one before |
 |---|---|---|
@@ -273,9 +305,12 @@ baseline that adds to the city takes the next minor version.
 | 1.8 | A challenge: `"challenge"`, and the `CHAL` chunk, only in a city being played as one | A city from before isn't one |
 | 1.9 | Stadiums, seaports, and airports: `"facilities"`, and the `FCLT` chunk | A city from before has none, and no demand held back until the city next checks |
 | 1.10 | The year the city was founded: `"founding"`, and the `FNDG` chunk | A city from before is counted from 1900, as it was; one that started later can't be told apart |
-- **Growing the binary format.** New state goes in new chunks, not new
-  fields in old ones, so a minor version stays an addition.
-- **The flat format** writes its version as a string, `"1.0"`, so 1.10
+| 2.0 | Features named rather than counted: `"features"`, and the `FEAT` chunk; the mods by name, in `"mods"` and the `MODS` chunk, and no definitions (0.5) | A 1.x save becomes 2.0 at 1.10, leaving its definitions and parts list behind; it runs on the definitions it is opened with |
+
+- **Growing a format.** New state goes in a new section or chunk, never a
+  new field in an existing one, so a feature can be kept or left out
+  whole.
+- **The flat format** writes its version as a string, `"2.0"`, so 1.10
   can't read as 1.1; a whole number, as saves before minor versions
   wrote, reads as that major version's .0. Scenarios and mod definitions
   are versioned the same way.
@@ -399,30 +434,28 @@ saved before 1.10 is counted from 1900. Reading refuses a year before
 ## Opening a newer save
 
 From 0.3.103, CityLimits can open a city a newer version saved, as PNG
-readers handle chunks they don't know.[^backports] Each save lists the parts every
-version after 1.0 added (`"parts"` in `.fcl`, the `PART` chunk in `.cl`),
-each with two flags that say what a game that doesn't know the part may
-do with it:
+readers handle chunks they don't know.[^backports] From 2.0 the rule is
+simple, as Tony Bark chose: a section of a `.fcl` save, or a chunk of a
+`.cl` one, that this version doesn't know is left out. The city opens
+without it, the news ticker says so, and saving leaves it out too; the
+newer version fills it in again, as it fills in any feature a save
+doesn't hold. A feature an older version couldn't safely leave out, such
+as one that puts new kinds of tiles on the map, comes with a new major
+version instead, which older versions refuse with a message. In `.fcl`,
+something unknown that isn't a section of its own, such as `"cheats":
+true`, is refused like any unknown field.
 
-- **Ignorable:** the game may open the file without it. If any part the
-  game doesn't know isn't ignorable, such as one that puts new kinds of
-  tiles on the map, the file is refused with a message naming it.
-- **Keepable:** a game that has changed the city may write the part back
-  exactly as it found it, because nothing in it goes wrong when the rest
-  of the city moves on. Traffic is: any amount on any road is valid, and
-  it fades. A part that isn't keepable is left out, and the newer game
-  rebuilds it, as an upgrade does.
+The one exception is a feature this version reserves: it knows the name,
+doesn't read inside, and writes it back exactly as it found it, in the
+same format it came in (a binary chunk can't become JSON without being
+understood). `connections`, to neighbouring cities, is reserved in 0.5.100
+(`SaveParts.Reserved`, the `CONN` chunk), so a city that has them passes
+through it intact until Senri's N2 gives them their contents.
 
-Saving such a city writes back the keepable parts it kept, in the same
-format they came in (a binary chunk can't become JSON without being
-understood). When it kept them all, the save keeps the newer version;
-when it left one out, it is this version's, so the newer game knows to
-rebuild, and the keepable parts still go in, named in its parts list, so
-the save opens here again with them and the newer game gets them back.
-A city opened this way says so on the news ticker, and the log
-lists each part and what will happen to it. A part a newer version adds
-is always a whole new section or chunk, never a new field in an existing
-one, so it can be kept or left out whole.
+A 1.x save lists its parts by the version that added them (`"parts"`, the
+`PART` chunk), each with two flags, ignorable and keepable, for a game
+that doesn't know the part; 0.4 and the backports open newer 1.x saves
+that way, falling back to their own version when they leave a part out.
 
 [^backports]: 0.3.100, 0.3.101, and 0.3.102 have backports of this, 0.3.100.1,
     0.3.101.1, and 0.3.102.1, on the branches `release/0.3.100` to
@@ -441,7 +474,7 @@ one, so it can be kept or left out whole.
 `docs/schemas/` holds a JSON Schema for each format people and agents
 write or read: `city-save` for `.fcl` saves, `scenario`, and the mod
 files `mod`, `zones`, `plants`, and `services`, with `definitions` for
-the base game's, one file a version, such as `city-save.v1.0.schema.json`.
+the base game's, one file a version, such as `city-save.v2.0.schema.json`.
 A schema describes a file's shape: its fields and their types, with no
 others. A file names its schema in `"$schema"`, which every loader
 accepts and ignores, and an editor such as VS Code then checks the file

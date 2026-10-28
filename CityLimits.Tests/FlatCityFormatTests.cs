@@ -165,7 +165,7 @@ public class FlatCityFormatTests
     }
 
     [Fact]
-    public void ACityKeepsTheDefinitionsItWasMadeWith()
+    public void ACityOpensOnTheDefinitionsGivenAndSaysWhenItWasPlayedWithOtherMods()
     {
         var folder = Directory.CreateTempSubdirectory().FullName;
         try
@@ -177,10 +177,22 @@ public class FlatCityFormatTests
             var definitions = CityLimits.Core.Definitions.ModLoader.Load(folder, out _);
             var city = new CitySimulation(TileMap.FromTerrain(10, 8, new TileKind[80]), 5, definitions: definitions);
 
-            var loaded = Load(FlatCityFormat.Write(city));
+            var text = FlatCityFormat.Write(city);
+            Assert.DoesNotContain("\"definitions\"", text);
+            Assert.Contains("cheap-commerce", text);
 
-            Assert.Equal(40, loaded.Definitions.Zone(TileUse.Commercial).Price);
-            Assert.Equal([new CityLimits.Core.Definitions.AppliedMod("cheap-commerce", "Cheap commerce", "2.0")], loaded.Definitions.AppliedMods);
+            // With the mod installed, the city opens as it was played.
+            Assert.True(FlatCityFormat.TryRead(text, definitions, out var same, out var problem, out var notes), problem);
+            Assert.Empty(notes);
+            Assert.Equal(40, same.Definitions.Zone(TileUse.Commercial).Price);
+
+            // Without it, it runs on the base game, and says so.
+            Assert.True(FlatCityFormat.TryRead(text, CityLimits.Core.Definitions.CityDefinitions.Base, out var plain, out problem, out notes), problem);
+            Assert.Equal(CityLimits.Core.Definitions.CityDefinitions.Base.Zone(TileUse.Commercial).Price, plain.Definitions.Zone(TileUse.Commercial).Price);
+            Assert.Equal("It was played with Cheap commerce 2.0, and opens with no mods, so it may play differently.", Assert.Single(notes));
+
+            // A file for 0.4 carries the definitions, as 0.4 reads them.
+            Assert.Contains("\"definitions\"", FlatCityFormat.Write(city, legacy: true));
         }
         finally
         {
@@ -188,9 +200,23 @@ public class FlatCityFormatTests
         }
     }
 
+    [Fact]
+    public void A20SaveMayLeaveOutAFeatureWhichIsFilledInAsAnUpgradeFillsIt()
+    {
+        var city = new CitySimulation(TileMap.FromTerrain(10, 8, new TileKind[80]), 5, startYear: 1950);
+        var save = System.Text.Json.Nodes.JsonNode.Parse(FlatCityFormat.Write(city))!.AsObject();
+        save.Remove("traffic");
+        save.Remove("founding");
+
+        Assert.True(FlatCityFormat.TryRead(save.ToJsonString(), out var loaded, out var problem), problem);
+
+        Assert.Equal(0, loaded.Traffic.DensityAt(3, 3));
+        Assert.Equal(1900, loaded.FoundedYear);
+    }
+
     // Each change breaks one thing in an otherwise good save; the message names what.
     [Theory]
-    [InlineData("format", "2", "format: this is format 2.0; this version of CityLimits reads up to 1.10.")]
+    [InlineData("format", "3", "format: this is format 3.0; this version of CityLimits reads up to 2.0.")]
     [InlineData("name", "\"\"", "name:")]
     [InlineData("random", "\"xyz\"", "random:")]
     [InlineData("cityTime", "3", "cityTime:")]
@@ -201,7 +227,6 @@ public class FlatCityFormatTests
     [InlineData("census.residentialHistory", "[1,2]", "census.residentialHistory:")]
     [InlineData("cityMaps.terrain", "[]", "cityMaps.terrain:")]
     [InlineData("power.plants", "[1]", "power.plants:")]
-    [InlineData("definitions", "{ \"format\": 1 }", "definitions:")]
     public void ADamagedSaveIsRefusedAndSaysWhere(string field, string value, string expected)
     {
         var save = JsonNode.Parse(FlatCityFormat.Write(Town()))!.AsObject();

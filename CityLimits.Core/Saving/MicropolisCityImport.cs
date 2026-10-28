@@ -379,7 +379,8 @@ public static class MicropolisCityImport
         save.Demand.Industrial = Math.Clamp(Word(misc, IndustrialValveAt), -CityDemand.BusinessLimit, CityDemand.BusinessLimit);
         save.CityMaps.LandValueAverage = Math.Clamp(Word(misc, LandValueAverageAt), 0, CityMaps.MaxLandValue);
 
-        var city = CitySimulation.Restore(save);
+        // An imported city runs on the base game, as Micropolis' cities were played.
+        var city = CitySimulation.Restore(save, CityDefinitions.Base, []);
         city.TracePowerNow();
         return city;
     }

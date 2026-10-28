@@ -33,6 +33,7 @@ public sealed class LoadPanel : IDisposable
     private const int OpenButton = 1;
 
     private IReadOnlyList<SavedCitySummary> _cities = [];
+    private CityDefinitions _definitions = CityDefinitions.Base;
     private int _first;
     private string? _problem;
 
@@ -65,9 +66,14 @@ public sealed class LoadPanel : IDisposable
     /// <summary>What was read but not used, or what an import replaced.</summary>
     public IReadOnlyList<string> Notes { get; private set; } = [];
 
-    /// <summary>Lists the cities in a folder afresh.</summary>
-    public void Reset(string folder)
+    /// <summary>
+    /// Lists the cities in a folder afresh, to open on the definitions given: the base game's, with
+    /// the mods installed. A city played with other mods says so when it opens.
+    /// </summary>
+    public void Reset(string folder, CityDefinitions definitions)
     {
+        ArgumentNullException.ThrowIfNull(definitions);
+        _definitions = definitions;
         _cities = CityFiles.List(folder);
         _first = 0;
         _problem = null;
@@ -225,7 +231,7 @@ public sealed class LoadPanel : IDisposable
         Unpick();
         _selected = index;
         var chosen = _cities[index];
-        if (!CityFiles.TryRead(chosen.Path, out var city, out var problem, out var notes))
+        if (!CityFiles.TryRead(chosen.Path, _definitions, out var city, out var problem, out var notes))
         {
             Logger.Warn("{File} couldn't be opened: {Problem}", chosen.Path, problem);
             _problem = $"{System.IO.Path.GetFileName(chosen.Path)}: {problem}";
