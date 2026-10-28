@@ -104,6 +104,12 @@ public sealed class CityMaps
     /// <summary>The land value under a tile, from 0 for a block with nothing built on it up to <see cref="MaxLandValue"/>.</summary>
     public int LandValueAt(int x, int y) => _map.Contains(x, y) ? _landValue[((y / 2) * _halfWidth) + (x / 2)] : 0;
 
+    /// <summary>
+    /// How much pollution industry gives off, in percent of Micropolis': 100 unless the city's
+    /// ordinances, CityLimits' own, say otherwise.
+    /// </summary>
+    public int IndustryPollutionPercent { get; set; } = 100;
+
     /// <summary>The pollution around a tile, from 0 to <see cref="MostPollution"/>.</summary>
     public int PollutionAt(int x, int y) => _map.Contains(x, y) ? _pollution[((y / 2) * _halfWidth) + (x / 2)] : 0;
 
@@ -220,7 +226,8 @@ public sealed class CityMaps
     /// </summary>
     /// <param name="services">The police coverage, spread this cycle.</param>
     /// <param name="influences">The facilities' influences on crime, worked out this cycle; none when null.</param>
-    public void UpdateCrime(ServiceCoverage services, FacilityInfluences? influences = null)
+    /// <param name="ordinances">What the city's ordinances add to crime everywhere, CityLimits' own.</param>
+    public void UpdateCrime(ServiceCoverage services, FacilityInfluences? influences = null, int ordinances = 0)
     {
         ArgumentNullException.ThrowIfNull(services);
 
@@ -240,7 +247,7 @@ public sealed class CityMaps
 
                 var crime = Math.Min(CrimeBase - landValue + _density[block], MostCrimeBeforePolice);
                 crime -= services.PoliceCoverageAt(blockX * 2, blockY * 2);
-                crime += influences?.At(InfluenceEffect.Crime, blockX * 2, blockY * 2) ?? 0;
+                crime += (influences?.At(InfluenceEffect.Crime, blockX * 2, blockY * 2) ?? 0) + ordinances;
                 crime = Math.Clamp(crime, 0, MostCrime);
                 _crime[block] = crime;
                 total += crime;
@@ -255,7 +262,7 @@ public sealed class CityMaps
     // is, or a road's by the traffic it showed when the scan last passed.
     private int PollutionOf(int x, int y, TileState state, TrafficMap traffic) => state.Use switch
     {
-        TileUse.Industrial => _map.ZoneStateAt(x, y).Development > 0 ? IndustryPollution : 0,
+        TileUse.Industrial => _map.ZoneStateAt(x, y).Development > 0 ? IndustryPollution * IndustryPollutionPercent / 100 : 0,
         TileUse.CoalPowerPlant => CoalPlantPollution,
         TileUse.Seaport or TileUse.Airport => _definitions.Facility(state.Use).Pollution,
         _ => traffic.LevelAt(x, y) switch

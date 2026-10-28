@@ -112,7 +112,10 @@ public sealed class PowerGrid
     /// Traces power from the plants the scan counted, through every tile that carries it toward
     /// the next, until everything connected is powered or the plants' capacity runs out.
     /// </summary>
-    public void Trace(TileMap map, CityDefinitions definitions)
+    /// <param name="map">The map to trace.</param>
+    /// <param name="definitions">The definitions, for the plants' capacity and what carries power.</param>
+    /// <param name="capacityPercent">The plants' capacity in percent, 100 unless the city's ordinances say otherwise.</param>
+    public void Trace(TileMap map, CityDefinitions definitions, int capacityPercent = 100)
     {
         ArgumentNullException.ThrowIfNull(map);
         ArgumentNullException.ThrowIfNull(definitions);
@@ -140,8 +143,9 @@ public sealed class PowerGrid
 
         _width = map.Width;
         _carriers = definitions.Infrastructure;
-        Capacity = (CoalPlants * definitions.Plant(TileUse.CoalPowerPlant).Capacity)
-            + (NuclearPlants * definitions.Plant(TileUse.NuclearPowerPlant).Capacity);
+        var capacity = ((long)CoalPlants * definitions.Plant(TileUse.CoalPowerPlant).Capacity)
+            + ((long)NuclearPlants * definitions.Plant(TileUse.NuclearPowerPlant).Capacity);
+        Capacity = (int)Math.Min(int.MaxValue, capacity * Math.Max(0, capacityPercent) / 100);
         PoweredTiles = 0;
         IsBrownedOut = false;
 

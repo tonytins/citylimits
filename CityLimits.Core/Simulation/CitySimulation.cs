@@ -149,6 +149,7 @@ public sealed class CitySimulation
         Trips = new TripPlanner(Traffic);
         Budget = new CityBudget(Definitions.Service(TileUse.FireStation).Upkeep, Definitions.Service(TileUse.PoliceStation).Upkeep);
         Budget.SetTaxRate(Definitions.Economy.TaxRate);
+        Ordinances = new CityOrdinances(Definitions);
         _growth = new ZoneGrowth(map, Random, Trips, Definitions, Demand, Maps, Community, Hazards);
     }
 
@@ -185,6 +186,9 @@ public sealed class CitySimulation
 
     /// <summary>Raised when an earthquake strikes, after its damage is done, so the game can shake the view.</summary>
     public event Action? EarthquakeStruck;
+
+    /// <summary>Raised when an ordinance is enacted or repealed, and when the city asks for one, each quarter it wants one.</summary>
+    public event Action<OrdinanceNews>? OrdinanceNews;
 
     /// <summary>The fires and floods on the map, and the holes they leave in buildings.</summary>
     public Hazards Hazards { get; }
@@ -303,6 +307,9 @@ public sealed class CitySimulation
     /// <summary>How well fire and police stations cover the city, and how many there are.</summary>
     public ServiceCoverage Services { get; }
 
+    /// <summary>The ordinances the city has enacted, and what they do.</summary>
+    public CityOrdinances Ordinances { get; }
+
     /// <summary>What the stadiums, seaports, and airports do to the land value, crime, and pollution around them.</summary>
     public FacilityInfluences Influences { get; }
 
@@ -353,7 +360,11 @@ public sealed class CitySimulation
             CityTime++;
             if (CityTime % 2 == 0)
             {
-                Demand.Update(Census, Budget.TaxEffect, Facilities.Caps);
+                Demand.Update(
+                    Census,
+                    Budget.TaxEffect,
+                    Facilities.Caps,
+                    (Ordinances.Effect(OrdinanceEffect.ResidentialDemand), Ordinances.Effect(OrdinanceEffect.CommercialDemand), Ordinances.Effect(OrdinanceEffect.IndustrialDemand)));
             }
 
             Census.Clear();
@@ -374,6 +385,7 @@ public sealed class CitySimulation
             {
                 Census.RecordMonth();
                 Community.UpdateNeeds(Census.Residential);
+                AskForOrdinance();
             }
 
             CollectTaxes();
@@ -386,7 +398,7 @@ public sealed class CitySimulation
         }
         else if (phase == PowerPhase)
         {
-            Power.Trace(Map, Definitions);
+            Power.Trace(Map, Definitions, Ordinances.Scaled(OrdinanceEffect.PowerCapacity, 100));
             if (Power.IsBrownedOut)
             {
                 MessageSent?.Invoke(CityMessage.Brownouts);
@@ -402,7 +414,7 @@ public sealed class CitySimulation
         {
             Services.SpreadPolice();
             Influences.Update(InfluenceEffect.Crime);
-            Maps.UpdateCrime(Services, Influences);
+            Maps.UpdateCrime(Services, Influences, Ordinances.Effect(OrdinanceEffect.Crime));
         }
         else if (phase == FirePhase)
         {
@@ -500,7 +512,10 @@ public sealed class CitySimulation
         if (kind < FireKinds)
         {
             var (x, y) = (Random.NextInt(0, Map.Width), Random.NextInt(0, Map.Height));
-            if (RandomFires && IsArsonable(x, y))
+            // Smoke detectors, CityLimits' own, stop some fires breaking out: a die is rolled only
+            // while they are enacted, so a city without them rolls as it always did.
+            var prevented = Ordinances.Effect(OrdinanceEffect.Fires);
+            if (RandomFires && IsArsonable(x, y) && (prevented == 0 || Random.NextInt(0, 100) >= -prevented))
             {
                 Ignite(x, y);
                 MessageSent?.Invoke(CityMessage.FireReported);
@@ -713,8 +728,44 @@ public sealed class CitySimulation
     /// The year's budget as it would be estimated now, at the tax rate and funding set now, from
     /// the city as the last count saw it. The budget panel shows it as the player changes them.
     /// </summary>
-    public BudgetYear EstimateBudget() =>
-        Budget.Estimate(Demand.TaxablePopulation, Maps.LandValueAverage, _budgetedRoadTiles + (_budgetedRailTiles * RoadTilesPerRail), _budgetedFireStations, _budgetedPoliceStations, Treasury.Funds);
+    public BudgetYear EstimateBudget()
+    {
+        var (income, cost) = Ordinances.YearlyMoney(Census.CityPopulation);
+        return Budget.Estimate(Demand.TaxablePopulation, Maps.LandValueAverage, _budgetedRoadTiles + (_budgetedRailTiles * RoadTilesPerRail), _budgetedFireStations, _budgetedPoliceStations, Treasury.Funds, income, cost);
+    }
+
+    /// <summary>
+    /// Enacts or repeals an ordinance, which takes effect at once and is paid for from the next
+    /// count, and tells the ticker. Tells whether that changed anything.
+    /// </summary>
+    /// <exception cref="ArgumentException">There is no ordinance with that id.</exception>
+    public bool SetOrdinance(string id, bool enacted)
+    {
+        if (!Ordinances.Set(id, enacted))
+        {
+            return false;
+        }
+
+        ApplyOrdinances();
+        OrdinanceNews?.Invoke(new OrdinanceNews(Definitions.Ordinance(id)!, enacted ? OrdinanceNewsKind.Enacted : OrdinanceNewsKind.Repealed));
+        return true;
+    }
+
+    // The settings other parts of the city read from the ordinances, set again whenever they change.
+    private void ApplyOrdinances()
+    {
+        Traffic.TripPercent = Ordinances.Scaled(OrdinanceEffect.Traffic, 100);
+        Maps.IndustryPollutionPercent = Ordinances.Scaled(OrdinanceEffect.IndustrialPollution, 100);
+    }
+
+    // Each quarter the city asks for the ordinance it most wants, as SimCity 3000's petitions do.
+    private void AskForOrdinance()
+    {
+        if (CityTime % (CityCalendar.CountsPerMonth * 3) == 0 && Ordinances.MostWanted(this) is { } wanted)
+        {
+            OrdinanceNews?.Invoke(new OrdinanceNews(wanted, OrdinanceNewsKind.Petition));
+        }
+    }
 
     private void SendMessages()
     {
@@ -958,8 +1009,15 @@ public sealed class CitySimulation
         Flood = FloodCodec.Capture(Map, Floods),
         Facilities = FacilityCodec.Capture(Map, Hazards, Facilities),
         Founding = new FoundingSave { Year = FoundedYear },
+        Ordinances = CaptureOrdinances(),
         Challenge = Challenge?.Capture(),
     };
+
+    private OrdinancesSave CaptureOrdinances()
+    {
+        var (incomeFund, costFund, lastYear, estimated) = Budget.CaptureOrdinances();
+        return new OrdinancesSave { Enacted = Ordinances.Capture(), IncomeFund = incomeFund, CostFund = costFund, LastYear = lastYear, Estimated = estimated };
+    }
 
     /// <summary>
     /// Makes a city from a save, checking each part as it goes. It runs on the definitions given, the
@@ -1029,6 +1087,10 @@ public sealed class CitySimulation
         FloodCodec.Apply(map, city.Hazards, save.Flood ?? throw new InvalidSave("flood: missing."));
         var founding = save.Founding ?? throw new InvalidSave("founding: missing.");
         city.FoundedYear = SaveChecks.InRange(founding.Year, CityCalendar.StartYear, city.Date.Year, "founding.year");
+        var ordinances = save.Ordinances ?? throw new InvalidSave("ordinances: missing.");
+        city.Ordinances.Restore(ordinances.Enacted);
+        city.Budget.RestoreOrdinances(ordinances.IncomeFund, ordinances.CostFund, ordinances.LastYear, ordinances.Estimated, "ordinances");
+        city.ApplyOrdinances();
         city.Challenge = save.Challenge is { } challenge ? Scenarios.Challenge.Restore(challenge) : null;
         var cycle = save.Cycle ?? throw new InvalidSave("cycle: missing.");
         city.RoadTiles = SaveChecks.InRange(cycle.RoadTiles, 0, int.MaxValue, "cycle.roadTiles");

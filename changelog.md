@@ -1,5 +1,28 @@
 # CityLimits Changelog
 
+## 0.5.105
+
+Cities have ordinances underneath now, after SimCity 3000's: ten
+city-wide rules, from a sales tax to smoke detectors, each earning or
+costing money by the city's population and changing how it behaves. The
+city panel and the news ticker will show them in the next version.
+
+For modders: definitions are format 2.2, with `ordinances.json`, which
+renames an ordinance, changes its money, and changes what it does:
+`residentialDemand`, `commercialDemand`, `industrialDemand`, `crime`,
+`industrialPollution`, `fires`, `powerCapacity`, or `traffic`. Older
+files still read. See [Tuning mods](docs/modding/tuning.md).
+
+For developers and agents: `CitySimulation.Ordinances` holds what is
+enacted (`CityOrdinances`), `SetOrdinance` enacts or repeals one, and
+`OrdinanceNews` says so, and carries the city's petition each quarter
+(`CityOrdinances.MostWanted`). A `BudgetYear` has `OrdinanceIncome` and
+`OrdinanceCost`, and `Income` beside `TaxIncome`. Saves gain the
+`ordinances` feature (`ORDN` in `.cl`), the first since 2.0, which a save
+for 0.4 leaves out; `docs/schemas/city-save.v2.0.schema.json` has it, and
+`docs/schemas/*.v2.2.schema.json` are new. Cities with no ordinances run
+exactly as before.
+
 ## 0.5.104
 
 Every window now has the same title bar, in the manner of macOS: a red

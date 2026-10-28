@@ -30,6 +30,7 @@ internal static class SaveUpgrades
             save.Parts = null;
             save.Definitions = null;
             save.Format = Current;
+            AddOrdinances(save);
             return;
         }
 
@@ -43,8 +44,13 @@ internal static class SaveUpgrades
         AddFlood(save);
         AddFacilities(save);
         AddFounding(save);
+        AddOrdinances(save);
         save.Format = Current;
     }
+
+    // 2.0's ordinances. A city from before has none enacted, and no ordinance money set aside.
+    private static void AddOrdinances(CitySave save) =>
+        save.Ordinances ??= new OrdinancesSave { Enacted = [], IncomeFund = 0, CostFund = 0 };
 
     // A 1.x save, up to 1.10, a minor version at a time.
     private static void ToLegacy(CitySave save)

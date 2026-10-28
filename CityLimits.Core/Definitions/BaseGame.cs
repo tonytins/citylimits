@@ -37,6 +37,26 @@ public static class BaseGame
         RoadCarriesPower: true,
         RailCarriesPower: false);
 
+    /// <summary>
+    /// The base game's ordinances, CityLimits' own after SimCity 3000's, as Tony Bark chose them:
+    /// four that earn the city money at some cost, and six that cost it money for some good. Money
+    /// is per 1,000 people a year, against a city of 10,000 collecting about $500 in taxes at 7%;
+    /// demand is in the units the tax rate pushes it by, a percent of tax being 20 to 30.
+    /// </summary>
+    public static readonly IReadOnlyList<OrdinanceSpec> Ordinances =
+    [
+        new("salesTax", "Sales tax", 6, [new(OrdinanceEffect.CommercialDemand, -40)]),
+        new("incomeTax", "Income tax", 8, [new(OrdinanceEffect.ResidentialDemand, -60)]),
+        new("legalizedGambling", "Legalized gambling", 10, [new(OrdinanceEffect.Crime, 15)]),
+        new("parkingFines", "Parking fines", 2, [new(OrdinanceEffect.Traffic, -10)]),
+        new("neighbourhoodWatch", "Neighbourhood watch", -5, [new(OrdinanceEffect.Crime, -15)]),
+        new("smokeDetectors", "Smoke detectors", -3, [new(OrdinanceEffect.Fires, -50)]),
+        new("pollutionControls", "Pollution controls", -6, [new(OrdinanceEffect.IndustrialPollution, -30), new(OrdinanceEffect.IndustrialDemand, -40)]),
+        new("energyConservation", "Energy conservation", -4, [new(OrdinanceEffect.PowerCapacity, 15)]),
+        new("tourismPromotion", "Tourism promotion", -5, [new(OrdinanceEffect.CommercialDemand, 50)]),
+        new("industrialPromotion", "Industrial promotion", -5, [new(OrdinanceEffect.IndustrialDemand, 50)]),
+    ];
+
     /// <summary>What a new city starts with in the base game: Micropolis' $20,000 and 7% tax.</summary>
     public static readonly EconomySpec Economy = new(Treasury.StartingFunds, CityBudget.DefaultTaxRate);
 

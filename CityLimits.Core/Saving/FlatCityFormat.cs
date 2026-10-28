@@ -73,7 +73,10 @@ public static class FlatCityFormat
             save.Format = SaveUpgrades.Legacy;
             save.Schema = FormatSchemas.UrlFor("city-save", SaveUpgrades.Legacy);
             save.Definitions = DefinitionWriter.Write(city.Definitions);
-            save.Parts = SaveParts.Known;
+            save.Parts = SaveParts.Legacy;
+
+            // What came after 1.10 is left out, as 0.4 never had it.
+            save.Ordinances = null;
             return save;
         }
 

@@ -63,14 +63,16 @@ public static class BinaryCityFormat
     private const string ChallengeTag = "CHAL";
     private const string FacilitiesTag = "FCLT";
     private const string FoundingTag = "FNDG";
+    private const string OrdinancesTag = "ORDN";
 
     // The chunks every file has: the city's core, with its definitions in format 1 and its mods' names in 2.0.
     private static readonly string[] Core = [CityTag, MapTag, BudgetTag, CensusTag, DemandTag, PowerTag, ServicesTag, CommunityTag, CityMapsTag, CycleTag];
     private static readonly string[] Required = [.. Core, DefinitionsTag];
     private static readonly string[] RequiredFrom2 = [.. Core, ModsTag];
 
-    // The chunks a file has only when it needs them, such as the challenge of a city being played as one.
-    private static readonly string[] Optional = [ChallengeTag];
+    // The chunks a file has only when it needs them, such as the challenge of a city being played as
+    // one, and the features added since 2.0, which a 2.0 file may go without and 1.10 never has.
+    private static readonly string[] Optional = [ChallengeTag, OrdinancesTag];
 
     // The chunks each minor version added, required from that version on; an older file goes without.
     private static readonly (string Tag, FormatVersion Since)[] Added = [(TrafficTag, new FormatVersion(1, 1)), (RoadTrafficTag, new FormatVersion(1, 3)), (RailTag, new FormatVersion(1, 4)), (PollutionTag, new FormatVersion(1, 5)), (CrimeTag, new FormatVersion(1, 5)), (FireTag, new FormatVersion(1, 6)), (FloodTag, new FormatVersion(1, 7)), (FacilitiesTag, new FormatVersion(1, 9)), (FoundingTag, new FormatVersion(1, 10))];
@@ -142,6 +144,11 @@ public static class BinaryCityFormat
         WriteChunk(stream, FloodTag, SectionCodec.Write(save.Flood!));
         WriteChunk(stream, FacilitiesTag, SectionCodec.Write(save.Facilities!));
         WriteChunk(stream, FoundingTag, SectionCodec.Write(save.Founding!));
+        if (save.Ordinances is { } ordinances)
+        {
+            WriteChunk(stream, OrdinancesTag, SectionCodec.Write(ordinances));
+        }
+
         if (save.Challenge is { } challenge)
         {
             WriteChunk(stream, ChallengeTag, SectionCodec.Write(challenge));
@@ -391,6 +398,7 @@ public static class BinaryCityFormat
             Flood = chunks.TryGetValue(FloodTag, out var flood) ? SectionCodec.Read<FloodSave>(flood, FloodTag) : null,
             Facilities = chunks.TryGetValue(FacilitiesTag, out var facilities) ? SectionCodec.Read<FacilitiesSave>(facilities, FacilitiesTag) : null,
             Founding = chunks.TryGetValue(FoundingTag, out var founding) ? SectionCodec.Read<FoundingSave>(founding, FoundingTag) : null,
+            Ordinances = chunks.TryGetValue(OrdinancesTag, out var ordinances) ? SectionCodec.Read<OrdinancesSave>(ordinances, OrdinancesTag) : null,
             Challenge = chunks.TryGetValue(ChallengeTag, out var challenge) ? SectionCodec.Read<ChallengeSave>(challenge, ChallengeTag) : null,
         };
     }

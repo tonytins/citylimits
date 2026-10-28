@@ -46,6 +46,8 @@ public sealed class CityBudget
     private long _roadFund;
     private long _fireFund;
     private long _policeFund;
+    private long _ordinanceIncomeFund;
+    private long _ordinanceCostFund;
     private bool _cut;
 
     /// <summary>Creates a budget whose stations cost the given upkeep a year: the base game's, $100 each, when none is given.</summary>
@@ -119,7 +121,9 @@ public sealed class CityBudget
     /// <param name="fireStations">The fire stations the scan counted.</param>
     /// <param name="policeStations">The police stations the scan counted.</param>
     /// <param name="funds">The money the city has now, which caps what upkeep can be paid.</param>
-    public BudgetYear Estimate(int population, int landValueAverage, int roadTiles, int fireStations, int policeStations, int funds)
+    /// <param name="ordinanceIncome">What the city's ordinances earn in a year.</param>
+    /// <param name="ordinanceCost">What the city's ordinances cost in a year, paid after the police.</param>
+    public BudgetYear Estimate(int population, int landValueAverage, int roadTiles, int fireStations, int policeStations, int funds, int ordinanceIncome = 0, int ordinanceCost = 0)
     {
         // As in Micropolis, the population and land value are divided as whole numbers first.
         var taxIncome = Round((long)population * landValueAverage / LandValueDivisor * TaxRate * EasyTaxFactor);
@@ -132,13 +136,15 @@ public sealed class CityBudget
         var policeFunded = Round(policeRequest * PoliceFunding / 100.0);
 
         // The money there is pays roads first, then fire, then police; the rest goes unpaid.
-        var available = Math.Max(0L, (long)funds + taxIncome);
+        // The ordinances, CityLimits' own, earn with the taxes and are paid last.
+        var available = Math.Max(0L, (long)funds + taxIncome + ordinanceIncome);
         var cut = false;
         (roadFunded, available, cut) = Pay(roadFunded, available, cut);
         (fireFunded, available, cut) = Pay(fireFunded, available, cut);
-        (policeFunded, _, cut) = Pay(policeFunded, available, cut);
+        (policeFunded, available, cut) = Pay(policeFunded, available, cut);
+        (var ordinancesPaid, _, cut) = Pay(ordinanceCost, available, cut);
 
-        return new BudgetYear(TaxRate, taxIncome, roadRequest, roadFunded, fireRequest, fireFunded, policeRequest, policeFunded, cut);
+        return new BudgetYear(TaxRate, taxIncome, roadRequest, roadFunded, fireRequest, fireFunded, policeRequest, policeFunded, cut, ordinanceIncome, ordinancesPaid);
     }
 
     /// <summary>
@@ -153,6 +159,8 @@ public sealed class CityBudget
         _roadFund += estimate.RoadFunded;
         _fireFund += estimate.FireFunded;
         _policeFund += estimate.PoliceFunded;
+        _ordinanceIncomeFund += estimate.OrdinanceIncome;
+        _ordinanceCostFund += estimate.OrdinanceCost;
         _cut |= estimate.Cut;
         Estimated = estimate;
 
@@ -179,10 +187,13 @@ public sealed class CityBudget
             (int)(_fireFund / CountsPerYear),
             0,
             (int)(_policeFund / CountsPerYear),
-            _cut);
+            _cut,
+            (int)(_ordinanceIncomeFund / CountsPerYear),
+            (int)(_ordinanceCostFund / CountsPerYear));
         treasury.Settle(year.CashFlow);
 
         (_taxFund, _roadFund, _fireFund, _policeFund, _cut) = (0, 0, 0, 0, false);
+        (_ordinanceIncomeFund, _ordinanceCostFund) = (0, 0);
         LastYear = year;
         return year;
     }
@@ -223,6 +234,36 @@ public sealed class CityBudget
         _cut = save.Cut;
         LastYear = YearOf(save.LastYear);
         Estimated = YearOf(save.Estimated);
+    }
+
+    // The ordinances' money is CityLimits' own, so it is saved in the ordinances' section, not the
+    // budget's, which keeps Micropolis' shape for older versions.
+    internal (long IncomeFund, long CostFund, int[]? LastYear, int[]? Estimated) CaptureOrdinances() =>
+        (_ordinanceIncomeFund, _ordinanceCostFund, MoneyOf(LastYear), MoneyOf(Estimated));
+
+    internal void RestoreOrdinances(long incomeFund, long costFund, int[]? lastYear, int[]? estimated, string at)
+    {
+        _ordinanceIncomeFund = SaveChecks.InRange(incomeFund, 0, long.MaxValue, $"{at}.incomeFund");
+        _ordinanceCostFund = SaveChecks.InRange(costFund, 0, long.MaxValue, $"{at}.costFund");
+        LastYear = WithMoney(LastYear, lastYear, $"{at}.lastYear");
+        Estimated = WithMoney(Estimated, estimated, $"{at}.estimated");
+    }
+
+    private static int[]? MoneyOf(BudgetYear? year) => year is null ? null : [year.OrdinanceIncome, year.OrdinanceCost];
+
+    private static BudgetYear? WithMoney(BudgetYear? year, int[]? money, string at)
+    {
+        if (year is null || money is null)
+        {
+            return year;
+        }
+
+        if (money.Length != 2 || money[0] < 0 || money[1] < 0)
+        {
+            throw new InvalidSave($"{at}: needs the income and the cost, each 0 or more.");
+        }
+
+        return year with { OrdinanceIncome = money[0], OrdinanceCost = money[1] };
     }
 
     private static BudgetYearSave? SaveOf(BudgetYear? year) => year is null ? null : new()
@@ -272,6 +313,8 @@ public sealed class CityBudget
 /// <param name="PoliceRequest">The police stations' upkeep at full funding.</param>
 /// <param name="PoliceFunded">The police stations' upkeep paid.</param>
 /// <param name="Cut">Whether funding had to be cut because the money ran out.</param>
+/// <param name="OrdinanceIncome">What the ordinances earned.</param>
+/// <param name="OrdinanceCost">What the ordinances cost, as paid.</param>
 public sealed record BudgetYear(
     int TaxRate,
     int TaxIncome,
@@ -281,16 +324,21 @@ public sealed record BudgetYear(
     int FireFunded,
     int PoliceRequest,
     int PoliceFunded,
-    bool Cut)
+    bool Cut,
+    int OrdinanceIncome = 0,
+    int OrdinanceCost = 0)
 {
-    /// <summary>What the upkeep paid came to.</summary>
-    public int Expenses => RoadFunded + FireFunded + PoliceFunded;
+    /// <summary>What the upkeep and the ordinances paid came to.</summary>
+    public int Expenses => RoadFunded + FireFunded + PoliceFunded + OrdinanceCost;
+
+    /// <summary>What came in: the taxes and what the ordinances earned.</summary>
+    public int Income => TaxIncome + OrdinanceIncome;
 
     /// <summary>What the year added to the treasury, or took from it.</summary>
-    public int CashFlow => TaxIncome - Expenses;
+    public int CashFlow => Income - Expenses;
 
-    /// <summary>Whether the upkeep paid came to more than the taxes collected.</summary>
-    public bool IsDeficit => Expenses > TaxIncome;
+    /// <summary>Whether what was paid came to more than what came in.</summary>
+    public bool IsDeficit => Expenses > Income;
 
     /// <summary>
     /// Whether spending outpaced income: a deficit, or funding cut because the money ran out.

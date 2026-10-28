@@ -911,6 +911,44 @@
       ],
       "additionalProperties": false
     },
+    "ordinances": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "enacted": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "incomeFund": {
+          "type": "integer"
+        },
+        "costFund": {
+          "type": "integer"
+        },
+        "lastYear": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "estimated": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        }
+      },
+      "required": [
+        "enacted",
+        "incomeFund",
+        "costFund"
+      ],
+      "additionalProperties": false
+    },
     "challenge": {
       "type": [
         "object",

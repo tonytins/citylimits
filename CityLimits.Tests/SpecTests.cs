@@ -9,7 +9,7 @@ namespace CityLimits.Tests;
 
 public class SpecTests
 {
-    private const string Manifest = """{ "format": "2.1", "id": "m", "name": "M" }""";
+    private const string Manifest = """{ "format": "2.2", "id": "m", "name": "M" }""";
 
     private static CitySimulation Flat(CityDefinitions definitions, int width = 32, int height = 32) =>
         new(TileMap.FromTerrain(width, height, new TileKind[width * height]), 1, definitions: definitions);
@@ -66,7 +66,7 @@ public class SpecTests
             Assert.True(BaseSpecFiles.Refresh(folder, "0.5.101"));
             Assert.False(BaseSpecFiles.Refresh(folder, "0.5.101"));
             Assert.Equal(
-                ["economy.json", "facilities.json", "infrastructure.json", "power.json", "services.json", "version.txt", "zones.json"],
+                ["economy.json", "facilities.json", "infrastructure.json", "ordinances.json", "power.json", "services.json", "version.txt", "zones.json"],
                 Directory.EnumerateFiles(folder).Select(Path.GetFileName).Order(StringComparer.Ordinal));
 
             File.WriteAllText(Path.Combine(folder, "economy.json"), """{ "format": "2.0", "startingFunds": 5 }""");
@@ -179,6 +179,32 @@ public class SpecTests
         Assert.Equal([new InfluenceSpec(InfluenceEffect.Crime, -10, 1)], definitions.Facility(TileUse.Stadium).Influences);
         Assert.Empty(definitions.Facility(TileUse.Airport).Influences);
         Assert.Equal(CityDefinitions.Base.Facility(TileUse.Seaport).Influences, definitions.Facility(TileUse.Seaport).Influences);
+    }
+
+    [Theory]
+    [InlineData("2.1", """[ { "id": "salesTax", "money": 9 } ]""", "ordinances.json: is from format 2.2; this file is 2.1.")]
+    [InlineData("2.2", """[ { "id": "curfew", "money": 9 } ]""", "ordinances.json: ordinances[0].id: 'curfew' is not one of salesTax, incomeTax, legalizedGambling, parkingFines, neighbourhoodWatch, smokeDetectors, pollutionControls, energyConservation, tourismPromotion, industrialPromotion.")]
+    [InlineData("2.2", """[ { "id": "smokeDetectors", "effects": [ { "effect": "fires", "amount": 20 } ] } ]""", "ordinances.json: ordinances[0].effects[0].amount: needs a number from -100 to 0, not 20.")]
+    [InlineData("2.2", """[ { "id": "salesTax", "effects": [ { "effect": "crime", "amount": 1 }, { "effect": "crime", "amount": 2 } ] } ]""", "ordinances.json: ordinances[0].effects[1].effect: 'crime' is given twice.")]
+    [InlineData("2.2", """[ { "id": "salesTax", "money": 5000 } ]""", "ordinances.json: ordinances[0].money: needs a number from -1000 to 1000, not 5000.")]
+    public void OrdinancesAreCheckedLikeEverythingElse(string format, string ordinances, string expected)
+    {
+        var json = $$"""{ "format": "{{format}}", "ordinances": {{ordinances}} }""";
+
+        Assert.False(DefinitionLoader.TryParseMod("m", Manifest, [new SpecFile("ordinances.json", json)], out _, out var error));
+        Assert.Equal(expected, error);
+    }
+
+    [Fact]
+    public void AModCanChangeWhatAnOrdinanceIsCalledCostsAndDoes()
+    {
+        var definitions = WithMod(("ordinances.json", """{ "format": "2.2", "ordinances": [ { "id": "neighbourhoodWatch", "name": "Night patrols", "money": -2, "effects": [ { "effect": "crime", "amount": -30 }, { "effect": "residentialDemand", "amount": 20 } ] } ] }"""));
+        var watch = definitions.Ordinance("neighbourhoodWatch")!;
+
+        Assert.Equal(("Night patrols", -2), (watch.Name, watch.Money));
+        Assert.Equal(-30, watch.AmountOf(OrdinanceEffect.Crime));
+        Assert.Equal(20, watch.AmountOf(OrdinanceEffect.ResidentialDemand));
+        Assert.Equal(CityDefinitions.Base.Ordinance("salesTax"), definitions.Ordinance("salesTax"));
     }
 
     [Fact]

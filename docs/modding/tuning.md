@@ -6,7 +6,7 @@ new kinds of things or change how the city works. If you haven't made a
 mod before, start with [Modding CityLimits](./README.md), which covers
 installing a mod and writing `mod.json`.
 
-A tuning mod can change six kinds of things, each in a file of its own
+A tuning mod can change seven kinds of things, each in a file of its own
 named for what it holds. These files are called spec files:
 
 ```text
@@ -19,6 +19,7 @@ Mods/
     facilities.json      stadiums, seaports, and airports
     infrastructure.json  roads, rail, power lines, parks, and the bulldozer
     economy.json         what a new city starts with
+    ordinances.json      the city's ordinances
 ```
 
 Every spec file is optional, and can sit anywhere in the mod's folder,
@@ -27,19 +28,20 @@ The game reads them in the order of their paths, letter by letter, so
 when two files in a mod change the same value, the later path wins.
 Other files, such as a readme, are left alone.
 
-Every file starts with `"format": "2.1"` and lists only what it changes.
+Every file starts with `"format": "2.2"` and lists only what it changes.
 A value you leave out keeps the base game's, which are Micropolis' unless
-said otherwise. Files
-written for CityLimits 0.4, with `"format": "1.0"` or `1`, still work, and
-so does `plants.json`, the name `power.json` had then. Strength, reach,
-and the last three files are new in 2.0; `carriesPower` and `influences`
-are new in 2.1, and a 2.0 file still works.
+said otherwise. Files written for CityLimits 0.4, with `"format": "1.0"`
+or `1`, still work, and so does `plants.json`, the name `power.json` had
+then. Strength, reach, and `facilities.json`, `infrastructure.json`, and
+`economy.json` are new in 2.0; `carriesPower` and `influences` in 2.1;
+and `ordinances.json` in 2.2. Older files still work.
 
 Each file can also name its schema in a `"$schema"` line, as the examples
 below do. A schema describes what can go in the file, so an editor such
 as VS Code can check it and suggest field names as you type. The game
 ignores the line. The schemas are in `docs/schemas/`: `mod`, `zones`,
-`power`, `services`, `facilities`, `infrastructure`, and `economy`.
+`power`, `services`, `facilities`, `infrastructure`, `economy`, and
+`ordinances`.
 
 The base game's own spec files are in the `common` folder beside the
 settings, where you can read every value the game plays with, in the
@@ -49,8 +51,8 @@ same format. See [Modding CityLimits](./README.md#the-base-games-files).
 
 ```json
 {
-  "$schema": "https://raw.githubusercontent.com/tonytins/citylimits/main/docs/schemas/zones.v2.1.schema.json",
-  "format": "2.1",
+  "$schema": "https://raw.githubusercontent.com/tonytins/citylimits/main/docs/schemas/zones.v2.2.schema.json",
+  "format": "2.2",
   "zones": [
     { "id": "commercial", "name": "Market", "price": 40 },
     { "id": "residential", "houses": 4 }
@@ -78,8 +80,8 @@ drawings in the tile sheet.
 
 ```json
 {
-  "$schema": "https://raw.githubusercontent.com/tonytins/citylimits/main/docs/schemas/power.v2.1.schema.json",
-  "format": "2.1",
+  "$schema": "https://raw.githubusercontent.com/tonytins/citylimits/main/docs/schemas/power.v2.2.schema.json",
+  "format": "2.2",
   "plants": [
     { "id": "coal", "name": "Coal works", "price": 2000, "capacity": 900 }
   ]
@@ -99,8 +101,8 @@ Each entry names a plant by its id, `coal` or `nuclear`.
 
 ```json
 {
-  "$schema": "https://raw.githubusercontent.com/tonytins/citylimits/main/docs/schemas/services.v2.1.schema.json",
-  "format": "2.1",
+  "$schema": "https://raw.githubusercontent.com/tonytins/citylimits/main/docs/schemas/services.v2.2.schema.json",
+  "format": "2.2",
   "services": [
     { "id": "police", "name": "Sheriff", "price": 300, "upkeep": 40 },
     { "id": "fire", "strength": 150, "reach": 2 }
@@ -123,8 +125,8 @@ Each entry names a station by its id, `fire` or `police`.
 
 ```json
 {
-  "$schema": "https://raw.githubusercontent.com/tonytins/citylimits/main/docs/schemas/facilities.v2.1.schema.json",
-  "format": "2.1",
+  "$schema": "https://raw.githubusercontent.com/tonytins/citylimits/main/docs/schemas/facilities.v2.2.schema.json",
+  "format": "2.2",
   "facilities": [
     { "id": "stadium", "name": "Arena", "demandCap": 800 },
     { "id": "airport", "pollution": 40, "influences": [
@@ -169,8 +171,8 @@ pollution this way.
 
 ```json
 {
-  "$schema": "https://raw.githubusercontent.com/tonytins/citylimits/main/docs/schemas/infrastructure.v2.1.schema.json",
-  "format": "2.1",
+  "$schema": "https://raw.githubusercontent.com/tonytins/citylimits/main/docs/schemas/infrastructure.v2.2.schema.json",
+  "format": "2.2",
   "infrastructure": [
     { "id": "road", "price": 15 },
     { "id": "rail", "price": 15, "carriesPower": true }
@@ -205,12 +207,70 @@ Power reaches more than lines in CityLimits. `carriesPower` says how, for
 Turn both off for Micropolis' rule, where only lines, zones, and
 buildings carry power. Parks never carry power.
 
+## `ordinances.json`
+
+```json
+{
+  "$schema": "https://raw.githubusercontent.com/tonytins/citylimits/main/docs/schemas/ordinances.v2.2.schema.json",
+  "format": "2.2",
+  "ordinances": [
+    { "id": "neighbourhoodWatch", "name": "Night patrols", "money": -3 },
+    { "id": "salesTax", "effects": [ { "effect": "commercialDemand", "amount": -20 } ] }
+  ]
+}
+```
+
+Ordinances are city-wide rules the player turns on and off at any time,
+after SimCity 3000's. While one is on, it earns the city money or costs
+it, by its population, and changes how the city behaves. Each entry names
+one of the game's by its id; a mod can change what it is called, what it
+costs, and what it does, but can't add new ones.
+
+| Field | What it changes | Limits |
+|---|---|---|
+| `id` | Which ordinance to change; see the table below | One of the ten |
+| `name` | Its name, as the player sees it | 1 to 80 characters |
+| `money` | What it earns each year for every 1,000 people, or costs, below zero. A city of 10,000 collects about $500 a year in taxes at 7% | -1 000 to 1 000 |
+| `effects` | What it does while it is on, as a list of `effect` and `amount`; a list replaces the game's whole, and `[]` takes them all away | Each effect at most once |
+
+| `effect` | What its `amount` changes | Limits |
+|---|---|---|
+| `residentialDemand`, `commercialDemand`, `industrialDemand` | That demand, added each time demand moves, as the tax rate pushes it; a percent of tax is about 20 to 30 | -2 000 to 2 000 |
+| `crime` | Crime everywhere, as police take it away | -250 to 250 |
+| `industrialPollution` | The pollution industry gives off, in percent: -30 leaves 70% | -100 to 900 |
+| `fires` | The chance of a fire breaking out by itself, in percent: -50 halves it | -100 to 0 |
+| `powerCapacity` | What the power plants can power, in percent: 15 makes it 115% | -100 to 900 |
+| `traffic` | The traffic each trip leaves on the roads, in percent: -10 leaves 90% | -100 to 900 |
+
+The game's ordinances, CityLimits' own:
+
+| `id` | Name | Money a year per 1,000 people | Effects |
+|---|---|---|---|
+| `salesTax` | Sales tax | +$6 | Commercial demand -40 |
+| `incomeTax` | Income tax | +$8 | Residential demand -60 |
+| `legalizedGambling` | Legalized gambling | +$10 | Crime +15 |
+| `parkingFines` | Parking fines | +$2 | Traffic -10% |
+| `neighbourhoodWatch` | Neighbourhood watch | -$5 | Crime -15 |
+| `smokeDetectors` | Smoke detectors | -$3 | Fires -50% |
+| `pollutionControls` | Pollution controls | -$6 | Industrial pollution -30%, industrial demand -40 |
+| `energyConservation` | Energy conservation | -$4 | Power capacity +15% |
+| `tourismPromotion` | Tourism promotion | -$5 | Commercial demand +50 |
+| `industrialPromotion` | Industrial promotion | -$5 | Industrial demand +50 |
+
+When a city of 2,000 people or more could use one it hasn't turned on,
+the news ticker asks for it, once a quarter, the most pressing first:
+energy conservation for brownouts, a neighbourhood watch for crime,
+pollution controls for smog, smoke detectors while fires burn, a way to
+raise money after a year in the red, and promotion when business is
+slack. What an ordinance asks for stays the same when a mod changes what
+it does.
+
 ## `economy.json`
 
 ```json
 {
-  "$schema": "https://raw.githubusercontent.com/tonytins/citylimits/main/docs/schemas/economy.v2.1.schema.json",
-  "format": "2.1",
+  "$schema": "https://raw.githubusercontent.com/tonytins/citylimits/main/docs/schemas/economy.v2.2.schema.json",
+  "format": "2.2",
   "startingFunds": 50000,
   "taxRate": 6
 }

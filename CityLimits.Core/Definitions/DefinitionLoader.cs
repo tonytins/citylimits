@@ -25,13 +25,13 @@ public static partial class DefinitionLoader
     /// plants' file <c>power.json</c>. A 1.0 file of the three kinds format 1 had reads too; one
     /// written as a whole number, such as <c>1</c>, is 1.0.
     /// </summary>
-    public static readonly FormatVersion Format = new(2, 1);
+    public static readonly FormatVersion Format = new(2, 2);
 
     /// <summary>Format 1's version, which a 1.10 save's definitions are written in for 0.4.</summary>
     public static readonly FormatVersion Format1 = new(1, 0);
 
     /// <summary>The spec files a mod or the base game may have, by the name each is known by.</summary>
-    public static readonly IReadOnlyList<string> SpecFiles = ["zones.json", "power.json", "plants.json", "services.json", "facilities.json", "economy.json", "infrastructure.json"];
+    public static readonly IReadOnlyList<string> SpecFiles = ["zones.json", "power.json", "plants.json", "services.json", "facilities.json", "economy.json", "infrastructure.json", "ordinances.json"];
 
     /// <summary>The most a station's strength may be, as a percentage of Micropolis'.</summary>
     public const int MaxStrength = 1000;
@@ -313,6 +313,7 @@ public static partial class DefinitionLoader
         var facilities = new Dictionary<TileUse, FacilityPatch>();
         InfrastructurePatch? infrastructure = null;
         EconomyPatch? economy = null;
+        var ordinances = new Dictionary<string, OrdinancePatch>(StringComparer.Ordinal);
         foreach (var file in files)
         {
             var kind = System.IO.Path.GetFileName(file.Name).ToLowerInvariant();
@@ -337,12 +338,15 @@ public static partial class DefinitionLoader
                 case "economy.json":
                     economy = ReadEconomy(file, economy);
                     break;
+                case "ordinances.json":
+                    ReadOrdinances(file, ordinances);
+                    break;
                 default:
                     throw new InvalidDefinitions($"{file.Name}: isn't a spec file; spec files are {string.Join(", ", SpecFiles)}.");
             }
         }
 
-        return new ModDefinitions(string.Empty, string.Empty, null, null, zones, plants, services, facilities, infrastructure, economy);
+        return new ModDefinitions(string.Empty, string.Empty, null, null, zones, plants, services, facilities, infrastructure, economy) { Ordinances = ordinances };
     }
 
     private static T Document<T>(SpecFile file)
@@ -494,6 +498,98 @@ public static partial class DefinitionLoader
         return influences;
     }
 
+    // From 2.2, ordinances. Each names one of the base game's by id and changes what it sets; its
+    // effects, when given, replace the ordinance's whole.
+    private static readonly FormatVersion OrdinancesSince = new(2, 2);
+
+    /// <summary>The most an ordinance may earn or cost a year for every 1,000 people.</summary>
+    public const int MaxOrdinanceMoney = 1000;
+
+    private static readonly Dictionary<string, OrdinanceEffect> OrdinanceEffects = new(StringComparer.Ordinal)
+    {
+        ["residentialDemand"] = OrdinanceEffect.ResidentialDemand,
+        ["commercialDemand"] = OrdinanceEffect.CommercialDemand,
+        ["industrialDemand"] = OrdinanceEffect.IndustrialDemand,
+        ["crime"] = OrdinanceEffect.Crime,
+        ["industrialPollution"] = OrdinanceEffect.IndustrialPollution,
+        ["fires"] = OrdinanceEffect.Fires,
+        ["powerCapacity"] = OrdinanceEffect.PowerCapacity,
+        ["traffic"] = OrdinanceEffect.Traffic,
+    };
+
+    /// <summary>An ordinance effect by the name the spec files give it.</summary>
+    internal static string EffectName(OrdinanceEffect effect) => OrdinanceEffects.First(pair => pair.Value == effect).Key;
+
+    // How far each effect may go, in its own units: demand as far as it reaches, crime and
+    // pollution their maps' ranges, and percents from none of it to ten times as much.
+    private static (int Least, int Most) Range(OrdinanceEffect effect) => effect switch
+    {
+        OrdinanceEffect.ResidentialDemand or OrdinanceEffect.CommercialDemand or OrdinanceEffect.IndustrialDemand => (-2000, 2000),
+        OrdinanceEffect.Crime => (-Simulation.CityMaps.MostCrime, Simulation.CityMaps.MostCrime),
+
+        // An ordinance can stop fires breaking out, but not start more.
+        OrdinanceEffect.Fires => (-100, 0),
+        _ => (-100, 900),
+    };
+
+    private static void ReadOrdinances(SpecFile file, Dictionary<string, OrdinancePatch> ordinances)
+    {
+        var document = Document<OrdinancesDocument>(file);
+        CheckFormat(document.Format, $"{file.Name}: format", oldest: Format, newest: Format);
+        if (document.Format!.Value < OrdinancesSince)
+        {
+            throw new InvalidDefinitions($"{file.Name}: is from format {OrdinancesSince}; this file is {document.Format}.");
+        }
+
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        var entries = document.Ordinances ?? [];
+        for (var i = 0; i < entries.Count; i++)
+        {
+            var at = $"{file.Name}: ordinances[{i}]";
+            var entry = entries[i] ?? throw new InvalidDefinitions($"{at}: needs an ordinance, not null.");
+            var id = entry.Id ?? throw new InvalidDefinitions($"{at}.id: is required.");
+            if (!BaseGame.Ordinances.Any(ordinance => ordinance.Id == id))
+            {
+                throw new InvalidDefinitions($"{at}.id: '{id}' is not one of {string.Join(", ", BaseGame.Ordinances.Select(ordinance => ordinance.Id))}.");
+            }
+
+            if (!seen.Add(id))
+            {
+                throw new InvalidDefinitions($"{at}.id: '{id}' is defined twice.");
+            }
+
+            List<OrdinanceEffectSpec>? effects = null;
+            if (entry.Effects is not null)
+            {
+                effects = [];
+                for (var e = 0; e < entry.Effects.Count; e++)
+                {
+                    var where = $"{at}.effects[{e}]";
+                    var each = entry.Effects[e] ?? throw new InvalidDefinitions($"{where}: needs an effect, not null.");
+                    var name = each.Effect ?? throw new InvalidDefinitions($"{where}.effect: is required.");
+                    if (!OrdinanceEffects.TryGetValue(name, out var effect))
+                    {
+                        throw new InvalidDefinitions($"{where}.effect: '{name}' is not one of {string.Join(", ", OrdinanceEffects.Keys)}.");
+                    }
+
+                    if (effects.Any(given => given.Effect == effect))
+                    {
+                        throw new InvalidDefinitions($"{where}.effect: '{name}' is given twice.");
+                    }
+
+                    var (least, most) = Range(effect);
+                    effects.Add(new OrdinanceEffectSpec(effect, InRange(each.Amount ?? throw new InvalidDefinitions($"{where}.amount: is required."), least, most, $"{where}.amount")));
+                }
+            }
+
+            var patch = new OrdinancePatch(
+                entry.Name is null ? null : Name(entry.Name, $"{at}.name"),
+                entry.Money is null ? null : InRange(entry.Money.Value, -MaxOrdinanceMoney, MaxOrdinanceMoney, $"{at}.money"),
+                effects);
+            ordinances[id] = ordinances.TryGetValue(id, out var before) ? before.Then(patch) : patch;
+        }
+    }
+
     private static InfrastructurePatch ReadInfrastructure(SpecFile file, InfrastructurePatch? before)
     {
         var document = Document<InfrastructureDocument>(file);
@@ -616,6 +712,7 @@ public static partial class DefinitionLoader
         ("facilities", Options.GetTypeInfo(typeof(FacilitiesDocument))),
         ("infrastructure", Options.GetTypeInfo(typeof(InfrastructureDocument))),
         ("economy", Options.GetTypeInfo(typeof(EconomyDocument))),
+        ("ordinances", Options.GetTypeInfo(typeof(OrdinancesDocument))),
     ];
 
     private static TileUse ZoneUse(string? id, string at, IEnumerable<TileUse> seen) => Id(ZoneIds, id, at, seen);
@@ -740,6 +837,7 @@ public static partial class DefinitionLoader
     [JsonSerializable(typeof(FacilitiesDocument))]
     [JsonSerializable(typeof(InfrastructureDocument))]
     [JsonSerializable(typeof(EconomyDocument))]
+    [JsonSerializable(typeof(OrdinancesDocument))]
     private sealed partial class DefinitionJson : JsonSerializerContext;
 
     // Reading stops at the first problem. The exception never leaves this class.
@@ -836,6 +934,34 @@ public static partial class DefinitionLoader
         public int? Price { get; set; }
 
         public bool? CarriesPower { get; set; }
+    }
+
+    private sealed class OrdinancesDocument
+    {
+        [JsonPropertyName("$schema")]
+        public string? Schema { get; set; }
+
+        public FormatVersion? Format { get; set; }
+
+        public List<OrdinanceDocument?>? Ordinances { get; set; }
+    }
+
+    private sealed class OrdinanceDocument
+    {
+        public string? Id { get; set; }
+
+        public string? Name { get; set; }
+
+        public int? Money { get; set; }
+
+        public List<OrdinanceEffectDocument?>? Effects { get; set; }
+    }
+
+    private sealed class OrdinanceEffectDocument
+    {
+        public string? Effect { get; set; }
+
+        public int? Amount { get; set; }
     }
 
     private sealed class EconomyDocument
@@ -1048,4 +1174,22 @@ public sealed record ModDefinitions(
 {
     /// <summary>The changes it makes to each stadium, seaport, or airport it names.</summary>
     public IReadOnlyDictionary<TileUse, FacilityPatch> Facilities { get; init; } = Facilities ?? new Dictionary<TileUse, FacilityPatch>();
+
+    /// <summary>The changes it makes to each ordinance it names, by id.</summary>
+    public IReadOnlyDictionary<string, OrdinancePatch> Ordinances { get; init; } = new Dictionary<string, OrdinancePatch>();
+}
+
+/// <summary>What a mod changes in an ordinance; a field left null keeps what it had, and effects given replace its whole.</summary>
+public sealed record OrdinancePatch(string? Name, int? Money, IReadOnlyList<OrdinanceEffectSpec>? Effects)
+{
+    /// <summary>This change, then another on top of it.</summary>
+    public OrdinancePatch Then(OrdinancePatch later) => new(later.Name ?? Name, later.Money ?? Money, later.Effects ?? Effects);
+
+    /// <summary>The ordinance with this mod's changes.</summary>
+    public OrdinanceSpec ApplyTo(OrdinanceSpec ordinance) => ordinance with
+    {
+        Name = Name ?? ordinance.Name,
+        Money = Money ?? ordinance.Money,
+        Effects = Effects ?? ordinance.Effects,
+    };
 }

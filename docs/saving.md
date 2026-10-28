@@ -136,6 +136,7 @@ size of the same city as `.fcl`.
 | `CHAL` | The scenario being played, for a city that is a challenge; from format 1.8, and only in such a city |
 | `FCLT` | The stadiums, seaports, and airports, the scan's counts of them, and the demand held back for want of one; from format 1.9 |
 | `FNDG` | The year the city was founded; from format 1.10 |
+| `ORDN` | The city's ordinances; a 2.0 feature, which a save for 0.4 leaves out |
 
 In a 2.0 file, the chunks from `TRAF` on are its features: each may be
 left out, and is then filled in as the version that added it fills it.
@@ -224,7 +225,7 @@ arrays of numbers sit on one line each.
 | `map` | The map: see below |
 | `budget`, `census`, `demand`, `power`, `services`, `community`, `cityMaps` | Each part of the simulation's state |
 | `cycle` | The road tiles counted this cycle, and what the last count set aside for the budget |
-| `traffic` and `roadTraffic`, `rail`, `pollution`, `crime`, `fire`, `flood`, `challenge`, `facilities`, `founding` | The features' sections, each from the version the table under Versions gives; a 2.0 save may leave any out |
+| `traffic` and `roadTraffic`, `rail`, `pollution`, `crime`, `fire`, `flood`, `challenge`, `facilities`, `founding`, `ordinances` | The features' sections, each from the version the table under Versions gives, `ordinances` from 2.0 alone; a 2.0 save may leave any out |
 | `parts` | In format 1 only: the parts list, from 1.2 |
 
 ### The map
@@ -431,6 +432,30 @@ from 1900, as it always did, and writes the part back as it was. A city
 saved before 1.10 is counted from 1900. Reading refuses a year before
 1900 or after the city's own date, and says so.
 
+## Ordinances
+
+The city's ordinances are a feature of format 2.0 with no version of its
+own, the first added since it began: `"ordinances"` in `.fcl` and the
+`ORDN` chunk in `.cl`:
+
+```json
+"ordinances": { "enacted": [ "salesTax" ], "incomeFund": 2880, "costFund": 0, "lastYear": [ 60, 0 ], "estimated": [ 60, 0 ] }
+```
+
+`enacted` lists the ordinances enacted, by id. The rest is their share of
+the budget, kept here rather than in `"budget"`, which keeps Micropolis'
+shape: what they have earned and cost this year so far, set aside each
+count as the taxes are, at 48 times a year's worth, and last year's and
+the latest estimate's income and cost, when the budget has those. A save
+without the section opens with none enacted. Reading refuses an id the
+definitions don't have.
+
+The feature is ignorable and keepable: a version that doesn't know it
+plays the city with no ordinances and may write the section back as it
+was, since enacting one changes nothing else that is saved; the year's
+ordinance money is then short by the months it played. A save for 0.4
+leaves it out, and its parts list doesn't name it.
+
 ## Opening a newer save
 
 From 0.3.103, CityLimits can open a city a newer version saved, as PNG
@@ -450,7 +475,7 @@ doesn't read inside, and writes it back exactly as it found it, in the
 same format it came in (a binary chunk can't become JSON without being
 understood). `connections`, to neighbouring cities, is reserved in 0.5.100
 (`SaveParts.Reserved`, the `CONN` chunk), so a city that has them passes
-through it intact until Senri's N4 gives them their contents.
+through it intact until Senri's N5 gives them their contents.
 
 A 1.x save lists its parts by the version that added them (`"parts"`, the
 `PART` chunk), each with two flags, ignorable and keepable, for a game

@@ -107,6 +107,12 @@ internal sealed class CitySave
     public FoundingSave? Founding { get; set; }
 
     /// <summary>
+    /// The ordinances enacted, and the year's money they have earned and cost so far; a feature of
+    /// format 2.0, and none enacted for a city from before.
+    /// </summary>
+    public OrdinancesSave? Ordinances { get; set; }
+
+    /// <summary>
     /// The scenario being played in the city, if any: its goals, when they are judged, and what is still
     /// to come; from format 1.8. A city that isn't a challenge leaves it out, so its save is as before.
     /// </summary>
@@ -378,6 +384,26 @@ internal sealed class TrafficSave
 {
     /// <summary>Each 2 by 2 block's traffic, row by row.</summary>
     public required int[] Density { get; set; }
+}
+
+/// <summary>The city's ordinances, and their share of the budget, which keeps Micropolis' shape in its own section.</summary>
+[System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(SectionCodec.ModelMembers)]
+internal sealed class OrdinancesSave
+{
+    /// <summary>The ids of the ordinances enacted.</summary>
+    public required string[] Enacted { get; set; }
+
+    /// <summary>What the ordinances have earned this year so far, set aside each count, 48 times a year's worth.</summary>
+    public required long IncomeFund { get; set; }
+
+    /// <summary>What the ordinances have cost this year so far, set aside each count, 48 times a year's worth.</summary>
+    public required long CostFund { get; set; }
+
+    /// <summary>Last year's ordinance income and cost, when the budget has a last year.</summary>
+    public int[]? LastYear { get; set; }
+
+    /// <summary>The latest estimate's ordinance income and cost, when the budget has one.</summary>
+    public int[]? Estimated { get; set; }
 }
 
 /// <summary>When the city was founded.</summary>

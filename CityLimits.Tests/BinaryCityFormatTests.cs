@@ -75,7 +75,7 @@ public class BinaryCityFormatTests
     [InlineData("format", "format: this is format 9.0; this version of CityLimits reads up to 2.0.")]
     [InlineData("checksum", "BUDG: is damaged: its checksum doesn't match.")]
     [InlineData("truncated", "The file ends partway through a chunk")]
-    [InlineData("cut short", "The file ends partway through a chunk")]
+    [InlineData("cut short", "ORDN: says it is 9 bytes, more than the file has left.")]
     [InlineData("length", "CYCL: says it is")]
     [InlineData("duplicate", "CYCL: the file holds it twice.")]
     [InlineData("missing", "CYCL: the file is missing it.")]

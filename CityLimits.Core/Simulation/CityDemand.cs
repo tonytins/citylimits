@@ -109,11 +109,12 @@ public sealed class CityDemand
     public double WorkersPerJob { get; private set; } = 1.0;
 
     /// <summary>
-    /// Moves each demand by how far its population is from what the city's economy calls for, and
-    /// by the push of the tax rate; a demand held back by <paramref name="caps"/> goes no higher than zero.
+    /// Moves each demand by how far its population is from what the city's economy calls for, by
+    /// the push of the tax rate, and by the nudge of the city's ordinances, CityLimits' own; a
+    /// demand held back by <paramref name="caps"/> goes no higher than zero.
     /// </summary>
     /// <exception cref="ArgumentOutOfRangeException">The tax rate is outside 0 to 20.</exception>
-    public void Update(CityCensus census, int taxRate = CityBudget.DefaultTaxRate, DemandCaps caps = DemandCaps.None)
+    public void Update(CityCensus census, int taxRate = CityBudget.DefaultTaxRate, DemandCaps caps = DemandCaps.None, (int Residential, int Commercial, int Industrial) nudge = default)
     {
         ArgumentNullException.ThrowIfNull(census);
         ArgumentOutOfRangeException.ThrowIfNegative(taxRate);
@@ -146,9 +147,9 @@ public sealed class CityDemand
         IndustrialPull = PullOf(industrialRatio);
         var push = TaxPush[taxRate];
         TaxPushApplied = push;
-        Residential = Move(Residential, residentialRatio, push, ResidentialLimit);
-        Commercial = Move(Commercial, commercialRatio, push, BusinessLimit);
-        Industrial = Move(Industrial, industrialRatio, push, BusinessLimit);
+        Residential = Move(Residential, residentialRatio, push + nudge.Residential, ResidentialLimit);
+        Commercial = Move(Commercial, commercialRatio, push + nudge.Commercial, BusinessLimit);
+        Industrial = Move(Industrial, industrialRatio, push + nudge.Industrial, BusinessLimit);
 
         // As Micropolis does, once it has moved: a demand held back stays where it is if it is
         // falling, and comes down to zero if it would rise.

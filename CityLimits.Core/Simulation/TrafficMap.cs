@@ -98,6 +98,12 @@ public sealed class TrafficMap
         }
     }
 
+    /// <summary>
+    /// How much traffic a trip leaves, in percent of <see cref="PerTrip"/>: 100 unless the city's
+    /// ordinances, CityLimits' own, say otherwise.
+    /// </summary>
+    public int TripPercent { get; set; } = 100;
+
     /// <summary>Lays a trip's traffic along its route: each road tile it remembered adds to its block.</summary>
     public void AddRoute(TileMap map, IReadOnlyList<(int X, int Y)> route)
     {
@@ -112,7 +118,7 @@ public sealed class TrafficMap
             }
 
             var block = ((y / 2) * _width) + (x / 2);
-            _density[block] = Math.Min(_density[block] + PerTrip, Most);
+            _density[block] = Math.Min(_density[block] + (TripPercent == 100 ? PerTrip : PerTrip * TripPercent / 100), Most);
         }
     }
 

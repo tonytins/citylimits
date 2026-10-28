@@ -131,6 +131,17 @@ public static class BaseSpecFiles
 
                     return entry;
                 })),
+            ListFile("ordinances", "ordinances", definitions.Ordinances.Select(ordinance => new JsonObject
+            {
+                ["id"] = ordinance.Id,
+                ["name"] = ordinance.Name,
+                ["money"] = ordinance.Money,
+                ["effects"] = new JsonArray(ordinance.Effects.Select(effect => (JsonNode)new JsonObject
+                {
+                    ["effect"] = DefinitionLoader.EffectName(effect.Effect),
+                    ["amount"] = effect.Amount,
+                }).ToArray()),
+            })),
             Document("economy", new JsonObject
             {
                 ["startingFunds"] = definitions.Economy.StartingFunds,

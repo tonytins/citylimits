@@ -2,7 +2,7 @@ namespace CityLimits.Core.Definitions;
 
 /// <summary>
 /// The definitions a city runs on: the base game's, with any mods applied on top: its zones, power
-/// plants, services, facilities, infrastructure, and economy. The same definitions, seed, and work
+/// plants, services, facilities, infrastructure, economy, and ordinances. The same definitions, seed, and work
 /// give the same city.
 /// </summary>
 public sealed class CityDefinitions
@@ -16,6 +16,7 @@ public sealed class CityDefinitions
     private readonly Dictionary<TileUse, PlantSpec> _plants;
     private readonly Dictionary<TileUse, ServiceSpec> _services;
     private readonly Dictionary<TileUse, FacilitySpec> _facilities;
+    private readonly OrdinanceSpec[] _ordinances;
 
     // Zones, plants, and services from a definitions file; the facilities, infrastructure, and
     // economy the base game has, until a file gives others.
@@ -24,8 +25,17 @@ public sealed class CityDefinitions
     {
     }
 
-    internal CityDefinitions(IEnumerable<ZoneSpec> zones, IEnumerable<PlantSpec> plants, IEnumerable<ServiceSpec> services, IEnumerable<FacilitySpec> facilities, InfrastructureSpec infrastructure, EconomySpec economy, IReadOnlyList<AppliedMod> mods)
+    internal CityDefinitions(
+        IEnumerable<ZoneSpec> zones,
+        IEnumerable<PlantSpec> plants,
+        IEnumerable<ServiceSpec> services,
+        IEnumerable<FacilitySpec> facilities,
+        InfrastructureSpec infrastructure,
+        EconomySpec economy,
+        IReadOnlyList<AppliedMod> mods,
+        IEnumerable<OrdinanceSpec>? ordinances = null)
     {
+        _ordinances = [.. ordinances ?? BaseGame.Ordinances];
         _zones = zones.ToDictionary(zone => zone.Use);
         _plants = plants.ToDictionary(plant => plant.Use);
         _services = services.ToDictionary(service => service.Use);
@@ -74,6 +84,12 @@ public sealed class CityDefinitions
     public FacilitySpec Facility(TileUse use) =>
         _facilities.TryGetValue(use, out var facility) ? facility : throw new ArgumentOutOfRangeException(nameof(use), $"{use} is not a stadium, a seaport, or an airport.");
 
+    /// <summary>The ordinances, in the order the player is shown them.</summary>
+    public IReadOnlyList<OrdinanceSpec> Ordinances => _ordinances;
+
+    /// <summary>The ordinance with an id, or null when there is none.</summary>
+    public OrdinanceSpec? Ordinance(string id) => Array.Find(_ordinances, ordinance => ordinance.Id == id);
+
     /// <summary>What a tool costs before the ground under it is cleared, as the palette shows it.</summary>
     public int CostOf(BuildAction action) => action switch
     {
@@ -108,7 +124,7 @@ public sealed class CityDefinitions
     internal IEnumerable<FacilitySpec> Facilities => _facilities.Values.OrderBy(facility => facility.Use);
 
     // A saved city's definitions are read as a whole and then told which mods made them.
-    internal CityDefinitions WithAppliedMods(IReadOnlyList<AppliedMod> mods) => new(_zones.Values, _plants.Values, _services.Values, _facilities.Values, Infrastructure, Economy, mods);
+    internal CityDefinitions WithAppliedMods(IReadOnlyList<AppliedMod> mods) => new(_zones.Values, _plants.Values, _services.Values, _facilities.Values, Infrastructure, Economy, mods, _ordinances);
 
     // A mod's entries change only the fields they set, and the mod is listed as applied.
     internal CityDefinitions With(ModDefinitions mod) => Patched(mod, [.. AppliedMods, new AppliedMod(mod.Id, mod.Name, mod.Version)]);
@@ -124,7 +140,8 @@ public sealed class CityDefinitions
         var facilities = _facilities.Values.Select(facility => mod.Facilities.TryGetValue(facility.Use, out var patch) ? patch.ApplyTo(facility) : facility);
         var infrastructure = mod.Infrastructure?.ApplyTo(Infrastructure) ?? Infrastructure;
         var economy = mod.Economy?.ApplyTo(Economy) ?? Economy;
-        return new CityDefinitions(zones, plants, services, facilities, infrastructure, economy, mods);
+        var ordinances = _ordinances.Select(ordinance => mod.Ordinances.TryGetValue(ordinance.Id, out var patch) ? patch.ApplyTo(ordinance) : ordinance);
+        return new CityDefinitions(zones, plants, services, facilities, infrastructure, economy, mods, ordinances);
     }
 }
 

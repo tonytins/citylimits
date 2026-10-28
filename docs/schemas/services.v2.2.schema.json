@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/tonytins/citylimits/main/docs/schemas/services.v2.2.schema.json",
+  "title": "A CityLimits spec file, services.json, in a mod or common/: the services",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "description": "The schema the file follows, for editors; the game ignores it.",
+      "type": "string"
+    },
+    "format": {
+      "description": "The file's format version, as \"major.minor\"; a whole number, as older files wrote it, is that major version, .0.",
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+$"
+        },
+        {
+          "type": "integer",
+          "minimum": 0
+        }
+      ]
+    },
+    "services": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "price": {
+            "type": "integer"
+          },
+          "upkeep": {
+            "type": "integer"
+          },
+          "strength": {
+            "type": "integer"
+          },
+          "reach": {
+            "type": "integer"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

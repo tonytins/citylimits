@@ -78,12 +78,21 @@ internal static class SaveParts
         // The year the city was founded only says how old it is, so a game that doesn't know it counts
         // the age from 1900, as it always did, and may write it back as it was.
         new() { Name = "founding", Chunk = "FNDG", Since = "1.10", Ignorable = true, Keepable = true },
+
+        // The first feature of 2.0, with no version: a city's ordinances, CityLimits' own. A game that
+        // doesn't know them plays the city as if none were enacted, and may write them back as they
+        // were, since enacting one changes nothing else that is saved; the year's ordinance money
+        // set aside meanwhile is only what the newer game had, so the year comes out short.
+        new() { Name = "ordinances", Chunk = "ORDN", Ignorable = true, Keepable = true },
     ];
+
+    /// <summary>The parts format 1's list names, each with the version that added it, for a save 0.4 opens.</summary>
+    public static PartSave[] Legacy => [.. Known.Where(part => part.Since is not null)];
 
     /// <summary>
     /// Features this version knows by name and carries through as they are, without reading them,
     /// until a later version gives them their contents: connections to neighbouring cities, which
-    /// Senri's N4 fills. A save that holds one writes it back unchanged; one that doesn't, leaves it out.
+    /// Senri's N5 fills. A save that holds one writes it back unchanged; one that doesn't, leaves it out.
     /// </summary>
     public static readonly PartSave[] Reserved =
     [
