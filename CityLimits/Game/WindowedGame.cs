@@ -65,7 +65,7 @@ public static class WindowedGame
             using var menu = new StartMenu(assets, VersionInfo.DisplayVersion);
             // The game's own challenges, then the player's.
             IReadOnlyList<string> scenarioFolders = [Commands.ScenarioSubcommand.ScenarioFolder, folders.ScenariosFolder];
-            menu.Show(fromLoading: true, seed, folders.CitiesFolder, settings, scenarioFolders, GameMods.Load(folders.ModsFolder, out _));
+            menu.Show(fromLoading: true, seed, folders.CitiesFolder, settings, scenarioFolders, GameMods.Load(folders, out _));
             while (true)
             {
                 var choice = RunMenu(menu, folders);
@@ -91,7 +91,7 @@ public static class WindowedGame
                     break;
                 }
 
-                menu.Show(fromLoading: false, seed, folders.CitiesFolder, settings, scenarioFolders, GameMods.Load(folders.ModsFolder, out _));
+                menu.Show(fromLoading: false, seed, folders.CitiesFolder, settings, scenarioFolders, GameMods.Load(folders, out _));
             }
 
             SaveSettings(folders, settings);
@@ -148,7 +148,7 @@ public static class WindowedGame
         Logger.Info("A new city, {Name}, from seed {Seed}", wanted.Name, seed);
 
         var map = TileMapGenerator.Generate(seed, MapSize.DefaultWidth, MapSize.DefaultHeight);
-        var city = new CitySimulation(map, seed, definitions: GameMods.Load(folders.ModsFolder, out modProblems));
+        var city = new CitySimulation(map, seed, definitions: GameMods.Load(folders, out modProblems));
         city.Rename(wanted.Name);
         return city;
     }

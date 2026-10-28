@@ -19,10 +19,14 @@ public static class ScenarioLoader
     /// The newest scenario format this version reads. Format 2 names its times as the game's dates, a
     /// month and a week of it, rather than ticks; it starts a city in a year of its own or from a saved
     /// city, and adds goals and disasters on dates. 2.1 added the Stadium, Seaport, and Airport tools and
-    /// counts, and 2.2 a disaster that repeats. The built-in scenarios are written in 2.0, since none of
-    /// them needs what came after.
+    /// counts, and 2.2 a disaster that repeats. 3.0, from 0.5, is 2.2 under the next major version, as
+    /// every format rounded up with 0.5; a game that reads 3.0 reads every 2.x file too. The built-in
+    /// scenarios are written in 2.0 and 2.2, which 3.0 reads.
     /// </summary>
-    public static readonly FormatVersion Format = new(2, 2);
+    public static readonly FormatVersion Format = new(3, 0);
+
+    /// <summary>The newest format 2 this version still reads, and writes for 0.4 when asked: 2.2.</summary>
+    public static readonly FormatVersion Format2 = new(2, 2);
 
     /// <summary>
     /// The newest format 1 this version still reads, its times in ticks: 1.1 added the Rail tool
@@ -154,7 +158,9 @@ public static class ScenarioLoader
                 return true;
             }
 
-            if (format.ProblemReadingWith(Format) is { } problem)
+            // Format 3 is format 2's fields under the next major version, so 2.x files read as they did.
+            var reader = format.Major == Format2.Major ? Format2 : Format;
+            if (format.ProblemReadingWith(reader) is { } problem)
             {
                 throw new InvalidScenario($"format: {problem}");
             }

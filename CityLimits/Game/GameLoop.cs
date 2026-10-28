@@ -1237,7 +1237,7 @@ public sealed class GameLoop : IDisposable
 
     // A city opened from here runs on the base game with the mods installed now, read afresh each
     // time, so a mod added since the game started counts; skipped mods are logged as they're read.
-    private CityDefinitions InstalledDefinitions() => GameMods.Load(_folders.ModsFolder, out _);
+    private CityDefinitions InstalledDefinitions() => GameMods.Load(_folders, out _);
 
     // The player's disaster switches decide which disasters happen on their own in the city.
     private void ApplyDisasters(GameSettings settings)

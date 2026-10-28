@@ -23,16 +23,11 @@ public enum DemandCaps
 /// The city's stadiums, seaports, and airports, as Micropolis has them. The scan counts each as it
 /// passes its centre, and the count starts again every cycle. Once a big city lacks one, the demand
 /// it serves is held at zero: residents want a stadium, industry a seaport, and commerce an
-/// airport. Each is checked, and the city told, at its own count of Micropolis' 64.
+/// airport, past the cap each one's spec gives (Micropolis' 500, 70, and 100, in the census' own
+/// units). Each is checked, and the city told, at its own count of Micropolis' 64.
 /// </summary>
 public sealed class Facilities
 {
-    // Micropolis' sizes, in the census' own units, approved by Tony Bark for Kyoto: more than 500
-    // residential, 70 industrial, or 100 commercial, and the city wants the building that serves it.
-    private const int MostResidentsWithoutStadium = 500;
-    private const int MostIndustryWithoutSeaport = 70;
-    private const int MostCommerceWithoutAirport = 100;
-
     /// <summary>The stadiums counted so far in this cycle's scan.</summary>
     public int Stadiums { get; private set; }
 
@@ -66,13 +61,13 @@ public sealed class Facilities
     }
 
     /// <summary>Checks whether residents want a stadium, from the cycle's census; tells whether they do.</summary>
-    internal bool CheckStadium(CityCensus census) => Hold(DemandCaps.Residential, census.Residential > MostResidentsWithoutStadium && Stadiums == 0);
+    internal bool CheckStadium(CityCensus census, int cap) => Hold(DemandCaps.Residential, census.Residential > cap && Stadiums == 0);
 
     /// <summary>Checks whether industry wants a seaport, from the cycle's census; tells whether it does.</summary>
-    internal bool CheckSeaport(CityCensus census) => Hold(DemandCaps.Industrial, census.Industrial > MostIndustryWithoutSeaport && Seaports == 0);
+    internal bool CheckSeaport(CityCensus census, int cap) => Hold(DemandCaps.Industrial, census.Industrial > cap && Seaports == 0);
 
     /// <summary>Checks whether commerce wants an airport, from the cycle's census; tells whether it does.</summary>
-    internal bool CheckAirport(CityCensus census) => Hold(DemandCaps.Commercial, census.Commercial > MostCommerceWithoutAirport && Airports == 0);
+    internal bool CheckAirport(CityCensus census, int cap) => Hold(DemandCaps.Commercial, census.Commercial > cap && Airports == 0);
 
     internal FacilitiesSave Capture() => new()
     {

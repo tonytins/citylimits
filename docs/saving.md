@@ -32,10 +32,10 @@ the game lists the folder's cities itself, newest first.
 - **Leaving a city** for the menu, for another city, or to quit asks
   first when the city has changes since it was last saved. A city has
   changes when its save would read differently from the last one.
-- **Opening a city** runs it on the base game with the mods installed
-  now. A city played with other mods opens anyway, and the news ticker
-  says so: `It was played with Cheap commerce 2.0, and opens with no
-  mods, so it may play differently.` A city whose buildings the installed
+- **Opening a city** runs it on the base game, as `common/` holds it,
+  with the mods installed now. A city played with other mods opens
+  anyway, and the news ticker says so: `It was played with Cheap
+  commerce 2.0, and opens with no mods, so it may play differently.` A city whose buildings the installed
   definitions can't hold, such as a level a mod added, is refused, naming
   the mods to install.
 - **Save for 0.4**, in the Settings window's Gameplay tab, saves cities,
@@ -120,7 +120,7 @@ size of the same city as `.fcl`.
 | Tag | What it holds |
 |---|---|
 | `VERS` | The format's minor version, as a 16-bit number; written first, and read as 0 when it is missing |
-| `FEAT` | The features list, each feature's name and its chunk's tag (see Opening a newer save); from 2.0, written after `VERS` |
+| `FEAT` | The features list, each feature's name and its chunk's tag (see Opening a newer save), `traffic` twice, for `TRAF` and `RTRF`; from 2.0, written after `VERS` |
 | `CITY` | The name, the seed, the generator, the steps, the calendar's count, and the money |
 | `MODS` | The mods the city was played with; from 2.0 |
 | `DEFS` | In format 1 only: the definitions, as definitions-format JSON text, and the mods applied |
@@ -215,7 +215,7 @@ arrays of numbers sit on one line each.
 |---|---|
 | `$schema` | The schema the file follows, such as `docs/schemas/city-save.v2.0.schema.json`, for editors; the game ignores it |
 | `format` | The format's version, `"2.0"`, or a 1.x version such as `"1.10"`; a save written before versions had minor numbers says `1`, which reads as 1.0 |
-| `features` | From 2.0, the names of the features the save holds beyond its core, such as `["traffic", "rail"]`, for people and tools to see; it may be left out |
+| `features` | From 2.0, the names of the features the save holds beyond its core, such as `["traffic", "rail"]`, for people and tools to see; it may be left out. `traffic` covers both traffic sections, `traffic` and `roadTraffic`; a save from 0.5.100 names `roadTraffic` too, which reads the same |
 | `name`, `seed`, `random` | The city's name, its seed, and the generator state |
 | `tick`, `cityTime` | The steps run, and the calendar's count |
 | `funds` | The money, which may be below zero |
@@ -224,7 +224,7 @@ arrays of numbers sit on one line each.
 | `map` | The map: see below |
 | `budget`, `census`, `demand`, `power`, `services`, `community`, `cityMaps` | Each part of the simulation's state |
 | `cycle` | The road tiles counted this cycle, and what the last count set aside for the budget |
-| `traffic`, `roadTraffic`, `rail`, `pollution`, `crime`, `fire`, `flood`, `challenge`, `facilities`, `founding` | The features, each from the version the table under Versions gives; a 2.0 save may leave any out |
+| `traffic` and `roadTraffic`, `rail`, `pollution`, `crime`, `fire`, `flood`, `challenge`, `facilities`, `founding` | The features' sections, each from the version the table under Versions gives; a 2.0 save may leave any out |
 | `parts` | In format 1 only: the parts list, from 1.2 |
 
 ### The map

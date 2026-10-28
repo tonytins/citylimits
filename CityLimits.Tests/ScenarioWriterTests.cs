@@ -49,8 +49,8 @@ public class ScenarioWriterTests
 
         var written = ScenarioWriter.Write(scenario, Folder);
 
-        Assert.Contains("\"format\": \"2.2\"", written);
-        Assert.Contains("scenario.v2.2.schema.json", written);
+        Assert.Contains("\"format\": \"3.0\"", written);
+        Assert.Contains("scenario.v3.0.schema.json", written);
         Assert.Contains("\"start\": 1950", written);
         Assert.Contains("\"week\": 2", written);
         Assert.Contains("\"text\": \"Stay out of debt\"", written);
@@ -92,5 +92,20 @@ public class ScenarioWriterTests
 
         var problem = Assert.Throws<InvalidDataException>(() => ScenarioWriter.Write(scenario, Folder));
         Assert.Equal("actions[0]: tick 5 falls between the calendar's weeks, so it can't be written as a date.", problem.Message);
+    }
+
+    [Fact]
+    public void AFileFor04Is22WithTheSameFields()
+    {
+        var scenario = Read("""
+            { "format": "3.0", "name": "W", "seed": 4, "map": { "width": 32, "height": 32 }, "ends": "1902-01",
+              "events": [ { "at": "1900-03", "disaster": "Fire", "repeat": { "weeks": 4, "times": 3 } } ] }
+            """);
+
+        var written = ScenarioWriter.Write(scenario, Folder, legacy: true);
+
+        Assert.Contains("\"format\": \"2.2\"", written);
+        Assert.Contains("scenario.v2.2.schema.json", written);
+        Assert.Equal(ScenarioWriter.Write(scenario, Folder).Replace("3.0", "2.2"), written);
     }
 }

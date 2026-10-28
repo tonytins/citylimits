@@ -31,7 +31,7 @@ public sealed class HeadlessRun
             Logger.Warn("{Problem}", folders.Problem);
         }
 
-        var simulation = new CitySimulation(map, _seed, definitions: GameMods.Load(folders.ModsFolder, out _));
+        var simulation = new CitySimulation(map, _seed, definitions: GameMods.Load(folders, out _));
 
         Logger.Info(
             "Headless run: seed {Seed}, map {Width} by {Height}, {Ticks} ticks",

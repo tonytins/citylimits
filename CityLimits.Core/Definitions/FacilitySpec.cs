@@ -1,0 +1,41 @@
+namespace CityLimits.Core.Definitions;
+
+/// <summary>
+/// What a stadium, a seaport, or an airport is, as data rather than code: its name, its price, how
+/// big the demand it serves may grow before the city wants one, and the pollution each of its
+/// tiles gives off. The base game's specs are Micropolis' numbers, and a mod can change them.
+/// </summary>
+/// <param name="Id">The id definitions and mods name the facility by, such as <c>stadium</c>.</param>
+/// <param name="Use">The use the facility's tiles carry.</param>
+/// <param name="Name">The facility's name, as the player sees it.</param>
+/// <param name="Price">What one costs to build.</param>
+/// <param name="DemandCap">
+/// How big the demand it serves may grow, in the census' units, before a city without one holds
+/// that demand at zero: residents for a stadium, industry for a seaport, and commerce for an airport.
+/// </param>
+/// <param name="Pollution">The pollution each of its tiles gives off.</param>
+public sealed record FacilitySpec(string Id, TileUse Use, string Name, int Price, int DemandCap, int Pollution);
+
+/// <summary>
+/// What the city's infrastructure costs, as data rather than code: each tile of road, bridge, rail,
+/// tunnel, power line, power line under water, and park, the bulldozer's work, and clearing trees
+/// or rubble before building. The base game's prices are Micropolis', and a mod can change them.
+/// </summary>
+/// <param name="Road">What one tile of road costs.</param>
+/// <param name="Bridge">What one tile of road over water costs.</param>
+/// <param name="Rail">What one tile of rail costs.</param>
+/// <param name="Tunnel">What one tile of rail under water costs.</param>
+/// <param name="PowerLine">What one tile of power line costs.</param>
+/// <param name="UnderwaterPowerLine">What one tile of power line under water costs.</param>
+/// <param name="Park">What one tile of park costs.</param>
+/// <param name="Bulldozer">What the bulldozer costs for each tile it clears, or each zone or plant it knocks down.</param>
+/// <param name="Clearing">What a tool pays to clear a tile of trees or rubble before it builds there.</param>
+public sealed record InfrastructureSpec(int Road, int Bridge, int Rail, int Tunnel, int PowerLine, int UnderwaterPowerLine, int Park, int Bulldozer, int Clearing);
+
+/// <summary>
+/// What a new city starts with, as data rather than code: its money and its tax rate. The base
+/// game's are Micropolis', and a mod can change them. A scenario sets its own money.
+/// </summary>
+/// <param name="StartingFunds">The money a new city starts with.</param>
+/// <param name="TaxRate">The tax rate a new city starts with, in percent.</param>
+public sealed record EconomySpec(int StartingFunds, int TaxRate);

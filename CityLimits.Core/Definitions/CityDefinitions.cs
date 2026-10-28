@@ -1,8 +1,9 @@
 namespace CityLimits.Core.Definitions;
 
 /// <summary>
-/// The definitions a city runs on: the base game's, with any mods applied on top. A city keeps
-/// the definitions it was made with, so the same definitions, seed, and work give the same city.
+/// The definitions a city runs on: the base game's, with any mods applied on top: its zones, power
+/// plants, services, facilities, infrastructure, and economy. The same definitions, seed, and work
+/// give the same city.
 /// </summary>
 public sealed class CityDefinitions
 {
@@ -14,12 +15,23 @@ public sealed class CityDefinitions
     private readonly Dictionary<TileUse, ZoneSpec> _zones;
     private readonly Dictionary<TileUse, PlantSpec> _plants;
     private readonly Dictionary<TileUse, ServiceSpec> _services;
+    private readonly Dictionary<TileUse, FacilitySpec> _facilities;
 
+    // Zones, plants, and services from a definitions file; the facilities, infrastructure, and
+    // economy the base game has, until a file gives others.
     internal CityDefinitions(IEnumerable<ZoneSpec> zones, IEnumerable<PlantSpec> plants, IEnumerable<ServiceSpec> services, IReadOnlyList<AppliedMod> mods)
+        : this(zones, plants, services, BaseGame.Facilities, BaseGame.Infrastructure, BaseGame.Economy, mods)
+    {
+    }
+
+    internal CityDefinitions(IEnumerable<ZoneSpec> zones, IEnumerable<PlantSpec> plants, IEnumerable<ServiceSpec> services, IEnumerable<FacilitySpec> facilities, InfrastructureSpec infrastructure, EconomySpec economy, IReadOnlyList<AppliedMod> mods)
     {
         _zones = zones.ToDictionary(zone => zone.Use);
         _plants = plants.ToDictionary(plant => plant.Use);
         _services = services.ToDictionary(service => service.Use);
+        _facilities = facilities.ToDictionary(facility => facility.Use);
+        Infrastructure = infrastructure;
+        Economy = economy;
         AppliedMods = mods;
         Mods = [.. mods.Select(mod => mod.Id)];
     }
@@ -29,6 +41,12 @@ public sealed class CityDefinitions
     /// and read by the same loader; a test keeps them valid, so reading them can't fail in play.
     /// </summary>
     public static CityDefinitions Base => BaseDefinitions.Value;
+
+    /// <summary>What roads, rail, power lines, parks, and the bulldozer cost.</summary>
+    public InfrastructureSpec Infrastructure { get; }
+
+    /// <summary>What a new city starts with.</summary>
+    public EconomySpec Economy { get; }
 
     /// <summary>The ids of the mods applied, in the order they were applied; empty for the base game.</summary>
     public IReadOnlyList<string> Mods { get; }
@@ -51,24 +69,29 @@ public sealed class CityDefinitions
     public ServiceSpec Service(TileUse use) =>
         _services.TryGetValue(use, out var service) ? service : throw new ArgumentOutOfRangeException(nameof(use), $"{use} is not a service building.");
 
+    /// <summary>The spec of the stadium, seaport, or airport a use belongs to.</summary>
+    /// <exception cref="ArgumentOutOfRangeException">The use isn't a stadium, a seaport, or an airport.</exception>
+    public FacilitySpec Facility(TileUse use) =>
+        _facilities.TryGetValue(use, out var facility) ? facility : throw new ArgumentOutOfRangeException(nameof(use), $"{use} is not a stadium, a seaport, or an airport.");
+
     /// <summary>What a tool costs before the ground under it is cleared, as the palette shows it.</summary>
     public int CostOf(BuildAction action) => action switch
     {
-        BuildAction.Road => TileCosts.Road,
+        BuildAction.Road => Infrastructure.Road,
         BuildAction.ZoneResidential => Zone(TileUse.Residential).Price,
         BuildAction.ZoneCommercial => Zone(TileUse.Commercial).Price,
         BuildAction.ZoneIndustrial => Zone(TileUse.Industrial).Price,
-        BuildAction.Bulldoze => TileCosts.Bulldoze,
+        BuildAction.Bulldoze => Infrastructure.Bulldozer,
         BuildAction.CoalPowerPlant => Plant(TileUse.CoalPowerPlant).Price,
         BuildAction.NuclearPowerPlant => Plant(TileUse.NuclearPowerPlant).Price,
-        BuildAction.PowerLine => TileCosts.PowerLine,
-        BuildAction.Park => TileCosts.Park,
-        BuildAction.Rail => TileCosts.Rail,
+        BuildAction.PowerLine => Infrastructure.PowerLine,
+        BuildAction.Park => Infrastructure.Park,
+        BuildAction.Rail => Infrastructure.Rail,
         BuildAction.FireStation => Service(TileUse.FireStation).Price,
         BuildAction.PoliceStation => Service(TileUse.PoliceStation).Price,
-        BuildAction.Stadium => TileCosts.Stadium,
-        BuildAction.Seaport => TileCosts.Seaport,
-        BuildAction.Airport => TileCosts.Airport,
+        BuildAction.Stadium => Facility(TileUse.Stadium).Price,
+        BuildAction.Seaport => Facility(TileUse.Seaport).Price,
+        BuildAction.Airport => Facility(TileUse.Airport).Price,
         _ => 0,
     };
 
@@ -81,16 +104,27 @@ public sealed class CityDefinitions
     /// <summary>The service specs, in the order of their uses.</summary>
     internal IEnumerable<ServiceSpec> Services => _services.Values.OrderBy(service => service.Use);
 
-    // A saved city's definitions are read as a whole and then told which mods made them.
-    internal CityDefinitions WithAppliedMods(IReadOnlyList<AppliedMod> mods) => new(_zones.Values, _plants.Values, _services.Values, mods);
+    /// <summary>The facility specs, in the order of their uses.</summary>
+    internal IEnumerable<FacilitySpec> Facilities => _facilities.Values.OrderBy(facility => facility.Use);
 
-    // A mod's zone, plant, or service entry changes only the fields it sets.
-    internal CityDefinitions With(ModDefinitions mod)
+    // A saved city's definitions are read as a whole and then told which mods made them.
+    internal CityDefinitions WithAppliedMods(IReadOnlyList<AppliedMod> mods) => new(_zones.Values, _plants.Values, _services.Values, _facilities.Values, Infrastructure, Economy, mods);
+
+    // A mod's entries change only the fields they set, and the mod is listed as applied.
+    internal CityDefinitions With(ModDefinitions mod) => Patched(mod, [.. AppliedMods, new AppliedMod(mod.Id, mod.Name, mod.Version)]);
+
+    // The base game's own files change the code's values as a mod would, but aren't a mod.
+    internal CityDefinitions WithBaseFiles(ModDefinitions files) => Patched(files, AppliedMods);
+
+    private CityDefinitions Patched(ModDefinitions mod, IReadOnlyList<AppliedMod> mods)
     {
         var zones = _zones.Values.Select(zone => mod.Zones.TryGetValue(zone.Use, out var patch) ? patch.ApplyTo(zone) : zone);
         var plants = _plants.Values.Select(plant => mod.Plants.TryGetValue(plant.Use, out var patch) ? patch.ApplyTo(plant) : plant);
         var services = _services.Values.Select(service => mod.Services.TryGetValue(service.Use, out var patch) ? patch.ApplyTo(service) : service);
-        return new CityDefinitions(zones, plants, services, [.. AppliedMods, new AppliedMod(mod.Id, mod.Name, mod.Version)]);
+        var facilities = _facilities.Values.Select(facility => mod.Facilities.TryGetValue(facility.Use, out var patch) ? patch.ApplyTo(facility) : facility);
+        var infrastructure = mod.Infrastructure?.ApplyTo(Infrastructure) ?? Infrastructure;
+        var economy = mod.Economy?.ApplyTo(Economy) ?? Economy;
+        return new CityDefinitions(zones, plants, services, facilities, infrastructure, economy, mods);
     }
 }
 

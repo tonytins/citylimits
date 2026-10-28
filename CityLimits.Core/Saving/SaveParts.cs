@@ -94,10 +94,17 @@ internal static class SaveParts
     /// The features a 2.0 save names: the parts above, known by their names rather than the versions
     /// that added them. A feature added from now on goes here, and the version doesn't move.
     /// </summary>
-    public static IEnumerable<string> FeatureNames => Known.Select(part => part.Name);
+    public static IEnumerable<string> FeatureNames => Known.Select(part => FeatureOf(part.Name)).Distinct();
 
-    /// <summary>Each feature's chunk in a binary save, the reserved ones' too.</summary>
-    public static IEnumerable<(string Name, string Chunk)> FeatureChunks => Known.Concat(Reserved).Select(part => (part.Name, part.Chunk));
+    /// <summary>
+    /// Each feature's chunks in a binary save, the reserved ones' too: one each, but traffic's two,
+    /// its average and each road's.
+    /// </summary>
+    public static IEnumerable<(string Name, string Chunk)> FeatureChunks => Known.Concat(Reserved).Select(part => (FeatureOf(part.Name), part.Chunk));
+
+    // Each road's traffic is part of the traffic feature, as Tony Bark chose for 0.5; its section
+    // keeps its own name, roadTraffic, so 0.4 and 0.5.100 read it as they did.
+    private static string FeatureOf(string part) => part == "roadTraffic" ? "traffic" : part;
 
     /// <summary>
     /// What a 2.0 save comes to with sections this version doesn't know, each by its name and where it

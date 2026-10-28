@@ -145,7 +145,9 @@ public class FormatSchemaTests
         Assert.True(stale.Count == 0, $"Out of date in docs/schemas: {string.Join(", ", stale)}; the new ones are beside the tests as .new files.");
 
         // Older versions' schemas stay, since files of those versions name them; nothing else is there.
-        var kinds = generated.Keys.Select(file => file[..file.IndexOf(".v", StringComparison.Ordinal)]).ToHashSet();
+        // In definitions 2.0, plants.json became power.json, and only a save for 0.4 holds a whole
+        // definitions file, in 1.0.
+        var kinds = generated.Keys.Select(file => file[..file.IndexOf(".v", StringComparison.Ordinal)]).Concat(["plants", "definitions"]).ToHashSet();
         Assert.All(
             Directory.EnumerateFiles(folder, "*.schema.json").Select(path => Path.GetFileName(path)),
             file => Assert.Contains(file[..file.IndexOf(".v", StringComparison.Ordinal)], kinds));

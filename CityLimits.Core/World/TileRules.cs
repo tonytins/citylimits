@@ -8,7 +8,7 @@ public static class TileRules
 
     /// <summary>
     /// Tells whether a tool has to clear the ground before it builds there. As in Micropolis,
-    /// the tool does it for <see cref="TileCosts.AutoClear"/> a tile.
+    /// the tool does it for the infrastructure's clearing price a tile.
     /// </summary>
     public static bool NeedsClearing(TileKind kind) => kind is TileKind.Trees or TileKind.Rubble;
 

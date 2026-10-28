@@ -6,8 +6,8 @@ using CityLimits.Core.Simulation;
 namespace CityLimits.Core.Scenarios;
 
 /// <summary>
-/// Writes a scenario as a file in the newest format, 2.2, which <see cref="ScenarioLoader"/> reads
-/// back as the same scenario: its times as the game's dates, a goal's words only when they aren't
+/// Writes a scenario as a file in the newest format, 3.0, or, for 0.4, 2.2, which
+/// <see cref="ScenarioLoader"/> reads back as the same scenario: its times as the game's dates, a goal's words only when they aren't
 /// the ones it would be given, and a saved city named from the scenario's own folder. A scenario
 /// whose times can't be dates, as a format 1 file's ticks may not be, isn't written.
 /// </summary>
@@ -22,20 +22,22 @@ public static class ScenarioWriter
     };
 
     /// <summary>
-    /// Writes a scenario as the text of a 2.2 file. A saved city is named relative to the folder the
-    /// file goes in, as the loader finds it.
+    /// Writes a scenario as the text of a 3.0 file, or, when <paramref name="legacy"/> asks, of a 2.2
+    /// one, which 0.4 reads: the same fields under the version before. A saved city is named relative
+    /// to the folder the file goes in, as the loader finds it.
     /// </summary>
     /// <exception cref="InvalidDataException">One of the scenario's times falls between the calendar's weeks.</exception>
-    public static string Write(Scenario scenario, string folder)
+    public static string Write(Scenario scenario, string folder, bool legacy = false)
     {
+        var format = legacy ? ScenarioLoader.Format2 : ScenarioLoader.Format;
         ArgumentNullException.ThrowIfNull(scenario);
         ArgumentNullException.ThrowIfNull(folder);
 
         var fromSeed = scenario.CityFile is null;
         var document = new ScenarioDocument2
         {
-            Schema = $"https://raw.githubusercontent.com/tonytins/citylimits/main/docs/schemas/scenario.v{ScenarioLoader.Format.Major}.{ScenarioLoader.Format.Minor}.schema.json",
-            Format = ScenarioLoader.Format,
+            Schema = FormatSchemas.UrlFor("scenario", format),
+            Format = format,
             Name = scenario.Name,
             Description = scenario.Description,
             Seed = fromSeed ? scenario.Seed : null,

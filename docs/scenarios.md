@@ -1,6 +1,6 @@
 # Scenarios
 
-> **Status:** format 2.2 is built: `CityLimits.Core/Scenarios/` and
+> **Status:** format 3.0 is built, from 0.5: `CityLimits.Core/Scenarios/` and
 > `citylimits scenario`, with `demo-town`, the built-in scenarios
 > `bridges`, `rail`, `zones-and-bulldozer`, and `small-town`, written in
 > 2.0, and the challenges `first-town`, in 2.0, and `smokestack`,
@@ -107,8 +107,9 @@ the scenario saved, while it is tested, and no other city can be opened
 while one is edited.
 
 Ctrl+S, or the Escape menu's Save, saves the scenario to the player's
-`Documents/CityLimits/Scenarios` as `<name>.json`, with its city beside it
-as `<name>.fcl` (`ScenarioEdit.TrySave`): from then on it starts from
+`Documents/CityLimits/Scenarios` as `<name>.json`, in format 3.0, with its
+city beside it as `<name>.fcl`, in save format 2.0 (`ScenarioEdit.TrySave`);
+with Save for 0.4 on in the settings, as 2.2 and 1.10, which 0.4 opens: from then on it starts from
 that city, whatever it was made from, its strokes, goals, and disasters
 kept. A game's own scenario is saved there as a copy, and the original
 is left as it was; saving over another scenario of the same name asks
@@ -185,10 +186,13 @@ report gives each time as both a date and a tick. A tick is one step of
 the simulation, one phase of Micropolis' cycle, the same unit as
 `citylimits --headless --ticks`; `CityCalendar` holds these numbers.
 
-## The file, version 2.2
+## The file, version 3.0
 
-2.1 adds the `Stadium`, `Seaport`, and `Airport` tools and counts to 2.0,
-and 2.2 a disaster that repeats; a 2.0 or 2.1 file reads as it did.
+3.0 is 2.2 under the next major version, as every format rounded up with
+0.5: its fields are 2.2's, and a game that reads 3.0 reads every 2.x file
+as it did. 2.1 added the `Stadium`, `Seaport`, and `Airport` tools and
+counts to 2.0, and 2.2 a disaster that repeats. 0.4 reads up to 2.2, and
+refuses 3.0 with a message.
 
 ```json
 {
@@ -246,7 +250,7 @@ A challenge has goals, and may start later and have a disaster:
 | Field | Required | Meaning |
 |---|---|---|
 | `$schema` | no | The scenario's schema, `docs/schemas/scenario.v2.0.schema.json`, for editors to check the file against; the game ignores it |
-| `format` | yes | The file format version, `"2.2"`, `"2.1"`, or `"2.0"`. A file of format 1, such as `"1.3"`, is read as [format 1](#format-1). A newer minor version, or another major one, is refused with a message saying which this version reads |
+| `format` | yes | The file format version, `"3.0"`, or a 2.x one, `"2.2"`, `"2.1"`, or `"2.0"`. A file of format 1, such as `"1.3"`, is read as [format 1](#format-1). A newer minor version, or another major one, is refused with a message saying which this version reads |
 | `name` | yes | A display name, 1 to 80 characters |
 | `description` | no | One or two sentences, up to 500 characters |
 | `seed` | yes, without `city` | The seed the map and the simulation are built from: any 32-bit integer |
@@ -428,7 +432,7 @@ and earthquakes among the disasters. Their schemas are
 
 ## The schema
 
-`docs/schemas/scenario.v2.2.schema.json` describes the file (`scenario.v2.1.schema.json` 2.1, without `repeat`, and `scenario.v2.0.schema.json` 2.0, which differs from 2.1 only in its name), and the files for 1.0 to 1.3 format 1: its fields
+`docs/schemas/scenario.v3.0.schema.json` describes the file (`scenario.v2.2.schema.json` 2.2, which differs only in its name, `scenario.v2.1.schema.json` 2.1, without `repeat`, and `scenario.v2.0.schema.json` 2.0, which differs from 2.1 only in its name), and the files for 1.0 to 1.3 format 1: its fields
 and their types, with no others. Name it in `"$schema"`, as the built-in
 scenarios do, and an editor such as VS Code checks the file and suggests
 its fields as you write. The schema is generated from the loader's own

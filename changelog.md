@@ -1,5 +1,44 @@
 # CityLimits Changelog
 
+## 0.5.101
+
+Mods can change more of the game: how strongly and how far fire and
+police stations cover the city, the stadium, seaport, and airport (their
+prices, the size of city that wants each, and how much they pollute),
+what roads, rail, power lines, parks, and the bulldozer cost, and the
+money and tax rate a new city starts with. A mod can now keep its files
+in folders of its own. Power plants go in `power.json`; `plants.json`
+still works. See [Tuning mods](docs/modding/tuning.md).
+
+The game now writes its own numbers into a `common` folder beside its
+settings, in the same files a mod uses, so you can see everything it
+plays with. You can change them there too, but each new version writes
+them again; a mod keeps a change for good.
+
+Scenarios you save from the editor are now in a new format too. With
+Save for 0.4 on, the editor saves them, and their cities, so 0.4 can
+open them.
+
+For developers and agents: scenarios are format 3.0, which is 2.2's
+fields under the next major version, as every format rounds up with
+0.5. Every 2.x and 1.x scenario still reads, and the built-ins stay as
+they were. `ScenarioWriter.Write(scenario, folder, legacy: true)`
+writes 2.2, and `ScenarioEdit.TrySave(city, out problem, legacy: true)`
+writes the scenario as 2.2 and its city as 1.10.
+`docs/schemas/scenario.v3.0.schema.json` is new.
+
+Definitions are format 2.0: `zones`, `power`, and `services`, with
+`strength` and `reach`, and the new `facilities`, `infrastructure`, and
+`economy` (`FacilitySpec`, `InfrastructureSpec`, `EconomySpec`), each
+with a v2.0 schema. 1.0 files still read, but strength and reach in one
+are refused. The base game's values stay in code (`BaseGame`), and
+`BaseSpecFiles` writes them to `common/` (`GameFolders.CommonFolder`) once
+for each build and applies them before the mods. `SpecFolder` finds spec
+files at any depth, in path order. `CitySimulation` takes its starting
+funds and tax rate from the definitions when none are given. A save for
+0.4 still carries definitions 1.0. In a save's features list, `traffic`
+now stands for `roadTraffic` too; the sections keep their names.
+
 ## 0.5.100
 
 The first of 0.5, Senri, a line kept for the long term. Cities now save

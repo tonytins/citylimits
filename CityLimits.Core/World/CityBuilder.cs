@@ -208,11 +208,11 @@ public sealed class CityBuilder
                 }
                 else if (state.Use == TileUse.PowerLine && state.Kind == TileKind.Grass)
                 {
-                    PlanCrossing(x, y, CrossingOverLine(PowerLines.ConnectionsAt(_map, x, y)), TileCosts.Road, plan);
+                    PlanCrossing(x, y, CrossingOverLine(PowerLines.ConnectionsAt(_map, x, y)), _definitions.Infrastructure.Road, plan);
                 }
                 else if (state.Use == TileUse.Rail && state.Kind == TileKind.Grass)
                 {
-                    PlanCrossing(x, y, Crossing(Rails.ConnectionsAt(_map, x, y), TileUse.RailAcrossRoad, TileUse.RailDownRoad), TileCosts.Road, plan);
+                    PlanCrossing(x, y, Crossing(Rails.ConnectionsAt(_map, x, y), TileUse.RailAcrossRoad, TileUse.RailDownRoad), _definitions.Infrastructure.Road, plan);
                 }
                 else if (state.Use != TileUse.None || !TileRules.CanLayRoad(state.Kind))
                 {
@@ -220,12 +220,12 @@ public sealed class CityBuilder
                 }
                 else
                 {
-                    plan.Change(x, y, new TileState(TileKind.Grass, TileUse.Road), TileCosts.Road + ClearingCost(state));
+                    plan.Change(x, y, new TileState(TileKind.Grass, TileUse.Road), _definitions.Infrastructure.Road + ClearingCost(state));
                 }
             }
         }
 
-        CrossWater(new TileState(TileKind.Water, TileUse.Road), TileCosts.Bridge, RoadNetwork.RunsToward, plan);
+        CrossWater(new TileState(TileKind.Water, TileUse.Road), _definitions.Infrastructure.Bridge, RoadNetwork.RunsToward, plan);
     }
 
     // A power line is strung like a road: in one straight line, clearing trees and rubble. It
@@ -256,11 +256,11 @@ public sealed class CityBuilder
                 }
                 else if (state.Use == TileUse.Road && state.Kind == TileKind.Grass)
                 {
-                    PlanCrossing(x, y, CrossingUnderRoad(RoadNetwork.ConnectionsAt(_map, x, y)), TileCosts.PowerLine, plan);
+                    PlanCrossing(x, y, CrossingUnderRoad(RoadNetwork.ConnectionsAt(_map, x, y)), _definitions.Infrastructure.PowerLine, plan);
                 }
                 else if (state.Use == TileUse.Rail && state.Kind == TileKind.Grass)
                 {
-                    PlanCrossing(x, y, Crossing(Rails.ConnectionsAt(_map, x, y), TileUse.RailAcrossPowerLine, TileUse.RailDownPowerLine), TileCosts.PowerLine, plan);
+                    PlanCrossing(x, y, Crossing(Rails.ConnectionsAt(_map, x, y), TileUse.RailAcrossPowerLine, TileUse.RailDownPowerLine), _definitions.Infrastructure.PowerLine, plan);
                 }
                 else if (state.Use != TileUse.None || !TileRules.CanBuildOn(state.Kind))
                 {
@@ -268,12 +268,12 @@ public sealed class CityBuilder
                 }
                 else
                 {
-                    plan.Change(x, y, new TileState(TileKind.Grass, TileUse.PowerLine), TileCosts.PowerLine + ClearingCost(state));
+                    plan.Change(x, y, new TileState(TileKind.Grass, TileUse.PowerLine), _definitions.Infrastructure.PowerLine + ClearingCost(state));
                 }
             }
         }
 
-        CrossWater(new TileState(TileKind.Water, TileUse.PowerLine), TileCosts.UnderwaterPowerLine, PowerLines.RunsToward, plan);
+        CrossWater(new TileState(TileKind.Water, TileUse.PowerLine), _definitions.Infrastructure.UnderwaterPowerLine, PowerLines.RunsToward, plan);
     }
 
     // Rail is laid as a road is, as in Micropolis: in one straight line, clearing trees and rubble,
@@ -304,11 +304,11 @@ public sealed class CityBuilder
                 else if (state.Use == TileUse.Road && state.Kind == TileKind.Grass)
                 {
                     // Rail laid on a road runs the other way to it.
-                    PlanCrossing(x, y, Crossing(RoadNetwork.ConnectionsAt(_map, x, y), TileUse.RailDownRoad, TileUse.RailAcrossRoad), TileCosts.Rail, plan);
+                    PlanCrossing(x, y, Crossing(RoadNetwork.ConnectionsAt(_map, x, y), TileUse.RailDownRoad, TileUse.RailAcrossRoad), _definitions.Infrastructure.Rail, plan);
                 }
                 else if (state.Use == TileUse.PowerLine && state.Kind == TileKind.Grass)
                 {
-                    PlanCrossing(x, y, Crossing(PowerLines.ConnectionsAt(_map, x, y), TileUse.RailDownPowerLine, TileUse.RailAcrossPowerLine), TileCosts.Rail, plan);
+                    PlanCrossing(x, y, Crossing(PowerLines.ConnectionsAt(_map, x, y), TileUse.RailDownPowerLine, TileUse.RailAcrossPowerLine), _definitions.Infrastructure.Rail, plan);
                 }
                 else if (state.Use != TileUse.None || !TileRules.CanBuildOn(state.Kind))
                 {
@@ -316,12 +316,12 @@ public sealed class CityBuilder
                 }
                 else
                 {
-                    plan.Change(x, y, new TileState(TileKind.Grass, TileUse.Rail), TileCosts.Rail + ClearingCost(state));
+                    plan.Change(x, y, new TileState(TileKind.Grass, TileUse.Rail), _definitions.Infrastructure.Rail + ClearingCost(state));
                 }
             }
         }
 
-        CrossWater(new TileState(TileKind.Water, TileUse.Rail), TileCosts.Tunnel, Rails.RunsToward, plan);
+        CrossWater(new TileState(TileKind.Water, TileUse.Rail), _definitions.Infrastructure.Tunnel, Rails.RunsToward, plan);
     }
 
     // Water is crossed in passes until no more of it can be: a tile is crossed once something
@@ -423,7 +423,7 @@ public sealed class CityBuilder
                 }
                 else
                 {
-                    plan.Change(x, y, new TileState(TileKind.Grass, TileUse.Park), TileCosts.Park + ClearingCost(state));
+                    plan.Change(x, y, new TileState(TileKind.Grass, TileUse.Park), _definitions.Infrastructure.Park + ClearingCost(state));
                 }
             }
         }
@@ -523,7 +523,7 @@ public sealed class CityBuilder
                 }
 
                 var cleared = state.Kind == TileKind.Water ? new TileState(TileKind.Water) : new TileState(TileKind.Grass);
-                plan.Change(x, y, cleared, TileCosts.Bulldoze);
+                plan.Change(x, y, cleared, _definitions.Infrastructure.Bulldozer);
             }
         }
 
@@ -550,7 +550,7 @@ public sealed class CityBuilder
                     }
                 }
 
-                plan.AddCost(TileCosts.Bulldoze);
+                plan.AddCost(_definitions.Infrastructure.Bulldozer);
             }
         }
     }
@@ -580,6 +580,6 @@ public sealed class CityBuilder
         : _hazards?.Floods.IsFlooded(x, y) == true ? BuildRefusal.Flooded
         : null;
 
-    private static int ClearingCost(TileState state) =>
-        TileRules.NeedsClearing(state.Kind) ? TileCosts.AutoClear : 0;
+    private int ClearingCost(TileState state) =>
+        TileRules.NeedsClearing(state.Kind) ? _definitions.Infrastructure.Clearing : 0;
 }

@@ -5,7 +5,7 @@ namespace CityLimits.Core.Definitions;
 /// <summary>
 /// Writes a city's definitions in the definitions format, the one the base game and mods use, so a
 /// save carries the definitions the city was made with and reads them back through
-/// <see cref="DefinitionLoader"/>, with all its checks. Mods already applied are written out as
+/// <see cref="DefinitionLoader"/>, with all its checks. Only a save for 0.4 (format 1.10) does, in definitions format 1.0. Mods already applied are written out as
 /// the numbers they gave, so a saved city doesn't change when the mods folder does.
 /// </summary>
 internal static class DefinitionWriter
@@ -19,7 +19,8 @@ internal static class DefinitionWriter
         using (var writer = new Utf8JsonWriter(stream))
         {
             writer.WriteStartObject();
-            writer.WriteString("format", DefinitionLoader.Format.ToString());
+            // Only a save for 0.4 carries its definitions, and 0.4 reads format 1.0.
+            writer.WriteString("format", DefinitionLoader.Format1.ToString());
 
             writer.WriteStartArray("zones");
             foreach (var zone in definitions.Zones)

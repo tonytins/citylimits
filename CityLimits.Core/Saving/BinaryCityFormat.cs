@@ -99,8 +99,10 @@ public static class BinaryCityFormat
         else
         {
             // The features by name, each with its chunk, the reserved ones kept from a newer save included.
-            var chunks = SaveParts.FeatureChunks.ToDictionary(feature => feature.Name, feature => feature.Chunk);
-            var entries = save.Features!.Select(name => new FeatureEntry { Name = name, Chunk = chunks[name] }).ToArray();
+            var entries = save.Features!
+                .SelectMany(name => SaveParts.FeatureChunks.Where(feature => feature.Name == name))
+                .Select(feature => new FeatureEntry { Name = feature.Name, Chunk = feature.Chunk })
+                .ToArray();
             WriteChunk(stream, FeaturesTag, SectionCodec.Write(new FeaturesChunk { Features = entries }));
         }
 

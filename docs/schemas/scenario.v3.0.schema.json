@@ -1,0 +1,227 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/tonytins/citylimits/main/docs/schemas/scenario.v3.0.schema.json",
+  "title": "A CityLimits scenario",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "description": "The schema the file follows, for editors; the game ignores it.",
+      "type": "string"
+    },
+    "format": {
+      "description": "The file's format version, as \"major.minor\"; a whole number, as older files wrote it, is that major version, .0.",
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+$"
+        },
+        {
+          "type": "integer",
+          "minimum": 0
+        }
+      ]
+    },
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "seed": {
+      "type": "integer"
+    },
+    "map": {
+      "type": "object",
+      "properties": {
+        "width": {
+          "type": "integer"
+        },
+        "height": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false
+    },
+    "funds": {
+      "type": "integer"
+    },
+    "start": {
+      "type": "integer"
+    },
+    "city": {
+      "type": "string"
+    },
+    "ends": {
+      "type": "string"
+    },
+    "disasters": {
+      "type": "boolean"
+    },
+    "actions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "at": {
+            "type": "string"
+          },
+          "week": {
+            "type": "integer"
+          },
+          "tool": {
+            "type": "string"
+          },
+          "from": {
+            "type": "object",
+            "properties": {
+              "x": {
+                "type": "integer"
+              },
+              "y": {
+                "type": "integer"
+              }
+            },
+            "additionalProperties": false
+          },
+          "to": {
+            "type": "object",
+            "properties": {
+              "x": {
+                "type": "integer"
+              },
+              "y": {
+                "type": "integer"
+              }
+            },
+            "additionalProperties": false
+          },
+          "expect": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "at": {
+            "type": "string"
+          },
+          "week": {
+            "type": "integer"
+          },
+          "tile": {
+            "type": "object",
+            "properties": {
+              "x": {
+                "type": "integer"
+              },
+              "y": {
+                "type": "integer"
+              }
+            },
+            "additionalProperties": false
+          },
+          "count": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "use": {
+            "type": "string"
+          },
+          "development": {
+            "type": "integer"
+          },
+          "developmentAtLeast": {
+            "type": "integer"
+          },
+          "developmentAtMost": {
+            "type": "integer"
+          },
+          "served": {
+            "type": "boolean"
+          },
+          "powered": {
+            "type": "boolean"
+          },
+          "fundsAtLeast": {
+            "type": "integer"
+          },
+          "fundsAtMost": {
+            "type": "integer"
+          },
+          "fundsEquals": {
+            "type": "integer"
+          },
+          "equals": {
+            "type": "integer"
+          },
+          "atLeast": {
+            "type": "integer"
+          },
+          "atMost": {
+            "type": "integer"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "goals": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "measure": {
+            "type": "string"
+          },
+          "atLeast": {
+            "type": "integer"
+          },
+          "atMost": {
+            "type": "integer"
+          },
+          "text": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "events": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "at": {
+            "type": "string"
+          },
+          "week": {
+            "type": "integer"
+          },
+          "disaster": {
+            "type": "string"
+          },
+          "repeat": {
+            "type": "object",
+            "properties": {
+              "weeks": {
+                "type": "integer"
+              },
+              "times": {
+                "type": "integer"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

@@ -3,9 +3,9 @@ namespace CityLimits.Core.Simulation;
 /// <summary>
 /// How well fire and police stations cover the city, worked out as Micropolis does. The scan adds
 /// each station's strength to the 8 by 8 tile block it stands in: its funding's effect, halved
-/// without power, and halved again without a road along its edge. Once a cycle each map is
-/// smoothed three times, so a station's cover spreads to the blocks around it and fades with
-/// distance.
+/// without power, and halved again without a road along its edge, scaled by its spec's strength.
+/// Once a cycle each map is smoothed as many times as its spec's reach, three in Micropolis, so a
+/// station's cover spreads to the blocks around it and fades with distance.
 /// </summary>
 /// <remarks>
 /// Coverage acts where Micropolis has it act, on crime and fires, which come with later
@@ -16,8 +16,8 @@ public sealed class ServiceCoverage
     /// <summary>The width and height of a coverage block, in tiles.</summary>
     public const int BlockSize = 8;
 
-    // A map is smoothed this many times before it is read.
-    private const int Smoothings = 3;
+    private readonly ServiceSpec _fireSpec;
+    private readonly ServiceSpec _policeSpec;
 
     private readonly int _width;
     private readonly int _height;
@@ -32,9 +32,11 @@ public sealed class ServiceCoverage
     /// the right or bottom edge counts as a block. The maps exist from the start, so the scan can
     /// add to them before the first cycle has begun.
     /// </summary>
-    public ServiceCoverage(TileMap map)
+    public ServiceCoverage(TileMap map, CityDefinitions? definitions = null)
     {
         ArgumentNullException.ThrowIfNull(map);
+        var specs = definitions ?? CityDefinitions.Base;
+        (_fireSpec, _policeSpec) = (specs.Service(TileUse.FireStation), specs.Service(TileUse.PoliceStation));
 
         _width = (map.Width + BlockSize - 1) / BlockSize;
         _height = (map.Height + BlockSize - 1) / BlockSize;
@@ -81,11 +83,11 @@ public sealed class ServiceCoverage
         {
             case TileUse.FireStation:
                 FireStations++;
-                _fireRaw[block] += strength;
+                _fireRaw[block] += Scaled(strength, _fireSpec);
                 break;
             case TileUse.PoliceStation:
                 PoliceStations++;
-                _policeRaw[block] += strength;
+                _policeRaw[block] += Scaled(strength, _policeSpec);
                 break;
             default:
                 throw new ArgumentOutOfRangeException(nameof(use), $"{use} is not a station.");
@@ -93,17 +95,21 @@ public sealed class ServiceCoverage
     }
 
     /// <summary>Spreads the police stations' strength into the coverage the city reads.</summary>
-    public void SpreadPolice() => Spread(_policeRaw, _police);
+    public void SpreadPolice() => Spread(_policeRaw, _police, _policeSpec.Reach);
 
     /// <summary>Spreads the fire stations' strength into the coverage the city reads.</summary>
-    public void SpreadFire() => Spread(_fireRaw, _fire);
+    public void SpreadFire() => Spread(_fireRaw, _fire, _fireSpec.Reach);
+
+    // Micropolis' station is 100; a spec's strength scales it, leaving Micropolis' figure as it is.
+    private static int Scaled(int strength, ServiceSpec spec) =>
+        spec.Strength == ServiceSpec.MicropolisStrength ? strength : (int)((long)strength * spec.Strength / ServiceSpec.MicropolisStrength);
 
     // Each pass gives a block half of itself plus an eighth of each of its four neighbours, as
     // whole numbers, as Micropolis does; the map's edge adds nothing.
-    private void Spread(int[] raw, int[] coverage)
+    private void Spread(int[] raw, int[] coverage, int passes)
     {
         Array.Copy(raw, coverage, raw.Length);
-        for (var pass = 0; pass < Smoothings; pass++)
+        for (var pass = 0; pass < passes; pass++)
         {
             for (var y = 0; y < _height; y++)
             {

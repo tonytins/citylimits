@@ -387,4 +387,17 @@ public sealed class ScenarioEditTests : IDisposable
         Assert.Equal("A scenario can't be saved while it is tested: go back to before play first.", problem);
         Assert.Empty(Directory.GetFiles(_folder));
     }
+
+    [Fact]
+    public void SavingFor04WritesTheScenarioAs22AndItsCityAs110()
+    {
+        var edit = Edit();
+        var city = edit.OpenCity();
+
+        Assert.True(edit.TrySave(city, out var problem, legacy: true), problem);
+
+        Assert.Contains("\"format\": \"2.2\"", File.ReadAllText(edit.Path));
+        Assert.Contains("\"format\": \"1.10\"", File.ReadAllText(Path.Combine(_folder, "Little Edit.fcl")));
+        Assert.False(edit.HasChanges(city));
+    }
 }

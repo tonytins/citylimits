@@ -1,6 +1,6 @@
 # CityLimits roadmap
 
-> **Last reviewed:** 2026-10-27 · **Last updated:** 2026-10-27 · **Change:** minor (Senri, N1a: city saves are format 2.0, by features and mods, and can still be written for 0.4) · **Stage:** beta
+> **Last reviewed:** 2026-10-27 · **Last updated:** 2026-10-27 · **Change:** minor (Senri, N1c: definitions 2.0, more specs, and the base game in `common/`) · **Stage:** beta
 
 Forward-looking: where CityLimits stands, what blocks the next milestone,  
 and what comes next. Verified status and evidence are in the  
@@ -65,10 +65,10 @@ Next, in order:
    - N1, the formats and the specs: every format moves to its next major
      version, a save names its features rather than counting minor
      versions, and lists its mods rather than carrying their definitions;
-     the base game becomes data in `Assets/Definitions/`, with more of it
-     made specs a mod can change; and packaging for each platform. The old
-     formats are still written, chosen in the settings. City saves are
-     done (N1a).
+     the base game becomes data in `common/`, with more of it made specs a
+     mod can change; and packaging for each platform. The old formats are
+     still written, chosen in the settings. The formats and the specs are
+     done (N1a to N1c); packaging is left.
    - N2, neighbours after SimCity 3000: connections at the map's edges
      and deals in what the game already has.
    - N3, the unified title bar and an Editing scenarios page in the help.
@@ -459,11 +459,12 @@ and online play, as Tony Bark set it out. Its formats are the ones online
 play builds on, so 0.6 adds to them rather than changing them.
 
 - [ ] N1: the formats and the specs, in one phase, as Tony Bark asked.
-  - [ ] Every format rounds up to its next major version: city saves 1.10
+  - [x] Every format rounds up to its next major version: city saves 1.10
     to 2.0, scenarios 2.2 to 3.0, and definitions and mods 1.0 to 2.0.
     Older versions refuse the new majors with a message; 0.5 reads every
-    format before them, for good. City saves are 2.0 (N1a); scenarios and
-    definitions follow.
+    format before them, for good. City saves are 2.0 (N1a), scenarios
+    3.0, 2.2's fields under the next major (N1b), and definitions 2.0,
+    with `plants.json` renamed `power.json` and still read (N1c).
   - [x] A save names its features, as HTML's do, rather than counting
     minor versions, as a plain list of names: new state is a new
     feature, and the version moves only for a change that breaks. A part
@@ -476,23 +477,28 @@ play builds on, so 0.6 adds to them rather than changing them.
     opening a city played with other mods says so (N1a). Offline, the
     seed is what makes a map; matching mods online is the server's to
     manage.
-  - [ ] The base game as data: its specs in `Assets/Definitions/`, read
-    as a mod is, with the code's own as the fallback when they're
-    missing or damaged, said so.
-  - [ ] More of the game as specs a mod can change: every tool's price
+  - [x] The base game as data: its spec files in `common/` beside the
+    settings, since a packaged game's own folder can't be written to,
+    written again by each new build and read before the mods, with the
+    code's own values as the fallback when they're missing or damaged,
+    said so in the log (N1c). A mod's spec files may sit in folders of
+    its own.
+  - [x] More of the game as specs a mod can change: every tool's price
     (roads, bridges, rail, power lines, parks, the bulldozer, and the
     stadium, seaport, and airport), the facilities' demand caps and
-    pollution, the disasters' chances and how fires and floods run,
-    services' coverage, the economy's starting money and tax, and the
-    terrain, with the map sizes to choose from in the New City window.
-    The engine's rules, its calendar, cycle, and tick, stay in code.
-  - [ ] The old formats written as well as the new, for every format,
+    pollution, services' coverage, strength and reach, and the economy's
+    starting money and tax (N1c). Disasters and terrain stay in code, as
+    Tony Bark chose, with the engine's rules, its calendar, cycle, and
+    tick.
+  - [x] The old formats written as well as the new, for every format,
     chosen by Save for 0.4 in the settings, so a city or a mod can still
     go back to 0.4. One save model, written as 1.10 by putting format 1's
     definitions and parts list back, so the old writer stays thin. City
-    saves are done (N1a), checked against 0.4.111 itself; scenarios and
-    definitions follow. Yokohama moves the choice to the command line,
-    and 0.7 drops the old writers, as Tony Bark settled.
+    saves are done (N1a), and scenarios, written as 2.2 with their cities
+    as 1.10 (N1b), each checked against 0.4.111 itself; a city saved for
+    0.4 carries its definitions in format 1.0, and a mod written in 1.0
+    still reads in both (N1c). Yokohama moves the choice to the command
+    line, and 0.7 drops the old writers, as Tony Bark settled.
   - [ ] Packaging for each platform from one place, after Photocraft's
     `packaging/`: a shared setup that reads the version once, then
     Linux's AppImage (in already), Windows, and macOS, shipping the base
@@ -511,6 +517,8 @@ play builds on, so 0.6 adds to them rather than changing them.
   the city's name; off by default. An Editing scenarios page in the Help
   window.
 - [ ] N4: oversights found on the way, fixed before Yokohama starts.
+  - [ ] `--headless` only reads `common/`, and leaves writing it to the
+    game in a window, as Tony Bark asked; 0.5.101 writes it from both.
 
 ### Yokohama: Online play
 
@@ -531,6 +539,10 @@ it. This is a draft, settled when the milestone starts.
   city's edges, with the deals N2 makes between them.
 - [ ] The region view: neighbouring cities shown beyond a map's edges,
   and visited by opening them; optional offline, always there online.
+- [ ] Regions that scale up to hold more cities, the map sizes goal
+  that came from Happy Isle, repurposed by Tony Bark. A city keeps
+  Micropolis' map size, which is already big at SimCity Classic's
+  scale.
 - [ ] Hosting and joining over a network, clients sending their strokes;
   the library or protocol is Tony Bark's to approve.
 - [ ] The host's controls: speed, disasters, saving and loading, and the
@@ -577,6 +589,8 @@ Yokohama waits on Senri, and on Tony Bark settling its design from the
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-27 | minor | Senri, N1c: definitions are format 2.0, with services' strength and reach and new specs for the facilities, the infrastructure's prices, and the economy; `plants.json` is `power.json`, and still reads. The base game's spec files go in `common/` beside the settings, written by each new build and read before the mods; a mod's spec files may sit in folders. Disasters and terrain stay in code, as Tony Bark chose; a city keeps Micropolis' map size, and the map sizes goal becomes Yokohama's regions that scale up. `--headless` only reading `common/` goes to N4. 883 tests. |
+| 2026-10-27 | minor | Senri, N1b: scenarios are format 3.0, 2.2's fields under the next major version, as every format rounds up with 0.5; every 2.x and 1.x file still reads. With Save for 0.4 on, the editor writes 2.2 with its city as 1.10, which 0.4.111 itself opened. Definitions move to 2.0 with the specs, where their contents change. 875 tests. |
 | 2026-10-27 | minor | Tony Bark simplified a save's features to a list of names, with a part an older version doesn't know left out, and reserved `connections` for neighbours, which come in Senri's N2 after SimCity 3000, trading what the game already has. Yokohama becomes a region of player cities that meet at their edges, after Network Edition, SimCity (2013), and Cities: Skylines, its server first; land ownership and district budgets go. |
 | 2026-10-27 | minor | Senri, N1a, the first of 0.5: city saves are format 2.0. A save names its features rather than counting minor versions, fills in any it leaves out, lists its mods by name rather than carrying definitions, and runs on the base game and the mods installed, saying when they differ. Save for 0.4, in the settings, writes 1.10 from the same model, which 0.4.111 itself opened. Tony Bark settled that the old writers last through 0.6, on the command line there, and go in 0.7; 0.5.101 drops nothing. 875 tests. |
 | 2026-10-27 | minor | Happy Isle, P4: three built-in challenges made with the editor's machinery, Smokestack, Hard Times, and Aftershock, beside First Town; each grown on a seeded map, saved with its city, and lost when left alone. Happy Isle is complete, and with Kyoto, 0.4. 873 tests. |

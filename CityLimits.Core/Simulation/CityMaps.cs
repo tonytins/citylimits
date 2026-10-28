@@ -40,6 +40,7 @@ public sealed class CityMaps
     private const int HighCrime = 190;
     private const int HighCrimeLandValue = 20;
 
+    private readonly CityDefinitions _definitions;
     private readonly TileMap _map;
     private readonly int _halfWidth;
     private readonly int _halfHeight;
@@ -58,10 +59,11 @@ public sealed class CityMaps
     private readonly int[] _commercialRate;
 
     /// <summary>Makes the maps for a city's map; nothing is worked out until the phases run.</summary>
-    public CityMaps(TileMap map)
+    public CityMaps(TileMap map, CityDefinitions? definitions = null)
     {
         ArgumentNullException.ThrowIfNull(map);
         _map = map;
+        _definitions = definitions ?? CityDefinitions.Base;
         _halfWidth = (map.Width + 1) / 2;
         _halfHeight = (map.Height + 1) / 2;
         _landValue = new int[_halfWidth * _halfHeight];
@@ -238,7 +240,8 @@ public sealed class CityMaps
     private int PollutionOf(int x, int y, TileState state, TrafficMap traffic) => state.Use switch
     {
         TileUse.Industrial => _map.ZoneStateAt(x, y).Development > 0 ? IndustryPollution : 0,
-        TileUse.CoalPowerPlant or TileUse.Seaport or TileUse.Airport => CoalPlantPollution,
+        TileUse.CoalPowerPlant => CoalPlantPollution,
+        TileUse.Seaport or TileUse.Airport => _definitions.Facility(state.Use).Pollution,
         _ => traffic.LevelAt(x, y) switch
         {
             TrafficLevel.Light => LightTrafficPollution,

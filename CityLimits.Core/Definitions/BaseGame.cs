@@ -1,12 +1,38 @@
 namespace CityLimits.Core.Definitions;
 
 /// <summary>
-/// The base game's definitions, written as a definitions file. They live in code so they can't go
-/// missing, and they are read by <see cref="DefinitionLoader"/>, the same loader a mod's files go
-/// through. The numbers are Micropolis'.
+/// The base game's definitions. They live in code so they can't go missing: its zones, power plants,
+/// and services as a definitions file, read by <see cref="DefinitionLoader"/>, the same loader a mod's
+/// files go through, and its facilities, infrastructure, and economy as specs. The game writes them
+/// out as files in <c>common/</c>, for players to see and mods to follow, and reads them back from
+/// there (<see cref="BaseFiles"/>). The numbers are Micropolis'.
 /// </summary>
 public static class BaseGame
 {
+    /// <summary>The base game's stadium, seaport, and airport: Micropolis' prices, demand caps, and pollution.</summary>
+    public static readonly IReadOnlyList<FacilitySpec> Facilities =
+    [
+        // Seaports and airports pollute as a coal plant does, as in Micropolis.
+        new("stadium", TileUse.Stadium, "Stadium", TileCosts.Stadium, 500, 0),
+        new("seaport", TileUse.Seaport, "Seaport", TileCosts.Seaport, 70, 100),
+        new("airport", TileUse.Airport, "Airport", TileCosts.Airport, 100, 100),
+    ];
+
+    /// <summary>The base game's infrastructure prices: Micropolis'.</summary>
+    public static readonly InfrastructureSpec Infrastructure = new(
+        Road: TileCosts.Road,
+        Bridge: TileCosts.Bridge,
+        Rail: TileCosts.Rail,
+        Tunnel: TileCosts.Tunnel,
+        PowerLine: TileCosts.PowerLine,
+        UnderwaterPowerLine: TileCosts.UnderwaterPowerLine,
+        Park: TileCosts.Park,
+        Bulldozer: TileCosts.Bulldoze,
+        Clearing: TileCosts.AutoClear);
+
+    /// <summary>What a new city starts with in the base game: Micropolis' $20,000 and 7% tax.</summary>
+    public static readonly EconomySpec Economy = new(Treasury.StartingFunds, CityBudget.DefaultTaxRate);
+
     /// <summary>The base game's definitions file.</summary>
     public const string Json = """
         {

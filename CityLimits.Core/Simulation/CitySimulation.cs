@@ -117,14 +117,15 @@ public sealed class CitySimulation
     private readonly ZoneGrowth _growth;
 
     /// <summary>
-    /// Creates a simulation over the given map, with the money the city starts with, the definitions
-    /// it runs on (the base game's when none are given), and the year its calendar starts in, January
+    /// Creates a simulation over the given map, with the money the city starts with (its
+    /// definitions' starting funds when none is given), the definitions it runs on (the base game's
+    /// when none are given), which also set its first tax rate, and the year its calendar starts in, January
     /// 1900 unless another is given. A city that starts later starts as if it had run every step
     /// since 1900, so its calendar's count is always its steps divided by 16, as every save holds.
     /// </summary>
     /// <exception cref="ArgumentNullException">The map is null.</exception>
     /// <exception cref="ArgumentOutOfRangeException">The starting money is negative, or the year is before 1900 or after 9999.</exception>
-    public CitySimulation(TileMap map, int seed, int funds = Treasury.StartingFunds, CityDefinitions? definitions = null, int startYear = CityCalendar.StartYear)
+    public CitySimulation(TileMap map, int seed, int? funds = null, CityDefinitions? definitions = null, int startYear = CityCalendar.StartYear)
     {
         ArgumentNullException.ThrowIfNull(map);
         ArgumentOutOfRangeException.ThrowIfLessThan(startYear, CityCalendar.StartYear);
@@ -136,16 +137,17 @@ public sealed class CitySimulation
         Map = map;
         Seed = seed;
         Random = new DeterministicRandom(seed);
-        Treasury = new Treasury(funds);
-        Roads = new RoadNetwork();
         Definitions = definitions ?? CityDefinitions.Base;
+        Treasury = new Treasury(funds ?? Definitions.Economy.StartingFunds);
+        Roads = new RoadNetwork();
         Hazards = new Hazards(map);
         Builder = new CityBuilder(map, Treasury, Roads, Definitions, Hazards);
-        Maps = new CityMaps(map);
-        Services = new ServiceCoverage(map);
+        Maps = new CityMaps(map, Definitions);
+        Services = new ServiceCoverage(map, Definitions);
         Traffic = new TrafficMap(map);
         Trips = new TripPlanner(Traffic);
         Budget = new CityBudget(Definitions.Service(TileUse.FireStation).Upkeep, Definitions.Service(TileUse.PoliceStation).Upkeep);
+        Budget.SetTaxRate(Definitions.Economy.TaxRate);
         _growth = new ZoneGrowth(map, Random, Trips, Definitions, Demand, Maps, Community, Hazards);
     }
 
@@ -720,17 +722,17 @@ public sealed class CitySimulation
             MessageSent?.Invoke(CityMessage.NeedPower);
         }
 
-        if (count == NeedStadiumCount && Facilities.CheckStadium(Census))
+        if (count == NeedStadiumCount && Facilities.CheckStadium(Census, Definitions.Facility(TileUse.Stadium).DemandCap))
         {
             MessageSent?.Invoke(CityMessage.NeedStadium);
         }
 
-        if (count == NeedSeaportCount && Facilities.CheckSeaport(Census))
+        if (count == NeedSeaportCount && Facilities.CheckSeaport(Census, Definitions.Facility(TileUse.Seaport).DemandCap))
         {
             MessageSent?.Invoke(CityMessage.NeedSeaport);
         }
 
-        if (count == NeedAirportCount && Facilities.CheckAirport(Census))
+        if (count == NeedAirportCount && Facilities.CheckAirport(Census, Definitions.Facility(TileUse.Airport).DemandCap))
         {
             MessageSent?.Invoke(CityMessage.NeedAirport);
         }

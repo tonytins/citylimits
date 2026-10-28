@@ -2,9 +2,10 @@ namespace CityLimits.Core.Definitions;
 
 /// <summary>
 /// Finds the mods in a folder and applies them to the base game's definitions. A mod is a folder
-/// named for its id, holding a <c>mod.json</c> manifest and the definitions it changes, a
-/// <c>zones.json</c>, a <c>plants.json</c>, and a <c>services.json</c>. Mods apply in id order. A mod that can't be read is skipped whole and
-/// reported, so a broken mod never stops the game or half-applies.
+/// named for its id, holding a <c>mod.json</c> manifest and the spec files it changes, such as
+/// <c>zones.json</c> and <c>services.json</c>, anywhere in the folders under it
+/// (<see cref="SpecFolder"/>). Mods apply in id order. A mod that can't be read is skipped whole
+/// and reported, so a broken mod never stops the game or half-applies.
 /// </summary>
 public static class ModLoader
 {
@@ -14,25 +15,17 @@ public static class ModLoader
     /// <summary>The name of a mod's manifest.</summary>
     public const string ManifestFile = "mod.json";
 
-    /// <summary>The name of a mod's zone definitions.</summary>
-    public const string ZonesFile = "zones.json";
-
-    /// <summary>The name of a mod's power plant definitions.</summary>
-    public const string PlantsFile = "plants.json";
-
-    /// <summary>The name of a mod's service definitions.</summary>
-    public const string ServicesFile = "services.json";
-
     /// <summary>
-    /// The base game's definitions with every valid mod in the folder applied. A missing folder
-    /// means no mods. Each mod that was skipped, and why, is in <paramref name="problems"/>.
+    /// The definitions given, the base game's unless a <c>common/</c> folder changed them, with
+    /// every valid mod in the folder applied. A missing folder means no mods. Each mod that was
+    /// skipped, and why, is in <paramref name="problems"/>.
     /// </summary>
-    public static CityDefinitions Load(string folder, out IReadOnlyList<string> problems)
+    public static CityDefinitions Load(string folder, out IReadOnlyList<string> problems, CityDefinitions? start = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(folder);
         var found = new List<string>();
         problems = found;
-        var definitions = CityDefinitions.Base;
+        var definitions = start ?? CityDefinitions.Base;
 
         List<string> modFolders;
         try
@@ -77,41 +70,19 @@ public static class ModLoader
         mod = null;
         try
         {
-            var manifest = ReadBounded(Path.Combine(modFolder, ManifestFile));
-            if (manifest is null)
+            var manifest = Path.Combine(modFolder, ManifestFile);
+            if (!File.Exists(manifest))
             {
                 error = $"it has no {ManifestFile}.";
                 return false;
             }
 
-            var zones = ReadBounded(Path.Combine(modFolder, ZonesFile));
-            var plants = ReadBounded(Path.Combine(modFolder, PlantsFile));
-            var services = ReadBounded(Path.Combine(modFolder, ServicesFile));
-            return DefinitionLoader.TryParseMod(name, manifest, zones, out mod, out error, plants, services);
+            return DefinitionLoader.TryParseMod(name, SpecFolder.ReadBounded(manifest), SpecFolder.Read(modFolder), out mod, out error);
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or FileTooLarge)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException)
         {
             error = ex.Message;
             return false;
         }
     }
-
-    // A file that isn't there is null; one that is too big is refused before it is read.
-    private static string? ReadBounded(string path)
-    {
-        var file = new FileInfo(path);
-        if (!file.Exists)
-        {
-            return null;
-        }
-
-        if (file.Length > DefinitionLoader.MaxFileBytes)
-        {
-            throw new FileTooLarge($"{file.Name} is {file.Length} bytes; the most is {DefinitionLoader.MaxFileBytes}.");
-        }
-
-        return File.ReadAllText(path);
-    }
-
-    private sealed class FileTooLarge(string message) : Exception(message);
 }

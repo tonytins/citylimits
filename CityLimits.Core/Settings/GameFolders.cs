@@ -22,6 +22,9 @@ public sealed record GameFolders
     /// <summary>The saved cities' folder name.</summary>
     public const string CitiesFolderName = "Cities";
 
+    /// <summary>The base game's spec files' folder name, beside the settings.</summary>
+    public const string CommonFolderName = "common";
+
     /// <summary>The player's own scenarios' folder name.</summary>
     public const string ScenariosFolderName = "Scenarios";
 
@@ -36,6 +39,12 @@ public sealed record GameFolders
 
     /// <summary>Where mods are read from.</summary>
     public required string ModsFolder { get; init; }
+
+    /// <summary>
+    /// Where the base game's spec files are written for players to read and change: beside the
+    /// settings, since a packaged game's own folder can't be written to.
+    /// </summary>
+    public required string CommonFolder { get; init; }
 
     /// <summary>Where cities are saved.</summary>
     public required string CitiesFolder { get; init; }
@@ -93,6 +102,7 @@ public sealed record GameFolders
             SettingsFile = settings,
             SettingsToRead = !settingsInConfig && settingsBesideExecutable ? besideExecutable : settings,
             ModsFolder = Path.Combine(documents, ModsFolderName),
+            CommonFolder = Path.Combine(configFolder!, FolderName, CommonFolderName),
             CitiesFolder = Path.Combine(documents, CitiesFolderName),
             ScenariosFolder = Path.Combine(documents, ScenariosFolderName),
             IsPortable = false,
@@ -123,6 +133,7 @@ public sealed record GameFolders
         SettingsFile = Path.Combine(executableFolder, SettingsFileName),
         SettingsToRead = Path.Combine(executableFolder, SettingsFileName),
         ModsFolder = Path.Combine(executableFolder, ModsFolderName),
+        CommonFolder = Path.Combine(executableFolder, CommonFolderName),
         CitiesFolder = Path.Combine(executableFolder, CitiesFolderName),
         ScenariosFolder = Path.Combine(executableFolder, ScenariosFolderName),
         IsPortable = true,

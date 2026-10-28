@@ -50,7 +50,8 @@ public static class FormatSchemas
     {
         "definitions" => "CityLimits definitions: zones, power plants, and services, as the base game writes them",
         "mod" => "A CityLimits mod's mod.json: who the mod is",
-        _ => $"A CityLimits mod's {name}.json: what it changes in the {name}",
+        "power" => "A CityLimits spec file, power.json, in a mod or common/: the power plants",
+        _ => $"A CityLimits spec file, {name}.json, in a mod or common/: the {name}",
     };
 
     // A document, a scenario's or a mod's, declares its fields nullable only so the loader can name a
@@ -109,10 +110,10 @@ public static class FormatSchemas
             };
         }
 
-        // A save holds its definitions as a definitions file, which has its own schema.
+        // A save for 0.4 holds its definitions as a definitions file in format 1.0, which has its own schema.
         if (type == typeof(JsonElement))
         {
-            return new JsonObject { ["$ref"] = UrlFor("definitions", DefinitionLoader.Format) };
+            return new JsonObject { ["$ref"] = UrlFor("definitions", DefinitionLoader.Format1) };
         }
 
         if (type == typeof(int[]))

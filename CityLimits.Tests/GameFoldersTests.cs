@@ -18,6 +18,7 @@ public class GameFoldersTests
         Assert.Equal(Path.Combine(Config, "CityLimits", "settings.json"), folders.SettingsFile);
         Assert.Equal(folders.SettingsFile, folders.SettingsToRead);
         Assert.Equal(Path.Combine(Documents, "CityLimits", "Mods"), folders.ModsFolder);
+        Assert.Equal(Path.Combine(Config, "CityLimits", "common"), folders.CommonFolder);
         Assert.Equal(Path.Combine(Documents, "CityLimits", "Cities"), folders.CitiesFolder);
     }
 
@@ -30,6 +31,7 @@ public class GameFoldersTests
         Assert.Null(folders.Problem);
         Assert.Equal(Path.Combine(Game, "settings.json"), folders.SettingsFile);
         Assert.Equal(Path.Combine(Game, "Mods"), folders.ModsFolder);
+        Assert.Equal(Path.Combine(Game, "common"), folders.CommonFolder);
         Assert.Equal(Path.Combine(Game, "Cities"), folders.CitiesFolder);
     }
 
