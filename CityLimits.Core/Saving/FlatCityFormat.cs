@@ -80,6 +80,7 @@ public static class FlatCityFormat
             save.Connections = null;
             save.Radiation = null;
             save.Vehicles = null;
+            save.Menaces = null;
             return save;
         }
 

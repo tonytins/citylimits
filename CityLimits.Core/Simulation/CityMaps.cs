@@ -98,6 +98,28 @@ public sealed class CityMaps
     /// <summary>The average pollution of the blocks with any, as of the last time it was worked out; 0 when none has any.</summary>
     public int PollutionAverage { get; private set; }
 
+    /// <summary>
+    /// The tile at the corner of the most polluted block, which the monster makes for: the first,
+    /// row by row, of those with the most, where Micropolis rolls a die between them; the map's
+    /// corner when none has any, as in Micropolis.
+    /// </summary>
+    public (int X, int Y) MostPolluted
+    {
+        get
+        {
+            var most = 0;
+            for (var block = 1; block < _pollution.Length; block++)
+            {
+                if (_pollution[block] > _pollution[most])
+                {
+                    most = block;
+                }
+            }
+
+            return ((most % _halfWidth) * 2, (most / _halfWidth) * 2);
+        }
+    }
+
     /// <summary>The average crime of the blocks with land value, as of the last time it was worked out; 0 when none has any.</summary>
     public int CrimeAverage { get; private set; }
 

@@ -72,13 +72,16 @@ public sealed class CitySimulation
     private const int MostTrafficBeforeJams = 60;
 
     // As Micropolis on Easy: once a cycle a disaster comes one time in 481, and is one of nine kinds:
-    // two a fire, two a flood, one an earthquake, and the rest a tornado, a monster, or nothing,
-    // which CityLimits doesn't have, so they pass by.
+    // two a fire, two a flood, one nothing, one a tornado, one an earthquake, and two the monster,
+    // which comes only to a city whose pollution averages over 60.
     private const int DisasterChance = 481;
     private const int DisasterKinds = 9;
     private const int FireKinds = 2;
     private const int FloodKinds = 2;
+    private const int TornadoKind = 5;
     private const int EarthquakeKind = 6;
+    private const int FirstMonsterKind = 7;
+    private const int MonsterPollution = 60;
 
     // A flood looks this many times for a shore with land beside it to rise onto; a flooded tile
     // spreads to each side one time in eight while the flood lasts, and drains one time in sixteen after.
@@ -124,6 +127,7 @@ public sealed class CitySimulation
 
     // What came of the vehicles' last move, kept so a step doesn't make a list.
     private readonly List<VehicleEvent> _vehicleEvents = [];
+    private readonly List<(int X, int Y)> _trampled = [];
 
     /// <summary>
     /// Creates a simulation over the given map, with the money the city starts with (its
@@ -191,7 +195,7 @@ public sealed class CitySimulation
     /// <summary>Raised when the city settles a year's taxes and upkeep, with what it came to.</summary>
     public event Action<BudgetYear>? YearSettled;
 
-    /// <summary>Raised when a burning building explodes, with where, so the game can show it; the fires it set are already burning.</summary>
+    /// <summary>Raised when a burning building explodes, or the tornado or the monster wrecks a tile, with where, so the game can show it; the fires it set are already burning.</summary>
     public event Action<int, int>? Exploded;
 
     /// <summary>Raised when an earthquake strikes, after its damage is done, so the game can shake the view.</summary>
@@ -239,8 +243,17 @@ public sealed class CitySimulation
     /// <summary>Whether the ship can run aground, as <see cref="RandomFires"/> says for fires.</summary>
     public bool RandomShipwrecks { get; set; } = true;
 
+    /// <summary>Whether tornadoes touch down, as <see cref="RandomFires"/> says for fires.</summary>
+    public bool RandomTornadoes { get; set; } = true;
+
+    /// <summary>Whether the monster comes to a polluted city, as <see cref="RandomFires"/> says for fires.</summary>
+    public bool RandomMonsters { get; set; } = true;
+
     /// <summary>The plane, helicopter, and ship about the city.</summary>
     public Vehicles Vehicles { get; } = new();
+
+    /// <summary>The tornado and the monster about the city.</summary>
+    public Menaces Menaces { get; } = new();
 
     /// <summary>
     /// The scenario being played in the city, if it is a challenge: it makes what is due, and judges
@@ -559,18 +572,31 @@ public sealed class CitySimulation
         {
             StartFlood(RandomFloods);
         }
+        else if (kind == TornadoKind)
+        {
+            CallTornado(RandomTornadoes);
+        }
         else if (kind == EarthquakeKind)
         {
             Quake(RandomEarthquakes);
+        }
+        else if (kind >= FirstMonsterKind && Maps.PollutionAverage > MonsterPollution)
+        {
+            CallMonster(RandomMonsters);
         }
     }
 
     /// <summary>
     /// Strikes the city with a disaster now, as a scenario's event does, whatever the switches for
     /// disasters on their own say: a fire on something that can burn, as Micropolis' Disasters menu
-    /// starts one, a flood from a shore, or an earthquake. Each is reported as one on its own is.
+    /// starts one, a flood from a shore, an earthquake, a meltdown, the plane or the ship coming
+    /// to grief, a tornado, or the monster, whatever the pollution. Each is reported as one on its own is.
     /// </summary>
-    /// <returns>Whether it found anywhere to strike: a fire something to burn, a flood a shore with land beside it.</returns>
+    /// <returns>
+    /// Whether it found anywhere to strike: a fire something to burn, a flood a shore with land
+    /// beside it, a meltdown a nuclear plant, a crash or a wreck a plane or a ship about; a tornado
+    /// or the monster already about comes again, and that counts.
+    /// </returns>
     public bool Strike(Disaster disaster) => disaster switch
     {
         Disaster.Fire => StartFireOnPurpose(),
@@ -579,6 +605,8 @@ public sealed class CitySimulation
         Disaster.Meltdown => MeltDownFirstPlant(),
         Disaster.PlaneCrash => CrashPlane(),
         Disaster.Shipwreck => WreckShip(),
+        Disaster.Tornado => CallTornado(allowed: true) || Menaces.Tornado is not null,
+        Disaster.Monster => CallMonster(allowed: true) || Menaces.Monster is not null,
         _ => throw new ArgumentOutOfRangeException(nameof(disaster), disaster, null),
     };
 
@@ -590,7 +618,14 @@ public sealed class CitySimulation
         for (var move = 0; move < 2; move++)
         {
             _vehicleEvents.Clear();
-            Vehicles.Move(TickCount, move, Map, Traffic, Random, RandomAirCrashes, RandomShipwrecks, _vehicleEvents);
+            _trampled.Clear();
+            Vehicles.Move(TickCount, move, Map, Traffic, Random, RandomAirCrashes, RandomShipwrecks, _vehicleEvents, Menaces.Quarry);
+            Menaces.Move(Map, Random, Vehicles, RandomAirCrashes, RandomShipwrecks, _vehicleEvents, _trampled);
+            foreach (var (x, y) in _trampled)
+            {
+                Trample(x, y);
+            }
+
             foreach (var happened in _vehicleEvents)
             {
                 switch (happened.Kind)
@@ -636,6 +671,73 @@ public sealed class CitySimulation
         {
             Map.SetState(x, y, new TileState(TileKind.Water));
         }
+    }
+
+    // A tornado touches down, or the one blowing lasts its full time again; with tornadoes off, only
+    // the dice for where are rolled.
+    private bool CallTornado(bool allowed)
+    {
+        if (!Menaces.CallTornado(Map, Random, allowed))
+        {
+            return false;
+        }
+
+        MessageSent?.Invoke(CityMessage.TornadoReported);
+        return true;
+    }
+
+    // The monster comes, or the one about makes for the most polluted place again; with monsters
+    // off, only the dice for where it would come up are rolled.
+    private bool CallMonster(bool allowed)
+    {
+        if (!Menaces.CallMonster(Map, Random, Maps.MostPolluted, allowed))
+        {
+            return false;
+        }
+
+        MessageSent?.Invoke(CityMessage.MonsterReported);
+        return true;
+    }
+
+    // As Micropolis' destroyTile, which the tornado and the monster do to each tile they pass: what
+    // stands on the water, a bridge, a line, or a tunnel, is lost to it; a building's centre goes up
+    // as fire takes it, since CityLimits can't leave its other tiles standing loose as Micropolis
+    // does; anything else that can burn is blown to rubble, which Micropolis' small explosion
+    // leaves. Bare ground, rubble, water, and what is burning are left be.
+    private void Trample(int x, int y)
+    {
+        if (!Map.Contains(x, y))
+        {
+            return;
+        }
+
+        var state = Map.StateAt(x, y);
+        if (state.Kind == TileKind.Water)
+        {
+            if (state.Use != TileUse.None)
+            {
+                Map.SetState(x, y, new TileState(TileKind.Water));
+                Exploded?.Invoke(x, y);
+            }
+
+            return;
+        }
+
+        if (!Fires.CanBurn(x, y))
+        {
+            return;
+        }
+
+        if (state.IsBuildingCenter)
+        {
+            Ignite(x, y);
+        }
+        else
+        {
+            Map.SetState(x, y, new TileState(TileKind.Rubble));
+        }
+
+        Exploded?.Invoke(x, y);
     }
 
     // A scenario's plane crash brings down the plane in the air; with none flying, nothing.
@@ -1285,6 +1387,7 @@ public sealed class CitySimulation
         Flood = FloodCodec.Capture(Map, Floods),
         Radiation = RadiationCodec.Capture(Map, Radiation),
         Vehicles = Vehicles.Capture(),
+        Menaces = Menaces.Capture(),
         Facilities = FacilityCodec.Capture(Map, Hazards, Facilities),
         Founding = new FoundingSave { Year = FoundedYear },
         Ordinances = CaptureOrdinances(),
@@ -1373,6 +1476,7 @@ public sealed class CitySimulation
         FloodCodec.Apply(map, city.Hazards, save.Flood ?? throw new InvalidSave("flood: missing."));
         RadiationCodec.Apply(map, city.Hazards, save.Radiation ?? throw new InvalidSave("radiation: missing."));
         city.Vehicles.Restore(save.Vehicles ?? throw new InvalidSave("vehicles: missing."));
+        city.Menaces.Restore(save.Menaces ?? throw new InvalidSave("menaces: missing."));
         var founding = save.Founding ?? throw new InvalidSave("founding: missing.");
         city.FoundedYear = SaveChecks.InRange(founding.Year, CityCalendar.StartYear, city.Date.Year, "founding.year");
         var ordinances = save.Ordinances ?? throw new InvalidSave("ordinances: missing.");

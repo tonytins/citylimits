@@ -34,6 +34,7 @@ internal static class SaveUpgrades
             AddConnections(save);
             AddRadiation(save);
             AddVehicles(save);
+            AddMenaces(save);
             return;
         }
 
@@ -51,8 +52,12 @@ internal static class SaveUpgrades
         AddConnections(save);
         AddRadiation(save);
         AddVehicles(save);
+        AddMenaces(save);
         save.Format = Current;
     }
+
+    // 2.0's menaces. A city from before has neither a tornado nor a monster about.
+    private static void AddMenaces(CitySave save) => save.Menaces ??= new MenacesSave();
 
     // 2.0's vehicles. A city from before has none about.
     private static void AddVehicles(CitySave save) => save.Vehicles ??= new VehiclesSave();

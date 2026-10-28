@@ -45,7 +45,7 @@ public class ForwardCompatibilityTests
         var written = JsonNode.Parse(FlatCityFormat.Write(City()))!.AsObject();
 
         Assert.Equal(
-            ["traffic", "rail", "pollution", "crime", "fire", "flood", "challenge", "facilities", "founding", "ordinances", "connections", "radiation", "vehicles"],
+            ["traffic", "rail", "pollution", "crime", "fire", "flood", "challenge", "facilities", "founding", "ordinances", "connections", "radiation", "vehicles", "menaces"],
             written["features"]!.AsArray().Select(feature => feature!.GetValue<string>()));
         Assert.EndsWith("city-save.v2.0.schema.json", written["$schema"]!.GetValue<string>());
     }

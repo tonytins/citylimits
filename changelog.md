@@ -1,5 +1,34 @@
 # CityLimits Changelog
 
+## 0.5.112
+
+The last of Micropolis' disasters come to CityLimits: the tornado and the
+monster. A tornado touches down somewhere in the city, lurches about
+wrecking whatever it passes over, and blows itself out after a while.
+The monster comes only to a city whose pollution is bad: it climbs out of
+the water, tramples its way to the most polluted place, and walks back
+home. Either one blows what it passes to rubble, sets a building it
+reaches the middle of on fire, and takes a bridge, or a line or rail over
+the water, down into it. The helicopter chases either one once its flight
+is over, and is brought down if it gets too close, as is a plane or a
+ship. Tornadoes and the monster each have a switch on the Settings
+window's Disasters tab, under the master Disasters switch. The art is
+Micropolis' own for now.
+
+For modders and scenario writers: `Tornado` and `Monster` are scenario
+events. The monster comes whatever the pollution, and a tornado or
+monster already about comes again instead: the tornado lasts its full
+time, and the monster turns back toward the pollution. Older versions
+don't know the names and refuse a scenario that uses them.
+
+For developers: `CitySimulation.Menaces` (`Sprites/Menaces.cs`),
+`CityMaps.MostPolluted`, `Disaster.Tornado` and `Disaster.Monster`,
+`CityMessage.TornadoReported` and `CityMessage.MonsterReported`, and
+`GameSettings.Tornadoes` and `GameSettings.Monsters`. Saves gain the
+`menaces` feature (`MNCE` in `.cl`), which a save for 0.4 leaves out.
+The disaster die's tornado and monster faces now do something, so a city
+rolls differently from 0.5.111 on once one comes up.
+
 ## 0.5.111
 
 Planes, helicopters, and ships come to the city, as in Micropolis. A

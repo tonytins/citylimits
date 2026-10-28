@@ -1,6 +1,6 @@
 # CityLimits roadmap
 
-> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-28 · **Change:** minor (Senri, N6c: planes, helicopters, and ships) · **Stage:** beta
+> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-28 · **Change:** minor (Senri, N6d: tornadoes and the monster) · **Stage:** beta
 
 Forward-looking: where CityLimits stands, what blocks the next milestone,  
 and what comes next. Verified status and evidence are in the  
@@ -100,7 +100,7 @@ Next, in order:
 | Deadwood: Land value, pollution, disasters | 100% | 0 | Meets the baseline: pollution and crime, fire with the ticker's fire-risk hints, floods, and earthquakes, as in Micropolis, with free repair and the settings' disaster switches |
 | Happy Isle: Player-facing game | 100% | 0 | The palette, laid out as Micropolis', and the HUD, with its bar along the bottom over a news ticker after Tony Bark's mock-up; the budget, demand, and city panels, the overview's power mode, the settings window, and the New City window; cities that save, load, autosave, and import from Micropolis; and scenarios to play, with four built-in challenges |
 | Kyoto: The scenario editor | 100% | 0 | The interface library it shares with play, the stadium, the seaport, and the airport the alpha missed, with the demand they hold back, the shared city view, editing a scenario in the game, tested by playing, its details, and saving it, with a New City window |
-| Senri (0.5, long-term): Formats, specs, neighbours, and packaging | 90% | 10–18 | Every format is at its next major and can be written for 0.4, the base game is data in `common/`, with more of it as specs, power runs along roads, facilities influence the land around them, every window has a unified title bar, the city has ordinances and neighbours to deal with, and the game is packaged for Linux, Windows, and macOS; the rest of Micropolis' disasters and what else turns up before online play are left |
+| Senri (0.5, long-term): Formats, specs, neighbours, and packaging | 90% | 2–6 | Every format is at its next major and can be written for 0.4, the base game is data in `common/`, with more of it as specs, power runs along roads, facilities influence the land around them, every window has a unified title bar, the city has ordinances and neighbours to deal with, and the game is packaged for Linux, Windows, and macOS; what else turns up before online play is left |
 | Yokohama (0.6): Online play | 0% | unestimated | Nothing yet: a Network Edition-style shared city, hosted by `CityLimits.Server`. Its checklist is a draft, settled when it starts |
 | | **Total** | **≈ 10–18, Yokohama unestimated** | |
 
@@ -108,7 +108,7 @@ Next, in order:
 
 | Rank | Work | Milestone | Estimate (h) |
 |---|---|---|---|
-| 1 | Senri, N6: oversights, with the rest of Micropolis' disasters | Senri | 10–18 |
+| 1 | Senri, N6: oversights, `--headless` only reading `common/` | Senri | 2–6 |
 
 Every row of the alpha gate passes, and CityLimits is an alpha since 0.3.100,
 and a beta since 0.4.100.
@@ -602,7 +602,7 @@ play builds on, so 0.6 adds to them rather than changing them.
   - [x] A Debug build keeps its settings beside itself, reading the
     player's own once, so working on the game never changes them; cities,
     mods, and scenarios stay where a player's copy keeps them (N6a).
-  - [ ] The rest of Micropolis' disasters, under the master Disasters
+  - [x] The rest of Micropolis' disasters, under the master Disasters
     switch, each with a row on the Disasters tab and a name for scenario
     events, with no format's version moving.
     - [x] A nuclear plant's meltdown, at Micropolis' odds as the scan
@@ -614,7 +614,12 @@ play builds on, so 0.6 adds to them rather than changing them.
       aground, and set fires where they come down, with the helicopter's
       traffic reports; `PlaneCrash` and `Shipwreck` for scenario events,
       and the `vehicles` feature (N6c).
-    - [ ] The tornado and the monster (N6d).
+    - [x] The tornado, which wanders and wrecks what it passes, and the
+      monster, which comes up out of the water in a city whose pollution
+      averages over 60, tramples its way to the worst of it, and goes
+      home, both as Micropolis' sprites, with the helicopter chasing
+      either; `Tornado` and `Monster` for scenario events, and the
+      `menaces` feature (N6d).
   - [ ] `--headless` only reads `common/`, and leaves writing it to the
     game in a window, as Tony Bark asked; 0.5.101 writes it from both.
 
@@ -686,6 +691,7 @@ Yokohama waits on Senri, and on Tony Bark settling its design from the
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-28 | minor | Senri, N6d: the tornado and the monster, after Micropolis' sprites, each with a row on the Disasters tab and a scenario event, the helicopter chasing them, and the `menaces` feature. Micropolis' disasters are all in; N6 has the `--headless` change left. 969 tests. |
 | 2026-10-28 | minor | Senri, N6c: planes, helicopters, and ships, after Micropolis' sprites, with air crashes and shipwrecks on the Disasters tab, scenario events for each, and the `vehicles` feature. 958 tests. |
 | 2026-10-28 | minor | Senri, N6b: nuclear meltdowns, after Micropolis', and the radioactive ground they leave for decades, with a switch on the Disasters tab, a scenario event, and the `radiation` feature. 946 tests. |
 | 2026-10-28 | minor | Senri, N6a: a Debug build keeps its settings beside itself, as Tony Bark asked. N6 takes in the rest of Micropolis' disasters, meltdown, aircraft and ships with their crashes, tornado, and monster, under the master switch with rows of their own, and no format's version moving. 938 tests. |

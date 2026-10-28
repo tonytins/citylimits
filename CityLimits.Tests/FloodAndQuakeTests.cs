@@ -36,6 +36,8 @@ public class FloodAndQuakeTests
         city.RandomFires = fires;
         city.RandomFloods = floods;
         city.RandomEarthquakes = earthquakes;
+        city.RandomTornadoes = false;
+        city.RandomMonsters = false;
         return city;
     }
 

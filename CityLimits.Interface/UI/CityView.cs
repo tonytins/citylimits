@@ -241,14 +241,25 @@ public sealed class CityView : IDisposable
         _explosionCount = kept;
     }
 
-    // The ship, the plane, and the helicopter are drawn over the map, centred on where each is, the
-    // aircraft above the ship; a missing drawing leaves that vehicle unseen, the rest drawn.
+    // The ship, the monster, the tornado, the plane, and the helicopter are drawn over the map in
+    // that order, the aircraft above the rest, each centred on where it is but the tornado, whose
+    // foot is there, as Micropolis draws it; a missing drawing leaves that one unseen, the rest drawn.
     private void DrawVehicles()
     {
         var vehicles = _city.Vehicles;
         if (vehicles.Ship is { } ship && _assets.ShipFrameFor(ship.Frame) is { } shipFrame)
         {
             Raylib.DrawTexture(shipFrame, ship.X - (shipFrame.Width / 2), ship.Y - (shipFrame.Height / 2), Color.White);
+        }
+
+        if (_city.Menaces.Monster is { } monster && _assets.MonsterFrameFor(monster.Frame) is { } monsterFrame)
+        {
+            Raylib.DrawTexture(monsterFrame, monster.X - (monsterFrame.Width / 2), monster.Y - (monsterFrame.Height / 2), Color.White);
+        }
+
+        if (_city.Menaces.Tornado is { } tornado && _assets.TornadoFrameFor(tornado.Frame) is { } tornadoFrame)
+        {
+            Raylib.DrawTexture(tornadoFrame, tornado.X - (tornadoFrame.Width / 2), tornado.Y - tornadoFrame.Height + 8, Color.White);
         }
 
         if (vehicles.Plane is { } plane && _assets.PlaneFrameFor(plane.Frame) is { } planeFrame)

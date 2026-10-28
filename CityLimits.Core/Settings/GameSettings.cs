@@ -33,7 +33,7 @@ public sealed record GameSettings
     /// disasters has them on, as Micropolis starts. Saving in the formats 0.4 reads is off unless asked for.
     /// </summary>
     /// <exception cref="ArgumentOutOfRangeException">A value is outside its allowed range.</exception>
-    public GameSettings(int windowWidth, int windowHeight, int speed, int autosaveSlots = 1, bool fullscreen = false, bool disasters = true, bool fires = true, bool floods = true, bool earthquakes = true, bool saveOlderFormats = false, bool meltdowns = true, bool airCrashes = true, bool shipwrecks = true)
+    public GameSettings(int windowWidth, int windowHeight, int speed, int autosaveSlots = 1, bool fullscreen = false, bool disasters = true, bool fires = true, bool floods = true, bool earthquakes = true, bool saveOlderFormats = false, bool meltdowns = true, bool airCrashes = true, bool shipwrecks = true, bool tornadoes = true, bool monsters = true)
     {
         ArgumentOutOfRangeException.ThrowIfLessThan(windowWidth, MinWindowWidth);
         ArgumentOutOfRangeException.ThrowIfGreaterThan(windowWidth, MaxWindowWidth);
@@ -57,6 +57,8 @@ public sealed record GameSettings
         Meltdowns = meltdowns;
         AirCrashes = airCrashes;
         Shipwrecks = shipwrecks;
+        Tornadoes = tornadoes;
+        Monsters = monsters;
     }
 
     /// <summary>The width of the window, in pixels.</summary>
@@ -101,6 +103,12 @@ public sealed record GameSettings
     /// <summary>Whether the ship can run aground, when <see cref="Disasters"/> are on too.</summary>
     public bool Shipwrecks { get; init; }
 
+    /// <summary>Whether tornadoes touch down, when <see cref="Disasters"/> are on too.</summary>
+    public bool Tornadoes { get; init; }
+
+    /// <summary>Whether the monster comes to a polluted city, when <see cref="Disasters"/> are on too.</summary>
+    public bool Monsters { get; init; }
+
     /// <summary>
     /// Whether cities, and scenarios' cities, are saved in the formats 0.4 reads, so they can go back
     /// to it; whatever those formats can't hold is left out. 0.5 offers it here; 0.6 moves it to the
@@ -125,6 +133,12 @@ public sealed record GameSettings
 
     /// <summary>Whether the ship can run aground: both switches are on.</summary>
     public bool RandomShipwrecks => Disasters && Shipwrecks;
+
+    /// <summary>Whether tornadoes touch down: both switches are on.</summary>
+    public bool RandomTornadoes => Disasters && Tornadoes;
+
+    /// <summary>Whether the monster comes to a polluted city: both switches are on.</summary>
+    public bool RandomMonsters => Disasters && Monsters;
 
     /// <summary>The settings the game starts with when there are none.</summary>
     public static GameSettings Default { get; } = new(1280, 720, 1);

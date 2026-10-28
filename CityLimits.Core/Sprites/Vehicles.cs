@@ -28,7 +28,7 @@ public sealed class Vehicles
     /// <summary>The traffic over which the helicopter sometimes reports it, as in Micropolis.</summary>
     public const int HeavyTraffic = 170;
 
-    private const int TileSize = 16;
+    internal const int TileSize = 16;
 
     // Micropolis' directions are 1 to 8, north and on clockwise; 9 to 11 are the plane taking off.
     private static readonly int[] PlaneDx = [0, 0, 6, 8, 6, 0, -6, -8, -6, 8, 8, 8];
@@ -171,7 +171,8 @@ public sealed class Vehicles
     /// <param name="airCrashes">Whether aircraft can collide.</param>
     /// <param name="shipwrecks">Whether a ship can run aground.</param>
     /// <param name="events">Where what happened is added.</param>
-    public void Move(long step, int move, TileMap map, TrafficMap traffic, DeterministicRandom random, bool airCrashes, bool shipwrecks, List<VehicleEvent> events)
+    /// <param name="quarry">Where the monster or the tornado is, in pixels, which the helicopter chases once its flight is over; null with neither about.</param>
+    public void Move(long step, int move, TileMap map, TrafficMap traffic, DeterministicRandom random, bool airCrashes, bool shipwrecks, List<VehicleEvent> events, (int X, int Y)? quarry = null)
     {
         ArgumentNullException.ThrowIfNull(map);
         ArgumentNullException.ThrowIfNull(traffic);
@@ -179,7 +180,7 @@ public sealed class Vehicles
         ArgumentNullException.ThrowIfNull(events);
         Cycle = (int)(((step * 2) + move) % CycleLength);
         MovePlane(map, random, airCrashes, events);
-        MoveHelicopter(traffic, random, events);
+        MoveHelicopter(traffic, random, events, quarry);
         MoveShip(map, random, shipwrecks, events);
     }
 
@@ -229,7 +230,7 @@ public sealed class Vehicles
         plane.Y += PlaneDy[z];
     }
 
-    private void MoveHelicopter(TrafficMap traffic, DeterministicRandom random, List<VehicleEvent> events)
+    private void MoveHelicopter(TrafficMap traffic, DeterministicRandom random, List<VehicleEvent> events, (int X, int Y)? quarry)
     {
         if (Helicopter is not { } helicopter)
         {
@@ -241,8 +242,13 @@ public sealed class Vehicles
             helicopter.MovesLeft--;
         }
 
-        // Its flight over, it heads home and lands there. N6d sends it after a monster or a tornado.
-        if (helicopter.MovesLeft == 0)
+        // Its flight over, it chases the monster or the tornado, as Micropolis sends it to so it comes
+        // down more often; with neither about, it heads home and lands there.
+        if (helicopter.MovesLeft == 0 && quarry is { } chased)
+        {
+            (helicopter.DestinationX, helicopter.DestinationY) = chased;
+        }
+        else if (helicopter.MovesLeft == 0)
         {
             (helicopter.DestinationX, helicopter.DestinationY) = (helicopter.HomeX, helicopter.HomeY);
             if (Distance(helicopter.X, helicopter.Y, helicopter.HomeX, helicopter.HomeY) < CollisionDistance)
@@ -347,7 +353,7 @@ public sealed class Vehicles
         }
     }
 
-    /// <summary>Takes the plane out of the air for a scenario's crash, saying where it was; null with none flying.</summary>
+    /// <summary>Takes the plane out of the air for a scenario's crash, or when the monster or the tornado catches it, saying where it was; null with none flying.</summary>
     internal (int X, int Y)? DownPlane()
     {
         if (Plane is not { } plane)
@@ -359,7 +365,19 @@ public sealed class Vehicles
         return (plane.X / TileSize, plane.Y / TileSize);
     }
 
-    /// <summary>Takes the ship off the water for a scenario's wreck, saying where it was; null with none sailing.</summary>
+    /// <summary>Takes the helicopter out of the air when the monster or the tornado catches it, saying where it was; null with none flying.</summary>
+    internal (int X, int Y)? DownHelicopter()
+    {
+        if (Helicopter is not { } helicopter)
+        {
+            return null;
+        }
+
+        Helicopter = null;
+        return (helicopter.X / TileSize, helicopter.Y / TileSize);
+    }
+
+    /// <summary>Takes the ship off the water for a scenario's wreck, or when the monster or the tornado catches it, saying where it was; null with none sailing.</summary>
     internal (int X, int Y)? SinkShip()
     {
         if (Ship is not { } ship)
@@ -418,10 +436,10 @@ public sealed class Vehicles
         return new Ship { X = sx, Y = sy, Frame = facing, NewDirection = facing, WayBack = NoWayBack, Count = 1 };
     }
 
-    private static (int X, int Y) Centre(int x, int y) => ((x * TileSize) + 8, (y * TileSize) + 8);
+    internal static (int X, int Y) Centre(int x, int y) => ((x * TileSize) + 8, (y * TileSize) + 8);
 
     // Micropolis' channel is deep water; here, water with water on all four sides, and nothing built on it.
-    private static bool IsChannel(TileMap map, int x, int y)
+    internal static bool IsChannel(TileMap map, int x, int y)
     {
         var state = map.StateAtOrDefault(x, y);
         if (state.Kind != TileKind.Water || state.Use != TileUse.None)
@@ -451,7 +469,7 @@ public sealed class Vehicles
     }
 
     // Micropolis' getDir: which of the eight ways points most nearly from one place to another.
-    private static int DirectionTo(int fromX, int fromY, int toX, int toY)
+    internal static int DirectionTo(int fromX, int fromY, int toX, int toY)
     {
         var (dx, dy) = (toX - fromX, toY - fromY);
         var z = dx < 0 ? (dy < 0 ? 11 : 8) : (dy < 0 ? 2 : 5);
@@ -480,7 +498,7 @@ public sealed class Vehicles
         return facing > 8 ? 1 : facing < 1 ? 8 : facing;
     }
 
-    private static int Distance(int x0, int y0, int x1, int y1) => Math.Abs(x0 - x1) + Math.Abs(y0 - y1);
+    internal static int Distance(int x0, int y0, int x1, int y1) => Math.Abs(x0 - x1) + Math.Abs(y0 - y1);
 }
 
 /// <summary>The plane: where it is, in pixels, its frame, 1 to 8 its heading and 9 to 11 taking off, and where it heads.</summary>

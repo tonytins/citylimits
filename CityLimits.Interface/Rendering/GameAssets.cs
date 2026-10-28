@@ -50,6 +50,10 @@ public sealed class GameAssets : IDisposable
     private readonly Texture2D?[] _planeFrames = new Texture2D?[11];
     private readonly Texture2D?[] _helicopterFrames = new Texture2D?[8];
     private readonly Texture2D?[] _shipFrames = new Texture2D?[8];
+
+    // The menaces' drawings, Micropolis' obj5 (monster, 16 frames) and obj6 (tornado, 3), frame n being drawing n - 1.
+    private readonly Texture2D?[] _monsterFrames = new Texture2D?[16];
+    private readonly Texture2D?[] _tornadoFrames = new Texture2D?[3];
     private readonly List<Texture2D> _textures = [];
 
     /// <summary>The sheet that holds every tile of ground, or null when it is missing.</summary>
@@ -72,6 +76,12 @@ public sealed class GameAssets : IDisposable
 
     /// <summary>The ship's drawing for its frame, 1 to 8, or null when it is missing.</summary>
     public Texture2D? ShipFrameFor(int frame) => frame is >= 1 and <= 8 ? _shipFrames[frame - 1] : null;
+
+    /// <summary>The monster's drawing for its frame, 1 to 16, or null when it is missing.</summary>
+    public Texture2D? MonsterFrameFor(int frame) => frame is >= 1 and <= 16 ? _monsterFrames[frame - 1] : null;
+
+    /// <summary>The tornado's drawing for its frame, 1 to 3, or null when it is missing.</summary>
+    public Texture2D? TornadoFrameFor(int frame) => frame is >= 1 and <= 3 ? _tornadoFrames[frame - 1] : null;
 
     /// <summary>The highlighted icon drawn while a tool is held, or null when it has none.</summary>
     public Texture2D? SelectedIconFor(Tool tool) => _selectedIcons.TryGetValue(tool, out var icon) ? icon : null;
@@ -147,7 +157,7 @@ public sealed class GameAssets : IDisposable
             assets._textures.Add(texture.Value);
         }
 
-        foreach (var (prefix, frames, name) in new[] { ("obj3-", assets._planeFrames, "plane"), ("obj2-", assets._helicopterFrames, "helicopter"), ("obj4-", assets._shipFrames, "ship") })
+        foreach (var (prefix, frames, name) in new[] { ("obj3-", assets._planeFrames, "plane"), ("obj2-", assets._helicopterFrames, "helicopter"), ("obj4-", assets._shipFrames, "ship"), ("obj5-", assets._monsterFrames, "monster"), ("obj6-", assets._tornadoFrames, "tornado") })
         {
             for (var i = 0; i < frames.Length; i++)
             {

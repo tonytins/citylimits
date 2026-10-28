@@ -140,6 +140,7 @@ size of the same city as `.fcl`.
 | `CONN` | The city's deals with its neighbours; a 2.0 feature, which a save for 0.4 leaves out |
 | `RADN` | The radioactive ground meltdowns left; a 2.0 feature, which a save for 0.4 leaves out |
 | `VHCL` | The plane, helicopter, and ship under way; a 2.0 feature, which a save for 0.4 leaves out |
+| `MNCE` | The tornado and the monster about; a 2.0 feature, which a save for 0.4 leaves out |
 
 In a 2.0 file, the chunks from `TRAF` on are its features: each may be
 left out, and is then filled in as the version that added it fills it.
@@ -228,7 +229,7 @@ arrays of numbers sit on one line each.
 | `map` | The map: see below |
 | `budget`, `census`, `demand`, `power`, `services`, `community`, `cityMaps` | Each part of the simulation's state |
 | `cycle` | The road tiles counted this cycle, and what the last count set aside for the budget |
-| `traffic` and `roadTraffic`, `rail`, `pollution`, `crime`, `fire`, `flood`, `challenge`, `facilities`, `founding`, `ordinances`, `connections`, `radiation`, `vehicles` | The features' sections, each from the version the table under Versions gives, `ordinances`, `connections`, `radiation`, and `vehicles` from 2.0 alone; a 2.0 save may leave any out |
+| `traffic` and `roadTraffic`, `rail`, `pollution`, `crime`, `fire`, `flood`, `challenge`, `facilities`, `founding`, `ordinances`, `connections`, `radiation`, `vehicles`, `menaces` | The features' sections, each from the version the table under Versions gives, `ordinances`, `connections`, `radiation`, `vehicles`, and `menaces` from 2.0 alone; a 2.0 save may leave any out |
 | `parts` | In format 1 only: the parts list, from 1.2 |
 
 ### The map
@@ -533,6 +534,23 @@ doesn't know it opens the city with nothing under way, and writes the
 section back as it was, since the vehicles leave nothing on the map
 until they come down. A save for 0.4 leaves it out. Reading refuses a
 list of the wrong length or a frame out of range, and says which.
+
+## Menaces
+
+The tornado and the monster about, as Micropolis' sprites, are a feature
+of format 2.0, `"menaces"` in `.fcl` and the `MNCE` chunk in `.cl`
+(`Sprites/Menaces.cs`), saved as the vehicles are: each a list of
+numbers, empty or left out when none is about, its positions in pixels.
+
+| Field | Numbers |
+|---|---|
+| `tornado` | x, y (its foot), frame (1 to 3), the moves left before it may blow itself out (0 to 200), and 1 while its frames count up, else 0 |
+| `monster` | x, y, frame (1 to 16), the x and y it heads for, the x and y it came up at, its stride (1 or -1), and 1 once it heads home, else 0 |
+
+A save without the section opens with neither about. It is ignorable and
+keepable, as the vehicles are, for the same reason: they change nothing
+until they move. A save for 0.4 leaves it out. Reading refuses a list of
+the wrong length or a number out of range, and says which.
 
 ## Opening a newer save
 

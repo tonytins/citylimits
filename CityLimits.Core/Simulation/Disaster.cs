@@ -20,4 +20,10 @@ public enum Disaster
 
     /// <summary>The ship at sea runs aground where it sails.</summary>
     Shipwreck,
+
+    /// <summary>A tornado touches down, or the one blowing lasts its full time again.</summary>
+    Tornado,
+
+    /// <summary>The monster comes up out of the water, whatever the pollution, and makes for the most polluted place.</summary>
+    Monster,
 }

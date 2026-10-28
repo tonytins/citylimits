@@ -29,6 +29,10 @@ sprites/obj3-0.png   the plane heading north; obj3-1 to obj3-7 the next headings
                      obj3-8 to obj3-10 taking off
 sprites/obj2-0.png   the helicopter heading north; obj2-1 to obj2-7 the next headings clockwise
 sprites/obj4-0.png   the ship heading north; obj4-1 to obj4-7 the next headings clockwise
+sprites/obj5-0.png   the monster walking northeast, obj5-0 to obj5-2; obj5-3 to obj5-11 southeast,
+                     southwest, and northwest; obj5-12 to obj5-15 turning, facing north,
+                     east, south, and west
+sprites/obj6-0.png   the tornado; obj6-1 and obj6-2 the rest of its spin
 Scenarios/           the built-in scenarios, one JSON file each, named for its id
 ```
 
@@ -234,7 +238,8 @@ in `sprites/` are the core's `obj1-0.png` to `obj1-4.png`, converted to 8-bit RG
 in the same way as the icons, added for Radial with Tony Bark's approval. The
 plane's, the helicopter's, and the ship's, `obj3`, `obj2`, and `obj4`, are the
 OLPC port's (micropolis-activity's `images/`), converted from XPM to 8-bit RGBA,
-added for Senri's N6c with Tony Bark's approval. The art
+added for Senri's N6c with Tony Bark's approval, and the monster's and the
+tornado's, `obj5` and `obj6`, the same way for N6d. The art
 is the property of its authors, and CityLimits is not a SimCity product and
 does not use the SimCity name or trademarks.
 

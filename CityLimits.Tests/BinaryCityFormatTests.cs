@@ -92,7 +92,7 @@ public class BinaryCityFormatTests
             "format" => Header(9).Concat(chunks.SelectMany(chunk => Chunk(chunk.Tag, chunk.Payload))).ToArray(),
             "checksum" => Flip(bytes, chunks.Single(chunk => chunk.Tag == "BUDG").PayloadOffset),
             "truncated" => bytes[..(cycle.Offset + 6)],
-            "cut short" => bytes[..^3],
+            "cut short" => bytes[..^1],
             "length" => SetLength(bytes, cycle.Offset, int.MaxValue),
             "duplicate" => bytes.Concat(Chunk("CYCL", cycle.Payload)).ToArray(),
             "missing" => bytes[..cycle.Offset],
@@ -102,7 +102,8 @@ public class BinaryCityFormatTests
 
         Assert.False(BinaryCityFormat.TryRead(damaged, out var city, out var problem, out _));
 
-        // Cut short, the last chunk says it runs past the end, whichever feature is written last.
+        // Cut short by a byte, the last chunk says it runs past the end, whichever feature is written
+        // last; its payload may be as short as two bytes, an empty section's {}.
         Assert.Null(city);
         Assert.StartsWith(expected.Replace("{last}", chunks[^1].Tag.Trim(), StringComparison.Ordinal), problem);
     }

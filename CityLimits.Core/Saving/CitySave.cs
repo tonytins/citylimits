@@ -128,6 +128,9 @@ internal sealed class CitySave
     /// <summary>The plane, helicopter, and ship about; a feature of format 2.0, and none for a city from before.</summary>
     public VehiclesSave? Vehicles { get; set; }
 
+    /// <summary>The tornado and the monster about; a feature of format 2.0, and none for a city from before.</summary>
+    public MenacesSave? Menaces { get; set; }
+
     /// <summary>
     /// The scenario being played in the city, if any: its goals, when they are judged, and what is still
     /// to come; from format 1.8. A city that isn't a challenge leaves it out, so its save is as before.
@@ -651,6 +654,17 @@ internal sealed class VehiclesSave
 
     /// <summary>The ship, or null: x, y, its frame, the way it turns to, the way it came, and the moves until it next looks.</summary>
     public int[]? Ship { get; set; }
+}
+
+/// <summary>The city's tornado and monster, as <see cref="Sprites.Menaces"/> writes them.</summary>
+[System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(SectionCodec.ModelMembers)]
+internal sealed class MenacesSave
+{
+    /// <summary>The tornado, or null: x and y in pixels, its frame, the moves left of its time, and 1 while its frames count up.</summary>
+    public int[]? Tornado { get; set; }
+
+    /// <summary>The monster, or null: x, y, its frame, where it heads, where it came from, x and y each, its stride, and 1 once it heads home.</summary>
+    public int[]? Monster { get; set; }
 }
 
 /// <summary>The radioactive ground on the map, as <see cref="RadiationCodec"/> writes it.</summary>

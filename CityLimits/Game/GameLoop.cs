@@ -663,11 +663,13 @@ public sealed class GameLoop : IDisposable
                     Meltdowns = chosen.Meltdowns,
                     AirCrashes = chosen.AirCrashes,
                     Shipwrecks = chosen.Shipwrecks,
+                    Tornadoes = chosen.Tornadoes,
+                    Monsters = chosen.Monsters,
                     SaveOlderFormats = chosen.SaveOlderFormats,
                 };
                 ApplyDisasters(_settings);
                 Logger.Info(
-                    "Settings changed: fullscreen {Fullscreen} from the next start, {Slots} autosaves, disasters {Disasters}: fires {Fires}, floods {Floods}, earthquakes {Earthquakes}, meltdowns {Meltdowns}, air crashes {AirCrashes}, shipwrecks {Shipwrecks}; saving for 0.4 {Older}",
+                    "Settings changed: fullscreen {Fullscreen} from the next start, {Slots} autosaves, disasters {Disasters}: fires {Fires}, floods {Floods}, earthquakes {Earthquakes}, meltdowns {Meltdowns}, air crashes {AirCrashes}, shipwrecks {Shipwrecks}, tornadoes {Tornadoes}, monsters {Monsters}; saving for 0.4 {Older}",
                     chosen.Fullscreen,
                     chosen.AutosaveSlots,
                     chosen.Disasters,
@@ -677,6 +679,8 @@ public sealed class GameLoop : IDisposable
                     chosen.Meltdowns,
                     chosen.AirCrashes,
                     chosen.Shipwrecks,
+                    chosen.Tornadoes,
+                    chosen.Monsters,
                     chosen.SaveOlderFormats);
                 return;
             case SettingsPanel.Outcome.Closed:
@@ -1403,6 +1407,8 @@ public sealed class GameLoop : IDisposable
         _simulation.RandomMeltdowns = settings.RandomMeltdowns;
         _simulation.RandomAirCrashes = settings.RandomAirCrashes;
         _simulation.RandomShipwrecks = settings.RandomShipwrecks;
+        _simulation.RandomTornadoes = settings.RandomTornadoes;
+        _simulation.RandomMonsters = settings.RandomMonsters;
     }
 
     // Whether the pointer is over the palette, the overview, the bar, the ticker, or an open window, rather than the map.

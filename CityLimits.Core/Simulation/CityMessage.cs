@@ -77,4 +77,10 @@ public enum CityMessage
 
     /// <summary>The helicopter has seen heavy traffic.</summary>
     HeavyTrafficReported,
+
+    /// <summary>A tornado has touched down.</summary>
+    TornadoReported,
+
+    /// <summary>The monster has been sighted.</summary>
+    MonsterReported,
 }

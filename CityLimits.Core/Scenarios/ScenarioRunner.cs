@@ -77,6 +77,8 @@ public sealed class ScenarioRunner
         city.RandomMeltdowns = scenario.Disasters;
         city.RandomAirCrashes = scenario.Disasters;
         city.RandomShipwrecks = scenario.Disasters;
+        city.RandomTornadoes = scenario.Disasters;
+        city.RandomMonsters = scenario.Disasters;
         var plan = new BuildPlan();
         var actions = scenario.Actions.OrderBy(a => a.Tick).ThenBy(a => a.Index).ToList();
         var events = scenario.Strikes();

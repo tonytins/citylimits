@@ -98,6 +98,10 @@ internal static class SaveParts
         // The plane, helicopter, and ship: a game that doesn't know them plays the city without
         // them, and may write them back as they were, since they change nothing until they move.
         new() { Name = "vehicles", Chunk = "VHCL", Ignorable = true, Keepable = true },
+
+        // The tornado and the monster: a game that doesn't know them plays the city without them,
+        // and may write them back as they were, since they change nothing until they move.
+        new() { Name = "menaces", Chunk = "MNCE", Ignorable = true, Keepable = true },
     ];
 
     /// <summary>The parts format 1's list names, each with the version that added it, for a save 0.4 opens.</summary>

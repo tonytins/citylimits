@@ -4,7 +4,7 @@ namespace CityLimits.UI;
 /// The settings window, opened from the start menu or the menu Escape opens in a city. Its tabs
 /// group the settings: Graphics, for fullscreen, which takes effect when the game next starts;
 /// Gameplay, for autosave, whether disasters happen at all, and saving for 0.4; and Disasters, for each kind: fires,
-/// floods, earthquakes, meltdowns, air crashes, and shipwrecks. A
+/// floods, earthquakes, meltdowns, air crashes, shipwrecks, tornadoes, and the monster. A
 /// change applies at once otherwise; the window's owner writes the settings when it closes. The
 /// player moves it by its title bar, whose toolbar holds the tabs, and its close button or Escape closes it. Choosing a fullscreen setting the
 /// game isn't running in opens a pop-up saying it waits for a restart, which takes the input,
@@ -21,7 +21,7 @@ public sealed class SettingsPanel : IMovableWindow
     private const int OptionWidth = 64;
     private const int OptionHeight = 24;
     private const int OptionGap = 6;
-    private const int Rows = 6;
+    private const int Rows = 8;
     private const int Height = WindowFrame.TitleHeight + Padding + (Rows * RowHeight) + Padding;
 
     private static readonly string[] Tabs = ["Graphics", "Gameplay", "Disasters"];
@@ -95,6 +95,18 @@ public sealed class SettingsPanel : IMovableWindow
                 settings => settings.Shipwrecks ? 1 : 0,
                 (settings, choice) => settings with { Shipwrecks = choice == 1 },
                 "A ship can run aground, wrecking what it hits."),
+            new(
+                "Tornadoes",
+                ["Off", "On"],
+                settings => settings.Tornadoes ? 1 : 0,
+                (settings, choice) => settings with { Tornadoes = choice == 1 },
+                "A tornado can touch down and wreck whatever it passes over."),
+            new(
+                "Monster",
+                ["Off", "On"],
+                settings => settings.Monsters ? 1 : 0,
+                (settings, choice) => settings with { Monsters = choice == 1 },
+                "A monster can come up out of the water in a polluted city and trample it."),
         ],
     ];
 

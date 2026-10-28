@@ -1097,6 +1097,27 @@
       },
       "additionalProperties": false
     },
+    "menaces": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "tornado": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "monster": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
     "challenge": {
       "type": [
         "object",
