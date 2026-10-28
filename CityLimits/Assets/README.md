@@ -175,7 +175,8 @@ in turn, each tile starting at a frame picked from where it is
 drawings of a building blowing apart, over the building's centre. A
 flooded tile is drawn from tiles 48 to 50, the flood's three drawings,
 picked by where the tile is (`TileAtlas.FloodIndexFor`).
-It is drawn over the map each frame, not into it.
+It is drawn over the map each frame, not into it, as radioactive ground
+is, tile 52 (`TileAtlas.RadiationTile`), Micropolis' drawing of it.
 
 A park is one of tiles 40 to 43, four wooded drawings, or 840, a fountain
 (841 to 843 are its animation, not used yet), chosen from the tile's

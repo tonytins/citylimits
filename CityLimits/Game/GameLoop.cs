@@ -660,17 +660,19 @@ public sealed class GameLoop : IDisposable
                     Fires = chosen.Fires,
                     Floods = chosen.Floods,
                     Earthquakes = chosen.Earthquakes,
+                    Meltdowns = chosen.Meltdowns,
                     SaveOlderFormats = chosen.SaveOlderFormats,
                 };
                 ApplyDisasters(_settings);
                 Logger.Info(
-                    "Settings changed: fullscreen {Fullscreen} from the next start, {Slots} autosaves, disasters {Disasters}: fires {Fires}, floods {Floods}, earthquakes {Earthquakes}; saving for 0.4 {Older}",
+                    "Settings changed: fullscreen {Fullscreen} from the next start, {Slots} autosaves, disasters {Disasters}: fires {Fires}, floods {Floods}, earthquakes {Earthquakes}, meltdowns {Meltdowns}; saving for 0.4 {Older}",
                     chosen.Fullscreen,
                     chosen.AutosaveSlots,
                     chosen.Disasters,
                     chosen.Fires,
                     chosen.Floods,
                     chosen.Earthquakes,
+                    chosen.Meltdowns,
                     chosen.SaveOlderFormats);
                 return;
             case SettingsPanel.Outcome.Closed:
@@ -1218,6 +1220,7 @@ public sealed class GameLoop : IDisposable
         BuildStatus.Refused when result.Reason == BuildRefusal.PartOfAZone => "Bulldoze its centre to clear it",
         BuildStatus.Refused when result.Reason == BuildRefusal.OnFire => "It's on fire: wait for it to burn out",
         BuildStatus.Refused when result.Reason == BuildRefusal.Flooded => "It's under water: wait for it to drain",
+        BuildStatus.Refused when result.Reason == BuildRefusal.Radioactive => "It's radioactive: nothing can be built there for years",
         BuildStatus.Unchanged => "There was nothing to clear",
         BuildStatus.Refused when result.Reason == BuildRefusal.NotEnoughFunds => $"Not enough money, it costs ${result.Cost}",
         BuildStatus.Refused when result.Reason == BuildRefusal.CannotBuildHere => "That ground cannot be built on",
@@ -1393,6 +1396,7 @@ public sealed class GameLoop : IDisposable
         _simulation.RandomFires = settings.RandomFires;
         _simulation.RandomFloods = settings.RandomFloods;
         _simulation.RandomEarthquakes = settings.RandomEarthquakes;
+        _simulation.RandomMeltdowns = settings.RandomMeltdowns;
     }
 
     // Whether the pointer is over the palette, the overview, the bar, the ticker, or an open window, rather than the map.

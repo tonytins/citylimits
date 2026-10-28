@@ -1,7 +1,7 @@
 namespace CityLimits.Core.World;
 
 /// <summary>
-/// The fires and floods on the map, and the holes they leave in buildings. A building that loses an
+/// The fires, floods, and radiation on the map, and the holes they leave in buildings. A building that loses an
 /// outer tile keeps standing with a hole in it, which nothing can be built in; it can't be redrawn
 /// while any of it burns or is flooded, and when it is, as a zone grows or declines, the holes are
 /// redrawn too, as Micropolis' zones are. Plants, stations, hospitals, and churches redraw the holes
@@ -18,7 +18,8 @@ public sealed class Hazards
         ArgumentNullException.ThrowIfNull(map);
         _map = map;
         Fires = new Fires(map);
-        Floods = new Floods(map, Fires);
+        Radiation = new Radiation(map);
+        Floods = new Floods(map, Fires, Radiation);
     }
 
     /// <summary>The fires burning.</summary>
@@ -27,11 +28,34 @@ public sealed class Hazards
     /// <summary>The floods.</summary>
     public Floods Floods { get; }
 
-    /// <summary>Tells whether a tile is burning or flooded.</summary>
-    public bool IsActive(int x, int y) => Fires.IsBurning(x, y) || Floods.IsFlooded(x, y);
+    /// <summary>The radioactive ground a meltdown leaves.</summary>
+    public Radiation Radiation { get; }
 
-    /// <summary>Tells whether any tile of the building centred on a tile is burning or flooded, which stops it being redrawn.</summary>
-    public bool AnyActiveIn(int centerX, int centerY) => Fires.AnyBurningIn(centerX, centerY) || Floods.AnyFloodedIn(centerX, centerY);
+    /// <summary>Tells whether a tile is burning, flooded, or radioactive.</summary>
+    public bool IsActive(int x, int y) => Fires.IsBurning(x, y) || Floods.IsFlooded(x, y) || Radiation.IsRadioactive(x, y);
+
+    /// <summary>Tells whether any tile of the building centred on a tile is burning, flooded, or radioactive, which stops it being redrawn.</summary>
+    public bool AnyActiveIn(int centerX, int centerY) => Fires.AnyBurningIn(centerX, centerY) || Floods.AnyFloodedIn(centerX, centerY) || AnyRadioactiveIn(centerX, centerY);
+
+    private bool AnyRadioactiveIn(int centerX, int centerY)
+    {
+        if (Radiation.Count == 0)
+        {
+            return false;
+        }
+
+        var size = Footprint.SizeOf(_map.StateAtOrDefault(centerX, centerY).Use);
+        for (var part = 0; part < Footprint.Parts(size); part++)
+        {
+            var (dx, dy) = Footprint.OffsetFromCenter(part, size);
+            if (Radiation.IsRadioactive(centerX + dx, centerY + dy))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     /// <summary>
     /// Tells whether a tile is a hole in a standing building: inside its footprint, but not one of

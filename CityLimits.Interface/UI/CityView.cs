@@ -46,7 +46,7 @@ public sealed class CityView : IDisposable
         ArgumentNullException.ThrowIfNull(assets);
         _city = city;
         _assets = assets;
-        _mapRenderer = new MapRenderer(city.Map, assets, city.Traffic, city.Fires, city.Floods);
+        _mapRenderer = new MapRenderer(city.Map, assets, city.Traffic, city.Fires, city.Floods, city.Radiation);
         Overview = new OverviewMap(city);
         city.Exploded += ShowExplosion;
         city.EarthquakeStruck += Shake;

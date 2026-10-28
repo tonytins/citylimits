@@ -136,6 +136,11 @@ public static class TileInfo
             return "Flooded - the water drains to bare ground in time";
         }
 
+        if (hazards?.Radiation.IsRadioactive(x, y) == true)
+        {
+            return "Radioactive - nothing can be built here until it decays, which can take decades";
+        }
+
         if (hazards?.HoleOwner(x, y) is var (ownerX, ownerY))
         {
             var owner = map.StateAt(ownerX, ownerY).Use;

@@ -1052,6 +1052,24 @@
       ],
       "additionalProperties": false
     },
+    "radiation": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "tiles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "tiles"
+      ],
+      "additionalProperties": false
+    },
     "challenge": {
       "type": [
         "object",

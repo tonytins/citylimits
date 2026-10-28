@@ -69,6 +69,9 @@ public static class TileAtlas
     /// <summary>How many frames a fire is animated in.</summary>
     public const int FireFrames = 8;
 
+    /// <summary>Radioactive ground, as a meltdown leaves it: Micropolis' RADTILE.</summary>
+    public const int RadiationTile = 52;
+
     /// <summary>The first of the flood's three drawings of water over the land.</summary>
     public const int FloodTile = 48;
 

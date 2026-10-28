@@ -138,6 +138,7 @@ size of the same city as `.fcl`.
 | `FNDG` | The year the city was founded; from format 1.10 |
 | `ORDN` | The city's ordinances; a 2.0 feature, which a save for 0.4 leaves out |
 | `CONN` | The city's deals with its neighbours; a 2.0 feature, which a save for 0.4 leaves out |
+| `RADN` | The radioactive ground meltdowns left; a 2.0 feature, which a save for 0.4 leaves out |
 
 In a 2.0 file, the chunks from `TRAF` on are its features: each may be
 left out, and is then filled in as the version that added it fills it.
@@ -226,7 +227,7 @@ arrays of numbers sit on one line each.
 | `map` | The map: see below |
 | `budget`, `census`, `demand`, `power`, `services`, `community`, `cityMaps` | Each part of the simulation's state |
 | `cycle` | The road tiles counted this cycle, and what the last count set aside for the budget |
-| `traffic` and `roadTraffic`, `rail`, `pollution`, `crime`, `fire`, `flood`, `challenge`, `facilities`, `founding`, `ordinances`, `connections` | The features' sections, each from the version the table under Versions gives, `ordinances` and `connections` from 2.0 alone; a 2.0 save may leave any out |
+| `traffic` and `roadTraffic`, `rail`, `pollution`, `crime`, `fire`, `flood`, `challenge`, `facilities`, `founding`, `ordinances`, `connections`, `radiation` | The features' sections, each from the version the table under Versions gives, `ordinances`, `connections`, and `radiation` from 2.0 alone; a 2.0 save may leave any out |
 | `parts` | In format 1 only: the parts list, from 1.2 |
 
 ### The map
@@ -492,6 +493,22 @@ The feature is ignorable and keepable, as the ordinances are: a version
 that doesn't know it plays the city with no deals, so their power and
 money stop while it does, and writes the section back as it was. A save
 for 0.4 leaves it out.
+
+## Radiation
+
+The radioactive ground a nuclear plant's meltdown leaves is a feature of
+format 2.0, `"radiation"` in `.fcl` and the `RADN` chunk in `.cl`
+(`Saving/RadiationCodec.cs`), saved as floods are: for each row of the
+map, a character a tile, `.` for none and `r` for radioactive ground.
+Beneath it the map holds bare ground, or, where the ground is a hole in
+a building, the building whole, the fire part marking the hole. A save
+without the section opens with none.
+
+It is ignorable but not keepable, as floods are: a version that doesn't
+know it opens the city as if the ground had decayed, and can't write it
+back, since it may build there. A save for 0.4 leaves it out. Reading
+refuses radiation on a fire, a flood, or anything but bare ground or a
+marked hole, and says where.
 
 ## Opening a newer save
 

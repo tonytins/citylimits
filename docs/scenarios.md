@@ -350,7 +350,7 @@ anywhere to strike.
 | Field | Required | Meaning |
 |---|---|---|
 | `at`, `week` | yes, `week` no | The date it strikes, after the actions then and before the checks |
-| `disaster` | yes | `Fire`, a fire on something that can burn, as Micropolis' Disasters menu starts one; `Flood`, the water rising from a shore onto the land beside it, which a map with no shore can't have; or `Earthquake`, which shakes the whole city (`CitySimulation.Strike`) |
+| `disaster` | yes | `Fire`, a fire on something that can burn, as Micropolis' Disasters menu starts one; `Flood`, the water rising from a shore onto the land beside it, which a map with no shore can't have; `Earthquake`, which shakes the whole city; or `Meltdown`, from 0.5.110, the first nuclear plant on the map melting down, which a city without one can't have (`CitySimulation.Strike`). A name 0.5.109 and before don't know is refused there, as any unknown one is |
 | `repeat` | no | From 2.2, the disaster strikes again: `{ "weeks": 10, "times": 4 }` strikes four times in all, the first at `at`, then every 10 weeks, as Micropolis' Hamburg is fire-bombed. Both are whole numbers from 1, not words, and the last strike must come by `ends`. Each strike is reported on its own, with the event's index |
 
 ### Goals

@@ -62,4 +62,7 @@ public enum CityMessage
 
     /// <summary>The city has more than 100 commercial units and no airport, so commercial demand is held at zero.</summary>
     NeedAirport,
+
+    /// <summary>A nuclear plant has melted down.</summary>
+    MeltdownReported,
 }

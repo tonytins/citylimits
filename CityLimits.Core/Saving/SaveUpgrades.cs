@@ -32,6 +32,7 @@ internal static class SaveUpgrades
             save.Format = Current;
             AddOrdinances(save);
             AddConnections(save);
+            AddRadiation(save);
             return;
         }
 
@@ -47,7 +48,17 @@ internal static class SaveUpgrades
         AddFounding(save);
         AddOrdinances(save);
         AddConnections(save);
+        AddRadiation(save);
         save.Format = Current;
+    }
+
+    // 2.0's radiation. A city from before has no radioactive ground.
+    private static void AddRadiation(CitySave save)
+    {
+        if (save.Map is { Width: >= 1 and <= MapCodec.MaxSide, Height: >= 1 and <= MapCodec.MaxSide } map)
+        {
+            save.Radiation ??= new RadiationSave { Tiles = [.. Enumerable.Repeat(new string('.', map.Width), map.Height)] };
+        }
     }
 
     // 2.0's connections. A city from before has no deals, no offer, and no grudges.

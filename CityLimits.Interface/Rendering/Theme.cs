@@ -21,6 +21,9 @@ public static class Theme
     /// <summary>Flood water, for a missing sheet and the overview map.</summary>
     public static readonly Color Flood = new() { R = 60, G = 110, B = 200, A = 255 };
 
+    /// <summary>Radioactive ground where there is no tile sheet, and on the overview.</summary>
+    public static readonly Color Radiation = new() { R = 200, G = 230, B = 40, A = 255 };
+
     /// <summary>A fire, for a missing sheet and the overview map.</summary>
     public static readonly Color Fire = new() { R = 255, G = 110, B = 20, A = 255 };
 

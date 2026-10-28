@@ -1,5 +1,25 @@
 # CityLimits Changelog
 
+## 0.5.110
+
+Nuclear plants can melt down, as in Micropolis: rarely, but when one
+does, it bursts into flames and leaves radioactive ground scattered
+around it. Nothing can be built on that ground, and the bulldozer can't
+clear it, until it decays, which takes decades. Meltdowns have a switch
+of their own on the Settings window's Disasters tab, and the master
+Disasters switch turns them off with the rest.
+
+For modders and scenario writers: `Meltdown` is a scenario event, the
+first nuclear plant on the map melting down. Older versions don't know
+the name and refuse a scenario that uses it.
+
+For developers: `CitySimulation.Radiation` and `Hazards.Radiation`
+(`World/Radiation.cs`); `Disaster.Meltdown`, `CityMessage.MeltdownReported`,
+`BuildRefusal.Radioactive`, and `GameSettings.Meltdowns`. Saves gain the
+`radiation` feature (`RADN` in `.cl`), which a save for 0.4 leaves out.
+Every nuclear plant now rolls a die for a meltdown each cycle, so a city
+with one rolls differently from 0.5.109 on.
+
 ## 0.5.109
 
 For developers: a Debug build keeps its settings beside itself, in

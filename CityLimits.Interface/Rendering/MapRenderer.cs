@@ -10,14 +10,15 @@ public sealed class MapRenderer : IDisposable
     private readonly TrafficMap? _traffic;
     private readonly Fires? _fires;
     private readonly Floods? _floods;
+    private readonly Radiation? _radiation;
     private readonly Texture2D? _sheet;
     private readonly MapChunkCache? _chunks;
 
     /// <summary>
     /// Creates a renderer for a map, with the given assets and, when the map is to show them, the
-    /// city's traffic, fires, and floods. Call it after the window is open.
+    /// city's traffic, fires, floods, and radiation. Call it after the window is open.
     /// </summary>
-    public MapRenderer(TileMap map, GameAssets? assets, TrafficMap? traffic = null, Fires? fires = null, Floods? floods = null)
+    public MapRenderer(TileMap map, GameAssets? assets, TrafficMap? traffic = null, Fires? fires = null, Floods? floods = null, Radiation? radiation = null)
     {
         ArgumentNullException.ThrowIfNull(map);
 
@@ -25,6 +26,7 @@ public sealed class MapRenderer : IDisposable
         _traffic = traffic;
         _fires = fires;
         _floods = floods;
+        _radiation = radiation;
         _sheet = assets?.TileSheet;
         _chunks = MapChunkCache.TryCreate(map, _sheet);
     }
@@ -76,6 +78,7 @@ public sealed class MapRenderer : IDisposable
 
         DrawTraffic(minX, minY, maxX, maxY, trafficFrame);
         DrawFloods(minX, minY, maxX, maxY);
+        DrawRadiation(minX, minY, maxX, maxY);
         DrawFires(minX, minY, maxX, maxY, fireFrame);
 
         if (camera.Zoom >= 0.75f)
@@ -251,6 +254,37 @@ public sealed class MapRenderer : IDisposable
                 else
                 {
                     Raylib.DrawTexturePro(_sheet.Value, TileAtlas.SourceFor(TileAtlas.FloodIndexFor(x, y)), destination, Vector2.Zero, 0f, Color.White);
+                }
+            }
+        }
+    }
+
+    // Radiation isn't part of the map's state either, which holds the bare ground beneath it, so it
+    // is drawn over the cached map, as floods are.
+    private void DrawRadiation(int minX, int minY, int maxX, int maxY)
+    {
+        if (_radiation is null || _radiation.Count == 0)
+        {
+            return;
+        }
+
+        for (var y = minY; y <= maxY; y++)
+        {
+            for (var x = minX; x <= maxX; x++)
+            {
+                if (!_radiation.IsRadioactive(x, y))
+                {
+                    continue;
+                }
+
+                var destination = new Rectangle { X = x * TileSize, Y = y * TileSize, Width = TileSize, Height = TileSize };
+                if (_sheet is null)
+                {
+                    Raylib.DrawRectangleRec(destination, Theme.Radiation);
+                }
+                else
+                {
+                    Raylib.DrawTexturePro(_sheet.Value, TileAtlas.SourceFor(TileAtlas.RadiationTile), destination, Vector2.Zero, 0f, Color.White);
                 }
             }
         }

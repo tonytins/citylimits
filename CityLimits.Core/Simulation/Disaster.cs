@@ -11,4 +11,7 @@ public enum Disaster
 
     /// <summary>An earthquake shakes the city.</summary>
     Earthquake,
+
+    /// <summary>A nuclear plant melts down, leaving radioactive ground around it.</summary>
+    Meltdown,
 }

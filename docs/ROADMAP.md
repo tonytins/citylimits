@@ -1,6 +1,6 @@
 # CityLimits roadmap
 
-> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-28 · **Change:** minor (Senri, N6a: a Debug build's own settings; the rest of Micropolis' disasters planned for N6) · **Stage:** beta
+> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-28 · **Change:** minor (Senri, N6b: meltdowns and radiation) · **Stage:** beta
 
 Forward-looking: where CityLimits stands, what blocks the next milestone,  
 and what comes next. Verified status and evidence are in the  
@@ -604,10 +604,14 @@ play builds on, so 0.6 adds to them rather than changing them.
     mods, and scenarios stay where a player's copy keeps them (N6a).
   - [ ] The rest of Micropolis' disasters, under the master Disasters
     switch, each with a row on the Disasters tab and a name for scenario
-    events, with no format's version moving: a nuclear plant's meltdown
-    and the radiation it leaves (N6b); planes, helicopters, and ships as
-    everyday traffic, which can crash or sink (N6c); and the tornado and
-    the monster (N6d).
+    events, with no format's version moving.
+    - [x] A nuclear plant's meltdown, at Micropolis' odds as the scan
+      passes it, and the radioactive ground it leaves, which nothing can
+      build on or clear until it decays, some 85 years on average;
+      `Meltdown` for scenario events, and the `radiation` feature (N6b).
+    - [ ] Planes, helicopters, and ships as everyday traffic, which can
+      crash or sink (N6c).
+    - [ ] The tornado and the monster (N6d).
   - [ ] `--headless` only reads `common/`, and leaves writing it to the
     game in a window, as Tony Bark asked; 0.5.101 writes it from both.
 
@@ -679,6 +683,7 @@ Yokohama waits on Senri, and on Tony Bark settling its design from the
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-28 | minor | Senri, N6b: nuclear meltdowns, after Micropolis', and the radioactive ground they leave for decades, with a switch on the Disasters tab, a scenario event, and the `radiation` feature. 946 tests. |
 | 2026-10-28 | minor | Senri, N6a: a Debug build keeps its settings beside itself, as Tony Bark asked. N6 takes in the rest of Micropolis' disasters, meltdown, aircraft and ships with their crashes, tornado, and monster, under the master switch with rows of their own, and no format's version moving. 938 tests. |
 | 2026-10-28 | minor | Senri, N5b, closing N5: a neighbour's offer in a window of its own, a Neighbours page in the city panel where a deal can be broken after asking, the budget's deal line, and the neighbours' news in blue on the ticker. Senri has only N6, oversights, left. 937 tests. |
 | 2026-10-28 | minor | Senri, N5a: four neighbours from the seed, connections read from the map's edges, roads and rail lifting demand, and power deals offered every six months, with a term, a yearly price, and a cost for breaking one; saved as `connections`, which 0.5.100 reserved and nothing is now. 937 tests. |

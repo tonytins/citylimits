@@ -15,15 +15,20 @@ public sealed class Floods
 
     private readonly TileMap _map;
     private readonly Fires _fires;
+    private readonly Radiation? _radiation;
     private readonly bool[] _flooded;
 
-    /// <summary>Makes the floods of a map, with none, beside the fires that water can't put out.</summary>
-    public Floods(TileMap map, Fires fires)
+    /// <summary>
+    /// Makes the floods of a map, with none, beside the fires that water can't put out and the
+    /// radioactive ground it doesn't cover.
+    /// </summary>
+    public Floods(TileMap map, Fires fires, Radiation? radiation = null)
     {
         ArgumentNullException.ThrowIfNull(map);
         ArgumentNullException.ThrowIfNull(fires);
         _map = map;
         _fires = fires;
+        _radiation = radiation;
         _flooded = new bool[map.Width * map.Height];
     }
 
@@ -36,9 +41,9 @@ public sealed class Floods
     /// <summary>Tells whether a tile is flooded; a tile off the map never is.</summary>
     public bool IsFlooded(int x, int y) => _map.Contains(x, y) && _flooded[(y * _map.Width) + x];
 
-    /// <summary>Tells whether water can spread onto a tile: any land not already flooded or burning.</summary>
+    /// <summary>Tells whether water can spread onto a tile: any land not already flooded, burning, or radioactive.</summary>
     public bool CanFlood(int x, int y) =>
-        _map.Contains(x, y) && !IsFlooded(x, y) && !_fires.IsBurning(x, y) && _map.StateAt(x, y).Kind != TileKind.Water;
+        _map.Contains(x, y) && !IsFlooded(x, y) && !_fires.IsBurning(x, y) && _radiation?.IsRadioactive(x, y) != true && _map.StateAt(x, y).Kind != TileKind.Water;
 
     /// <summary>Starts a flood's spreading again, for <see cref="Duration"/> cycles.</summary>
     public void Rise() => CyclesLeft = Duration;

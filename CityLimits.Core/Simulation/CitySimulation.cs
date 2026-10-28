@@ -110,6 +110,11 @@ public sealed class CitySimulation
     // An explosion sets fire to the four tiles at the corners of its centre.
     private static readonly (int Dx, int Dy)[] ExplosionCorners = [(-1, -1), (1, -1), (-1, 1), (1, 1)];
 
+    // Micropolis' odds of a nuclear plant melting down as the scan passes it, at its easiest level,
+    // and how many tiles around it a meltdown tries to make radioactive.
+    private const int MeltdownChance = 30000;
+    private const int MeltdownTries = 200;
+
     // Micropolis reports high pollution and crime when their averages are above these.
     private const int MostPollutionBeforeComplaints = 60;
     private const int MostCrimeBeforeComplaints = 100;
@@ -203,6 +208,9 @@ public sealed class CitySimulation
     /// <summary>The floods on the map.</summary>
     public Floods Floods => Hazards.Floods;
 
+    /// <summary>The radioactive ground meltdowns have left.</summary>
+    public Radiation Radiation => Hazards.Radiation;
+
     /// <summary>
     /// Whether fires start on their own, as Micropolis' disasters start them. The player's settings
     /// decide it in the game, and a scenario's file in a scenario; it isn't saved with the city. A
@@ -217,6 +225,9 @@ public sealed class CitySimulation
 
     /// <summary>Whether earthquakes strike, as <see cref="RandomFires"/> says for fires.</summary>
     public bool RandomEarthquakes { get; set; } = true;
+
+    /// <summary>Whether nuclear plants melt down, as <see cref="RandomFires"/> says for fires.</summary>
+    public bool RandomMeltdowns { get; set; } = true;
 
     /// <summary>
     /// The scenario being played in the city, if it is a challenge: it makes what is due, and judges
@@ -550,8 +561,61 @@ public sealed class CitySimulation
         Disaster.Fire => StartFireOnPurpose(),
         Disaster.Flood => StartFlood(allowed: true),
         Disaster.Earthquake => Quake(allowed: true),
+        Disaster.Meltdown => MeltDownFirstPlant(),
         _ => throw new ArgumentOutOfRangeException(nameof(disaster), disaster, null),
     };
+
+    // A scenario's meltdown strikes the first nuclear plant on the map, row by row; with none, nothing.
+    private bool MeltDownFirstPlant()
+    {
+        for (var y = 0; y < Map.Height; y++)
+        {
+            for (var x = 0; x < Map.Width; x++)
+            {
+                var state = Map.StateAt(x, y);
+                if (state.IsBuildingCenter && state.Use == TileUse.NuclearPowerPlant)
+                {
+                    Meltdown(x, y);
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    // As Micropolis' doMeltdown: explosions at the plant's four corners, the plant ablaze, and 200
+    // tries at the ground around it, 20 tiles either side and 15 above and below, each making
+    // radioactive whatever can burn, or bare ground, there, but never a building's centre.
+    private void Meltdown(int x, int y)
+    {
+        Ignite(x, y);
+        foreach (var (cx, cy) in new[] { (x - 1, y - 1), (x - 1, y + 2), (x + 2, y - 1), (x + 2, y + 2) })
+        {
+            Explode(cx, cy);
+            Exploded?.Invoke(cx, cy);
+        }
+
+        for (var tries = 0; tries < MeltdownTries; tries++)
+        {
+            var (rx, ry) = (x - 20 + Random.NextInt(0, 41), y - 15 + Random.NextInt(0, 31));
+            if (!Map.Contains(rx, ry))
+            {
+                continue;
+            }
+
+            var state = Map.StateAt(rx, ry);
+            var bare = state.Use == TileUse.None && state.Kind == TileKind.Grass;
+            if (!state.IsBuildingCenter && (bare || Fires.CanBurn(rx, ry) || Fires.IsBurning(rx, ry)))
+            {
+                Fires.PutOut(rx, ry);
+                Floods.Drain(rx, ry);
+                Radiation.Contaminate(rx, ry);
+            }
+        }
+
+        MessageSent?.Invoke(CityMessage.MeltdownReported);
+    }
 
     private bool StartFireOnPurpose()
     {
@@ -955,6 +1019,17 @@ public sealed class CitySimulation
                     continue;
                 }
 
+                // Radioactive ground decays now and then, as Micropolis' does.
+                if (Radiation.IsRadioactive(x, y))
+                {
+                    if (Random.NextInt(0, Radiation.DecayChance) == 0)
+                    {
+                        Radiation.Decay(x, y);
+                    }
+
+                    continue;
+                }
+
                 var state = Map.StateAt(x, y);
                 if (state.IsRoad)
                 {
@@ -983,6 +1058,14 @@ public sealed class CitySimulation
 
                 if (TileRules.IsPowerPlant(state.Use))
                 {
+                    // As Micropolis does, a nuclear plant may melt down as the scan passes it; the
+                    // dice are rolled whether meltdowns are on or not, as the other disasters' are.
+                    if (state.Use == TileUse.NuclearPowerPlant && Random.NextInt(0, MeltdownChance + 1) == 0 && RandomMeltdowns)
+                    {
+                        Meltdown(x, y);
+                        continue;
+                    }
+
                     RepairNowAndThen(x, y, BuildingRepairCounts);
                     continue;
                 }
@@ -1091,6 +1174,7 @@ public sealed class CitySimulation
         Crime = Maps.CaptureCrime(),
         Fire = FireCodec.Capture(Map, Hazards),
         Flood = FloodCodec.Capture(Map, Floods),
+        Radiation = RadiationCodec.Capture(Map, Radiation),
         Facilities = FacilityCodec.Capture(Map, Hazards, Facilities),
         Founding = new FoundingSave { Year = FoundedYear },
         Ordinances = CaptureOrdinances(),
@@ -1177,6 +1261,7 @@ public sealed class CitySimulation
         city.Maps.RestoreCrime(save.Crime ?? throw new InvalidSave("crime: missing."));
         FireCodec.Apply(map, city.Fires, save.Fire ?? throw new InvalidSave("fire: missing."));
         FloodCodec.Apply(map, city.Hazards, save.Flood ?? throw new InvalidSave("flood: missing."));
+        RadiationCodec.Apply(map, city.Hazards, save.Radiation ?? throw new InvalidSave("radiation: missing."));
         var founding = save.Founding ?? throw new InvalidSave("founding: missing.");
         city.FoundedYear = SaveChecks.InRange(founding.Year, CityCalendar.StartYear, city.Date.Year, "founding.year");
         var ordinances = save.Ordinances ?? throw new InvalidSave("ordinances: missing.");

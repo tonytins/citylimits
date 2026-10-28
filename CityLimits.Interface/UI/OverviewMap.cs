@@ -210,6 +210,11 @@ public sealed class OverviewMap : IDisposable
             return Theme.Flood;
         }
 
+        if (city.Radiation.IsRadioactive(x, y))
+        {
+            return Theme.Radiation;
+        }
+
         return MapColorAt(city.Map, x, y);
     }
 

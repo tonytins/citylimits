@@ -29,4 +29,7 @@ public enum BuildRefusal
 
     /// <summary>The tile is under water from a flood, which nothing can build on or clear until it drains.</summary>
     Flooded,
+
+    /// <summary>The tile is radioactive from a meltdown, which nothing can build on or clear until it decays.</summary>
+    Radioactive,
 }

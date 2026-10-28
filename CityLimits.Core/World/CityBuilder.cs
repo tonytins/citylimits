@@ -171,6 +171,11 @@ public sealed class CityBuilder
             return BuildResult.Refused(BuildRefusal.Flooded);
         }
 
+        if (plan.SkippedBecause(BuildRefusal.Radioactive) > 0)
+        {
+            return BuildResult.Refused(BuildRefusal.Radioactive);
+        }
+
         if (plan.SkippedBecause(BuildRefusal.PartOfAZone) > 0)
         {
             return BuildResult.Refused(BuildRefusal.PartOfAZone);
@@ -537,7 +542,8 @@ public sealed class CityBuilder
                     continue;
                 }
 
-                // A tile burning or flooded stays so: the bulldozer can't clear fire or water, as in Micropolis.
+                // A tile burning, flooded, or radioactive stays so: the bulldozer can't clear fire,
+                // water, or radiation, as in Micropolis.
                 var size = Footprint.SizeOf(center.Use);
                 for (var dy = -1; dy < size - 1; dy++)
                 {
@@ -574,10 +580,11 @@ public sealed class CityBuilder
         return false;
     }
 
-    // Why a fire or a flood on a tile refuses the work, or null when there is neither.
+    // Why a fire, a flood, or radiation on a tile refuses the work, or null when there is none.
     private BuildRefusal? ActiveHazard(int x, int y) =>
         _hazards?.Fires.IsBurning(x, y) == true ? BuildRefusal.OnFire
         : _hazards?.Floods.IsFlooded(x, y) == true ? BuildRefusal.Flooded
+        : _hazards?.Radiation.IsRadioactive(x, y) == true ? BuildRefusal.Radioactive
         : null;
 
     private int ClearingCost(TileState state) =>

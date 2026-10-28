@@ -120,6 +120,12 @@ internal sealed class CitySave
     public ConnectionsSave? Connections { get; set; }
 
     /// <summary>
+    /// The radioactive ground meltdowns have left; a feature of format 2.0, and none for a city
+    /// from before.
+    /// </summary>
+    public RadiationSave? Radiation { get; set; }
+
+    /// <summary>
     /// The scenario being played in the city, if any: its goals, when they are judged, and what is still
     /// to come; from format 1.8. A city that isn't a challenge leaves it out, so its save is as before.
     /// </summary>
@@ -628,6 +634,14 @@ internal sealed class FloodSave
 
     /// <summary>How many more cycles the water spreads for.</summary>
     public required int CyclesLeft { get; set; }
+}
+
+/// <summary>The radioactive ground on the map, as <see cref="RadiationCodec"/> writes it.</summary>
+[System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(SectionCodec.ModelMembers)]
+internal sealed class RadiationSave
+{
+    /// <summary>Each row of the map, a character a tile: '.' for none, and 'r' for radioactive ground.</summary>
+    public required string[] Tiles { get; set; }
 }
 
 /// <summary>One of the city's maps on 2 by 2 tile blocks, such as pollution or crime, and its average.</summary>

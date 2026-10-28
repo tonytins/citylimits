@@ -89,6 +89,11 @@ internal static class SaveParts
         // them carries them through as they were, so they are kept as the ordinances are, and a
         // deal's power and money stop while that game plays.
         new() { Name = "connections", Chunk = "CONN", Ignorable = true, Keepable = true },
+
+        // The radioactive ground a meltdown leaves, left out as floods are: the map holds bare
+        // ground beneath it, so a game that doesn't know it opens the city as if it had decayed. It
+        // can't keep it, since it may build there.
+        new() { Name = "radiation", Chunk = "RADN", Ignorable = true, Keepable = false },
     ];
 
     /// <summary>The parts format 1's list names, each with the version that added it, for a save 0.4 opens.</summary>
