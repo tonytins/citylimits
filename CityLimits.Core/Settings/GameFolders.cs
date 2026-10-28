@@ -6,7 +6,9 @@ namespace CityLimits.Core.Settings;
 /// players expect a game's files. A packaged game, such as an AppImage, runs from a read-only
 /// folder, so nothing is written beside the executable. The exception is a portable copy: when
 /// <c>settings.json</c> already sits beside the executable and that folder can be written to,
-/// everything stays there, as it always has.
+/// everything stays there, as it always has. A Debug build of the game keeps only its settings
+/// beside itself (<see cref="WithDevelopmentSettings"/>), so working on the game never changes the
+/// settings the player's own copy uses.
 /// </summary>
 public sealed record GameFolders
 {
@@ -109,8 +111,27 @@ public sealed record GameFolders
         };
     }
 
-    /// <summary>Works out the folders on this machine.</summary>
-    public static GameFolders Detect()
+    /// <summary>
+    /// The same folders, but with the settings kept in a folder of their own, as a Debug build keeps
+    /// them beside itself: written there, and read from there once they exist, or, the first time,
+    /// from where they would have been read, so a developer's settings come along once.
+    /// </summary>
+    /// <param name="folder">The folder the settings go in.</param>
+    /// <param name="settingsThere">Whether a settings file already sits in it.</param>
+    /// <exception cref="ArgumentException">The folder is empty.</exception>
+    public GameFolders WithDevelopmentSettings(string folder, bool settingsThere)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(folder);
+        var settings = Path.Combine(folder, SettingsFileName);
+        return this with { SettingsFile = settings, SettingsToRead = settingsThere ? settings : SettingsToRead };
+    }
+
+    /// <summary>
+    /// Works out the folders on this machine. A Debug build, asking with <paramref name="development"/>,
+    /// keeps its settings beside itself and everything else where a player's copy keeps it; the
+    /// settings beside it never make it a portable copy.
+    /// </summary>
+    public static GameFolders Detect(bool development = false)
     {
         var executableFolder = AppContext.BaseDirectory;
 
@@ -119,13 +140,15 @@ public sealed record GameFolders
         var configFolder = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData, Environment.SpecialFolderOption.DoNotVerify);
         var documentsFolder = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments, Environment.SpecialFolderOption.DoNotVerify);
 
-        return Resolve(
+        var besideExecutable = File.Exists(Path.Combine(executableFolder, SettingsFileName));
+        var folders = Resolve(
             executableFolder,
-            File.Exists(Path.Combine(executableFolder, SettingsFileName)),
+            besideExecutable && !development,
             CanWriteTo(executableFolder),
             configFolder,
             documentsFolder,
             IsUsable(configFolder) && File.Exists(Path.Combine(configFolder, FolderName, SettingsFileName)));
+        return development ? folders.WithDevelopmentSettings(executableFolder, besideExecutable) : folders;
     }
 
     private static GameFolders Beside(string executableFolder, string? problem) => new()

@@ -15,6 +15,17 @@ internal struct VersionInfo
     public const string Version = $"{ThisAssembly.Git.SemVer.Major}.{ThisAssembly.Git.SemVer.Minor}.{ThisAssembly.Git.SemVer.Patch}";
 
     /// <summary>
+    /// Whether this is a Debug build, which keeps its settings beside itself rather than the
+    /// player's (<see cref="Core.Settings.GameFolders.WithDevelopmentSettings"/>), as Tony Bark asked.
+    /// </summary>
+    public const bool IsDebugBuild =
+#if DEBUG
+        true;
+#else
+        false;
+#endif
+
+    /// <summary>
     /// The name, version, and build number as shown to the user, such as <c>CityLimits 0.1.116 (Build 123456)</c>.
     /// </summary>
     public static string DisplayVersion => $"{Name} {Version} (Build {BuildNumber})";

@@ -247,7 +247,11 @@ call, not yours.
   `sleep 6`, find the window with `xdotool search --name CityLimits`,
   pick a tool with `xdotool key 2`, draw, then
   `import -window root <scratch>/shot.png` and `kill` the game. Killing it
-  skips `SaveSettings`, so the run leaves `settings.json` alone.
+  skips `SaveSettings`, though a change made in the settings window is
+  written at once. A Debug build keeps its settings beside itself, in
+  `CityLimits/bin/Debug/net10.0/settings.json`, reading the player's own
+  only the first time, so a check never changes the player's
+  `~/.config/CityLimits/settings.json` (`GameFolders.WithDevelopmentSettings`).
 - **Hold every press across frames.** Raylib compares input between
   frames, so a press and a release within one frame are never seen: an
   instant `xdotool click` builds nothing, and an instant `xdotool key`

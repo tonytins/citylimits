@@ -1,5 +1,15 @@
 # CityLimits Changelog
 
+## 0.5.109
+
+For developers: a Debug build keeps its settings beside itself, in
+`CityLimits/bin/Debug/net10.0/settings.json`, reading the player's own
+only the first time, so working on the game never changes the settings
+the installed game uses. Cities, mods, and scenarios stay where they
+were. `GameFolders.Detect(development: true)` asks for it, and
+`GameFolders.WithDevelopmentSettings` does it; a Release build and the
+packages are unchanged.
+
 ## 0.5.108
 
 Neighbours' deals are in the game. When a neighbour offers one, the

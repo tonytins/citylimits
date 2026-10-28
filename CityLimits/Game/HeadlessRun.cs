@@ -25,7 +25,7 @@ public sealed class HeadlessRun
     public int Run()
     {
         var map = TileMapGenerator.Generate(_seed, MapSize.DefaultWidth, MapSize.DefaultHeight);
-        var folders = GameFolders.Detect();
+        var folders = GameFolders.Detect(development: VersionInfo.IsDebugBuild);
         if (folders.Problem is not null)
         {
             Logger.Warn("{Problem}", folders.Problem);

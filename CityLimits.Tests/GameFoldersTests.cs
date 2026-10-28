@@ -74,6 +74,21 @@ public class GameFoldersTests
     }
 
     [Fact]
+    public void ADevelopmentBuildKeepsOnlyItsSettingsBesideItselfAndBringsThePlayersAlongOnce()
+    {
+        var player = GameFolders.Resolve(Game, settingsBesideExecutable: false, executableFolderWritable: true, Config, Documents, settingsInConfig: true);
+
+        var first = player.WithDevelopmentSettings(Game, settingsThere: false);
+        var later = player.WithDevelopmentSettings(Game, settingsThere: true);
+
+        Assert.Equal(Path.Combine(Game, "settings.json"), first.SettingsFile);
+        Assert.Equal(player.SettingsFile, first.SettingsToRead);
+        Assert.Equal(first.SettingsFile, later.SettingsToRead);
+        Assert.False(later.IsPortable);
+        Assert.Equal((player.ModsFolder, player.CitiesFolder, player.ScenariosFolder, player.CommonFolder), (later.ModsFolder, later.CitiesFolder, later.ScenariosFolder, later.CommonFolder));
+    }
+
+    [Fact]
     public void TheGamesFolderIsRequired()
     {
         Assert.ThrowsAny<ArgumentException>(() => GameFolders.Resolve(" ", false, false, Config, Documents, false));

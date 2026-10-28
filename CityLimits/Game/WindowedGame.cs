@@ -14,7 +14,7 @@ public static class WindowedGame
     /// </summary>
     public static int Play(int? seed)
     {
-        var folders = GameFolders.Detect();
+        var folders = GameFolders.Detect(development: VersionInfo.IsDebugBuild);
         if (folders.Problem is not null)
         {
             Logger.Warn("{Problem}", folders.Problem);
