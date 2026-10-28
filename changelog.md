@@ -1,5 +1,38 @@
 # CityLimits Changelog
 
+## 0.5.103
+
+Power no longer needs a line beside every street. A zone or building on
+a road has power whenever another one on the same road does. Roads use
+none of a plant's capacity, so plants go further. When a city wants more
+power than its plants make, the buildings nearest the plant along the
+road keep theirs. Lines still reach anything no road does.
+
+Stadiums, seaports, and airports now change the land around them, as
+fire and police stations cover it. A stadium raises the land value
+nearby, and the noise of a seaport or an airport lowers it, the airport's
+furthest. Each needs power to do it.
+
+For modders: definitions are format 2.1. `infrastructure.json` entries
+for `road` and `rail` can set `carriesPower`; turn both off for
+Micropolis' rule. Rail is off in the base game, and an entry may now
+give `carriesPower` without a `price`. Facilities have `influences`, a
+list of `effect` (`landValue`, `crime`, or `pollution`), `strength`, and
+`reach`; `[]` takes the base game's away. 2.0 files still read. See
+[Tuning mods](docs/modding/tuning.md).
+
+For developers and agents: `PowerGrid.Trace` joins road and rail networks
+(`InfrastructureSpec.RoadCarriesPower`, `RailCarriesPower`), walking each
+nearest first and powering each building whole or not at all.
+`FacilityInfluences` works out the facilities' influences from the map
+when land value, pollution, and crime are, so there's no new save state.
+The `docs/schemas/*.v2.1.schema.json` files are new.
+
+The version now counts every commit, not only those that change the game
+project: `GitCommitsRelativeTo` points GitInfo at the repository's root,
+and `GitInfo.txt` stays where it is, so the count carries on from
+0.5.102.
+
 ## 0.5.102
 
 CityLimits now comes for Windows and macOS as well as Linux, each ready

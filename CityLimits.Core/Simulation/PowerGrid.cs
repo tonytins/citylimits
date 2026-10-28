@@ -1,22 +1,30 @@
 namespace CityLimits.Core.Simulation;
 
 /// <summary>
-/// Which tiles have power, worked out as Micropolis does. The scan counts the plants it passes
-/// and gives each zone it reaches the power the last trace left it; then, once a cycle, power is
-/// traced from the plants through everything that carries it, one tile at a time, until the
-/// plants' pooled capacity runs out.
+/// Which tiles have power, worked out as Micropolis does, with CityLimits' own ways to carry it.
+/// The scan counts the plants it passes and gives each zone it reaches the power the last trace
+/// left it; then, once a cycle, power is traced from the plants through everything that carries
+/// it, one tile at a time, until the plants' pooled capacity runs out.
 /// </summary>
 /// <remarks>
-/// As in Micropolis, the capacity is every plant's on the map, connected to the grid or not,
-/// and a plant is always powered itself. The trace is a plain flood fill, so when capacity runs
-/// out the tiles left dark are not exactly the ones Micropolis' walk would leave.
+/// As in Micropolis, lines and every zone and building carry power to what touches them, the
+/// capacity is every plant's on the map, connected to the grid or not, and a plant is always
+/// powered itself. Where the definitions say so (<see cref="InfrastructureSpec"/>), a road or rail
+/// network joins every zone and building along it: once
+/// one of them is powered, so are the rest, without the network itself being powered or using
+/// capacity; the buildings nearest along it are powered first, each whole or not at all. The
+/// trace is otherwise a plain flood fill, so when capacity runs out the tiles left dark are
+/// not exactly the ones Micropolis' walk would leave.
 /// </remarks>
 public sealed class PowerGrid
 {
     private readonly List<(int X, int Y)> _plants = [];
     private bool[] _powered = [];
     private int[] _stack = [];
+    private bool[] _joined = [];
+    private int[] _networkStack = [];
     private int _width;
+    private InfrastructureSpec _carriers = BaseGame.Infrastructure;
 
     /// <summary>The coal plants the scan has passed this cycle.</summary>
     public int CoalPlants { get; private set; }
@@ -120,7 +128,18 @@ public sealed class PowerGrid
             Array.Clear(_powered);
         }
 
+        if (_joined.Length != tiles)
+        {
+            _joined = new bool[tiles];
+            _networkStack = new int[tiles];
+        }
+        else
+        {
+            Array.Clear(_joined);
+        }
+
         _width = map.Width;
+        _carriers = definitions.Infrastructure;
         Capacity = (CoalPlants * definitions.Plant(TileUse.CoalPowerPlant).Capacity)
             + (NuclearPlants * definitions.Plant(TileUse.NuclearPowerPlant).Capacity);
         PoweredTiles = 0;
@@ -155,18 +174,111 @@ public sealed class PowerGrid
             foreach (var (side, dx, dy) in Sides.All)
             {
                 var (nextX, nextY) = (x + dx, y + dy);
-                if (!map.Contains(nextX, nextY) || _powered[(nextY * _width) + nextX])
+                if (!map.Contains(nextX, nextY))
                 {
                     continue;
                 }
 
-                if (PowerLines.RunsToward(state, side) && PowerLines.RunsToward(map.StateAt(nextX, nextY), Sides.Opposite(side))
-                    && !TryPower((nextY * _width) + nextX, ref depth))
+                var next = (nextY * _width) + nextX;
+                var nextState = map.StateAt(nextX, nextY);
+
+                // A zone or building on a road or rail joins every other one along it.
+                if (state.HasFootprint && IsNetwork(nextState) && !_joined[next] && !JoinNetwork(map, next, ref depth))
+                {
+                    return;
+                }
+
+                if (!_powered[next] && PowerLines.RunsToward(state, side) && PowerLines.RunsToward(nextState, Sides.Opposite(side)) && !TryPower(next, ref depth))
                 {
                     return;
                 }
             }
         }
+    }
+
+    private bool IsNetwork(TileState state) =>
+        (_carriers.RoadCarriesPower && state.HasRoad) || (_carriers.RailCarriesPower && state.IsRail);
+
+    private bool Joins(TileState from, TileState to, RoadConnections side) =>
+        (_carriers.RoadCarriesPower && RoadNetwork.RunsToward(from, side) && RoadNetwork.RunsToward(to, Sides.Opposite(side)))
+        || (_carriers.RailCarriesPower && Rails.RunsToward(from, side) && Rails.RunsToward(to, Sides.Opposite(side)));
+
+    // Walks the road or rail network from one of its tiles, nearest first, each tile once, and
+    // powers each zone and building beside it whole, in the order the walk reaches them, so a
+    // plant short of capacity lights the buildings nearest it along the road, not a strip of
+    // each. The trace then carries on from them. The network itself isn't powered and uses no
+    // capacity. Returns false when the capacity runs out.
+    private bool JoinNetwork(TileMap map, int start, ref int depth)
+    {
+        var (head, tail) = (0, 0);
+        _joined[start] = true;
+        _networkStack[tail++] = start;
+        while (head < tail)
+        {
+            var index = _networkStack[head++];
+            var (x, y) = (index % _width, index / _width);
+            var state = map.StateAt(x, y);
+            foreach (var (side, dx, dy) in Sides.All)
+            {
+                var (nextX, nextY) = (x + dx, y + dy);
+                if (!map.Contains(nextX, nextY))
+                {
+                    continue;
+                }
+
+                var next = (nextY * _width) + nextX;
+                var nextState = map.StateAt(nextX, nextY);
+                if (nextState.HasFootprint)
+                {
+                    if (!_powered[next] && !PowerWhole(map, nextX, nextY, nextState, ref depth))
+                    {
+                        return false;
+                    }
+                }
+                else if (!_joined[next] && IsNetwork(nextState) && Joins(state, nextState, side))
+                {
+                    _joined[next] = true;
+                    _networkStack[tail++] = next;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    // Powers every tile of the building a tile is part of, or, when the capacity left can't
+    // power them all, none of them.
+    private bool PowerWhole(TileMap map, int x, int y, TileState part, ref int depth)
+    {
+        var size = Footprint.SizeOf(part.Use);
+        var (left, top) = (x - (part.ZonePart % size), y - (part.ZonePart / size));
+        var needed = 0;
+        for (var row = top; row < top + size; row++)
+        {
+            for (var column = left; column < left + size; column++)
+            {
+                needed += map.Contains(column, row) && !_powered[(row * _width) + column] ? 1 : 0;
+            }
+        }
+
+        if (PoweredTiles + needed > Capacity)
+        {
+            IsBrownedOut = true;
+            return false;
+        }
+
+        for (var row = top; row < top + size; row++)
+        {
+            for (var column = left; column < left + size; column++)
+            {
+                if (map.Contains(column, row))
+                {
+                    TryPower((row * _width) + column, ref depth);
+                }
+            }
+        }
+
+        return true;
     }
 
     private bool TryPower(int index, ref int depth)

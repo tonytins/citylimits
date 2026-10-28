@@ -104,27 +104,35 @@ public sealed class ServiceCoverage
     private static int Scaled(int strength, ServiceSpec spec) =>
         spec.Strength == ServiceSpec.MicropolisStrength ? strength : (int)((long)strength * spec.Strength / ServiceSpec.MicropolisStrength);
 
-    // Each pass gives a block half of itself plus an eighth of each of its four neighbours, as
-    // whole numbers, as Micropolis does; the map's edge adds nothing.
     private void Spread(int[] raw, int[] coverage, int passes)
     {
         Array.Copy(raw, coverage, raw.Length);
+        Smooth(coverage, _scratch, _width, _height, passes);
+    }
+
+    /// <summary>
+    /// Smooths a map of blocks in place, as many times as given. Each pass gives a block half of
+    /// itself plus an eighth of each of its four neighbours, as whole numbers, as Micropolis does;
+    /// the map's edge adds nothing. The scratch map is as big as the map.
+    /// </summary>
+    internal static void Smooth(int[] map, int[] scratch, int width, int height, int passes)
+    {
         for (var pass = 0; pass < passes; pass++)
         {
-            for (var y = 0; y < _height; y++)
+            for (var y = 0; y < height; y++)
             {
-                for (var x = 0; x < _width; x++)
+                for (var x = 0; x < width; x++)
                 {
                     var edge = 0;
-                    edge += x > 0 ? coverage[(y * _width) + x - 1] : 0;
-                    edge += x + 1 < _width ? coverage[(y * _width) + x + 1] : 0;
-                    edge += y > 0 ? coverage[((y - 1) * _width) + x] : 0;
-                    edge += y + 1 < _height ? coverage[((y + 1) * _width) + x] : 0;
-                    _scratch[(y * _width) + x] = ((edge / 4) + coverage[(y * _width) + x]) / 2;
+                    edge += x > 0 ? map[(y * width) + x - 1] : 0;
+                    edge += x + 1 < width ? map[(y * width) + x + 1] : 0;
+                    edge += y > 0 ? map[((y - 1) * width) + x] : 0;
+                    edge += y + 1 < height ? map[((y + 1) * width) + x] : 0;
+                    scratch[(y * width) + x] = ((edge / 4) + map[(y * width) + x]) / 2;
                 }
             }
 
-            Array.Copy(_scratch, coverage, coverage.Length);
+            Array.Copy(scratch, map, map.Length);
         }
     }
 

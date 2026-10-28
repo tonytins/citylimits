@@ -9,7 +9,7 @@ namespace CityLimits.Tests;
 
 public class SpecTests
 {
-    private const string Manifest = """{ "format": "2.0", "id": "m", "name": "M" }""";
+    private const string Manifest = """{ "format": "2.1", "id": "m", "name": "M" }""";
 
     private static CitySimulation Flat(CityDefinitions definitions, int width = 32, int height = 32) =>
         new(TileMap.FromTerrain(width, height, new TileKind[width * height]), 1, definitions: definitions);
@@ -139,6 +139,59 @@ public class SpecTests
     {
         Assert.False(DefinitionLoader.TryParseMod("m", Manifest, [new SpecFile(name, $$"""{ "format": "{{format}}", "plants": [] }""")], out _, out var error));
         Assert.Equal(expected, error);
+    }
+
+    [Theory]
+    [InlineData("""{ "format": "2.0", "infrastructure": [ { "id": "road", "carriesPower": false } ] }""", "infrastructure.json: infrastructure[0].carriesPower: is from format 2.1; this file is 2.0.")]
+    [InlineData("""{ "format": "2.1", "infrastructure": [ { "id": "bridge", "carriesPower": true } ] }""", "infrastructure.json: infrastructure[0].carriesPower: only road and rail may carry power this way, not bridge.")]
+    [InlineData("""{ "format": "2.1", "infrastructure": [ { "id": "park", "carriesPower": true } ] }""", "infrastructure.json: infrastructure[0].carriesPower: only road and rail may carry power this way, not park.")]
+    [InlineData("""{ "format": "2.1", "infrastructure": [ { "id": "road" } ] }""", "infrastructure.json: infrastructure[0]: needs a price or carriesPower.")]
+    [InlineData("""{ "format": "2.1", "infrastructure": [ { "id": "road", "price": 5 }, { "id": "road", "carriesPower": true } ] }""", "infrastructure.json: infrastructure[1].id: 'road' is defined twice.")]
+    public void WhatCarriesPowerIsCheckedLikeEverythingElse(string json, string expected)
+    {
+        Assert.False(DefinitionLoader.TryParseMod("m", Manifest, [new SpecFile("infrastructure.json", json)], out _, out var error));
+        Assert.Equal(expected, error);
+    }
+
+    [Theory]
+    [InlineData("2.0", """[ { "effect": "landValue", "strength": 5, "reach": 1 } ]""", "facilities.json: facilities[0].influences: is from format 2.1; this file is 2.0.")]
+    [InlineData("2.1", """[ { "effect": "noise", "strength": 5, "reach": 1 } ]""", "facilities.json: facilities[0].influences[0].effect: 'noise' is not one of landValue, crime, pollution.")]
+    [InlineData("2.1", """[ { "effect": "crime", "strength": 5, "reach": 1 }, { "effect": "crime", "strength": 1, "reach": 1 } ]""", "facilities.json: facilities[0].influences[1].effect: 'crime' is given twice.")]
+    [InlineData("2.1", """[ { "effect": "crime", "strength": 300, "reach": 1 } ]""", "facilities.json: facilities[0].influences[0].strength: needs a number from -255 to 255, not 300.")]
+    [InlineData("2.1", """[ { "effect": "crime", "strength": 5 } ]""", "facilities.json: facilities[0].influences[0].reach: is required.")]
+    public void InfluencesAreCheckedLikeEverythingElse(string format, string influences, string expected)
+    {
+        var json = $$"""{ "format": "{{format}}", "facilities": [ { "id": "stadium", "influences": {{influences}} } ] }""";
+
+        Assert.False(DefinitionLoader.TryParseMod("m", Manifest, [new SpecFile("facilities.json", json)], out _, out var error));
+        Assert.Equal(expected, error);
+    }
+
+    [Fact]
+    public void TheBaseGamesFacilitiesHaveTheirOwnInfluencesAndAModCanReplaceOrClearThem()
+    {
+        Assert.Equal([new InfluenceSpec(InfluenceEffect.LandValue, 20, 2)], CityDefinitions.Base.Facility(TileUse.Stadium).Influences);
+        Assert.Equal([new InfluenceSpec(InfluenceEffect.LandValue, -20, 2)], CityDefinitions.Base.Facility(TileUse.Seaport).Influences);
+        Assert.Equal([new InfluenceSpec(InfluenceEffect.LandValue, -30, 3)], CityDefinitions.Base.Facility(TileUse.Airport).Influences);
+
+        var definitions = WithMod(("facilities.json", """{ "format": "2.1", "facilities": [ { "id": "stadium", "influences": [ { "effect": "crime", "strength": -10, "reach": 1 } ] }, { "id": "airport", "influences": [] } ] }"""));
+
+        Assert.Equal([new InfluenceSpec(InfluenceEffect.Crime, -10, 1)], definitions.Facility(TileUse.Stadium).Influences);
+        Assert.Empty(definitions.Facility(TileUse.Airport).Influences);
+        Assert.Equal(CityDefinitions.Base.Facility(TileUse.Seaport).Influences, definitions.Facility(TileUse.Seaport).Influences);
+    }
+
+    [Fact]
+    public void TheBaseGameCarriesPowerAlongRoadsButNotRail()
+    {
+        Assert.True(CityDefinitions.Base.Infrastructure.RoadCarriesPower);
+        Assert.False(CityDefinitions.Base.Infrastructure.RailCarriesPower);
+
+        var definitions = WithMod(("infrastructure.json", """{ "format": "2.1", "infrastructure": [ { "id": "rail", "carriesPower": true }, { "id": "road", "carriesPower": false } ] }"""));
+
+        Assert.True(definitions.Infrastructure.RailCarriesPower);
+        Assert.False(definitions.Infrastructure.RoadCarriesPower);
+        Assert.Equal(CityDefinitions.Base.Infrastructure.Road, definitions.Infrastructure.Road);
     }
 
     [Fact]

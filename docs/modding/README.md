@@ -61,8 +61,8 @@ This mod makes commercial zones cost $40 and calls them markets.
 
    ```json
    {
-     "$schema": "https://raw.githubusercontent.com/tonytins/citylimits/main/docs/schemas/mod.v2.0.schema.json",
-     "format": "2.0",
+     "$schema": "https://raw.githubusercontent.com/tonytins/citylimits/main/docs/schemas/mod.v2.1.schema.json",
+     "format": "2.1",
      "id": "cheap-commerce",
      "name": "Cheap commerce",
      "version": "1.0",
@@ -74,8 +74,8 @@ This mod makes commercial zones cost $40 and calls them markets.
 
    ```json
    {
-     "$schema": "https://raw.githubusercontent.com/tonytins/citylimits/main/docs/schemas/zones.v2.0.schema.json",
-     "format": "2.0",
+     "$schema": "https://raw.githubusercontent.com/tonytins/citylimits/main/docs/schemas/zones.v2.1.schema.json",
+     "format": "2.1",
      "zones": [
        { "id": "commercial", "name": "Market", "price": 40 }
      ]
@@ -95,7 +95,7 @@ Every mod needs one. It names the mod; the changes go in the other files.
 | Field | Required | Meaning |
 |---|---|---|
 | `$schema` | no | Where the file's description is, so an editor such as VS Code can check your file and suggest what can go in it. The game ignores it |
-| `format` | yes | The version of the mod format, `"2.0"`. Mods written for CityLimits 0.4, with `"1.0"` or `1`, still work |
+| `format` | yes | The version of the mod format, `"2.1"`. Mods written with `"2.0"`, and for CityLimits 0.4 with `"1.0"` or `1`, still work |
 | `id` | yes | The mod's id: lowercase letters, digits, and single hyphens, such as `cheap-commerce`. The mod's folder must have the same name |
 | `name` | yes | The mod's name, 1 to 80 characters |
 | `version` | no | Your own version number for the mod, up to 32 characters |

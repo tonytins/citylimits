@@ -124,11 +124,14 @@ public sealed class CityMaps
     /// the pollution, and the crime it reads are as of the last time each was worked out; a wooded
     /// park counts as trees, not as something built, and a fountain counts as built. Pollution is
     /// what the block's industry, coal plants, busy roads, and fires give off, smoothed twice; a
-    /// burning tile is rubble, not something built.
+    /// burning tile is rubble, not something built. The facilities' influences, when given, are
+    /// CityLimits' own: they add to the land value before it is held to its range, and to the
+    /// pollution once it is smoothed, held to 0 to <see cref="MostPollution"/>.
     /// </summary>
     /// <param name="traffic">The traffic each road shows, which pollutes.</param>
     /// <param name="fires">The fires burning, which pollute.</param>
-    public void UpdateLandValue(TrafficMap traffic, Fires fires)
+    /// <param name="influences">The facilities' influences on land value and pollution, worked out this cycle; none when null.</param>
+    public void UpdateLandValue(TrafficMap traffic, Fires fires, FacilityInfluences? influences = null)
     {
         ArgumentNullException.ThrowIfNull(traffic);
         ArgumentNullException.ThrowIfNull(fires);
@@ -181,6 +184,7 @@ public sealed class CityMaps
                         value -= HighCrimeLandValue;
                     }
 
+                    value += influences?.At(InfluenceEffect.LandValue, blockX * 2, blockY * 2) ?? 0;
                     value = Math.Clamp(value, 1, MaxLandValue);
                     total += value;
                     count++;
@@ -194,6 +198,15 @@ public sealed class CityMaps
 
         Smooth(_pollutionRaw, _pollutionScratch, _halfWidth, _halfHeight);
         Smooth(_pollutionScratch, _pollution, _halfWidth, _halfHeight);
+        if (influences is not null)
+        {
+            for (var block = 0; block < _pollution.Length; block++)
+            {
+                var (blockX, blockY) = (block % _halfWidth, block / _halfWidth);
+                _pollution[block] = Math.Clamp(_pollution[block] + influences.At(InfluenceEffect.Pollution, blockX * 2, blockY * 2), 0, MostPollution);
+            }
+        }
+
         PollutionAverage = AverageOfNonZero(_pollution);
 
         SmoothTerrain();
@@ -203,9 +216,11 @@ public sealed class CityMaps
     /// Works crime out again, as Micropolis does once the police coverage has spread: for each block
     /// with land value, 128 less the land value, plus the population density, no more than 300, less
     /// the police coverage there, from 0 to <see cref="MostCrime"/>. A block with no land value has none.
+    /// The facilities' influences on crime, when given, are added with the police coverage's.
     /// </summary>
     /// <param name="services">The police coverage, spread this cycle.</param>
-    public void UpdateCrime(ServiceCoverage services)
+    /// <param name="influences">The facilities' influences on crime, worked out this cycle; none when null.</param>
+    public void UpdateCrime(ServiceCoverage services, FacilityInfluences? influences = null)
     {
         ArgumentNullException.ThrowIfNull(services);
 
@@ -225,6 +240,7 @@ public sealed class CityMaps
 
                 var crime = Math.Min(CrimeBase - landValue + _density[block], MostCrimeBeforePolice);
                 crime -= services.PoliceCoverageAt(blockX * 2, blockY * 2);
+                crime += influences?.At(InfluenceEffect.Crime, blockX * 2, blockY * 2) ?? 0;
                 crime = Math.Clamp(crime, 0, MostCrime);
                 _crime[block] = crime;
                 total += crime;

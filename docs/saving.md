@@ -450,7 +450,7 @@ doesn't read inside, and writes it back exactly as it found it, in the
 same format it came in (a binary chunk can't become JSON without being
 understood). `connections`, to neighbouring cities, is reserved in 0.5.100
 (`SaveParts.Reserved`, the `CONN` chunk), so a city that has them passes
-through it intact until Senri's N2 gives them their contents.
+through it intact until Senri's N4 gives them their contents.
 
 A 1.x save lists its parts by the version that added them (`"parts"`, the
 `PART` chunk), each with two flags, ignorable and keepable, for a game

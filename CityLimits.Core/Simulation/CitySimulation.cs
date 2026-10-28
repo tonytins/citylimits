@@ -144,6 +144,7 @@ public sealed class CitySimulation
         Builder = new CityBuilder(map, Treasury, Roads, Definitions, Hazards);
         Maps = new CityMaps(map, Definitions);
         Services = new ServiceCoverage(map, Definitions);
+        Influences = new FacilityInfluences(map, Definitions);
         Traffic = new TrafficMap(map);
         Trips = new TripPlanner(Traffic);
         Budget = new CityBudget(Definitions.Service(TileUse.FireStation).Upkeep, Definitions.Service(TileUse.PoliceStation).Upkeep);
@@ -302,6 +303,9 @@ public sealed class CitySimulation
     /// <summary>How well fire and police stations cover the city, and how many there are.</summary>
     public ServiceCoverage Services { get; }
 
+    /// <summary>What the stadiums, seaports, and airports do to the land value, crime, and pollution around them.</summary>
+    public FacilityInfluences Influences { get; }
+
     /// <summary>The city's stadiums, seaports, and airports, and the demand held back for want of one.</summary>
     public Facilities Facilities { get; } = new();
 
@@ -390,12 +394,15 @@ public sealed class CitySimulation
         }
         else if (phase == LandValuePhase)
         {
-            Maps.UpdateLandValue(Traffic, Fires);
+            Influences.Update(InfluenceEffect.LandValue);
+            Influences.Update(InfluenceEffect.Pollution);
+            Maps.UpdateLandValue(Traffic, Fires, Influences);
         }
         else if (phase == PolicePhase)
         {
             Services.SpreadPolice();
-            Maps.UpdateCrime(Services);
+            Influences.Update(InfluenceEffect.Crime);
+            Maps.UpdateCrime(Services, Influences);
         }
         else if (phase == FirePhase)
         {

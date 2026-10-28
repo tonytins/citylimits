@@ -25,7 +25,7 @@ public static partial class DefinitionLoader
     /// plants' file <c>power.json</c>. A 1.0 file of the three kinds format 1 had reads too; one
     /// written as a whole number, such as <c>1</c>, is 1.0.
     /// </summary>
-    public static readonly FormatVersion Format = new(2, 0);
+    public static readonly FormatVersion Format = new(2, 1);
 
     /// <summary>Format 1's version, which a 1.10 save's definitions are written in for 0.4.</summary>
     public static readonly FormatVersion Format1 = new(1, 0);
@@ -88,6 +88,28 @@ public static partial class DefinitionLoader
     /// <summary>The infrastructure's prices by their ids, in the order the ids are listed.</summary>
     internal static IEnumerable<(string Id, int Price)> InfrastructurePrices(InfrastructureSpec prices) =>
         InfrastructureIds.Zip([prices.Road, prices.Bridge, prices.Rail, prices.Tunnel, prices.PowerLine, prices.UnderwaterPowerLine, prices.Park, prices.Bulldozer, prices.Clearing]);
+
+    /// <summary>The infrastructure that may say whether it carries power, and whether it does.</summary>
+    internal static IEnumerable<(string Id, bool CarriesPower)> PowerCarriers(InfrastructureSpec infrastructure) =>
+        [("road", infrastructure.RoadCarriesPower), ("rail", infrastructure.RailCarriesPower)];
+
+    // From 2.1, facilities have influences, as roads and rail say whether they carry power.
+    private static readonly FormatVersion InfluencesSince = new(2, 1);
+
+    /// <summary>The most an influence's strength may be, either way: the largest of the maps' ranges.</summary>
+    public const int MaxInfluence = 255;
+
+    private static readonly Dictionary<string, InfluenceEffect> InfluenceEffects = new(StringComparer.Ordinal)
+    {
+        ["landValue"] = InfluenceEffect.LandValue,
+        ["crime"] = InfluenceEffect.Crime,
+        ["pollution"] = InfluenceEffect.Pollution,
+    };
+
+    /// <summary>An influence's effect by the name the spec files give it.</summary>
+    internal static string EffectName(InfluenceEffect effect) => InfluenceEffects.First(pair => pair.Value == effect).Key;
+
+    private static readonly FormatVersion CarriesPowerSince = new(2, 1);
 
     // The documents' code is generated at build time, so reading them needs no reflection and
     // survives trimming.
@@ -434,9 +456,42 @@ public static partial class DefinitionLoader
                 entry.Name is null ? null : Name(entry.Name, $"{at}.name"),
                 entry.Price is null ? null : Price(entry.Price.Value, $"{at}.price"),
                 entry.DemandCap is null ? null : InRange(entry.DemandCap.Value, 0, MaxPopulation, $"{at}.demandCap"),
-                entry.Pollution is null ? null : InRange(entry.Pollution.Value, 0, Simulation.CityMaps.MostPollution, $"{at}.pollution"));
+                entry.Pollution is null ? null : InRange(entry.Pollution.Value, 0, Simulation.CityMaps.MostPollution, $"{at}.pollution"),
+                entry.Influences is null ? null : Influences(entry.Influences, document.Format!.Value, $"{at}.influences"));
             facilities[use] = facilities.TryGetValue(use, out var before) ? before.Then(patch) : patch;
         }
+    }
+
+    // A facility's influences, which replace its own whole; an empty list clears them.
+    private static List<InfluenceSpec> Influences(List<InfluenceDocument?> entries, FormatVersion format, string at)
+    {
+        if (format < InfluencesSince)
+        {
+            throw new InvalidDefinitions($"{at}: is from format {InfluencesSince}; this file is {format}.");
+        }
+
+        var influences = new List<InfluenceSpec>();
+        for (var i = 0; i < entries.Count; i++)
+        {
+            var where = $"{at}[{i}]";
+            var entry = entries[i] ?? throw new InvalidDefinitions($"{where}: needs an influence, not null.");
+            var name = entry.Effect ?? throw new InvalidDefinitions($"{where}.effect: is required.");
+            if (!InfluenceEffects.TryGetValue(name, out var effect))
+            {
+                throw new InvalidDefinitions($"{where}.effect: '{name}' is not one of {string.Join(", ", InfluenceEffects.Keys)}.");
+            }
+
+            if (influences.Any(influence => influence.Effect == effect))
+            {
+                throw new InvalidDefinitions($"{where}.effect: '{name}' is given twice.");
+            }
+
+            var strength = InRange(entry.Strength ?? throw new InvalidDefinitions($"{where}.strength: is required."), -MaxInfluence, MaxInfluence, $"{where}.strength");
+            var reach = InRange(entry.Reach ?? throw new InvalidDefinitions($"{where}.reach: is required."), 0, MaxReach, $"{where}.reach");
+            influences.Add(new InfluenceSpec(effect, strength, reach));
+        }
+
+        return influences;
     }
 
     private static InfrastructurePatch ReadInfrastructure(SpecFile file, InfrastructurePatch? before)
@@ -444,6 +499,8 @@ public static partial class DefinitionLoader
         var document = Document<InfrastructureDocument>(file);
         CheckFormat(document.Format, $"{file.Name}: format", oldest: Format, newest: Format);
         var prices = new Dictionary<string, int>(StringComparer.Ordinal);
+        var carriers = new Dictionary<string, bool>(StringComparer.Ordinal);
+        var seen = new HashSet<string>(StringComparer.Ordinal);
         var entries = document.Infrastructure ?? [];
         for (var i = 0; i < entries.Count; i++)
         {
@@ -455,14 +512,40 @@ public static partial class DefinitionLoader
                 throw new InvalidDefinitions($"{at}.id: '{id}' is not one of {string.Join(", ", InfrastructureIds)}.");
             }
 
-            if (!prices.TryAdd(id, Price(entry.Price ?? throw new InvalidDefinitions($"{at}.price: is required."), $"{at}.price")))
+            if (!seen.Add(id))
             {
                 throw new InvalidDefinitions($"{at}.id: '{id}' is defined twice.");
+            }
+
+            if (entry.Price is null && entry.CarriesPower is null)
+            {
+                throw new InvalidDefinitions($"{at}: needs a price{(id is "road" or "rail" ? " or carriesPower" : string.Empty)}.");
+            }
+
+            if (entry.Price is { } price)
+            {
+                prices[id] = Price(price, $"{at}.price");
+            }
+
+            if (entry.CarriesPower is { } carries)
+            {
+                if (document.Format!.Value < CarriesPowerSince)
+                {
+                    throw new InvalidDefinitions($"{at}.carriesPower: is from format {CarriesPowerSince}; this file is {document.Format}.");
+                }
+
+                if (id is not ("road" or "rail"))
+                {
+                    throw new InvalidDefinitions($"{at}.carriesPower: only road and rail may carry power this way, not {id}.");
+                }
+
+                carriers[id] = carries;
             }
         }
 
         int? Of(string id) => prices.TryGetValue(id, out var price) ? price : null;
-        var patch = new InfrastructurePatch(Of("road"), Of("bridge"), Of("rail"), Of("tunnel"), Of("powerLine"), Of("underwaterPowerLine"), Of("park"), Of("bulldozer"), Of("clearing"));
+        bool? Carries(string id) => carriers.TryGetValue(id, out var carries) ? carries : null;
+        var patch = new InfrastructurePatch(Of("road"), Of("bridge"), Of("rail"), Of("tunnel"), Of("powerLine"), Of("underwaterPowerLine"), Of("park"), Of("bulldozer"), Of("clearing"), Carries("road"), Carries("rail"));
         return before?.Then(patch) ?? patch;
     }
 
@@ -723,6 +806,17 @@ public static partial class DefinitionLoader
         public int? DemandCap { get; set; }
 
         public int? Pollution { get; set; }
+
+        public List<InfluenceDocument?>? Influences { get; set; }
+    }
+
+    private sealed class InfluenceDocument
+    {
+        public string? Effect { get; set; }
+
+        public int? Strength { get; set; }
+
+        public int? Reach { get; set; }
     }
 
     private sealed class InfrastructureDocument
@@ -740,6 +834,8 @@ public static partial class DefinitionLoader
         public string? Id { get; set; }
 
         public int? Price { get; set; }
+
+        public bool? CarriesPower { get; set; }
     }
 
     private sealed class EconomyDocument
@@ -874,10 +970,10 @@ public sealed record ServicePatch(string? Name, int? Price, int? Upkeep, int? St
 }
 
 /// <summary>What a mod changes in one facility's spec; a field left null keeps the value it had.</summary>
-public sealed record FacilityPatch(string? Name, int? Price, int? DemandCap, int? Pollution)
+public sealed record FacilityPatch(string? Name, int? Price, int? DemandCap, int? Pollution, IReadOnlyList<InfluenceSpec>? Influences = null)
 {
     /// <summary>This change, then another on top of it.</summary>
-    public FacilityPatch Then(FacilityPatch later) => new(later.Name ?? Name, later.Price ?? Price, later.DemandCap ?? DemandCap, later.Pollution ?? Pollution);
+    public FacilityPatch Then(FacilityPatch later) => new(later.Name ?? Name, later.Price ?? Price, later.DemandCap ?? DemandCap, later.Pollution ?? Pollution, later.Influences ?? Influences);
 
     /// <summary>The facility's spec with this mod's changes.</summary>
     public FacilitySpec ApplyTo(FacilitySpec facility) => facility with
@@ -886,21 +982,35 @@ public sealed record FacilityPatch(string? Name, int? Price, int? DemandCap, int
         Price = Price ?? facility.Price,
         DemandCap = DemandCap ?? facility.DemandCap,
         Pollution = Pollution ?? facility.Pollution,
+        Influences = Influences ?? facility.Influences,
     };
 }
 
-/// <summary>What a mod changes in the infrastructure's prices; a price left null keeps the one it had.</summary>
-public sealed record InfrastructurePatch(int? Road, int? Bridge, int? Rail, int? Tunnel, int? PowerLine, int? UnderwaterPowerLine, int? Park, int? Bulldozer, int? Clearing)
+/// <summary>What a mod changes in the infrastructure: its prices, and what carries power; a field left null keeps what it had.</summary>
+public sealed record InfrastructurePatch(
+    int? Road,
+    int? Bridge,
+    int? Rail,
+    int? Tunnel,
+    int? PowerLine,
+    int? UnderwaterPowerLine,
+    int? Park,
+    int? Bulldozer,
+    int? Clearing,
+    bool? RoadCarriesPower = null,
+    bool? RailCarriesPower = null)
 {
     /// <summary>This change, then another on top of it.</summary>
     public InfrastructurePatch Then(InfrastructurePatch later) => new(
         later.Road ?? Road, later.Bridge ?? Bridge, later.Rail ?? Rail, later.Tunnel ?? Tunnel, later.PowerLine ?? PowerLine,
-        later.UnderwaterPowerLine ?? UnderwaterPowerLine, later.Park ?? Park, later.Bulldozer ?? Bulldozer, later.Clearing ?? Clearing);
+        later.UnderwaterPowerLine ?? UnderwaterPowerLine, later.Park ?? Park, later.Bulldozer ?? Bulldozer, later.Clearing ?? Clearing,
+        later.RoadCarriesPower ?? RoadCarriesPower, later.RailCarriesPower ?? RailCarriesPower);
 
-    /// <summary>The prices with this mod's changes.</summary>
+    /// <summary>The infrastructure with this mod's changes.</summary>
     public InfrastructureSpec ApplyTo(InfrastructureSpec prices) => new(
         Road ?? prices.Road, Bridge ?? prices.Bridge, Rail ?? prices.Rail, Tunnel ?? prices.Tunnel, PowerLine ?? prices.PowerLine,
-        UnderwaterPowerLine ?? prices.UnderwaterPowerLine, Park ?? prices.Park, Bulldozer ?? prices.Bulldozer, Clearing ?? prices.Clearing);
+        UnderwaterPowerLine ?? prices.UnderwaterPowerLine, Park ?? prices.Park, Bulldozer ?? prices.Bulldozer, Clearing ?? prices.Clearing,
+        RoadCarriesPower ?? prices.RoadCarriesPower, RailCarriesPower ?? prices.RailCarriesPower);
 }
 
 /// <summary>What a mod changes in what a new city starts with; a field left null keeps the value it had.</summary>

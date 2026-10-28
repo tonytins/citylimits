@@ -12,13 +12,15 @@ public static class BaseGame
     /// <summary>The base game's stadium, seaport, and airport: Micropolis' prices, demand caps, and pollution.</summary>
     public static readonly IReadOnlyList<FacilitySpec> Facilities =
     [
-        // Seaports and airports pollute as a coal plant does, as in Micropolis.
-        new("stadium", TileUse.Stadium, "Stadium", TileCosts.Stadium, 500, 0),
-        new("seaport", TileUse.Seaport, "Seaport", TileCosts.Seaport, 70, 100),
-        new("airport", TileUse.Airport, "Airport", TileCosts.Airport, 100, 100),
+        // Seaports and airports pollute as a coal plant does, as in Micropolis. Their influences
+        // are CityLimits' own, as Tony Bark chose: a stadium lifts the land around it, and a
+        // seaport's and an airport's noise lowers it.
+        new("stadium", TileUse.Stadium, "Stadium", TileCosts.Stadium, 500, 0, [new(InfluenceEffect.LandValue, 20, 2)]),
+        new("seaport", TileUse.Seaport, "Seaport", TileCosts.Seaport, 70, 100, [new(InfluenceEffect.LandValue, -20, 2)]),
+        new("airport", TileUse.Airport, "Airport", TileCosts.Airport, 100, 100, [new(InfluenceEffect.LandValue, -30, 3)]),
     ];
 
-    /// <summary>The base game's infrastructure prices: Micropolis'.</summary>
+    /// <summary>The base game's infrastructure: Micropolis' prices, and power along roads.</summary>
     public static readonly InfrastructureSpec Infrastructure = new(
         Road: TileCosts.Road,
         Bridge: TileCosts.Bridge,
@@ -28,7 +30,12 @@ public static class BaseGame
         UnderwaterPowerLine: TileCosts.UnderwaterPowerLine,
         Park: TileCosts.Park,
         Bulldozer: TileCosts.Bulldoze,
-        Clearing: TileCosts.AutoClear);
+        Clearing: TileCosts.AutoClear,
+
+        // CityLimits' own: power reaches the buildings along a road without a line beside every
+        // street, as Tony Bark chose; Micropolis needs lines.
+        RoadCarriesPower: true,
+        RailCarriesPower: false);
 
     /// <summary>What a new city starts with in the base game: Micropolis' $20,000 and 7% tax.</summary>
     public static readonly EconomySpec Economy = new(Treasury.StartingFunds, CityBudget.DefaultTaxRate);

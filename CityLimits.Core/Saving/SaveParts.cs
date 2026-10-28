@@ -83,7 +83,7 @@ internal static class SaveParts
     /// <summary>
     /// Features this version knows by name and carries through as they are, without reading them,
     /// until a later version gives them their contents: connections to neighbouring cities, which
-    /// Senri's N2 fills. A save that holds one writes it back unchanged; one that doesn't, leaves it out.
+    /// Senri's N4 fills. A save that holds one writes it back unchanged; one that doesn't, leaves it out.
     /// </summary>
     public static readonly PartSave[] Reserved =
     [

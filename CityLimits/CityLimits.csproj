@@ -12,10 +12,12 @@
     <!-- The Windows executable's icon; other platforms' packages carry their own (packaging/). -->
     <ApplicationIcon>..\icon.ico</ApplicationIcon>
     <!-- The version comes from GitInfo.txt alone. GitInfo would otherwise take it from a release tag,
-         such as v0.3.106, or a branch named for a version, ahead of the file, and count every commit
-         since rather than only the game project's. -->
+         such as v0.3.106, or a branch named for a version, ahead of the file, and count from there. -->
     <GitIgnoreTagVersion>true</GitIgnoreTagVersion>
     <GitIgnoreBranchVersion>true</GitIgnoreBranchVersion>
+    <!-- Every commit counts, whichever project it changes, as Tony Bark chose for 0.5.103; GitInfo
+         would otherwise count only those that touch this folder, where GitInfo.txt is. -->
+    <GitCommitsRelativeTo>$(MSBuildThisFileDirectory)..</GitCommitsRelativeTo>
   </PropertyGroup>
 
   <ItemGroup>

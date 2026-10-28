@@ -113,9 +113,24 @@ public static class BaseSpecFiles
                 ["price"] = facility.Price,
                 ["demandCap"] = facility.DemandCap,
                 ["pollution"] = facility.Pollution,
+                ["influences"] = new JsonArray(facility.Influences.Select(influence => (JsonNode)new JsonObject
+                {
+                    ["effect"] = DefinitionLoader.EffectName(influence.Effect),
+                    ["strength"] = influence.Strength,
+                    ["reach"] = influence.Reach,
+                }).ToArray()),
             })),
             ListFile("infrastructure", "infrastructure", DefinitionLoader.InfrastructurePrices(definitions.Infrastructure)
-                .Select(pair => new JsonObject { ["id"] = pair.Id, ["price"] = pair.Price })),
+                .Select(pair =>
+                {
+                    var entry = new JsonObject { ["id"] = pair.Id, ["price"] = pair.Price };
+                    foreach (var (id, carries) in DefinitionLoader.PowerCarriers(definitions.Infrastructure).Where(carrier => carrier.Id == pair.Id))
+                    {
+                        entry["carriesPower"] = carries;
+                    }
+
+                    return entry;
+                })),
             Document("economy", new JsonObject
             {
                 ["startingFunds"] = definitions.Economy.StartingFunds,

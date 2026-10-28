@@ -27,14 +27,21 @@ public class PowerGridTests
     }
 
     // The base game with the coal plant's capacity changed, applied through a mod folder.
-    private static CityDefinitions WithCoalCapacity(int capacity)
+    private static CityDefinitions WithCoalCapacity(int capacity) =>
+        WithMod("plants.json", $$"""{ "format": 1, "plants": [ { "id": "coal", "capacity": {{capacity}} } ] }""");
+
+    // The base game with Micropolis' rule: only lines, zones, and buildings carry power.
+    private static CityDefinitions MicropolisPower() =>
+        WithMod("infrastructure.json", """{ "format": "2.1", "infrastructure": [ { "id": "road", "carriesPower": false } ] }""");
+
+    private static CityDefinitions WithMod(string file, string json)
     {
         var folder = Directory.CreateTempSubdirectory().FullName;
         try
         {
-            var mod = Directory.CreateDirectory(Path.Combine(folder, "small-coal")).FullName;
-            File.WriteAllText(Path.Combine(mod, "mod.json"), """{ "format": 1, "id": "small-coal", "name": "Small coal" }""");
-            File.WriteAllText(Path.Combine(mod, "plants.json"), $$"""{ "format": 1, "plants": [ { "id": "coal", "capacity": {{capacity}} } ] }""");
+            var mod = Directory.CreateDirectory(Path.Combine(folder, "m")).FullName;
+            File.WriteAllText(Path.Combine(mod, "mod.json"), """{ "format": 1, "id": "m", "name": "M" }""");
+            File.WriteAllText(Path.Combine(mod, file), json);
             var definitions = ModLoader.Load(folder, out var problems);
             Assert.Empty(problems);
             return definitions;
@@ -62,10 +69,97 @@ public class PowerGridTests
     }
 
     [Fact]
-    public void PowerRunsAlongALineButNotAcrossAGapOrARoad()
+    public void ARoadJoinsTheZonesAlongItWithoutBeingPoweredOrUsingCapacity()
+    {
+        // A plant, a line to a zone, then a road, then another zone, then a gap and a third.
+        var city = City(24, 6);
+        city.Builder.Apply(BuildAction.CoalPowerPlant, 2, 2);
+        Line(city, 5, 2, 8, 2);
+        city.Builder.Apply(BuildAction.ZoneResidential, 10, 2);
+        city.Builder.Apply(BuildAction.Road, 12, 2);
+        city.Builder.Apply(BuildAction.ZoneResidential, 14, 2);
+        city.Builder.Apply(BuildAction.ZoneResidential, 19, 2);
+
+        RunCycles(city);
+
+        Assert.True(city.Map.StateAt(10, 2).Powered);
+        Assert.True(city.Map.StateAt(14, 2).Powered);
+        Assert.False(city.Map.StateAt(19, 2).Powered);
+        Assert.False(city.Power.HasPower(12, 2));
+        Assert.Equal(16 + 4 + 9 + 9, city.Power.PoweredTiles);
+    }
+
+    [Fact]
+    public void AZoneDownTheRoadIsPoweredAndOneOnAnotherRoadIsnt()
+    {
+        // The plant's road runs east to a zone ten tiles away; another road, not joined to it, has a zone of its own.
+        var city = City(30, 12);
+        city.Builder.Apply(BuildAction.CoalPowerPlant, 2, 2);
+        var road = new BuildStroke(BuildAction.Road, 4, 4);
+        road.DragTo(20, 4);
+        city.Builder.Apply(road);
+        city.Builder.Apply(BuildAction.ZoneResidential, 19, 2);
+        var other = new BuildStroke(BuildAction.Road, 4, 9);
+        other.DragTo(20, 9);
+        city.Builder.Apply(other);
+        city.Builder.Apply(BuildAction.ZoneResidential, 10, 7);
+
+        RunCycles(city);
+
+        Assert.True(city.Map.StateAt(19, 2).Powered);
+        Assert.False(city.Map.StateAt(10, 7).Powered);
+    }
+
+    [Fact]
+    public void WhenCapacityRunsOutAlongARoadTheZonesNearestThePlantKeepPowerEveryTime()
+    {
+        static string Lit() => LitWith(16 + (3 * 9));
+
+        static string LitWith(int capacity)
+        {
+            // A plant whose capacity lights itself and a few zones, on a road lined with more.
+            var city = City(40, 8, WithCoalCapacity(capacity));
+            city.Builder.Apply(BuildAction.CoalPowerPlant, 2, 2);
+            var road = new BuildStroke(BuildAction.Road, 1, 5);
+            road.DragTo(38, 5);
+            city.Builder.Apply(road);
+            for (var x = 6; x <= 36; x += 3)
+            {
+                city.Builder.Apply(BuildAction.ZoneResidential, x, 3);
+            }
+
+            RunCycles(city);
+            Assert.True(city.Power.IsBrownedOut);
+            return string.Concat(Enumerable.Range(0, 11).Select(i => city.Map.StateAt(6 + (i * 3), 3).Powered ? '1' : '0'));
+        }
+
+        var first = Lit();
+
+        Assert.Equal(first, Lit());
+        Assert.Equal("11100000000", first);
+    }
+
+    [Fact]
+    public void AParkDoesntCarryPower()
+    {
+        var city = City(16, 6);
+        city.Builder.Apply(BuildAction.CoalPowerPlant, 2, 2);
+        var park = new BuildStroke(BuildAction.Park, 4, 2);
+        park.DragTo(7, 2);
+        Assert.Equal(BuildStatus.Built, city.Builder.Apply(park).Status);
+        city.Builder.Apply(BuildAction.ZoneResidential, 9, 2);
+
+        RunCycles(city);
+
+        Assert.False(city.Power.HasPower(5, 2));
+        Assert.False(city.Map.StateAt(9, 2).Powered);
+    }
+
+    [Fact]
+    public void WithMicropolisRulesPowerRunsAlongALineButNotAcrossAGapOrARoad()
     {
         // A plant, a line to a zone, then a road, then another zone.
-        var city = City(24, 6);
+        var city = City(24, 6, MicropolisPower());
         city.Builder.Apply(BuildAction.CoalPowerPlant, 2, 2);
         Line(city, 5, 2, 8, 2);
         city.Builder.Apply(BuildAction.ZoneResidential, 10, 2);

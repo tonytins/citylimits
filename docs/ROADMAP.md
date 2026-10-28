@@ -1,6 +1,6 @@
 # CityLimits roadmap
 
-> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-28 · **Change:** minor (Senri, N1d: packaging for each platform and `scenario --verbose`; N1 is done, and influences join N2) · **Stage:** beta
+> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-28 · **Change:** minor (Senri's phases reordered, and N2: power along roads, and facilities' influences) · **Stage:** beta
 
 Forward-looking: where CityLimits stands, what blocks the next milestone,  
 and what comes next. Verified status and evidence are in the  
@@ -68,12 +68,16 @@ Next, in order:
      the base game becomes data in `common/`, with more of it made specs a
      mod can change; and packaging for each platform. The old formats are
      still written, chosen in the settings. Done (N1a to N1d).
-   - N2, neighbours after SimCity 3000: connections at the map's edges
-     and deals in what the game already has; and influences, the
-     stations' coverage made general, so facilities and parks can raise
-     or lower land value, crime, and pollution around them.
+   - N2, influences and power: the stations' coverage made general, so
+     facilities can raise or lower land value, crime, and pollution
+     around them; and power that reaches buildings along the roads,
+     without a line beside every street. Done.
    - N3, the unified title bar and an Editing scenarios page in the help.
-   - N4, oversights found on the way.
+   - N4, neighbours after SimCity 3000: connections at the map's edges,
+     and deals offered as SimCity 3000 offers them, in what the game
+     already has. After N3, so the deals window has the title bar from
+     its start.
+   - N5, oversights found on the way.
 2. **Yokohama, 0.6**, online play: the server first, bringing online
    neighbours and the region view, settled when it starts.
 
@@ -93,16 +97,16 @@ Next, in order:
 | Deadwood: Land value, pollution, disasters | 100% | 0 | Meets the baseline: pollution and crime, fire with the ticker's fire-risk hints, floods, and earthquakes, as in Micropolis, with free repair and the settings' disaster switches |
 | Happy Isle: Player-facing game | 100% | 0 | The palette, laid out as Micropolis', and the HUD, with its bar along the bottom over a news ticker after Tony Bark's mock-up; the budget, demand, and city panels, the overview's power mode, the settings window, and the New City window; cities that save, load, autosave, and import from Micropolis; and scenarios to play, with four built-in challenges |
 | Kyoto: The scenario editor | 100% | 0 | The interface library it shares with play, the stadium, the seaport, and the airport the alpha missed, with the demand they hold back, the shared city view, editing a scenario in the game, tested by playing, its details, and saving it, with a New City window |
-| Senri (0.5, long-term): Formats, specs, neighbours, and packaging | 45% | 16–29 | Every format is at its next major and can be written for 0.4, the base game is data in `common/`, with more of it as specs, and the game is packaged for Linux, Windows, and macOS; neighbours and influences, the unified title bar and the help page, and what turns up before online play are left |
+| Senri (0.5, long-term): Formats, specs, neighbours, and packaging | 60% | 13–23 | Every format is at its next major and can be written for 0.4, the base game is data in `common/`, with more of it as specs, power runs along roads, facilities influence the land around them, and the game is packaged for Linux, Windows, and macOS; the unified title bar and the help page, neighbours and their deals, and what turns up before online play are left |
 | Yokohama (0.6): Online play | 0% | unestimated | Nothing yet: a Network Edition-style shared city, hosted by `CityLimits.Server`. Its checklist is a draft, settled when it starts |
-| | **Total** | **≈ 16–29, Yokohama unestimated** | |
+| | **Total** | **≈ 13–23, Yokohama unestimated** | |
 
 ## Upcoming work, ranked
 
 | Rank | Work | Milestone | Estimate (h) |
 |---|---|---|---|
-| 1 | Senri, N2: neighbours, connections, and deals, and influences | Senri | 11–19 |
-| 2 | Senri, N3: the unified title bar and the help page | Senri | 4–8 |
+| 1 | Senri, N3: the unified title bar and the help page | Senri | 4–8 |
+| 2 | Senri, N4: neighbours, connections, and deals | Senri | 8–14 |
 
 Every row of the alpha gate passes, and CityLimits is an alpha since 0.3.100,
 and a beta since 0.4.100.
@@ -470,7 +474,7 @@ play builds on, so 0.6 adds to them rather than changing them.
     feature, and the version moves only for a change that breaks. A part
     an older version doesn't know is left out, here and when saving, and
     one a save leaves out is filled in as the version that added it
-    fills it; `connections` is reserved for N2 and carried through
+    fills it; `connections` is reserved for N4 and carried through
     intact (N1a).
   - [x] A save lists the mods its city was played with, not their
     definitions, and runs on the base game and the mods installed;
@@ -506,32 +510,52 @@ play builds on, so 0.6 adds to them rather than changing them.
     Apple silicon and Intel Macs, each carrying the .NET runtime, with
     tools downloaded at pinned, checked versions (N1d). The base game's
     data is in its code, and `common/` is written when it starts. An
-    installer, a Developer ID, and notarizing are left for later.
+    installer is left for later. The Mac app stays signed ad hoc, as
+    Tony Bark chose: a Developer ID costs more than a solo project needs.
 - [x] `citylimits scenario --verbose`: the report lists every tile an
   action changed, beside the totals it gives by default, as Tony Bark
   chose (N1d).
-- [ ] N2: neighbours, after SimCity 3000, as Tony Bark chose: the map's
-  edges border neighbouring cities, roads, rail, and power lines run to
-  an edge connect to them, and deals trade what the game already has
-  (power, and road and rail lifting demand), saved as `connections`,
-  which 0.5.100 already reserves. Yokohama's region and online
-  neighbours build on it.
-  - [ ] Influences, as Tony Bark chose: the fire and police stations'
+- [x] N2: influences and power, as Tony Bark chose, in one release.
+  - [x] Influences: the fire and police stations'
     coverage made general, so a facility (the stadium, seaport, and
-    airport) or a park can raise or lower the land value, crime, or
-    pollution around it. Each is optional in the spec files, with an
+    airport) can raise or lower the land value, crime, or pollution
+    around it. Each is optional in the spec files, with an
     `effect` (`landValue`, `crime`, or `pollution`), a `strength`, which
     may be negative, such as an airport's noise, and a `reach`, as a
     station's has; definitions 2.1. New mechanics underneath, tuning to
     the player. The base game sets its own values, since CityLimits isn't
-    bound to Micropolis, each for Tony Bark to approve. The influence
-    maps are saved as a new feature. Roads, rail, and power lines stay
-    out, since reach means something else on a network.
+    bound to Micropolis, each for Tony Bark to approve. Influences are
+    worked out from the map each cycle, so a save needs nothing new. Parks
+    have none, as SimCity 3000's are buildings of their own; roads, rail,
+    and power lines stay out, since reach means something else on a
+    network. A facility without power has none. The base game's: a
+    stadium raises land value by 20, reach 2; a seaport lowers it by 20,
+    reach 2; an airport, by 30, reach 3; crime has none, for now (N2b).
+  - [x] Power along roads: a zone or building on a road is powered when a
+    powered one is on the same road network. The road joins them without
+    being powered itself, or using the plants' capacity, as in SimCity
+    (2013), so a street needs no line beside it; a line still reaches what
+    no road does. Each is an optional `carriesPower` on the road and rail
+    entries in `infrastructure.json`: the base game turns it on for roads,
+    rail stays off for now, and a mod can turn either back to Micropolis'
+    rules. Parks don't carry power, as Tony Bark chose. When capacity runs short, the buildings nearest the plant along
+    the road keep power, each whole. Definitions 2.1. The built-in
+    scenarios and challenges follow the new rule; left alone, each
+    challenge is still lost (N2a).
 - [ ] N3: a unified title bar for every window, macOS-style, whose title
   can be edited where a window turns that on, as the city panel does for
   the city's name; off by default. An Editing scenarios page in the Help
   window.
-- [ ] N4: oversights found on the way, fixed before Yokohama starts.
+- [ ] N4: neighbours, after SimCity 3000, as Tony Bark chose: the map's
+  edges border neighbouring cities, made up from the city's seed so they
+  stay the same, and roads, rail, and power lines run to an edge connect
+  to them. Neighbours offer deals as SimCity 3000's do, in a window of
+  their own: what the game already has to trade, power first, for a
+  monthly sum over a term, shown in the budget, with a cost for breaking
+  one; and road and rail connections lift demand. Saved as
+  `connections`, which 0.5.100 already reserves. Yokohama's region and
+  online neighbours build on it.
+- [ ] N5: oversights found on the way, fixed before Yokohama starts.
   - [ ] `--headless` only reads `common/`, and leaves writing it to the
     game in a window, as Tony Bark asked; 0.5.101 writes it from both.
 
@@ -541,7 +565,7 @@ Version 0.6: a region of cities, after SimCity 2000 Network Edition's way
 of playing together and the region of SimCity (2013) and Cities:
 Skylines, as Tony Bark set it out. Each player keeps a city of their
 own, and neighbouring cities meet at their edges through the connections
-Senri's N2 brings. The server comes first, and online neighbours with
+Senri's N4 brings. The server comes first, and online neighbours with
 it. This is a draft, settled when the milestone starts.
 
 - [ ] `CityLimits.Server`: cities run headless on a host, taking
@@ -551,7 +575,7 @@ it. This is a draft, settled when the milestone starts.
   are the starting point, since they are proven. Bots may drive the
   server, never the client.
 - [ ] Online neighbours: other players' cities as the neighbours at a
-  city's edges, with the deals N2 makes between them.
+  city's edges, with the deals N4 makes between them.
 - [ ] The region view: neighbouring cities shown beyond a map's edges,
   and visited by opening them; optional offline, always there online.
 - [ ] Regions that scale up to hold more cities, the map sizes goal
@@ -572,8 +596,8 @@ first challenges are done, and 0.4 with them.
 
 Senri's N1, done, settled the formats 0.5 keeps for the long term and 0.6
 builds online play on; every spec after it costs a feature name, not a
-format version. N2 is now the long pole: neighbours, and influences, each
-new state in the save. N1's dual writing lasts through 0.6 and comes out
+format version. N4, neighbours, is now the long pole, with the most to
+design: the deals, their window, and their place in the budget. N1's dual writing lasts through 0.6 and comes out
 in 0.7, so it stays thin: one save model, written two ways.
 
 Yokohama waits on Senri, and on Tony Bark settling its design from the
@@ -603,6 +627,9 @@ Yokohama waits on Senri, and on Tony Bark settling its design from the
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-28 | minor | GitInfo counts every commit from 0.5.103, not only the game project's, as Tony Bark chose, bringing forward what was planned for 0.6, so a library-only change gets its own version. |
+| 2026-10-28 | minor | Senri, N2, in one release as Tony Bark asked: power reaches the zones and buildings along a road without a line beside every street, roads using no capacity, and when it runs short the buildings nearest the plant keep power whole; and the stadium, seaport, and airport influence the land value, crime, or pollution around them, the base game setting its own: +20, -20, and -30 land value. `carriesPower` on road and rail, and `influences` on facilities, are definitions 2.1. Parks neither carry power nor have influences, as Tony Bark chose, after SimCity 3000's parks. 908 tests. |
+| 2026-10-28 | minor | Tony Bark reordered Senri: N2 is influences and power along roads, as SimCity (2013) carries it, N3 the title bar and help page, N4 neighbours, with deals offered as SimCity 3000 offers them, after the title bar so their window has it, and N5 oversights. The Mac app stays signed ad hoc. |
 | 2026-10-28 | minor | Senri, N1d, closing N1: packaging after Photocraft's, a shared setup and a script for each platform, building an AppImage and a `.tar.gz` for Linux, a zip for Windows, and an app for each kind of Mac, all carrying the .NET runtime; and `scenario --verbose`, listing each tile an action changed. 884 tests. |
 | 2026-10-27 | minor | Tony Bark moved influences into Senri's N2: the stations' coverage made general, so facilities and parks raise or lower land value, crime, and pollution around them, with the base game setting its own values; roads, rail, and power lines stay out. N1 is down to packaging and `scenario --verbose`. |
 | 2026-10-27 | minor | Senri, N1c: definitions are format 2.0, with services' strength and reach and new specs for the facilities, the infrastructure's prices, and the economy; `plants.json` is `power.json`, and still reads. The base game's spec files go in `common/` beside the settings, written by each new build and read before the mods; a mod's spec files may sit in folders. Disasters and terrain stay in code, as Tony Bark chose; a city keeps Micropolis' map size, and the map sizes goal becomes Yokohama's regions that scale up. `--headless` only reading `common/` goes to N4. 883 tests. |
