@@ -44,6 +44,12 @@ public sealed class GameAssets : IDisposable
     private readonly Dictionary<Tool, Texture2D> _icons = new();
     private readonly Dictionary<Tool, Texture2D> _selectedIcons = new();
     private readonly Texture2D?[] _trainFrames = new Texture2D?[Enum.GetValues<TrainFrame>().Length];
+
+    // The vehicles' drawings, Micropolis' obj3 (plane, 11 frames), obj2 (helicopter, 8), and obj4
+    // (ship, 8), each frame n of the vehicle being the drawing n - 1.
+    private readonly Texture2D?[] _planeFrames = new Texture2D?[11];
+    private readonly Texture2D?[] _helicopterFrames = new Texture2D?[8];
+    private readonly Texture2D?[] _shipFrames = new Texture2D?[8];
     private readonly List<Texture2D> _textures = [];
 
     /// <summary>The sheet that holds every tile of ground, or null when it is missing.</summary>
@@ -57,6 +63,15 @@ public sealed class GameAssets : IDisposable
 
     /// <summary>The train's drawing for a frame, or null when it is missing.</summary>
     public Texture2D? TrainFrameFor(TrainFrame frame) => _trainFrames[(int)frame];
+
+    /// <summary>The plane's drawing for its frame, 1 to 11, or null when it is missing.</summary>
+    public Texture2D? PlaneFrameFor(int frame) => frame is >= 1 and <= 11 ? _planeFrames[frame - 1] : null;
+
+    /// <summary>The helicopter's drawing for its frame, 1 to 8, or null when it is missing.</summary>
+    public Texture2D? HelicopterFrameFor(int frame) => frame is >= 1 and <= 8 ? _helicopterFrames[frame - 1] : null;
+
+    /// <summary>The ship's drawing for its frame, 1 to 8, or null when it is missing.</summary>
+    public Texture2D? ShipFrameFor(int frame) => frame is >= 1 and <= 8 ? _shipFrames[frame - 1] : null;
 
     /// <summary>The highlighted icon drawn while a tool is held, or null when it has none.</summary>
     public Texture2D? SelectedIconFor(Tool tool) => _selectedIcons.TryGetValue(tool, out var icon) ? icon : null;
@@ -130,6 +145,23 @@ public sealed class GameAssets : IDisposable
 
             assets._trainFrames[(int)frame] = texture.Value;
             assets._textures.Add(texture.Value);
+        }
+
+        foreach (var (prefix, frames, name) in new[] { ("obj3-", assets._planeFrames, "plane"), ("obj2-", assets._helicopterFrames, "helicopter"), ("obj4-", assets._shipFrames, "ship") })
+        {
+            for (var i = 0; i < frames.Length; i++)
+            {
+                var path = Path.Combine(spriteDirectory, $"{prefix}{i}.png");
+                var texture = LoadTexture(path);
+                if (!texture.HasValue)
+                {
+                    missing.Add($"The {name}'s drawing {i} is missing: {path}");
+                    continue;
+                }
+
+                frames[i] = texture.Value;
+                assets._textures.Add(texture.Value);
+            }
         }
 
         problems = missing;

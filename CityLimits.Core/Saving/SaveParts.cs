@@ -94,6 +94,10 @@ internal static class SaveParts
         // ground beneath it, so a game that doesn't know it opens the city as if it had decayed. It
         // can't keep it, since it may build there.
         new() { Name = "radiation", Chunk = "RADN", Ignorable = true, Keepable = false },
+
+        // The plane, helicopter, and ship: a game that doesn't know them plays the city without
+        // them, and may write them back as they were, since they change nothing until they move.
+        new() { Name = "vehicles", Chunk = "VHCL", Ignorable = true, Keepable = true },
     ];
 
     /// <summary>The parts format 1's list names, each with the version that added it, for a save 0.4 opens.</summary>

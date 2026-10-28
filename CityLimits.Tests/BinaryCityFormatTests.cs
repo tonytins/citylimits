@@ -75,7 +75,7 @@ public class BinaryCityFormatTests
     [InlineData("format", "format: this is format 9.0; this version of CityLimits reads up to 2.0.")]
     [InlineData("checksum", "BUDG: is damaged: its checksum doesn't match.")]
     [InlineData("truncated", "The file ends partway through a chunk")]
-    [InlineData("cut short", "RADN: says it is")]
+    [InlineData("cut short", "{last}: says it is")]
     [InlineData("length", "CYCL: says it is")]
     [InlineData("duplicate", "CYCL: the file holds it twice.")]
     [InlineData("missing", "CYCL: the file is missing it.")]
@@ -102,8 +102,9 @@ public class BinaryCityFormatTests
 
         Assert.False(BinaryCityFormat.TryRead(damaged, out var city, out var problem, out _));
 
+        // Cut short, the last chunk says it runs past the end, whichever feature is written last.
         Assert.Null(city);
-        Assert.StartsWith(expected, problem);
+        Assert.StartsWith(expected.Replace("{last}", chunks[^1].Tag.Trim(), StringComparison.Ordinal), problem);
     }
 
     [Fact]

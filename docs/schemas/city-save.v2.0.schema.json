@@ -1070,6 +1070,33 @@
       ],
       "additionalProperties": false
     },
+    "vehicles": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "plane": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "helicopter": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "ship": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
     "challenge": {
       "type": [
         "object",

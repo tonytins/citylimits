@@ -661,11 +661,13 @@ public sealed class GameLoop : IDisposable
                     Floods = chosen.Floods,
                     Earthquakes = chosen.Earthquakes,
                     Meltdowns = chosen.Meltdowns,
+                    AirCrashes = chosen.AirCrashes,
+                    Shipwrecks = chosen.Shipwrecks,
                     SaveOlderFormats = chosen.SaveOlderFormats,
                 };
                 ApplyDisasters(_settings);
                 Logger.Info(
-                    "Settings changed: fullscreen {Fullscreen} from the next start, {Slots} autosaves, disasters {Disasters}: fires {Fires}, floods {Floods}, earthquakes {Earthquakes}, meltdowns {Meltdowns}; saving for 0.4 {Older}",
+                    "Settings changed: fullscreen {Fullscreen} from the next start, {Slots} autosaves, disasters {Disasters}: fires {Fires}, floods {Floods}, earthquakes {Earthquakes}, meltdowns {Meltdowns}, air crashes {AirCrashes}, shipwrecks {Shipwrecks}; saving for 0.4 {Older}",
                     chosen.Fullscreen,
                     chosen.AutosaveSlots,
                     chosen.Disasters,
@@ -673,6 +675,8 @@ public sealed class GameLoop : IDisposable
                     chosen.Floods,
                     chosen.Earthquakes,
                     chosen.Meltdowns,
+                    chosen.AirCrashes,
+                    chosen.Shipwrecks,
                     chosen.SaveOlderFormats);
                 return;
             case SettingsPanel.Outcome.Closed:
@@ -1397,6 +1401,8 @@ public sealed class GameLoop : IDisposable
         _simulation.RandomFloods = settings.RandomFloods;
         _simulation.RandomEarthquakes = settings.RandomEarthquakes;
         _simulation.RandomMeltdowns = settings.RandomMeltdowns;
+        _simulation.RandomAirCrashes = settings.RandomAirCrashes;
+        _simulation.RandomShipwrecks = settings.RandomShipwrecks;
     }
 
     // Whether the pointer is over the palette, the overview, the bar, the ticker, or an open window, rather than the map.

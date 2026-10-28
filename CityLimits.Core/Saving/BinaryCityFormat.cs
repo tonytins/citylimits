@@ -66,6 +66,7 @@ public static class BinaryCityFormat
     private const string OrdinancesTag = "ORDN";
     private const string ConnectionsTag = "CONN";
     private const string RadiationTag = "RADN";
+    private const string VehiclesTag = "VHCL";
 
     // The chunks every file has: the city's core, with its definitions in format 1 and its mods' names in 2.0.
     private static readonly string[] Core = [CityTag, MapTag, BudgetTag, CensusTag, DemandTag, PowerTag, ServicesTag, CommunityTag, CityMapsTag, CycleTag];
@@ -74,7 +75,7 @@ public static class BinaryCityFormat
 
     // The chunks a file has only when it needs them, such as the challenge of a city being played as
     // one, and the features added since 2.0, which a 2.0 file may go without and 1.10 never has.
-    private static readonly string[] Optional = [ChallengeTag, OrdinancesTag, ConnectionsTag, RadiationTag];
+    private static readonly string[] Optional = [ChallengeTag, OrdinancesTag, ConnectionsTag, RadiationTag, VehiclesTag];
 
     // The chunks each minor version added, required from that version on; an older file goes without.
     private static readonly (string Tag, FormatVersion Since)[] Added = [(TrafficTag, new FormatVersion(1, 1)), (RoadTrafficTag, new FormatVersion(1, 3)), (RailTag, new FormatVersion(1, 4)), (PollutionTag, new FormatVersion(1, 5)), (CrimeTag, new FormatVersion(1, 5)), (FireTag, new FormatVersion(1, 6)), (FloodTag, new FormatVersion(1, 7)), (FacilitiesTag, new FormatVersion(1, 9)), (FoundingTag, new FormatVersion(1, 10))];
@@ -159,6 +160,11 @@ public static class BinaryCityFormat
         if (save.Radiation is { } radiation)
         {
             WriteChunk(stream, RadiationTag, SectionCodec.Write(radiation));
+        }
+
+        if (save.Vehicles is { } vehicles)
+        {
+            WriteChunk(stream, VehiclesTag, SectionCodec.Write(vehicles));
         }
 
         if (save.Challenge is { } challenge)
@@ -413,6 +419,7 @@ public static class BinaryCityFormat
             Ordinances = chunks.TryGetValue(OrdinancesTag, out var ordinances) ? SectionCodec.Read<OrdinancesSave>(ordinances, OrdinancesTag) : null,
             Connections = chunks.TryGetValue(ConnectionsTag, out var connections) ? SectionCodec.Read<ConnectionsSave>(connections, ConnectionsTag) : null,
             Radiation = chunks.TryGetValue(RadiationTag, out var radiation) ? SectionCodec.Read<RadiationSave>(radiation, RadiationTag) : null,
+            Vehicles = chunks.TryGetValue(VehiclesTag, out var vehicles) ? SectionCodec.Read<VehiclesSave>(vehicles, VehiclesTag) : null,
             Challenge = chunks.TryGetValue(ChallengeTag, out var challenge) ? SectionCodec.Read<ChallengeSave>(challenge, ChallengeTag) : null,
         };
     }

@@ -125,6 +125,9 @@ internal sealed class CitySave
     /// </summary>
     public RadiationSave? Radiation { get; set; }
 
+    /// <summary>The plane, helicopter, and ship about; a feature of format 2.0, and none for a city from before.</summary>
+    public VehiclesSave? Vehicles { get; set; }
+
     /// <summary>
     /// The scenario being played in the city, if any: its goals, when they are judged, and what is still
     /// to come; from format 1.8. A city that isn't a challenge leaves it out, so its save is as before.
@@ -634,6 +637,20 @@ internal sealed class FloodSave
 
     /// <summary>How many more cycles the water spreads for.</summary>
     public required int CyclesLeft { get; set; }
+}
+
+/// <summary>The city's aircraft and ship, as <see cref="Sprites.Vehicles"/> writes them.</summary>
+[System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(SectionCodec.ModelMembers)]
+internal sealed class VehiclesSave
+{
+    /// <summary>The plane, or null: x and y in pixels, its frame, and where it heads, x and y.</summary>
+    public int[]? Plane { get; set; }
+
+    /// <summary>The helicopter, or null: x, y, its frame, where it heads, its home, x and y each, and the moves left of its flight.</summary>
+    public int[]? Helicopter { get; set; }
+
+    /// <summary>The ship, or null: x, y, its frame, the way it turns to, the way it came, and the moves until it next looks.</summary>
+    public int[]? Ship { get; set; }
 }
 
 /// <summary>The radioactive ground on the map, as <see cref="RadiationCodec"/> writes it.</summary>

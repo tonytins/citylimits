@@ -1,5 +1,34 @@
 # CityLimits Changelog
 
+## 0.5.111
+
+Planes, helicopters, and ships come to the city, as in Micropolis. A
+powered airport sends up a plane now and then, and a helicopter that
+flies to the busiest roads and reports heavy traffic before it lands
+again. A powered seaport calls in ships, which come in from a channel at
+the map's edge and sail its waters. If the plane and the helicopter
+meet, both come down in flames; a ship that runs aground blows up and
+wrecks what it hit. Air crashes and shipwrecks each have a switch on the
+Settings window's Disasters tab, and the master Disasters switch turns
+them off with the rest. The art is Micropolis' own for now.
+
+Ships that come in from the west edge now face east as they enter, which
+Micropolis had backwards.
+
+For modders and scenario writers: `PlaneCrash` and `Shipwreck` are
+scenario events, bringing down the plane in the air or wrecking the ship
+at sea; with none under way, nothing happens. Older versions don't know
+the names and refuse a scenario that uses them.
+
+For developers: `CitySimulation.Vehicles` (`Sprites/Vehicles.cs`);
+`Disaster.PlaneCrash` and `Disaster.Shipwreck`; `CityMessage`'s
+`PlaneCrashReported`, `HelicopterCrashReported`, `ShipwreckReported`, and
+`HeavyTrafficReported`; and `GameSettings.AirCrashes` and
+`GameSettings.Shipwrecks`. Saves gain the `vehicles` feature (`VHCL` in
+`.cl`), which a save for 0.4 leaves out. A powered airport or seaport now
+rolls dice as the scan passes it, so a city with one rolls differently
+from 0.5.110 on.
+
 ## 0.5.110
 
 Nuclear plants can melt down, as in Micropolis: rarely, but when one

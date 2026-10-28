@@ -14,4 +14,10 @@ public enum Disaster
 
     /// <summary>A nuclear plant melts down, leaving radioactive ground around it.</summary>
     Meltdown,
+
+    /// <summary>The plane in the air comes down where it flies.</summary>
+    PlaneCrash,
+
+    /// <summary>The ship at sea runs aground where it sails.</summary>
+    Shipwreck,
 }

@@ -181,6 +181,7 @@ public sealed class CityView : IDisposable
         _mapRenderer.Draw(Camera, _trafficAnimation.Frame, _fireFrame);
         _mapRenderer.DrawStadiumGames(Camera, _city.CityTime, _fireFrame);
         DrawTrain();
+        DrawVehicles();
         for (var i = 0; i < _explosionCount; i++)
         {
             _mapRenderer.DrawExplosion(_explosions[i].X, _explosions[i].Y, _explosions[i].Steps / StepsPerExplosionFrame);
@@ -238,6 +239,27 @@ public sealed class CityView : IDisposable
         }
 
         _explosionCount = kept;
+    }
+
+    // The ship, the plane, and the helicopter are drawn over the map, centred on where each is, the
+    // aircraft above the ship; a missing drawing leaves that vehicle unseen, the rest drawn.
+    private void DrawVehicles()
+    {
+        var vehicles = _city.Vehicles;
+        if (vehicles.Ship is { } ship && _assets.ShipFrameFor(ship.Frame) is { } shipFrame)
+        {
+            Raylib.DrawTexture(shipFrame, ship.X - (shipFrame.Width / 2), ship.Y - (shipFrame.Height / 2), Color.White);
+        }
+
+        if (vehicles.Plane is { } plane && _assets.PlaneFrameFor(plane.Frame) is { } planeFrame)
+        {
+            Raylib.DrawTexture(planeFrame, plane.X - (planeFrame.Width / 2), plane.Y - (planeFrame.Height / 2), Color.White);
+        }
+
+        if (vehicles.Helicopter is { } copter && _assets.HelicopterFrameFor(copter.Frame) is { } copterFrame)
+        {
+            Raylib.DrawTexture(copterFrame, copter.X - (copterFrame.Width / 2), copter.Y - (copterFrame.Height / 2), Color.White);
+        }
     }
 
     // The train is drawn over the map, centred on where it is, 32 pixels square as Micropolis' is.

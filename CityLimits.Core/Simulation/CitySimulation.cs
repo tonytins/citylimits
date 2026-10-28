@@ -1,5 +1,6 @@
 using System.Globalization;
 using CityLimits.Core.Economy;
+using CityLimits.Core.Sprites;
 
 namespace CityLimits.Core.Simulation;
 
@@ -121,6 +122,9 @@ public sealed class CitySimulation
 
     private readonly ZoneGrowth _growth;
 
+    // What came of the vehicles' last move, kept so a step doesn't make a list.
+    private readonly List<VehicleEvent> _vehicleEvents = [];
+
     /// <summary>
     /// Creates a simulation over the given map, with the money the city starts with (its
     /// definitions' starting funds when none is given), the definitions it runs on (the base game's
@@ -228,6 +232,15 @@ public sealed class CitySimulation
 
     /// <summary>Whether nuclear plants melt down, as <see cref="RandomFires"/> says for fires.</summary>
     public bool RandomMeltdowns { get; set; } = true;
+
+    /// <summary>Whether the plane and the helicopter can collide, as <see cref="RandomFires"/> says for fires.</summary>
+    public bool RandomAirCrashes { get; set; } = true;
+
+    /// <summary>Whether the ship can run aground, as <see cref="RandomFires"/> says for fires.</summary>
+    public bool RandomShipwrecks { get; set; } = true;
+
+    /// <summary>The plane, helicopter, and ship about the city.</summary>
+    public Vehicles Vehicles { get; } = new();
 
     /// <summary>
     /// The scenario being played in the city, if it is a challenge: it makes what is due, and judges
@@ -447,6 +460,8 @@ public sealed class CitySimulation
         {
             Maps.UpdateDensity(Definitions);
         }
+
+        MoveVehicles();
     }
 
     // As in Micropolis' fire: one visit in four, the fire may spread to each side, one time in eight,
@@ -562,8 +577,92 @@ public sealed class CitySimulation
         Disaster.Flood => StartFlood(allowed: true),
         Disaster.Earthquake => Quake(allowed: true),
         Disaster.Meltdown => MeltDownFirstPlant(),
+        Disaster.PlaneCrash => CrashPlane(),
+        Disaster.Shipwreck => WreckShip(),
         _ => throw new ArgumentOutOfRangeException(nameof(disaster), disaster, null),
     };
+
+    // As Micropolis moves its sprites twice for each simulation step, the vehicles move twice a
+    // step, and the city answers what came of each move: fires where aircraft came down or a ship
+    // was wrecked, and the helicopter's word on the traffic.
+    private void MoveVehicles()
+    {
+        for (var move = 0; move < 2; move++)
+        {
+            _vehicleEvents.Clear();
+            Vehicles.Move(TickCount, move, Map, Traffic, Random, RandomAirCrashes, RandomShipwrecks, _vehicleEvents);
+            foreach (var happened in _vehicleEvents)
+            {
+                switch (happened.Kind)
+                {
+                    case VehicleEventKind.HeavyTraffic:
+                        MessageSent?.Invoke(CityMessage.HeavyTrafficReported);
+                        break;
+                    case VehicleEventKind.Shipwreck:
+                        Wreck(happened.X, happened.Y);
+                        MessageSent?.Invoke(CityMessage.ShipwreckReported);
+                        break;
+                    default:
+                        CrashAt(happened.X, happened.Y);
+                        MessageSent?.Invoke(happened.Kind == VehicleEventKind.PlaneCrash ? CityMessage.PlaneCrashReported : CityMessage.HelicopterCrashReported);
+                        break;
+                }
+            }
+        }
+    }
+
+    // An aircraft coming down sets fire where it lands, and at the corners around, as Micropolis'
+    // explosion does, at once rather than when its drawing ends, as Tony Bark chose for explosions.
+    private void CrashAt(int x, int y)
+    {
+        var state = Map.StateAtOrDefault(x, y, new TileState(TileKind.Water));
+        var bare = state.Use == TileUse.None && state.Kind == TileKind.Grass && !Floods.IsFlooded(x, y) && !Radiation.IsRadioactive(x, y);
+        if (!state.IsBuildingCenter && (bare || Fires.CanBurn(x, y)))
+        {
+            Ignite(x, y);
+        }
+
+        Explode(x, y);
+        Exploded?.Invoke(x, y);
+    }
+
+    // A ship run aground blows up and wrecks what it hit, as Micropolis' destroyTile: what stands on
+    // the water, a bridge, a line, or a tunnel, is lost to it, and what stands on land burns.
+    private void Wreck(int x, int y)
+    {
+        CrashAt(x, y);
+        var state = Map.StateAtOrDefault(x, y);
+        if (state.Kind == TileKind.Water && state.Use != TileUse.None)
+        {
+            Map.SetState(x, y, new TileState(TileKind.Water));
+        }
+    }
+
+    // A scenario's plane crash brings down the plane in the air; with none flying, nothing.
+    private bool CrashPlane()
+    {
+        if (Vehicles.DownPlane() is not { } where)
+        {
+            return false;
+        }
+
+        CrashAt(where.X, where.Y);
+        MessageSent?.Invoke(CityMessage.PlaneCrashReported);
+        return true;
+    }
+
+    // A scenario's shipwreck runs the ship at sea aground; with none sailing, nothing.
+    private bool WreckShip()
+    {
+        if (Vehicles.SinkShip() is not { } where)
+        {
+            return false;
+        }
+
+        Wreck(where.X, where.Y);
+        MessageSent?.Invoke(CityMessage.ShipwreckReported);
+        return true;
+    }
 
     // A scenario's meltdown strikes the first nuclear plant on the map, row by row; with none, nothing.
     private bool MeltDownFirstPlant()
@@ -1072,6 +1171,16 @@ public sealed class CitySimulation
 
                 if (TileRules.IsFacility(state.Use))
                 {
+                    // A powered airport sends up aircraft, and a powered seaport calls in a ship, as in Micropolis.
+                    if (powered && state.Use == TileUse.Airport)
+                    {
+                        Vehicles.VisitAirport(x, y, Map, Random);
+                    }
+                    else if (powered && state.Use == TileUse.Seaport)
+                    {
+                        Vehicles.VisitSeaport(Map, Random);
+                    }
+
                     RepairNowAndThen(x, y, state.Use == TileUse.Airport ? BuildingRepairCounts : CommunityRepairCounts);
                     Facilities.Count(state.Use);
                     continue;
@@ -1175,6 +1284,7 @@ public sealed class CitySimulation
         Fire = FireCodec.Capture(Map, Hazards),
         Flood = FloodCodec.Capture(Map, Floods),
         Radiation = RadiationCodec.Capture(Map, Radiation),
+        Vehicles = Vehicles.Capture(),
         Facilities = FacilityCodec.Capture(Map, Hazards, Facilities),
         Founding = new FoundingSave { Year = FoundedYear },
         Ordinances = CaptureOrdinances(),
@@ -1262,6 +1372,7 @@ public sealed class CitySimulation
         FireCodec.Apply(map, city.Fires, save.Fire ?? throw new InvalidSave("fire: missing."));
         FloodCodec.Apply(map, city.Hazards, save.Flood ?? throw new InvalidSave("flood: missing."));
         RadiationCodec.Apply(map, city.Hazards, save.Radiation ?? throw new InvalidSave("radiation: missing."));
+        city.Vehicles.Restore(save.Vehicles ?? throw new InvalidSave("vehicles: missing."));
         var founding = save.Founding ?? throw new InvalidSave("founding: missing.");
         city.FoundedYear = SaveChecks.InRange(founding.Year, CityCalendar.StartYear, city.Date.Year, "founding.year");
         var ordinances = save.Ordinances ?? throw new InvalidSave("ordinances: missing.");

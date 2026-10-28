@@ -65,4 +65,16 @@ public enum CityMessage
 
     /// <summary>A nuclear plant has melted down.</summary>
     MeltdownReported,
+
+    /// <summary>The plane has crashed.</summary>
+    PlaneCrashReported,
+
+    /// <summary>The helicopter has crashed.</summary>
+    HelicopterCrashReported,
+
+    /// <summary>The ship has run aground.</summary>
+    ShipwreckReported,
+
+    /// <summary>The helicopter has seen heavy traffic.</summary>
+    HeavyTrafficReported,
 }

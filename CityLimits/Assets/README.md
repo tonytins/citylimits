@@ -25,6 +25,10 @@ tools/icseap.png     seaport
 tools/icairp.png     airport
 sprites/obj1-0.png   the train running north or south; obj1-1 east or west, obj1-2 turning
                      between north and west, obj1-3 between north and east, obj1-4 in a tunnel
+sprites/obj3-0.png   the plane heading north; obj3-1 to obj3-7 the next headings clockwise, and
+                     obj3-8 to obj3-10 taking off
+sprites/obj2-0.png   the helicopter heading north; obj2-1 to obj2-7 the next headings clockwise
+sprites/obj4-0.png   the ship heading north; obj4-1 to obj4-7 the next headings clockwise
 Scenarios/           the built-in scenarios, one JSON file each, named for its id
 ```
 
@@ -227,7 +231,10 @@ rail icons are the core's `icrail.png` and `icrailhi.png`; the stadium, seaport,
 and airport icons are the core's `icstad`, `icseap`, and `icairp`, with their
 `hi` versions, added for Kyoto with Tony Bark's approval; and the train's drawings
 in `sprites/` are the core's `obj1-0.png` to `obj1-4.png`, converted to 8-bit RGBA
-in the same way as the icons, added for Radial with Tony Bark's approval. The art
+in the same way as the icons, added for Radial with Tony Bark's approval. The
+plane's, the helicopter's, and the ship's, `obj3`, `obj2`, and `obj4`, are the
+OLPC port's (micropolis-activity's `images/`), converted from XPM to 8-bit RGBA,
+added for Senri's N6c with Tony Bark's approval. The art
 is the property of its authors, and CityLimits is not a SimCity product and
 does not use the SimCity name or trademarks.
 

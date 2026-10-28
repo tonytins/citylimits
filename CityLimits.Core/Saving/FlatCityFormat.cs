@@ -79,6 +79,7 @@ public static class FlatCityFormat
             save.Ordinances = null;
             save.Connections = null;
             save.Radiation = null;
+            save.Vehicles = null;
             return save;
         }
 

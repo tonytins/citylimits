@@ -1,6 +1,6 @@
 # CityLimits roadmap
 
-> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-28 · **Change:** minor (Senri, N6b: meltdowns and radiation) · **Stage:** beta
+> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-28 · **Change:** minor (Senri, N6c: planes, helicopters, and ships) · **Stage:** beta
 
 Forward-looking: where CityLimits stands, what blocks the next milestone,  
 and what comes next. Verified status and evidence are in the  
@@ -609,8 +609,11 @@ play builds on, so 0.6 adds to them rather than changing them.
       passes it, and the radioactive ground it leaves, which nothing can
       build on or clear until it decays, some 85 years on average;
       `Meltdown` for scenario events, and the `radiation` feature (N6b).
-    - [ ] Planes, helicopters, and ships as everyday traffic, which can
-      crash or sink (N6c).
+    - [x] Planes and helicopters from a powered airport and ships from a
+      powered seaport, as Micropolis' sprites, which can collide, run
+      aground, and set fires where they come down, with the helicopter's
+      traffic reports; `PlaneCrash` and `Shipwreck` for scenario events,
+      and the `vehicles` feature (N6c).
     - [ ] The tornado and the monster (N6d).
   - [ ] `--headless` only reads `common/`, and leaves writing it to the
     game in a window, as Tony Bark asked; 0.5.101 writes it from both.
@@ -683,6 +686,7 @@ Yokohama waits on Senri, and on Tony Bark settling its design from the
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-28 | minor | Senri, N6c: planes, helicopters, and ships, after Micropolis' sprites, with air crashes and shipwrecks on the Disasters tab, scenario events for each, and the `vehicles` feature. 958 tests. |
 | 2026-10-28 | minor | Senri, N6b: nuclear meltdowns, after Micropolis', and the radioactive ground they leave for decades, with a switch on the Disasters tab, a scenario event, and the `radiation` feature. 946 tests. |
 | 2026-10-28 | minor | Senri, N6a: a Debug build keeps its settings beside itself, as Tony Bark asked. N6 takes in the rest of Micropolis' disasters, meltdown, aircraft and ships with their crashes, tornado, and monster, under the master switch with rows of their own, and no format's version moving. 938 tests. |
 | 2026-10-28 | minor | Senri, N5b, closing N5: a neighbour's offer in a window of its own, a Neighbours page in the city panel where a deal can be broken after asking, the budget's deal line, and the neighbours' news in blue on the ticker. Senri has only N6, oversights, left. 937 tests. |

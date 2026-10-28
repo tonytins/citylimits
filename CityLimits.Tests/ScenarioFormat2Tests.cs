@@ -229,7 +229,7 @@ public class ScenarioFormat2Tests
     public void AnEventNeedsADisasterTheGameHas()
     {
         Assert.Equal(
-            "events[0].disaster: 'Volcano' is not one of Fire, Flood, Earthquake, Meltdown.",
+            "events[0].disaster: 'Volcano' is not one of Fire, Flood, Earthquake, Meltdown, PlaneCrash, Shipwreck.",
             Refusal(File("\"ends\": \"1901-01\", \"events\": [ { \"at\": \"1900-02\", \"disaster\": \"Volcano\" } ]")));
     }
 

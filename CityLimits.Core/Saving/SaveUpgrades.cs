@@ -33,6 +33,7 @@ internal static class SaveUpgrades
             AddOrdinances(save);
             AddConnections(save);
             AddRadiation(save);
+            AddVehicles(save);
             return;
         }
 
@@ -49,8 +50,12 @@ internal static class SaveUpgrades
         AddOrdinances(save);
         AddConnections(save);
         AddRadiation(save);
+        AddVehicles(save);
         save.Format = Current;
     }
+
+    // 2.0's vehicles. A city from before has none about.
+    private static void AddVehicles(CitySave save) => save.Vehicles ??= new VehiclesSave();
 
     // 2.0's radiation. A city from before has no radioactive ground.
     private static void AddRadiation(CitySave save)

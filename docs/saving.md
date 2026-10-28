@@ -139,6 +139,7 @@ size of the same city as `.fcl`.
 | `ORDN` | The city's ordinances; a 2.0 feature, which a save for 0.4 leaves out |
 | `CONN` | The city's deals with its neighbours; a 2.0 feature, which a save for 0.4 leaves out |
 | `RADN` | The radioactive ground meltdowns left; a 2.0 feature, which a save for 0.4 leaves out |
+| `VHCL` | The plane, helicopter, and ship under way; a 2.0 feature, which a save for 0.4 leaves out |
 
 In a 2.0 file, the chunks from `TRAF` on are its features: each may be
 left out, and is then filled in as the version that added it fills it.
@@ -227,7 +228,7 @@ arrays of numbers sit on one line each.
 | `map` | The map: see below |
 | `budget`, `census`, `demand`, `power`, `services`, `community`, `cityMaps` | Each part of the simulation's state |
 | `cycle` | The road tiles counted this cycle, and what the last count set aside for the budget |
-| `traffic` and `roadTraffic`, `rail`, `pollution`, `crime`, `fire`, `flood`, `challenge`, `facilities`, `founding`, `ordinances`, `connections`, `radiation` | The features' sections, each from the version the table under Versions gives, `ordinances`, `connections`, and `radiation` from 2.0 alone; a 2.0 save may leave any out |
+| `traffic` and `roadTraffic`, `rail`, `pollution`, `crime`, `fire`, `flood`, `challenge`, `facilities`, `founding`, `ordinances`, `connections`, `radiation`, `vehicles` | The features' sections, each from the version the table under Versions gives, `ordinances`, `connections`, `radiation`, and `vehicles` from 2.0 alone; a 2.0 save may leave any out |
 | `parts` | In format 1 only: the parts list, from 1.2 |
 
 ### The map
@@ -509,6 +510,29 @@ know it opens the city as if the ground had decayed, and can't write it
 back, since it may build there. A save for 0.4 leaves it out. Reading
 refuses radiation on a fire, a flood, or anything but bare ground or a
 marked hole, and says where.
+
+## Vehicles
+
+The plane, the helicopter, and the ship under way, as Micropolis' sprites,
+are a feature of format 2.0, `"vehicles"` in `.fcl` and the `VHCL` chunk
+in `.cl` (`Sprites/Vehicles.cs`). Each is a list of numbers, empty or
+left out when none is under way, its positions in pixels, 16 to a tile:
+
+| Field | Numbers |
+|---|---|
+| `plane` | x, y, frame (1 to 11), and the x and y it is flying to |
+| `helicopter` | x, y, frame (1 to 8), the x and y it is flying to, the x and y of the airport it came from, and the moves its flight has left |
+| `ship` | x, y, frame (1 to 8), the direction it is turning to (1 to 8), the direction it came from (1 to 8, or 10 for none yet), and its count to its next look around (0 to 9) |
+
+Micropolis' animation cycle, which says when each turns, comes from the
+city's steps, two moves a step, and isn't saved. A save without the
+section opens with nothing under way.
+
+It is ignorable and keepable, as the ordinances are: a version that
+doesn't know it opens the city with nothing under way, and writes the
+section back as it was, since the vehicles leave nothing on the map
+until they come down. A save for 0.4 leaves it out. Reading refuses a
+list of the wrong length or a frame out of range, and says which.
 
 ## Opening a newer save
 
