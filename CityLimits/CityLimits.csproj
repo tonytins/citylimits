@@ -9,6 +9,8 @@
          still needs it fails loudly here instead of in a trimmed build. -->
     <JsonSerializerIsReflectionEnabledByDefault>false</JsonSerializerIsReflectionEnabledByDefault>
     <RollForward>LatestMajor</RollForward>
+    <!-- The Windows executable's icon; other platforms' packages carry their own (packaging/). -->
+    <ApplicationIcon>..\icon.ico</ApplicationIcon>
     <!-- The version comes from GitInfo.txt alone. GitInfo would otherwise take it from a release tag,
          such as v0.3.106, or a branch named for a version, ahead of the file, and count every commit
          since rather than only the game project's. -->

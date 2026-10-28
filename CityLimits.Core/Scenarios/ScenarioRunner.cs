@@ -45,6 +45,12 @@ public sealed class ScenarioRunner
     }
 
     /// <summary>
+    /// Whether each action's report lists every tile it changed (<see cref="ActionReport.Changes"/>),
+    /// as <c>citylimits scenario --verbose</c> asks; off, a report gives only the totals.
+    /// </summary>
+    public bool ListsTiles { get; set; }
+
+    /// <summary>
     /// Runs a scenario for its ticks, or for <paramref name="ticks"/> when given. At each tick the
     /// actions due are made in file order, then the disasters due strike, then the checks due are
     /// made, and then the city takes a step; on the last tick the goals are judged.
@@ -83,7 +89,7 @@ public sealed class ScenarioRunner
             var date = scenario.DateAt(tick).ToString();
             while (nextAction < actions.Count && actions[nextAction].Tick == tick)
             {
-                var report = Make(city, plan, actions[nextAction++], date);
+                var report = Make(city, plan, actions[nextAction++], date, ListsTiles);
                 actionReports.Add(report);
                 ActionMade?.Invoke(report);
             }
@@ -222,7 +228,7 @@ public sealed class ScenarioRunner
 
     // The stroke is planned first, for what it would skip and why, then applied as the tool
     // applies it. Both see the same map, so they agree.
-    private static ActionReport Make(CitySimulation city, BuildPlan plan, ScenarioAction action, string date)
+    private static ActionReport Make(CitySimulation city, BuildPlan plan, ScenarioAction action, string date, bool listsTiles)
     {
         var stroke = new BuildStroke(action.Tool, action.FromX, action.FromY);
         stroke.DragTo(action.ToX, action.ToY);
@@ -240,6 +246,16 @@ public sealed class ScenarioRunner
         }
 
         var built = result.Status == BuildStatus.Built;
+
+        // What the plan would change is what was changed, when the stroke was built.
+        IReadOnlyList<TileChange>? changes = null;
+        if (listsTiles)
+        {
+            changes = built
+                ? plan.Tiles.Select(tile => new TileChange(tile.X, tile.Y, tile.State.Kind.ToString(), tile.State.Use.ToString())).ToList()
+                : [];
+        }
+
         return new ActionReport(
             action.Index,
             action.Tick,
@@ -250,7 +266,8 @@ public sealed class ScenarioRunner
             skipped,
             built ? result.Cost : 0,
             action.Expect?.IsMetBy(result),
-            date);
+            date,
+            changes);
     }
 
     private static CheckReport Check(CitySimulation city, ScenarioCheck check, string date)

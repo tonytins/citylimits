@@ -130,6 +130,7 @@ citylimits scenario demo-town --headless                # run a built-in scenari
 citylimits scenario --file my-bug.json --headless       # run a scenario from a file
 citylimits scenario demo-town --headless --ticks 768    # run this many ticks instead of to the end date
 citylimits scenario demo-town --headless --json         # the report as JSON on stdout
+citylimits scenario demo-town --headless --verbose      # every tile each action changed, too
 ```
 
 Scenarios run only with the global `--headless` flag, and a run without
@@ -165,6 +166,10 @@ report's `won` says how it went.
 Without `--json`, the run writes to the log as `citylimits --headless` does: the setup,
 each action, disaster, and check with its date and tick, each goal at the
 end, and a summary line.
+
+`--verbose` adds every tile each action changed, beside the totals: in
+the log, a line for each tile under its action, with how many tiles were
+skipped for each reason, and in the JSON report, each action's `changes`.
 
 With `--json`, stdout carries the report and nothing else, so it can be
 piped into a parser. For that run, the log moves to stderr:
@@ -499,8 +504,11 @@ line. For an action, `status` and, when
 it wasn't built, `reason` are its `BuildResult`; `tiles` is how many
 tiles it changed; `skipped` maps each `BuildRefusal` to how many tiles it
 skipped for that reason, or how many zones for a zone stroke, as
-`BuildPlan.SkippedBecause` counts them; and `met` is present only when
-the action had an `expect`. `start` and `ends`, and each action's,
+`BuildPlan.SkippedBecause` counts them; `met` is present only when
+the action had an `expect`; and `changes`, present only with `--verbose`,
+lists each tile the action changed as `{ "x", "y", "ground", "use" }`,
+its `TileKind` and `TileUse` names, empty when it built nothing. Skipped
+tiles are counted, not listed. `start` and `ends`, and each action's,
 event's, and check's `date`, are the same times as their ticks, as the
 file names dates. `won` is present only for a challenge; `found` is what
 the goal's measure came to at the end. The example shows the shape of the report. It

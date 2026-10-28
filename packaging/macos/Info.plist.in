@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleName</key>
+	<string>CityLimits</string>
+	<key>CFBundleDisplayName</key>
+	<string>CityLimits</string>
+	<key>CFBundleIdentifier</key>
+	<string>io.github.tonytins.citylimits</string>
+	<key>CFBundleExecutable</key>
+	<string>CityLimits</string>
+	<key>CFBundleIconFile</key>
+	<string>CityLimits.icns</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>@VERSION@</string>
+	<key>CFBundleVersion</key>
+	<string>@VERSION@</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>en</string>
+	<key>LSApplicationCategoryType</key>
+	<string>public.app-category.simulation-games</string>
+	<!-- The oldest macOS .NET 10 runs on. -->
+	<key>LSMinimumSystemVersion</key>
+	<string>14.0</string>
+	<key>NSHighResolutionCapable</key>
+	<true/>
+	<key>BuildCommit</key>
+	<string>@BUILD_SHA@</string>
+</dict>
+</plist>

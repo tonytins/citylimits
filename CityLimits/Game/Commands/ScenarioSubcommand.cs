@@ -15,7 +15,7 @@ public sealed class ScenarioSubcommand : ISubcommand
 
     private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
 
-    private static readonly OptionSpec Options = new(["--file", "--ticks"], ["--json"], MaxPositionals: 1);
+    private static readonly OptionSpec Options = new(["--file", "--ticks"], ["--json", "--verbose"], MaxPositionals: 1);
 
     public string Name => "scenario";
 
@@ -33,6 +33,7 @@ public sealed class ScenarioSubcommand : ISubcommand
           --ticks <count>   run this many ticks instead of the scenario's own, 0 to {Scenario.MaxTicks},
                             but not fewer than its last action or check needs
           --json            write the report as JSON to stdout, and the log to stderr
+          --verbose         list every tile each action changed, beside the totals
 
         Exit codes: 0 every check passed, 1 the scenario could not run, 2 the command line
         was wrong, 3 a check or an expectation failed. A lost challenge is still 0.
@@ -64,7 +65,7 @@ public sealed class ScenarioSubcommand : ISubcommand
 
         if (scenarioId == "list")
         {
-            return options.Has("--json") || scenarioFile is not null || ticks is not null
+            return options.Has("--json") || options.Has("--verbose") || scenarioFile is not null || ticks is not null
                 ? Refuse(context, "'scenario list' takes no options.")
                 : List(context, catalog);
         }
@@ -115,7 +116,7 @@ public sealed class ScenarioSubcommand : ISubcommand
         ScenarioReport report;
         try
         {
-            report = Run(scenario!, source, ticks);
+            report = Run(scenario!, source, ticks, options.Has("--verbose"));
         }
         catch (Exception ex)
         {
@@ -131,7 +132,7 @@ public sealed class ScenarioSubcommand : ISubcommand
         return report.Passed ? ExitCodes.Success : ExitCodes.ChecksFailed;
     }
 
-    private static ScenarioReport Run(Scenario scenario, string source, int? ticks)
+    private static ScenarioReport Run(Scenario scenario, string source, int? ticks, bool verbose)
     {
         Logger.Info(
             "Scenario '{Name}' from {Source}: {From}, map {Width} by {Height}, {Start} to {Ends}, {Ticks} ticks, ${Funds}",
@@ -145,7 +146,7 @@ public sealed class ScenarioSubcommand : ISubcommand
             ticks ?? scenario.Ticks,
             scenario.Funds);
 
-        var runner = new ScenarioRunner();
+        var runner = new ScenarioRunner { ListsTiles = verbose };
         runner.ActionMade += LogAction;
         runner.EventHappened += LogEvent;
         runner.CheckMade += LogCheck;
@@ -196,10 +197,31 @@ public sealed class ScenarioSubcommand : ISubcommand
         if (action.Met == false)
         {
             Logger.Warn("action {Index} at {Date}, tick {Tick}: {Tool} {Status}{Reason}, {Tiles} tiles, ${Cost}{Expectation}", action.Index, action.Date, action.Tick, action.Tool, action.Status, reason, action.Tiles, action.Cost, expectation);
+            LogTiles(action);
             return;
         }
 
         Logger.Info("action {Index} at {Date}, tick {Tick}: {Tool} {Status}{Reason}, {Tiles} tiles, ${Cost}{Expectation}", action.Index, action.Date, action.Tick, action.Tool, action.Status, reason, action.Tiles, action.Cost, expectation);
+        LogTiles(action);
+    }
+
+    // With --verbose, each tile the action changed, and how many it skipped for each reason.
+    private static void LogTiles(ActionReport action)
+    {
+        if (action.Changes is null)
+        {
+            return;
+        }
+
+        foreach (var change in action.Changes)
+        {
+            Logger.Info("  ({X}, {Y}): {Use} on {Ground}", change.X, change.Y, change.Use, change.Ground);
+        }
+
+        foreach (var (reason, count) in action.Skipped)
+        {
+            Logger.Info("  skipped {Count}: {Reason}", count, reason);
+        }
     }
 
     private static void LogEvent(EventReport happening) =>

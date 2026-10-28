@@ -92,6 +92,8 @@ public sealed record CityCounts(int Road, int Bridge, int Residential, int Comme
 /// <param name="Skipped">How many tiles it skipped for each reason, or zones for a zone stroke; only the reasons that skipped some.</param>
 /// <param name="Cost">The money it spent; nothing when it wasn't built.</param>
 /// <param name="Met">Whether it came to what it expected; absent when it expected nothing.</param>
+/// <param name="Date">The month it was made in, as YYYY-MM.</param>
+/// <param name="Changes">Each tile it changed, in the order it changed them, when the run was asked for them (<c>--verbose</c>); absent otherwise.</param>
 public sealed record ActionReport(
     int Index,
     int Tick,
@@ -102,7 +104,11 @@ public sealed record ActionReport(
     IReadOnlyDictionary<string, int> Skipped,
     int Cost,
     bool? Met,
-    string? Date = null);
+    string? Date = null,
+    IReadOnlyList<TileChange>? Changes = null);
+
+/// <summary>A tile an action changed: where it is, and the ground and use it was left with, as <see cref="TileKind"/> and <see cref="TileUse"/> names.</summary>
+public sealed record TileChange(int X, int Y, string Ground, string Use);
 
 /// <summary>What came of one check: whether it passed, and when it didn't, what was expected and what was found; and when it was made.</summary>
 public sealed record CheckReport(int Index, int Tick, bool Passed, string? Expected, string? Actual, string? Date = null);

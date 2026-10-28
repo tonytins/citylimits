@@ -1,5 +1,23 @@
 # CityLimits Changelog
 
+## 0.5.102
+
+CityLimits now comes for Windows and macOS as well as Linux, each ready
+to run with nothing else to install: a zip for Windows, an app for Apple
+silicon and Intel Macs, and an AppImage or a plain folder for Linux. On
+Windows, the game has its icon. On macOS, the app isn't signed by a
+known developer yet, so the first time you open it, Control-click it and
+choose Open.
+
+For developers and agents: `packaging/` follows Photocraft's, with a
+shared `env.sh` that reads the version once and a `package.sh` for each
+platform, all runnable from Linux or macOS; see `packaging/README.md`.
+Packages go to `dist/release/` and carry the .NET runtime unless given
+`--framework-dependent`. `package-appimage.sh` is now
+`linux/package.sh`, and appimagetool is pinned and checked. `citylimits
+scenario --verbose` lists each tile an action changed, in the log and as
+each action's `changes` in the JSON report, which stays format 1.
+
 ## 0.5.101
 
 Mods can change more of the game: how strongly and how far fire and

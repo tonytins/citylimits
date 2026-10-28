@@ -43,6 +43,28 @@ public class ScenarioRunnerTests
     }
 
     [Fact]
+    public void AVerboseRunListsEachTileAnActionChangedAndAPlainOneDoesnt()
+    {
+        const string json = """
+            { "format": 1, "name": "Tiles", "seed": 2000, "ticks": 0,
+              "actions": [
+                { "tick": 0, "tool": "Road", "from": { "x": 34, "y": 53 }, "to": { "x": 36, "y": 53 } },
+                { "tick": 0, "tool": "Road", "from": { "x": 34, "y": 53 }, "to": { "x": 36, "y": 53 } } ] }
+            """;
+
+        var verbose = new ScenarioRunner { ListsTiles = true }.Run(Load(json), "test");
+        var plain = Run(json);
+
+        Assert.Equal(
+            [new TileChange(34, 53, "Grass", "Road"), new TileChange(35, 53, "Grass", "Road"), new TileChange(36, 53, "Grass", "Road")],
+            verbose.Actions[0].Changes!.OrderBy(change => change.X));
+        Assert.Empty(verbose.Actions[1].Changes!);
+        Assert.All(plain.Actions, action => Assert.Null(action.Changes));
+        Assert.DoesNotContain("\"changes\"", ScenarioReportJson.Serialize(plain));
+        Assert.Contains("\"changes\"", ScenarioReportJson.Serialize(verbose));
+    }
+
+    [Fact]
     public void ACheckSeesTheActionsOfItsOwnTick()
     {
         var report = Run("""
