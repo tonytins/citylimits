@@ -219,7 +219,7 @@ public sealed class GameLoop : IDisposable
         LeaveToMenu,
         LeaveToQuit,
         OpenCity,
-        BackToBeforePlay,
+        ResetTest,
         StartOver,
     }
 
@@ -591,9 +591,9 @@ public sealed class GameLoop : IDisposable
     {
         switch (GameMenu.Update(_editing is not null, _editing?.IsTesting == true))
         {
-            case GameMenu.Choice.BackToBeforePlay:
+            case GameMenu.Choice.ResetTest:
                 CloseModal();
-                Ask(Pending.BackToBeforePlay, "Go back to before play?", "The city goes back to how it was when you pressed play: the test, and everything built during it, are undone.", "Go back", "Stay");
+                Ask(Pending.ResetTest, "Reset the test?", "The city goes back to how it was when you pressed play: the test, and everything built during it, are undone.", "Reset", "Stay");
                 break;
             case GameMenu.Choice.StartOver:
                 CloseModal();
@@ -749,8 +749,8 @@ public sealed class GameLoop : IDisposable
                 (OpenedCity, OpenedFile, OpenedNotes) = (_cityToOpen, _fileToOpen, _notesToOpen);
                 Leaving = Leave.Open;
                 break;
-            case Pending.BackToBeforePlay when _editing is not null:
-                Reopen(_editing.EndTest, "went back to before play");
+            case Pending.ResetTest when _editing is not null:
+                Reopen(_editing.EndTest, "reset the test");
                 break;
             case Pending.StartOver when _editing is not null:
                 Reopen(_editing.OpenCity, "started over");
@@ -782,7 +782,7 @@ public sealed class GameLoop : IDisposable
         _editing!.BeginTest(_simulation);
         _simulation.Challenge!.Finished += ShowChallengeResult;
         Logger.Info("Testing {Name}", _editing.Scenario.Name);
-        _ticker.Advise($"Testing {_editing.Scenario.Name}: Escape's menu goes back to before play");
+        _ticker.Advise($"Testing {_editing.Scenario.Name}: Escape's menu resets it");
     }
 
     // The city's name in the bar, or, editing a scenario, what is being done to it.

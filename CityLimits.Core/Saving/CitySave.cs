@@ -113,6 +113,13 @@ internal sealed class CitySave
     public OrdinancesSave? Ordinances { get; set; }
 
     /// <summary>
+    /// The deals with the neighbouring cities, the offer standing, the grudges held, and the year's
+    /// money from the deals so far; a feature of format 2.0, which 0.5.100 reserved, and no deals for
+    /// a city from before.
+    /// </summary>
+    public ConnectionsSave? Connections { get; set; }
+
+    /// <summary>
     /// The scenario being played in the city, if any: its goals, when they are judged, and what is still
     /// to come; from format 1.8. A city that isn't a challenge leaves it out, so its save is as before.
     /// </summary>
@@ -404,6 +411,75 @@ internal sealed class OrdinancesSave
 
     /// <summary>The latest estimate's ordinance income and cost, when the budget has one.</summary>
     public int[]? Estimated { get; set; }
+}
+
+/// <summary>The city's dealings with its neighbours, as <see cref="CityNeighbours"/> writes them, and their share of the budget.</summary>
+[System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(SectionCodec.ModelMembers)]
+internal sealed class ConnectionsSave
+{
+    /// <summary>The deals in force.</summary>
+    public required DealSave[] Deals { get; set; }
+
+    /// <summary>The offer standing, or null.</summary>
+    public OfferSave? Offer { get; set; }
+
+    /// <summary>For each side, north, east, south, and west, the step until which its neighbour won't deal.</summary>
+    public required long[] GrudgeUntil { get; set; }
+
+    /// <summary>What the deals have earned this year so far, set aside each count, 48 times a year's worth.</summary>
+    public long IncomeFund { get; set; }
+
+    /// <summary>What the deals have cost this year so far, set aside each count, 48 times a year's worth.</summary>
+    public long CostFund { get; set; }
+
+    /// <summary>Last year's deal income and cost, when the budget has a last year.</summary>
+    public int[]? LastYear { get; set; }
+
+    /// <summary>The latest estimate's deal income and cost, when the budget has one.</summary>
+    public int[]? Estimated { get; set; }
+}
+
+/// <summary>A deal in force.</summary>
+[System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(SectionCodec.ModelMembers)]
+internal sealed class DealSave
+{
+    /// <summary>The neighbour's side: north, east, south, or west.</summary>
+    public required string Side { get; set; }
+
+    /// <summary>Which way the power goes: cityBuys or citySells.</summary>
+    public required string Kind { get; set; }
+
+    /// <summary>How much power, in tiles of capacity.</summary>
+    public required int Power { get; set; }
+
+    /// <summary>What changes hands each year.</summary>
+    public required int Money { get; set; }
+
+    /// <summary>The step the deal ends at.</summary>
+    public required long EndStep { get; set; }
+}
+
+/// <summary>An offer standing.</summary>
+[System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(SectionCodec.ModelMembers)]
+internal sealed class OfferSave
+{
+    /// <summary>The neighbour's side.</summary>
+    public required string Side { get; set; }
+
+    /// <summary>Which way the power would go.</summary>
+    public required string Kind { get; set; }
+
+    /// <summary>How much power, in tiles of capacity.</summary>
+    public required int Power { get; set; }
+
+    /// <summary>What would change hands each year.</summary>
+    public required int Money { get; set; }
+
+    /// <summary>How many years it would run.</summary>
+    public required int Years { get; set; }
+
+    /// <summary>The step the offer lapses at.</summary>
+    public required long ExpiresStep { get; set; }
 }
 
 /// <summary>When the city was founded.</summary>

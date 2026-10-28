@@ -9,8 +9,7 @@ using CityLimits.Core.World;
 namespace CityLimits.Tests;
 
 // A newer CityLimits's save, made by hand: format 2.0 still, since a feature is known by its name,
-// not by a version. It has a "weather" part this version doesn't know, which it leaves out, and, when
-// asked, "connections", which this version reserves and carries through as it is.
+// not by a version. It has a "weather" part this version doesn't know, which it leaves out.
 public class ForwardCompatibilityTests
 {
     private static CitySimulation City()
@@ -24,16 +23,11 @@ public class ForwardCompatibilityTests
         return city;
     }
 
-    private static string FutureFlat(bool connections = false, bool listed = true)
+    private static string FutureFlat(bool listed = true)
     {
         var save = JsonNode.Parse(FlatCityFormat.Write(City()))!.AsObject();
         save["weather"] = new JsonObject { ["levels"] = new JsonArray(1, 2, 3) };
         save["features"]!.AsArray().Add(JsonValue.Create("weather"));
-        if (connections)
-        {
-            save["connections"] = new JsonObject { ["neighbours"] = new JsonArray("Riverton") };
-            save["features"]!.AsArray().Add(JsonValue.Create("connections"));
-        }
 
         if (!listed)
         {
@@ -51,7 +45,7 @@ public class ForwardCompatibilityTests
         var written = JsonNode.Parse(FlatCityFormat.Write(City()))!.AsObject();
 
         Assert.Equal(
-            ["traffic", "rail", "pollution", "crime", "fire", "flood", "challenge", "facilities", "founding", "ordinances"],
+            ["traffic", "rail", "pollution", "crime", "fire", "flood", "challenge", "facilities", "founding", "ordinances", "connections"],
             written["features"]!.AsArray().Select(feature => feature!.GetValue<string>()));
         Assert.EndsWith("city-save.v2.0.schema.json", written["$schema"]!.GetValue<string>());
     }
@@ -82,34 +76,6 @@ public class ForwardCompatibilityTests
     }
 
     [Fact]
-    public void ConnectionsAreReservedAndCarriedThroughAsTheyAre()
-    {
-        Assert.True(FlatCityFormat.TryRead(FutureFlat(connections: true), out var city, out var problem, out var notes), problem);
-
-        Assert.Contains("Its connections part is kept as it was when you save it.", notes);
-        var written = JsonNode.Parse(FlatCityFormat.Write(city))!.AsObject();
-        Assert.Equal("[\"Riverton\"]", written["connections"]!["neighbours"]!.ToJsonString());
-        Assert.True(Names(written["features"], "connections"));
-        Assert.Null(written["weather"]);
-
-        // Written back, it opens the same way again, and carries them on.
-        Assert.True(FlatCityFormat.TryRead(written.ToJsonString(), out var reopened, out problem, out _), problem);
-        Assert.Equal("[\"Riverton\"]", JsonNode.Parse(FlatCityFormat.Write(reopened))!["connections"]!["neighbours"]!.ToJsonString());
-    }
-
-    [Fact]
-    public void KeptFeaturesGoBackOnlyIntoTheirOwnFormat()
-    {
-        Assert.True(FlatCityFormat.TryRead(FutureFlat(connections: true), out var city, out var problem, out _), problem);
-
-        var binary = BinaryCityFormat.Write(city);
-
-        Assert.DoesNotContain("CONN", Encoding.ASCII.GetString(binary));
-        Assert.True(BinaryCityFormat.TryRead(binary, out _, out problem, out var notes), problem);
-        Assert.Empty(notes);
-    }
-
-    [Fact]
     public void AFileFor04IsFormat110WithItsDefinitionsAndPartsAndRunsInStepWithTheCity()
     {
         var city = City();
@@ -134,14 +100,13 @@ public class ForwardCompatibilityTests
     }
 
     [Fact]
-    public void AFileFor04LeavesOutAFeatureFormat1CantHold()
+    public void AFileFor04LeavesOutTheFeaturesFormat1CantHold()
     {
-        Assert.True(FlatCityFormat.TryRead(FutureFlat(connections: true), out var city, out var problem, out _), problem);
-
-        var written = JsonNode.Parse(FlatCityFormat.Write(city, legacy: true))!.AsObject();
+        var written = JsonNode.Parse(FlatCityFormat.Write(City(), legacy: true))!.AsObject();
 
         Assert.Equal("1.10", written["format"]!.GetValue<string>());
         Assert.Null(written["connections"]);
+        Assert.Null(written["ordinances"]);
     }
 
     [Fact]
@@ -162,20 +127,16 @@ public class ForwardCompatibilityTests
     }
 
     [Fact]
-    public void ABinarySavesUnknownChunkIsLeftOutAndItsReservedConnectionsKept()
+    public void ABinarySavesUnknownChunkIsLeftOut()
     {
         Assert.True(BinaryCityFormat.TryRead(FutureBinary(), out var city, out var problem, out var notes), problem);
 
         Assert.Contains("Its weather part is left out, and is left out when you save it.", notes);
-        Assert.Contains("Its connections part is kept as it was when you save it.", notes);
         var written = BinaryCityFormat.Write(city);
         var chunks = Chunks(written);
         Assert.Equal(2, BinaryPrimitives.ReadUInt16BigEndian(written.AsSpan(6)));
         Assert.DoesNotContain(chunks, chunk => chunk.Tag == "WTHR");
-        Assert.Equal([7, 8, 9], chunks.Single(chunk => chunk.Tag == "CONN").Payload);
-
-        Assert.True(BinaryCityFormat.TryRead(written, out var reopened, out problem, out _), problem);
-        Assert.Equal([7, 8, 9], Chunks(BinaryCityFormat.Write(reopened)).Single(chunk => chunk.Tag == "CONN").Payload);
+        Assert.Single(chunks, chunk => chunk.Tag == "CONN");
     }
 
     // Bridgeport with rail, opened from 0.3.106's save in each backport (0.3.100.1, 0.3.101.1, and
@@ -205,7 +166,7 @@ public class ForwardCompatibilityTests
     }
 
     // The binary save as docs/saving.md lays it out: the header, then chunks, with the features list
-    // given weather and connections, and their own chunks added.
+    // given weather, and its own chunk added.
     private static byte[] FutureBinary()
     {
         var bytes = BinaryCityFormat.Write(City());
@@ -217,7 +178,6 @@ public class ForwardCompatibilityTests
         }
 
         rebuilt.AddRange(Chunk("WTHR", [1, 2, 3]));
-        rebuilt.AddRange(Chunk("CONN", [7, 8, 9]));
         return [.. rebuilt];
     }
 
@@ -226,7 +186,7 @@ public class ForwardCompatibilityTests
     private static IEnumerable<byte> AddFeatures(byte[] payload)
     {
         var count = payload[0] >> 1;
-        return [.. Varint(count + 2), .. payload[1..], .. FeatureBytes("weather", "WTHR"), .. FeatureBytes("connections", "CONN")];
+        return [.. Varint(count + 1), .. payload[1..], .. FeatureBytes("weather", "WTHR")];
     }
 
     private static byte[] FeatureBytes(string name, string chunk) => [1, .. Text(name), .. Text(chunk)];

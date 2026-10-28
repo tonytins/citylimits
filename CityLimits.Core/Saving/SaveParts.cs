@@ -84,6 +84,11 @@ internal static class SaveParts
         // were, since enacting one changes nothing else that is saved; the year's ordinance money
         // set aside meanwhile is only what the newer game had, so the year comes out short.
         new() { Name = "ordinances", Chunk = "ORDN", Ignorable = true, Keepable = true },
+
+        // The city's dealings with its neighbours, which 0.5.100 reserved: a game that doesn't know
+        // them carries them through as they were, so they are kept as the ordinances are, and a
+        // deal's power and money stop while that game plays.
+        new() { Name = "connections", Chunk = "CONN", Ignorable = true, Keepable = true },
     ];
 
     /// <summary>The parts format 1's list names, each with the version that added it, for a save 0.4 opens.</summary>
@@ -91,13 +96,11 @@ internal static class SaveParts
 
     /// <summary>
     /// Features this version knows by name and carries through as they are, without reading them,
-    /// until a later version gives them their contents: connections to neighbouring cities, which
-    /// Senri's N5 fills. A save that holds one writes it back unchanged; one that doesn't, leaves it out.
+    /// until a later version gives them their contents. A save that holds one writes it back
+    /// unchanged; one that doesn't, leaves it out. None is reserved now: 0.5.100 reserved
+    /// connections, which Senri's N5 gave their contents.
     /// </summary>
-    public static readonly PartSave[] Reserved =
-    [
-        new() { Name = "connections", Chunk = "CONN", Ignorable = true, Keepable = true },
-    ];
+    public static readonly PartSave[] Reserved = [];
 
     /// <summary>
     /// The features a 2.0 save names: the parts above, known by their names rather than the versions

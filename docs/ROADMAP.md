@@ -1,6 +1,6 @@
 # CityLimits roadmap
 
-> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-28 · **Change:** minor (Senri, N4b: the ordinances' page, budget line, and blue ticker news; N4 is done) · **Stage:** beta
+> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-28 · **Change:** minor (Senri, N5a: neighbours' rules, connections, and power deals) · **Stage:** beta
 
 Forward-looking: where CityLimits stands, what blocks the next milestone,  
 and what comes next. Verified status and evidence are in the  
@@ -581,6 +581,22 @@ play builds on, so 0.6 adds to them rather than changing them.
   one; and road and rail connections lift demand. Saved as
   `connections`, which 0.5.100 already reserves. Yokohama's region and
   online neighbours build on it.
+  - [x] The rules (N5a): four neighbours, named and sized from the seed
+    by a hash of their own, never the city's dice. A road, rail, or
+    power line on an edge tile connects to that side; each road lifts
+    commercial and industrial demand by 20, and each rail line
+    industrial by 30. Every six months, a neighbour with a power line to
+    a city of 2,000 or more offers a deal: 300 tiles of power for $60 a
+    year a hundred to a city browned out, or to buy half its spare
+    capacity, up to 500, at $40 a hundred, for ten years. An offer
+    stands three months. A deal carries power and money only while its
+    line is up; breaking one costs a year's money, and the neighbour
+    won't deal for five years. Deals show in the budget, and are saved
+    as `connections`.
+  - [ ] The window and the ticker (N5b): an offer in a window of its own,
+    taken or turned down there; a Neighbours page in the city panel,
+    with each neighbour, its connections, and its deal, which can be
+    broken; the budget's deal line; and the news in blue on the ticker.
 - [ ] N6: oversights found on the way, fixed before Yokohama starts.
   - [ ] `--headless` only reads `common/`, and leaves writing it to the
     game in a window, as Tony Bark asked; 0.5.101 writes it from both.
@@ -653,6 +669,7 @@ Yokohama waits on Senri, and on Tony Bark settling its design from the
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-28 | minor | Senri, N5a: four neighbours from the seed, connections read from the map's edges, roads and rail lifting demand, and power deals offered every six months, with a term, a yearly price, and a cost for breaking one; saved as `connections`, which 0.5.100 reserved and nothing is now. 937 tests. |
 | 2026-10-28 | minor | Senri, N4b, closing N4: the city panel's Ordinances page, each ordinance a button with its rate and, under the pointer, what it does; the budget's ordinance line; and ordinance news on the ticker in blue, as Tony Bark chose, opening the page when clicked. 929 tests. |
 | 2026-10-28 | minor | Senri, N4a: Tony Bark added ordinances, after SimCity 3000's, as N4, before neighbours, which become N5, with oversights N6. Ten ordinances, any enacted at any time, earn or cost money by population and nudge demand, crime, pollution, fires, power, or traffic; the city asks for the one it most wants each quarter. `ordinances.json` in definitions 2.2; saved as the `ordinances` feature. 928 tests. |
 | 2026-10-28 | minor | Senri, N3: every window has a unified title bar, macOS-style, after Tony Bark's idea: a red close button, the title in the middle, and a toolbar for the settings' tabs and the help's pages, which frees the room the tabs took. Every window moves by it, the start menu's too. The city panel's title is the city's name, edited in place; other windows can turn that on, and none does yet. Help has an Editing scenarios page. 908 tests. |

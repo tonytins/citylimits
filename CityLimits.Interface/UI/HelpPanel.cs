@@ -52,7 +52,7 @@ public sealed class HelpPanel : IMovableWindow
         ("Its details", true),
         ("Click the city's name on the bar for the city panel, then Edit scenario under the goals: its name, dates, money, and description, its goals, and its disasters, each of which may repeat. Apply checks them and Cancel drops them.", false),
         ("Testing", true),
-        ("Play to test it: the city is kept as it stands, and the scenario runs on it as a player would see it. The Escape menu's Back to before play undoes the test; Start over opens it afresh.", false),
+        ("Play to test it: the city is kept as it stands, and the scenario runs on it as a player would see it. The Escape menu's Reset undoes the test; Start over opens it afresh.", false),
         ("Saving", true),
         ("Ctrl+S, or the Escape menu's Save, saves it to Documents/CityLimits/Scenarios with its city beside it. With Save for 0.4 on in the settings, 0.4 can open it too.", false),
     ];

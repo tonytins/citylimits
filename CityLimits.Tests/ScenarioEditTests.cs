@@ -384,7 +384,7 @@ public sealed class ScenarioEditTests : IDisposable
         edit.BeginTest(city);
 
         Assert.False(edit.TrySave(city, out var problem));
-        Assert.Equal("A scenario can't be saved while it is tested: go back to before play first.", problem);
+        Assert.Equal("A scenario can't be saved while it is tested: reset it first.", problem);
         Assert.Empty(Directory.GetFiles(_folder));
     }
 

@@ -77,6 +77,7 @@ public static class FlatCityFormat
 
             // What came after 1.10 is left out, as 0.4 never had it.
             save.Ordinances = null;
+            save.Connections = null;
             return save;
         }
 

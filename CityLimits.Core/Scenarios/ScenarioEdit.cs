@@ -263,7 +263,7 @@ public sealed class ScenarioEdit
         ArgumentNullException.ThrowIfNull(city);
         if (IsTesting)
         {
-            problem = "A scenario can't be saved while it is tested: go back to before play first.";
+            problem = "A scenario can't be saved while it is tested: reset it first.";
             return false;
         }
 

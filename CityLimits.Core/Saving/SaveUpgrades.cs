@@ -31,6 +31,7 @@ internal static class SaveUpgrades
             save.Definitions = null;
             save.Format = Current;
             AddOrdinances(save);
+            AddConnections(save);
             return;
         }
 
@@ -45,8 +46,13 @@ internal static class SaveUpgrades
         AddFacilities(save);
         AddFounding(save);
         AddOrdinances(save);
+        AddConnections(save);
         save.Format = Current;
     }
+
+    // 2.0's connections. A city from before has no deals, no offer, and no grudges.
+    private static void AddConnections(CitySave save) =>
+        save.Connections ??= new ConnectionsSave { Deals = [], GrudgeUntil = new long[4] };
 
     // 2.0's ordinances. A city from before has none enacted, and no ordinance money set aside.
     private static void AddOrdinances(CitySave save) =>

@@ -150,6 +150,7 @@ public sealed class CitySimulation
         Budget = new CityBudget(Definitions.Service(TileUse.FireStation).Upkeep, Definitions.Service(TileUse.PoliceStation).Upkeep);
         Budget.SetTaxRate(Definitions.Economy.TaxRate);
         Ordinances = new CityOrdinances(Definitions);
+        Neighbours = new CityNeighbours(map, seed);
         _growth = new ZoneGrowth(map, Random, Trips, Definitions, Demand, Maps, Community, Hazards);
     }
 
@@ -189,6 +190,9 @@ public sealed class CitySimulation
 
     /// <summary>Raised when an ordinance is enacted or repealed, and when the city asks for one, each quarter it wants one.</summary>
     public event Action<OrdinanceNews>? OrdinanceNews;
+
+    /// <summary>Raised when a neighbour offers a deal, and when one is taken, turned down, lapses, ends, or is broken.</summary>
+    public event Action<NeighbourNews>? NeighbourNews;
 
     /// <summary>The fires and floods on the map, and the holes they leave in buildings.</summary>
     public Hazards Hazards { get; }
@@ -310,6 +314,9 @@ public sealed class CitySimulation
     /// <summary>The ordinances the city has enacted, and what they do.</summary>
     public CityOrdinances Ordinances { get; }
 
+    /// <summary>The cities beyond the map's edges, what connects to them, and the deals made with them.</summary>
+    public CityNeighbours Neighbours { get; }
+
     /// <summary>What the stadiums, seaports, and airports do to the land value, crime, and pollution around them.</summary>
     public FacilityInfluences Influences { get; }
 
@@ -364,7 +371,7 @@ public sealed class CitySimulation
                     Census,
                     Budget.TaxEffect,
                     Facilities.Caps,
-                    (Ordinances.Effect(OrdinanceEffect.ResidentialDemand), Ordinances.Effect(OrdinanceEffect.CommercialDemand), Ordinances.Effect(OrdinanceEffect.IndustrialDemand)));
+                    DemandNudge());
             }
 
             Census.Clear();
@@ -386,6 +393,7 @@ public sealed class CitySimulation
                 Census.RecordMonth();
                 Community.UpdateNeeds(Census.Residential);
                 AskForOrdinance();
+                DealWithNeighbours();
             }
 
             CollectTaxes();
@@ -398,7 +406,7 @@ public sealed class CitySimulation
         }
         else if (phase == PowerPhase)
         {
-            Power.Trace(Map, Definitions, Ordinances.Scaled(OrdinanceEffect.PowerCapacity, 100));
+            Power.Trace(Map, Definitions, Ordinances.Scaled(OrdinanceEffect.PowerCapacity, 100), Neighbours.PowerTraded());
             if (Power.IsBrownedOut)
             {
                 MessageSent?.Invoke(CityMessage.Brownouts);
@@ -731,8 +739,84 @@ public sealed class CitySimulation
     public BudgetYear EstimateBudget()
     {
         var (income, cost) = Ordinances.YearlyMoney(Census.CityPopulation);
-        return Budget.Estimate(Demand.TaxablePopulation, Maps.LandValueAverage, _budgetedRoadTiles + (_budgetedRailTiles * RoadTilesPerRail), _budgetedFireStations, _budgetedPoliceStations, Treasury.Funds, income, cost);
+        var (dealIncome, dealCost) = Neighbours.YearlyMoney();
+        return Budget.Estimate(Demand.TaxablePopulation, Maps.LandValueAverage, _budgetedRoadTiles + (_budgetedRailTiles * RoadTilesPerRail), _budgetedFireStations, _budgetedPoliceStations, Treasury.Funds, income, cost, dealIncome, dealCost);
     }
+
+    /// <summary>Takes the deal a neighbour offers, from now for its term. Tells whether there was one to take.</summary>
+    public bool AcceptOffer()
+    {
+        if (Neighbours.Accept(TickCount) is not { } deal)
+        {
+            return false;
+        }
+
+        TellOfDeal(NeighbourNewsKind.Accepted, deal.Side, deal.Kind, deal.Power, deal.Money);
+        return true;
+    }
+
+    /// <summary>Turns down the deal a neighbour offers. Tells whether there was one.</summary>
+    public bool DeclineOffer()
+    {
+        if (Neighbours.Decline() is not { } offer)
+        {
+            return false;
+        }
+
+        TellOfDeal(NeighbourNewsKind.Declined, offer.Side, offer.Kind, offer.Power, offer.Money);
+        return true;
+    }
+
+    /// <summary>
+    /// Breaks the deal with a neighbour: the city pays a year of its money at once, and that
+    /// neighbour won't deal for <see cref="CityNeighbours.GrudgeYears"/> years. Tells whether there was one.
+    /// </summary>
+    public bool BreakDeal(CityNeighbours.Side side)
+    {
+        if (Neighbours.Break(side, TickCount) is not { } deal)
+        {
+            return false;
+        }
+
+        Treasury.Settle(-deal.Money);
+        TellOfDeal(NeighbourNewsKind.Broken, deal.Side, deal.Kind, deal.Power, deal.Money);
+        return true;
+    }
+
+    // What demand is nudged by each time it moves: the ordinances and the roads and rail to neighbours, CityLimits' own.
+    private (int Residential, int Commercial, int Industrial) DemandNudge()
+    {
+        var (residential, commercial, industrial) = Neighbours.DemandNudge();
+        return (
+            residential + Ordinances.Effect(OrdinanceEffect.ResidentialDemand),
+            commercial + Ordinances.Effect(OrdinanceEffect.CommercialDemand),
+            industrial + Ordinances.Effect(OrdinanceEffect.IndustrialDemand));
+    }
+
+    // Each month the deals over and an offer unanswered lapse; every six months, offset from the
+    // petitions, a neighbour with a power line to the city may offer one.
+    private void DealWithNeighbours()
+    {
+        var (ended, lapsed) = Neighbours.Expire(TickCount);
+        foreach (var deal in ended)
+        {
+            TellOfDeal(NeighbourNewsKind.Ended, deal.Side, deal.Kind, deal.Power, deal.Money);
+        }
+
+        if (lapsed is not null)
+        {
+            TellOfDeal(NeighbourNewsKind.Lapsed, lapsed.Side, lapsed.Kind, lapsed.Power, lapsed.Money);
+        }
+
+        if (CityTime % (CityCalendar.CountsPerMonth * 6) == CityCalendar.CountsPerMonth * 3
+            && Neighbours.Propose(Census.CityPopulation, Power.IsBrownedOut, Power.Capacity, Power.PoweredTiles, TickCount) is { } offer)
+        {
+            TellOfDeal(NeighbourNewsKind.Offer, offer.Side, offer.Kind, offer.Power, offer.Money);
+        }
+    }
+
+    private void TellOfDeal(NeighbourNewsKind kind, CityNeighbours.Side side, DealKind deal, int power, int money) =>
+        NeighbourNews?.Invoke(new NeighbourNews(Neighbours.Of(side), kind, deal, power, money));
 
     /// <summary>
     /// Enacts or repeals an ordinance, which takes effect at once and is paid for from the next
@@ -1010,8 +1094,16 @@ public sealed class CitySimulation
         Facilities = FacilityCodec.Capture(Map, Hazards, Facilities),
         Founding = new FoundingSave { Year = FoundedYear },
         Ordinances = CaptureOrdinances(),
+        Connections = CaptureConnections(),
         Challenge = Challenge?.Capture(),
     };
+
+    private ConnectionsSave CaptureConnections()
+    {
+        var save = Neighbours.Capture();
+        (save.IncomeFund, save.CostFund, save.LastYear, save.Estimated) = Budget.CaptureDeals();
+        return save;
+    }
 
     private OrdinancesSave CaptureOrdinances()
     {
@@ -1091,6 +1183,9 @@ public sealed class CitySimulation
         city.Ordinances.Restore(ordinances.Enacted);
         city.Budget.RestoreOrdinances(ordinances.IncomeFund, ordinances.CostFund, ordinances.LastYear, ordinances.Estimated, "ordinances");
         city.ApplyOrdinances();
+        var connections = save.Connections ?? throw new InvalidSave("connections: missing.");
+        city.Neighbours.Restore(connections);
+        city.Budget.RestoreDeals(connections.IncomeFund, connections.CostFund, connections.LastYear, connections.Estimated, "connections");
         city.Challenge = save.Challenge is { } challenge ? Scenarios.Challenge.Restore(challenge) : null;
         var cycle = save.Cycle ?? throw new InvalidSave("cycle: missing.");
         city.RoadTiles = SaveChecks.InRange(cycle.RoadTiles, 0, int.MaxValue, "cycle.roadTiles");

@@ -113,9 +113,10 @@ public class CommunityBuildingTests
     public void AGrowingCityGetsAHospitalAndAChurchInItsEmptyZones()
     {
         // Fifteen residential buildings of 40 (600 residents, two of each wanted), the shops and
-        // factories to employ them, and ten empty residential zones, all powered and on a road.
+        // factories to employ them, and ten empty residential zones, all powered and on a road, which
+        // stops a tile short of the edge so no neighbour's demand comes into it.
         var city = new CitySimulation(TileMap.FromTerrain(132, 8, new TileKind[132 * 8]), 5, funds: 1_000_000);
-        var road = new BuildStroke(BuildAction.Road, 0, 3);
+        var road = new BuildStroke(BuildAction.Road, 1, 3);
         road.DragTo(125, 3);
         city.Builder.Apply(road);
         Zones(city, BuildAction.ZoneResidential, 1, 43, TileUse.Residential, 4);

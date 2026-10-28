@@ -137,6 +137,7 @@ size of the same city as `.fcl`.
 | `FCLT` | The stadiums, seaports, and airports, the scan's counts of them, and the demand held back for want of one; from format 1.9 |
 | `FNDG` | The year the city was founded; from format 1.10 |
 | `ORDN` | The city's ordinances; a 2.0 feature, which a save for 0.4 leaves out |
+| `CONN` | The city's deals with its neighbours; a 2.0 feature, which a save for 0.4 leaves out |
 
 In a 2.0 file, the chunks from `TRAF` on are its features: each may be
 left out, and is then filled in as the version that added it fills it.
@@ -225,7 +226,7 @@ arrays of numbers sit on one line each.
 | `map` | The map: see below |
 | `budget`, `census`, `demand`, `power`, `services`, `community`, `cityMaps` | Each part of the simulation's state |
 | `cycle` | The road tiles counted this cycle, and what the last count set aside for the budget |
-| `traffic` and `roadTraffic`, `rail`, `pollution`, `crime`, `fire`, `flood`, `challenge`, `facilities`, `founding`, `ordinances` | The features' sections, each from the version the table under Versions gives, `ordinances` from 2.0 alone; a 2.0 save may leave any out |
+| `traffic` and `roadTraffic`, `rail`, `pollution`, `crime`, `fire`, `flood`, `challenge`, `facilities`, `founding`, `ordinances`, `connections` | The features' sections, each from the version the table under Versions gives, `ordinances` and `connections` from 2.0 alone; a 2.0 save may leave any out |
 | `parts` | In format 1 only: the parts list, from 1.2 |
 
 ### The map
@@ -456,6 +457,42 @@ was, since enacting one changes nothing else that is saved; the year's
 ordinance money is then short by the months it played. A save for 0.4
 leaves it out, and its parts list doesn't name it.
 
+## Neighbours
+
+The city's dealings with the cities beyond its edges are a feature of
+format 2.0, `"connections"` in `.fcl` and the `CONN` chunk in `.cl`, the
+name 0.5.100 reserved:
+
+```json
+"connections": {
+  "deals": [ { "side": "east", "kind": "cityBuys", "power": 300, "money": 180, "endStep": 16800 } ],
+  "offer": null,
+  "grudgeUntil": [ 0, 0, 0, 0 ],
+  "incomeFund": 0, "costFund": 4320, "lastYear": [ 0, 180 ], "estimated": [ 0, 180 ]
+}
+```
+
+`deals` are the deals in force, one at most with each neighbour, by
+side: which way the power goes (`cityBuys` or `citySells`), how much
+capacity, what changes hands a year, and the step the deal ends at.
+`offer` is the deal a neighbour has offered and the player hasn't
+answered, with its `years` and the step it lapses at, or null.
+`grudgeUntil` holds, for north, east, south, and west, the step until
+which that neighbour won't deal, after a deal with it was broken. The
+rest is the deals' share of the budget, kept here as the ordinances'
+is in theirs.
+
+The neighbours' names and sizes come from the city's seed, and what
+connects to them from the map, so neither is saved. A save without the
+section opens with no deals. Reading refuses a side or a kind it doesn't
+know, two deals with one neighbour, and a `grudgeUntil` without four
+steps.
+
+The feature is ignorable and keepable, as the ordinances are: a version
+that doesn't know it plays the city with no deals, so their power and
+money stop while it does, and writes the section back as it was. A save
+for 0.4 leaves it out.
+
 ## Opening a newer save
 
 From 0.3.103, CityLimits can open a city a newer version saved, as PNG
@@ -473,9 +510,10 @@ true`, is refused like any unknown field.
 The one exception is a feature this version reserves: it knows the name,
 doesn't read inside, and writes it back exactly as it found it, in the
 same format it came in (a binary chunk can't become JSON without being
-understood). `connections`, to neighbouring cities, is reserved in 0.5.100
-(`SaveParts.Reserved`, the `CONN` chunk), so a city that has them passes
-through it intact until Senri's N5 gives them their contents.
+understood). `connections`, to neighbouring cities, was reserved in
+0.5.100 (`SaveParts.Reserved`, the `CONN` chunk), so a city that has them
+passes through 0.5.100 to 0.5.106 intact; Senri's N5 gave them their
+contents in 0.5.107, and nothing is reserved now.
 
 A 1.x save lists its parts by the version that added them (`"parts"`, the
 `PART` chunk), each with two flags, ignorable and keepable, for a game

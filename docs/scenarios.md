@@ -97,7 +97,7 @@ with the bar saying it is being edited:
   checkpoint, and the scenario runs on it as it would for a player: its
   actions and events come on their dates, and its goals are judged at
   its end date.
-- The Escape menu's Back to before play puts the city back as it was at
+- The Escape menu's Reset puts the city back as it was at
   the checkpoint, undoing the test and everything built during it. Start
   over opens the scenario's city afresh, dropping every change.
 

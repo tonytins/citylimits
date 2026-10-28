@@ -1,5 +1,25 @@
 # CityLimits Changelog
 
+## 0.5.107
+
+Cities have neighbours now, after SimCity 3000's: one beyond each edge
+of the map, with a name and a size of its own. A road, rail, or power
+line that reaches an edge connects to that neighbour. Roads to
+neighbours bring more commerce and industry, and rail more industry.
+
+With a power line to a neighbour, it may offer a deal every six months:
+to sell a city that runs short some power, or to buy what it has spare,
+for a sum each year over ten years. The window that offers them comes in
+the next version.
+
+For developers and agents: `CitySimulation.Neighbours` (`CityNeighbours`)
+has the four neighbours, `ConnectionsTo` a side, the deals in force, and
+the offer standing; `AcceptOffer`, `DeclineOffer`, and `BreakDeal` answer
+them, and `NeighbourNews` says what happened. A `BudgetYear` has
+`DealIncome` and `DealCost`. Saves gain the `connections` feature (`CONN`
+in `.cl`), which 0.5.100 reserved; nothing is reserved now, and a save
+for 0.4 leaves it out.
+
 ## 0.5.106
 
 Ordinances are in the game. The city panel has an Ordinances page in its

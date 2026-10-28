@@ -949,6 +949,109 @@
       ],
       "additionalProperties": false
     },
+    "connections": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "deals": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "side": {
+                "type": "string"
+              },
+              "kind": {
+                "type": "string"
+              },
+              "power": {
+                "type": "integer"
+              },
+              "money": {
+                "type": "integer"
+              },
+              "endStep": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "side",
+              "kind",
+              "power",
+              "money",
+              "endStep"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "offer": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "side": {
+              "type": "string"
+            },
+            "kind": {
+              "type": "string"
+            },
+            "power": {
+              "type": "integer"
+            },
+            "money": {
+              "type": "integer"
+            },
+            "years": {
+              "type": "integer"
+            },
+            "expiresStep": {
+              "type": "integer"
+            }
+          },
+          "required": [
+            "side",
+            "kind",
+            "power",
+            "money",
+            "years",
+            "expiresStep"
+          ],
+          "additionalProperties": false
+        },
+        "grudgeUntil": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "incomeFund": {
+          "type": "integer"
+        },
+        "costFund": {
+          "type": "integer"
+        },
+        "lastYear": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "estimated": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        }
+      },
+      "required": [
+        "deals",
+        "grudgeUntil"
+      ],
+      "additionalProperties": false
+    },
     "challenge": {
       "type": [
         "object",

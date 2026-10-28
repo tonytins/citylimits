@@ -29,7 +29,7 @@ public sealed class GameMenu
     [
         ("Resume", Choice.Resume),
         ("Save", Choice.Save),
-        ("Back to before play", Choice.BackToBeforePlay),
+        ("Reset", Choice.ResetTest),
         ("Start over", Choice.StartOver),
         ("Settings", Choice.Settings),
         ("Main menu", Choice.MainMenu),
@@ -61,7 +61,7 @@ public sealed class GameMenu
         Quit,
 
         /// <summary>Put the scenario's city back as it was when its test was played.</summary>
-        BackToBeforePlay,
+        ResetTest,
 
         /// <summary>Open the scenario's city afresh, dropping every change.</summary>
         StartOver,
@@ -108,10 +108,10 @@ public sealed class GameMenu
         }
     }
 
-    // Going back to before play needs a test to go back from; saving a scenario needs none under way.
+    // Resetting needs a test to go back from; saving a scenario needs none under way.
     private static bool IsEnabled(Choice choice, bool testing) => choice switch
     {
-        Choice.BackToBeforePlay => testing,
+        Choice.ResetTest => testing,
         Choice.Save => !testing,
         _ => true,
     };
