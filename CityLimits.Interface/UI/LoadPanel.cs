@@ -4,7 +4,8 @@ namespace CityLimits.UI;
 /// The list of saved cities, newest first, that Load Game and Ctrl+O open: each with its date,
 /// population, money, and when it was saved. A click picks one, and under the list its stats show
 /// beside a map of it; Open, Enter, or a second click opens it. The mouse wheel scrolls a long
-/// list, and Back or Escape leaves. A city that can't be read says why here and stays listed.
+/// list, and Back, Escape, or the close button leaves; the player moves it by its title bar. A
+/// city that can't be read says why here and stays listed.
 /// </summary>
 public sealed class LoadPanel : IDisposable
 {
@@ -41,6 +42,7 @@ public sealed class LoadPanel : IDisposable
     private int _selected = -1;
     private CitySimulation? _picked;
     private IReadOnlyList<string> _pickedNotes = [];
+    private readonly WindowFrame _frame = new("Load a city");
     private readonly List<string> _stats = [];
     private readonly MapPreview _preview = new();
 
@@ -107,10 +109,8 @@ public sealed class LoadPanel : IDisposable
     {
         Raylib.DrawRectangle(0, 0, Raylib.GetScreenWidth(), Raylib.GetScreenHeight(), Theme.Dim);
         var bounds = Bounds();
-        Raylib.DrawRectangleRec(bounds, Theme.Panel);
-        Raylib.DrawRectangleLinesEx(bounds, 1f, Theme.PanelBorder);
+        _frame.Draw(bounds);
         var x = (int)bounds.X + Padding;
-        Raylib.DrawText("Load a city", x, (int)bounds.Y + Padding, FontSize, Theme.Text);
 
         var mouse = Raylib.GetMousePosition();
         if (_cities.Count == 0)
@@ -175,7 +175,12 @@ public sealed class LoadPanel : IDisposable
 
     private Outcome Choose()
     {
-        if (Raylib.IsKeyPressed(KeyboardKey.Escape))
+        if (_frame.FollowPointer(Bounds()))
+        {
+            return Outcome.Open;
+        }
+
+        if (Raylib.IsKeyPressed(KeyboardKey.Escape) || _frame.Update(Bounds()) == WindowFrame.Action.Close)
         {
             return Outcome.Back;
         }
@@ -281,22 +286,18 @@ public sealed class LoadPanel : IDisposable
         return Outcome.Opened;
     }
 
-    private static Rectangle Bounds() => new()
-    {
-        X = (Raylib.GetScreenWidth() - Width) / 2,
-        Y = (Raylib.GetScreenHeight() - Height) / 2,
-        Width = Width,
-        Height = Height,
-    };
+    private Rectangle Bounds() => _frame.Place(
+        new Vector2(Width, Height),
+        new Vector2((Raylib.GetScreenWidth() - Width) / 2, (Raylib.GetScreenHeight() - Height) / 2));
 
-    private static Rectangle RowBounds(int row)
+    private Rectangle RowBounds(int row)
     {
         var bounds = Bounds();
         return new Rectangle { X = bounds.X + Padding, Y = bounds.Y + ListTop + (row * RowHeight), Width = Width - (Padding * 2), Height = RowHeight - 2 };
     }
 
     // Open, then Back, along the bottom right; a button is counted from the right.
-    private static Rectangle ButtonBounds(int button)
+    private Rectangle ButtonBounds(int button)
     {
         var bounds = Bounds();
         var right = bounds.X + Width - Padding - ButtonWidth;

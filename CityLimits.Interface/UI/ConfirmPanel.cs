@@ -2,8 +2,9 @@ namespace CityLimits.UI;
 
 /// <summary>
 /// A question with two answers, such as replacing a saved city or leaving one with unsaved changes.
-/// Enter gives the first answer and Escape the second, the safe one. A long message is wrapped to
-/// the panel's width when it is asked, and the panel grows to hold it.
+/// Enter gives the first answer, and Escape or the close button the second, the safe one. A long
+/// message is wrapped to the panel's width when it is asked, and the panel grows to hold it. The
+/// player moves it by its title bar.
 /// </summary>
 public sealed class ConfirmPanel
 {
@@ -16,7 +17,7 @@ public sealed class ConfirmPanel
     private const int ButtonHeight = 30;
     private const int ButtonPadding = 14;
 
-    private string _title = string.Empty;
+    private readonly WindowFrame _frame = new(string.Empty);
     private IReadOnlyList<string> _lines = [];
     private string _yes = "Yes";
     private string _no = "No";
@@ -37,14 +38,19 @@ public sealed class ConfirmPanel
     /// <summary>Sets the question and its two answers, the one that goes ahead first.</summary>
     public void Ask(string title, string message, string yes, string no)
     {
-        (_title, _yes, _no) = (title, yes, no);
+        (_frame.Title, _yes, _no) = (title, yes, no);
         _lines = TextWrap.Lines(message, TextSize, Width - (Padding * 2));
     }
 
     /// <summary>Takes this frame's keys and clicks.</summary>
     public Answer Update()
     {
-        if (Raylib.IsKeyPressed(KeyboardKey.Escape))
+        if (_frame.FollowPointer(Bounds()))
+        {
+            return Answer.None;
+        }
+
+        if (Raylib.IsKeyPressed(KeyboardKey.Escape) || _frame.Update(Bounds()) == WindowFrame.Action.Close)
         {
             return Answer.No;
         }
@@ -65,15 +71,13 @@ public sealed class ConfirmPanel
             : Answer.None;
     }
 
-    /// <summary>Draws the question in the middle of the screen, over a dimmed view.</summary>
+    /// <summary>Draws the question, in the middle of the screen until the player moves it, over a dimmed view.</summary>
     public void Draw()
     {
         Raylib.DrawRectangle(0, 0, Raylib.GetScreenWidth(), Raylib.GetScreenHeight(), Theme.Dim);
         var bounds = Bounds();
-        Raylib.DrawRectangleRec(bounds, Theme.Panel);
-        Raylib.DrawRectangleLinesEx(bounds, 1f, Theme.PanelBorder);
-        Raylib.DrawText(_title, (int)bounds.X + Padding, (int)bounds.Y + Padding, FontSize, Theme.Text);
-        var y = (int)bounds.Y + Padding + FontSize + 12;
+        _frame.Draw(bounds);
+        var y = (int)bounds.Y + WindowFrame.TitleHeight + 12;
         foreach (var line in _lines)
         {
             Raylib.DrawText(line, (int)bounds.X + Padding, y, TextSize, Theme.TextDim);
@@ -93,15 +97,11 @@ public sealed class ConfirmPanel
         Raylib.DrawText(label, (int)(bounds.X + ((bounds.Width - width) / 2)), (int)bounds.Y + 5, FontSize, color);
     }
 
-    private int Height => Math.Max(LeastHeight, Padding + FontSize + 12 + (_lines.Count * LineHeight) + 16 + ButtonHeight + Padding);
+    private int Height => Math.Max(LeastHeight, WindowFrame.TitleHeight + 12 + (_lines.Count * LineHeight) + 16 + ButtonHeight + Padding);
 
-    private Rectangle Bounds() => new()
-    {
-        X = (Raylib.GetScreenWidth() - Width) / 2,
-        Y = (Raylib.GetScreenHeight() - Height) / 2,
-        Width = Width,
-        Height = Height,
-    };
+    private Rectangle Bounds() => _frame.Place(
+        new Vector2(Width, Height),
+        new Vector2((Raylib.GetScreenWidth() - Width) / 2, (Raylib.GetScreenHeight() - Height) / 2));
 
     // The safe answer sits on the right, by the panel's corner; the one that goes ahead to its left.
     private Rectangle NoBounds()

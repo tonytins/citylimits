@@ -117,6 +117,9 @@ first, and leaving asks only when something changed since the last
 save. A saved city's start year and money can still move while the city
 is at its founding, as a seed's can.
 
+The Help window's Editing scenarios page, from the question mark on the bar
+or F1, sums this up in the game.
+
 The Scenarios list's New opens the New City window, titled New scenario:
 a name and a seed beside the map that seed grows, with Generate for
 another, as New Game's is. Start opens it to edit, from 1900 with

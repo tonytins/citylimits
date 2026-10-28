@@ -1,7 +1,7 @@
 namespace CityLimits.UI;
 
 /// <summary>
-/// Where a window sits on the screen. The player moves it by dragging its title strip, as windows
+/// Where a window sits on the screen. The player moves it by dragging its title bar, as windows
 /// move anywhere else; it starts where its panel asks, keeps where it was left for the next time it
 /// opens, and is always kept on the screen above the bar along the bottom.
 /// </summary>
@@ -11,8 +11,8 @@ public sealed class WindowPlacement
     private Vector2? _position;
     private Vector2 _grab;
 
-    /// <summary>Creates a placement for a window whose title strip is the given height.</summary>
-    /// <exception cref="ArgumentOutOfRangeException">The title strip's height isn't positive.</exception>
+    /// <summary>Creates a placement for a window whose title bar is the given height.</summary>
+    /// <exception cref="ArgumentOutOfRangeException">The title bar's height isn't positive.</exception>
     public WindowPlacement(int titleHeight)
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(titleHeight);
@@ -32,7 +32,7 @@ public sealed class WindowPlacement
         return new Rectangle { X = position.X, Y = position.Y, Width = size.X, Height = size.Y };
     }
 
-    /// <summary>Starts a drag when a press lands on the window's title strip. Tells whether it did.</summary>
+    /// <summary>Starts a drag when a press lands on the window's title bar. Tells whether it did.</summary>
     public bool BeginDrag(Vector2 point, Rectangle bounds)
     {
         var title = bounds with { Height = Math.Min(_titleHeight, bounds.Height) };

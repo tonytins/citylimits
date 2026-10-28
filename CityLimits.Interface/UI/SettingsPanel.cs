@@ -6,7 +6,7 @@ namespace CityLimits.UI;
 /// Gameplay, for autosave, whether disasters happen at all, and saving for 0.4; and Disasters, for each kind: fires,
 /// floods, and earthquakes. A
 /// change applies at once otherwise; the window's owner writes the settings when it closes. The
-/// player moves it by its title, and its x or Escape closes it. Choosing a fullscreen setting the
+/// player moves it by its title bar, whose toolbar holds the tabs, and its close button or Escape closes it. Choosing a fullscreen setting the
 /// game isn't running in opens a pop-up saying it waits for a restart, which takes the input,
 /// Escape and dragging included, until its Okay closes it.
 /// </summary>
@@ -14,20 +14,15 @@ public sealed class SettingsPanel : IMovableWindow
 {
     private const int FontSize = 14;
     private const int SmallSize = 10;
-    private const int TitleSize = 20;
     private const int Padding = 12;
-    private const int Width = 420;
-    private const int CloseSize = 20;
-    private const int TitleStrip = Padding + TitleSize + 6;
-    private const int TabHeight = 26;
-    private const int TabWidth = 100;
+    private const int Width = 440;
     private const int RowHeight = 52;
     private const int LabelColumn = 110;
     private const int OptionWidth = 64;
     private const int OptionHeight = 24;
     private const int OptionGap = 6;
     private const int Rows = 3;
-    private const int Height = TitleStrip + TabHeight + Padding + (Rows * RowHeight) + Padding;
+    private const int Height = WindowFrame.TitleHeight + Padding + (Rows * RowHeight) + Padding;
 
     private static readonly string[] Tabs = ["Graphics", "Gameplay", "Disasters"];
 
@@ -85,9 +80,8 @@ public sealed class SettingsPanel : IMovableWindow
         ],
     ];
 
-    private readonly WindowPlacement _placement = new(TitleStrip);
+    private readonly WindowFrame _frame = new("Settings") { Toolbar = Tabs, SelectedTool = 0 };
     private readonly NoticePanel _notice = new();
-    private int _tab;
 
     // The press that closes the pop-up mustn't also start dragging the window behind it.
     private bool _noticeClosedThisFrame;
@@ -108,11 +102,11 @@ public sealed class SettingsPanel : IMovableWindow
     /// <summary>The settings as the player has set them.</summary>
     public GameSettings Current { get; private set; } = GameSettings.Default;
 
-    /// <summary>Tells whether the player is dragging the window, or its pop-up, by its title.</summary>
-    public bool IsDragging => _placement.IsDragging || _notice.IsDragging;
+    /// <summary>Tells whether the player is dragging the window, or its pop-up, by its title bar.</summary>
+    public bool IsDragging => _frame.IsDragging || _notice.IsDragging;
 
     /// <summary>Where the window is on the screen: in the middle until the player moves it.</summary>
-    public Rectangle Bounds => _placement.Bounds(
+    public Rectangle Bounds => _frame.Place(
         new Vector2(Width, Height),
         new Vector2((Raylib.GetScreenWidth() - Width) / 2, (Hud.BarTop() - Height) / 2));
 
@@ -124,7 +118,8 @@ public sealed class SettingsPanel : IMovableWindow
     }
 
     /// <summary>
-    /// Starts moving the window when a press lands on its title, but not on its x; while the pop-up is
+    /// Starts moving the window when a press lands on its title bar, but not on its close button or a
+    /// tab; while the pop-up is
     /// open, only the pop-up moves. Tells whether it did.
     /// </summary>
     public bool BeginDrag(Vector2 point)
@@ -134,7 +129,7 @@ public sealed class SettingsPanel : IMovableWindow
             return _notice.BeginDrag(point);
         }
 
-        return !Raylib.CheckCollisionPointRec(point, CloseBounds(Bounds)) && _placement.BeginDrag(point, Bounds);
+        return _frame.BeginDrag(point, Bounds);
     }
 
     /// <summary>Moves the window, or its pop-up, with the pointer while the button is held.</summary>
@@ -146,10 +141,10 @@ public sealed class SettingsPanel : IMovableWindow
             return;
         }
 
-        _placement.Drag(point, held, new Vector2(Width, Height));
+        _frame.Drag(point, held, new Vector2(Width, Height));
     }
 
-    /// <summary>Takes this frame's input: Escape or the x closes it, a tab shows its settings, and a choice changes one.</summary>
+    /// <summary>Takes this frame's input: Escape or the close button closes it, a tab shows its settings, and a choice changes one.</summary>
     public Outcome Update()
     {
         _noticeClosedThisFrame = false;
@@ -171,21 +166,16 @@ public sealed class SettingsPanel : IMovableWindow
 
         var mouse = Raylib.GetMousePosition();
         var bounds = Bounds;
-        if (Raylib.CheckCollisionPointRec(mouse, CloseBounds(bounds)))
+        switch (_frame.Update(bounds))
         {
-            return Outcome.Closed;
-        }
-
-        for (var tab = 0; tab < Tabs.Length; tab++)
-        {
-            if (Raylib.CheckCollisionPointRec(mouse, TabBounds(bounds, tab)))
-            {
-                _tab = tab;
+            case WindowFrame.Action.Close:
+                return Outcome.Closed;
+            case WindowFrame.Action.Toolbar:
+                _frame.SelectedTool = _frame.ClickedTool;
                 return Outcome.Open;
-            }
         }
 
-        var settings = Settings[_tab];
+        var settings = Settings[_frame.SelectedTool];
         for (var row = 0; row < settings.Length; row++)
         {
             var setting = settings[row];
@@ -208,30 +198,10 @@ public sealed class SettingsPanel : IMovableWindow
     public void Draw()
     {
         var bounds = Bounds;
-        Raylib.DrawRectangleRec(bounds, Theme.Panel);
-        Raylib.DrawRectangleLinesEx(bounds, 1f, Theme.PanelBorder);
-
+        _frame.Draw(bounds);
         var x = (int)bounds.X + Padding;
-        Raylib.DrawText("Settings", x, (int)bounds.Y + Padding, TitleSize, Theme.Text);
-        var close = CloseBounds(bounds);
-        Raylib.DrawText("x", (int)close.X + 6, (int)close.Y + 2, FontSize, Theme.TextDim);
-
         var mouse = Raylib.GetMousePosition();
-        for (var tab = 0; tab < Tabs.Length; tab++)
-        {
-            var tabBounds = TabBounds(bounds, tab);
-            var hovered = Raylib.CheckCollisionPointRec(mouse, tabBounds);
-            Raylib.DrawRectangleRec(tabBounds, tab == _tab ? Theme.PanelBorder : Theme.Panel);
-            Raylib.DrawRectangleLinesEx(tabBounds, 1f, Theme.PanelBorder);
-            var color = tab == _tab ? Theme.Accent : hovered ? Theme.Text : Theme.TextDim;
-            Raylib.DrawText(Tabs[tab], (int)tabBounds.X + ((TabWidth - Raylib.MeasureText(Tabs[tab], FontSize)) / 2), (int)tabBounds.Y + 6, FontSize, color);
-        }
-
-        // The line under the tabs runs to the window's edge, broken under the tab that is showing.
-        var line = (int)bounds.Y + TitleStrip + TabHeight;
-        Raylib.DrawLine((int)bounds.X, line, (int)(bounds.X + bounds.Width), line, Theme.PanelBorder);
-
-        var settings = Settings[_tab];
+        var settings = Settings[_frame.SelectedTool];
         for (var row = 0; row < settings.Length; row++)
         {
             var setting = settings[row];
@@ -266,17 +236,7 @@ public sealed class SettingsPanel : IMovableWindow
         }
     }
 
-    private static Rectangle CloseBounds(Rectangle bounds) => new() { X = bounds.X + Width - CloseSize - 6, Y = bounds.Y + 6, Width = CloseSize, Height = CloseSize };
-
-    private static Rectangle TabBounds(Rectangle bounds, int tab) => new()
-    {
-        X = bounds.X + Padding + (tab * (TabWidth + 4)),
-        Y = bounds.Y + TitleStrip,
-        Width = TabWidth,
-        Height = TabHeight,
-    };
-
-    private static int RowTop(Rectangle bounds, int row) => (int)bounds.Y + TitleStrip + TabHeight + Padding + (row * RowHeight);
+    private static int RowTop(Rectangle bounds, int row) => (int)bounds.Y + WindowFrame.TitleHeight + Padding + (row * RowHeight);
 
     private static Rectangle OptionBounds(Rectangle bounds, int row, int choice) => new()
     {

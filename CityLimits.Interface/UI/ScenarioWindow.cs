@@ -8,18 +8,17 @@ namespace CityLimits.UI;
 /// columns: its name, start, end, money, and description; its goals; and its disasters, each of
 /// which may repeat. A goal or a disaster is added with its column's Add and taken out with its x;
 /// a click on a goal's measure or a disaster's kind moves it to the next one. Nothing changes until
-/// Apply, or Enter, and Cancel, or Escape, drops every edit. What can't be read, or what the
+/// Apply, or Enter, and Cancel, Escape, or the close button drops every edit. What can't be read, or what the
 /// scenario can't hold, is said under the columns, and the window stays open. A scenario whose saved
 /// city has run since its founding takes its start and its money from the city, so those only show.
-/// Tab moves to the next field. The player moves the window by its title.
+/// Tab moves to the next field. The player moves the window by its title bar.
 /// </summary>
 public sealed partial class ScenarioWindow : IMovableWindow
 {
-    private const int TitleSize = 20;
     private const int FieldSize = 14;
     private const int LabelSize = 10;
     private const int Padding = 14;
-    private const int TitleStrip = Padding + TitleSize + 6;
+    private const int TitleStrip = WindowFrame.TitleHeight + 10;
     private const int FirstColumn = 260;
     private const int SecondColumn = 300;
     private const int ThirdColumn = 300;
@@ -45,7 +44,7 @@ public sealed partial class ScenarioWindow : IMovableWindow
     private static readonly GoalMeasure[] Measures = Enum.GetValues<GoalMeasure>();
     private static readonly Disaster[] Disasters = Enum.GetValues<Disaster>();
 
-    private readonly WindowPlacement _placement = new(TitleStrip);
+    private readonly WindowFrame _frame = new("Scenario");
     private readonly TextField _name = new(string.Empty, 80, _ => true, FieldSize);
     private readonly TextField _start = new(string.Empty, 4, char.IsAsciiDigit, FieldSize);
     private readonly TextField _ends = new(string.Empty, 7, c => char.IsAsciiDigit(c) || c == '-', FieldSize);
@@ -78,18 +77,18 @@ public sealed partial class ScenarioWindow : IMovableWindow
     public ScenarioDetails? Details { get; private set; }
 
     /// <summary>Where the window is: in the middle of the screen until the player moves it.</summary>
-    public Rectangle Bounds => _placement.Bounds(
+    public Rectangle Bounds => _frame.Place(
         new Vector2(Width, Height),
         new Vector2((Raylib.GetScreenWidth() - Width) / 2, (Raylib.GetScreenHeight() - Height) / 2));
 
     /// <inheritdoc />
-    public bool IsDragging => _placement.IsDragging;
+    public bool IsDragging => _frame.IsDragging;
 
     /// <inheritdoc />
-    public bool BeginDrag(Vector2 point) => _placement.BeginDrag(point, Bounds);
+    public bool BeginDrag(Vector2 point) => _frame.BeginDrag(point, Bounds);
 
     /// <inheritdoc />
-    public void Drag(Vector2 point, bool held) => _placement.Drag(point, held, new Vector2(Width, Height));
+    public void Drag(Vector2 point, bool held) => _frame.Drag(point, held, new Vector2(Width, Height));
 
     /// <summary>
     /// Opens the window on a scenario's details as they stand; its start and money can be changed
@@ -121,10 +120,10 @@ public sealed partial class ScenarioWindow : IMovableWindow
     /// <summary>Says what is wrong with the details applied, under the columns, and keeps the window open.</summary>
     public void ShowProblem(string problem) => _problem = Readable(problem);
 
-    /// <summary>Takes this frame's keys, typing, and clicks, other than a drag by the title.</summary>
+    /// <summary>Takes this frame's keys, typing, and clicks, other than a drag by the title bar.</summary>
     public Outcome Update()
     {
-        if (Raylib.IsKeyPressed(KeyboardKey.Escape))
+        if (Raylib.IsKeyPressed(KeyboardKey.Escape) || _frame.Update(Bounds) == WindowFrame.Action.Close)
         {
             return Outcome.Cancel;
         }
@@ -158,9 +157,7 @@ public sealed partial class ScenarioWindow : IMovableWindow
     {
         Raylib.DrawRectangle(0, 0, Raylib.GetScreenWidth(), Raylib.GetScreenHeight(), Theme.Dim);
         var bounds = Bounds;
-        Raylib.DrawRectangleRec(bounds, Theme.Panel);
-        Raylib.DrawRectangleLinesEx(bounds, 1f, Theme.PanelBorder);
-        Raylib.DrawText("Scenario", (int)bounds.X + Padding, (int)bounds.Y + Padding, TitleSize, Theme.Text);
+        _frame.Draw(bounds);
         var mouse = Raylib.GetMousePosition();
 
         // The first column: the scenario as a whole.

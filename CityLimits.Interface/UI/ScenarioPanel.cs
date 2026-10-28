@@ -5,8 +5,9 @@ namespace CityLimits.UI;
 /// own, then the player's, each with its dates and how many goals it has. A click picks one, and
 /// its briefing shows under the list, what it's about and the goals to meet by its end, beside a
 /// map of the city it starts with. Play, or Enter, starts it; Edit opens it in the game to edit;
-/// New opens the New City window to start a scenario from a seed; Back or Escape leaves. A scenario
-/// that can't be read is listed with why, and can't be played or edited. What is edited is saved to
+/// New opens the New City window to start a scenario from a seed; Back, Escape, or the close
+/// button leaves, and the player moves it by its title bar. A scenario that can't be read is
+/// listed with why, and can't be played or edited. What is edited is saved to
 /// the player's own folder, the last of those listed.
 /// </summary>
 public sealed class ScenarioPanel : IDisposable
@@ -38,6 +39,7 @@ public sealed class ScenarioPanel : IDisposable
     private IReadOnlyList<ScenarioListing> _listings = [];
 
     // Each row's words, and the briefing, are laid out when they change, never in a frame.
+    private readonly WindowFrame _frame = new("Scenarios");
     private readonly List<(string Name, string Details, bool Playable)> _rows = [];
     private readonly List<string> _briefing = [];
     private readonly List<string> _problemLines = [];
@@ -140,7 +142,12 @@ public sealed class ScenarioPanel : IDisposable
             return ChooseNew();
         }
 
-        if (Raylib.IsKeyPressed(KeyboardKey.Escape))
+        if (_frame.FollowPointer(Bounds()))
+        {
+            return Outcome.Open;
+        }
+
+        if (Raylib.IsKeyPressed(KeyboardKey.Escape) || _frame.Update(Bounds()) == WindowFrame.Action.Close)
         {
             return Outcome.Back;
         }
@@ -200,10 +207,8 @@ public sealed class ScenarioPanel : IDisposable
     {
         Raylib.DrawRectangle(0, 0, Raylib.GetScreenWidth(), Raylib.GetScreenHeight(), Theme.Dim);
         var bounds = Bounds();
-        Raylib.DrawRectangleRec(bounds, Theme.Panel);
-        Raylib.DrawRectangleLinesEx(bounds, 1f, Theme.PanelBorder);
+        _frame.Draw(bounds);
         var x = (int)bounds.X + Padding;
-        Raylib.DrawText("Scenarios", x, (int)bounds.Y + Padding, FontSize, Theme.Text);
 
         var mouse = Raylib.GetMousePosition();
         if (_listings.Count == 0)
@@ -418,22 +423,18 @@ public sealed class ScenarioPanel : IDisposable
         return string.Concat(text.AsSpan(0, end), "...");
     }
 
-    private static Rectangle Bounds() => new()
-    {
-        X = (Raylib.GetScreenWidth() - Width) / 2,
-        Y = (Raylib.GetScreenHeight() - Height) / 2,
-        Width = Width,
-        Height = Height,
-    };
+    private Rectangle Bounds() => _frame.Place(
+        new Vector2(Width, Height),
+        new Vector2((Raylib.GetScreenWidth() - Width) / 2, (Raylib.GetScreenHeight() - Height) / 2));
 
-    private static Rectangle RowBounds(int row)
+    private Rectangle RowBounds(int row)
     {
         var bounds = Bounds();
         return new Rectangle { X = bounds.X + Padding, Y = bounds.Y + ListTop + (row * RowHeight), Width = Width - (Padding * 2), Height = RowHeight - 2 };
     }
 
     // New, Edit, Play, then Back, along the bottom right; a button is counted from the right.
-    private static Rectangle ButtonBounds(int button)
+    private Rectangle ButtonBounds(int button)
     {
         var bounds = Bounds();
         var right = bounds.X + Width - Padding - ButtonWidth;

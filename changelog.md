@@ -1,5 +1,25 @@
 # CityLimits Changelog
 
+## 0.5.104
+
+Every window now has the same title bar, in the manner of macOS: a red
+button at its left closes it, its title sits in the middle, and some
+windows keep a toolbar at the right. The settings' tabs and the help's
+pages live there now, and Apply, Cancel, and the like stay at the bottom.
+Every window moves by its title bar, the ones on the start menu too.
+
+To rename a city, click its name at the top of the city panel, type, and
+press Enter; Escape leaves the name as it was.
+
+Help has a second page, Editing scenarios, on making a scenario in the
+game.
+
+For developers: `WindowFrame` in `CityLimits.Interface/UI/` draws every
+window's title bar and owns its placement, dragging, close button,
+toolbar (`Toolbar`, `SelectedTool`), and in-place title editing
+(`TitleEditable`, off by default, with `CheckTitle`). Its colours are in
+`Theme`. A window that nothing else drags calls `FollowPointer`.
+
 ## 0.5.103
 
 Power no longer needs a line beside every street. A zone or building on

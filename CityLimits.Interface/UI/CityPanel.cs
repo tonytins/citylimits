@@ -1,34 +1,32 @@
 namespace CityLimits.UI;
 
 /// <summary>
-/// The city panel, opened by a click on the city's name in the bar. At the top, the name, ready
-/// to edit: Enter renames the city, and closing drops an edit that wasn't entered. Under it, the
+/// The city panel, opened by a click on the city's name in the bar. Its title is the city's name,
+/// which the player edits in place, the only window that turns that on: a click on it starts an
+/// edit, Enter renames the city, and Escape or a click elsewhere drops the edit. Under it, the
 /// city at a glance: its date and age, population, demand, and money. A city played as a challenge
 /// has a second column beside it, with the challenge's name, its end, how it stands, and the
 /// disasters still to come, and its goals under both, each with how the city measures up; a
 /// scenario being edited shows its draft there, which nothing acts on until it is tested, with an
 /// Edit under its goals that opens the scenario's details. At the
 /// bottom, the seed its map grew from, which a click copies. The game is paused while it is open,
-/// and the player moves it by its title.
+/// and the player moves it by its title bar.
 /// </summary>
 public sealed class CityPanel : IMovableWindow
 {
     private const int FontSize = 14;
     private const int SmallSize = 10;
-    private const int TitleSize = 20;
     private const int Padding = 14;
 
     // A free city's panel holds the city's column; a challenge's is wide enough for a second.
     private const int NarrowWidth = 360;
     private const int WideWidth = 580;
-    private const int BaseHeight = 340;
+    private const int BaseHeight = 290;
 
     // A challenge's section: its heading, a line a goal, and a gap above the seed.
     private const int ChallengeHeading = 22;
     private const int ChallengeGap = 10;
     private const int LineHeight = 20;
-    private const int CloseSize = 20;
-    private const int TitleStrip = Padding + TitleSize + 6;
     private const int ColumnGap = 24;
     private const int LeftColumn = 330;
 
@@ -36,9 +34,12 @@ public sealed class CityPanel : IMovableWindow
     private const int EventRoom = 3;
     private const double NoteSeconds = 2.0;
 
-    private readonly WindowPlacement _placement = new(TitleStrip);
-    private readonly TextField _name = new(CitySimulation.DefaultName, CitySimulation.MaxNameLength, _ => true);
-    private string? _problem;
+    private readonly WindowFrame _frame = new(CitySimulation.DefaultName, CitySimulation.MaxNameLength)
+    {
+        TitleEditable = true,
+        CheckTitle = name => CitySimulation.IsValidName(name) ? null : $"A city's name needs 1 to {CitySimulation.MaxNameLength} characters",
+    };
+
     private double _renamedAt = double.NegativeInfinity;
     private double _copiedAt = double.NegativeInfinity;
 
@@ -82,18 +83,18 @@ public sealed class CityPanel : IMovableWindow
     public string Name { get; private set; } = CitySimulation.DefaultName;
 
     /// <summary>Where the panel is: in the middle of the screen until the player moves it.</summary>
-    public Rectangle Bounds => _placement.Bounds(
+    public Rectangle Bounds => _frame.Place(
         new Vector2(Width, Height),
         new Vector2((Raylib.GetScreenWidth() - Width) / 2, (Raylib.GetScreenHeight() - Height) / 2));
 
     /// <inheritdoc />
-    public bool IsDragging => _placement.IsDragging;
+    public bool IsDragging => _frame.IsDragging;
 
     /// <inheritdoc />
-    public bool BeginDrag(Vector2 point) => _placement.BeginDrag(point, Bounds);
+    public bool BeginDrag(Vector2 point) => _frame.BeginDrag(point, Bounds);
 
     /// <inheritdoc />
-    public void Drag(Vector2 point, bool held) => _placement.Drag(point, held, new Vector2(Width, Height));
+    public void Drag(Vector2 point, bool held) => _frame.Drag(point, held, new Vector2(Width, Height));
 
     /// <summary>
     /// Opens the panel on the city as it is, with its challenge, or, when it has none, the draft of
@@ -102,7 +103,8 @@ public sealed class CityPanel : IMovableWindow
     public void Reset(CitySimulation city, Challenge? draft = null)
     {
         ArgumentNullException.ThrowIfNull(city);
-        _name.Text = city.Name;
+        _frame.CancelEdit();
+        _frame.Title = city.Name;
         _challenge = city.Challenge ?? draft;
         _isDraft = city.Challenge is null && draft is not null;
         _isChallenge = _challenge is not null;
@@ -121,19 +123,36 @@ public sealed class CityPanel : IMovableWindow
             }
         }
 
-        _problem = null;
         _renamedAt = double.NegativeInfinity;
         _copiedAt = double.NegativeInfinity;
     }
 
-    /// <summary>Takes this frame's typing and clicks, other than a drag by the title.</summary>
+    /// <summary>Takes this frame's typing and clicks, other than a drag by the title bar.</summary>
     public Outcome Update(CitySimulation city)
     {
         ArgumentNullException.ThrowIfNull(city);
 
         var mouse = Raylib.GetMousePosition();
         var pressed = Raylib.IsMouseButtonPressed(MouseButton.Left);
-        if (Raylib.IsKeyPressed(KeyboardKey.Escape) || (pressed && Raylib.CheckCollisionPointRec(mouse, CloseBounds())))
+
+        // While the name is being edited, the keyboard is the title's: Escape drops the edit, not the panel.
+        var editing = _frame.IsEditingTitle;
+        switch (_frame.Update(Bounds))
+        {
+            case WindowFrame.Action.Close:
+                return Outcome.Closed;
+            case WindowFrame.Action.Renamed:
+                Name = _frame.Title;
+                _renamedAt = Raylib.GetTime();
+                return Outcome.Renamed;
+        }
+
+        if (editing || _frame.IsEditingTitle)
+        {
+            return Outcome.Open;
+        }
+
+        if (Raylib.IsKeyPressed(KeyboardKey.Escape))
         {
             return Outcome.Closed;
         }
@@ -149,26 +168,7 @@ public sealed class CityPanel : IMovableWindow
             _copiedAt = Raylib.GetTime();
         }
 
-        // A problem stays until the player changes the name it was about.
-        if (_name.Update())
-        {
-            _problem = null;
-        }
-
-        if (!Raylib.IsKeyPressed(KeyboardKey.Enter) && !Raylib.IsKeyPressed(KeyboardKey.KpEnter))
-        {
-            return Outcome.Open;
-        }
-
-        if (!CitySimulation.IsValidName(_name.Text))
-        {
-            _problem = $"A city's name needs 1 to {CitySimulation.MaxNameLength} characters";
-            return Outcome.Open;
-        }
-
-        Name = _name.Text.Trim();
-        _renamedAt = Raylib.GetTime();
-        return Outcome.Renamed;
+        return Outcome.Open;
     }
 
     /// <summary>Draws the panel over a dimmed city.</summary>
@@ -178,24 +178,20 @@ public sealed class CityPanel : IMovableWindow
 
         Raylib.DrawRectangle(0, 0, Raylib.GetScreenWidth(), Raylib.GetScreenHeight(), Theme.Dim);
         var bounds = Bounds;
-        Raylib.DrawRectangleRec(bounds, Theme.Panel);
-        Raylib.DrawRectangleLinesEx(bounds, 1f, Theme.PanelBorder);
+        _frame.Draw(bounds);
 
+        // The frame shows a problem with the name under the title bar while the name is edited.
         var x = (int)bounds.X + Padding;
-        var y = (int)bounds.Y + Padding;
-        Raylib.DrawText(city.Name, x, y, TitleSize, Theme.Text);
-        var close = CloseBounds();
-        Raylib.DrawText("x", (int)close.X + 6, (int)close.Y + 2, FontSize, Theme.TextDim);
-        y = (int)bounds.Y + TitleStrip + 4;
-
-        var field = new Rectangle { X = x, Y = y, Width = Width - (Padding * 2), Height = TextField.Height };
-        _name.Draw(field, focused: true);
-        y += TextField.Height + 4;
+        var y = (int)bounds.Y + WindowFrame.TitleHeight + 6;
         var now = Raylib.GetTime();
-        var (note, noteColor) = _problem is not null
-            ? (_problem, Theme.Error)
-            : now - _renamedAt < NoteSeconds ? ("Renamed", Theme.Accent) : ("Type a new name and press Enter to rename the city", Theme.TextDim);
-        Raylib.DrawText(note, x, y, SmallSize, noteColor);
+        if (_frame.TitleProblem is null)
+        {
+            var (note, noteColor) = now - _renamedAt < NoteSeconds
+                ? ("Renamed", Theme.Accent)
+                : _frame.IsEditingTitle ? ("Press Enter to rename the city, or Escape to leave it", Theme.TextDim) : ("Click the name above to rename the city", Theme.TextDim);
+            Raylib.DrawText(note, x, y, SmallSize, noteColor);
+        }
+
         y += SmallSize + 12;
 
         DrawCity(city, x, y);
@@ -341,12 +337,6 @@ public sealed class CityPanel : IMovableWindow
     }
 
     private static string SignedMoney(long amount) => amount > 0 ? $"+{Hud.Money(amount)}" : Hud.Money(amount);
-
-    private Rectangle CloseBounds()
-    {
-        var bounds = Bounds;
-        return new Rectangle { X = bounds.X + Width - CloseSize - 6, Y = bounds.Y + 6, Width = CloseSize, Height = CloseSize };
-    }
 
     // Under the goals, at the right, just above the seed.
     private Rectangle EditBounds()

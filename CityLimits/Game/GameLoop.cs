@@ -1055,14 +1055,14 @@ public sealed class GameLoop : IDisposable
             }
 
             // A press on the help window, which sits over everything else, never reaches what is
-            // under it: its x closes it, and its title moves it.
+            // under it: its close button closes it, its toolbar turns the page, and its title bar moves it.
             if (_helpOpen && Raylib.CheckCollisionPointRec(mouse, _helpPanel.Bounds))
             {
                 if (_helpPanel.IsOnClose(mouse))
                 {
                     _helpOpen = false;
                 }
-                else
+                else if (!_helpPanel.PickPage())
                 {
                     TryBeginDrag(_helpPanel, mouse);
                 }
@@ -1071,7 +1071,7 @@ public sealed class GameLoop : IDisposable
             }
 
             // A press on the demand panel, which sits over everything else, never reaches what is
-            // under it: its x closes it, and its title moves it.
+            // under it: its close button closes it, and its title bar moves it.
             if (_demandOpen && Raylib.CheckCollisionPointRec(mouse, _demandPanel.Bounds))
             {
                 if (_demandPanel.IsOnClose(mouse))

@@ -69,6 +69,18 @@ public static class Theme
     /// <summary>The border of the panels.</summary>
     public static readonly Color PanelBorder = new() { R = 72, G = 80, B = 92, A = 255 };
 
+    /// <summary>A window's title bar, a shade lighter than the window, macOS-style.</summary>
+    public static readonly Color TitleBar = new() { R = 38, G = 43, B = 52, A = 245 };
+
+    /// <summary>A window's close button: macOS' red.</summary>
+    public static readonly Color CloseButton = new() { R = 236, G = 95, B = 86, A = 255 };
+
+    /// <summary>The mark on a window's close button while the pointer is over it.</summary>
+    public static readonly Color CloseMark = new() { R = 90, G = 20, B = 16, A = 255 };
+
+    /// <summary>The toolbar item showing in a window's title bar, such as the settings tab that is open.</summary>
+    public static readonly Color ToolbarSelected = new() { R = 58, G = 66, B = 80, A = 255 };
+
     /// <summary>The color of the panel text.</summary>
     public static readonly Color Text = new() { R = 228, G = 232, B = 238, A = 255 };
 

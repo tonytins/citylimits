@@ -6,42 +6,39 @@ namespace CityLimits.UI;
 /// limit. Under the chart are the demand now, what moved it at the last update, and the census
 /// behind it. Micropolis has only the meter; the panel is a liberty the owner chose, after later city
 /// builders. It shows what the simulation already works out, the game keeps running while it is
-/// open, and the player moves it by its title.
+/// open, and the player moves it by its title bar.
 /// </summary>
 public sealed class DemandPanel : IMovableWindow
 {
     private const int FontSize = 14;
     private const int SmallSize = 10;
-    private const int TitleSize = 20;
     private const int Padding = 12;
     private const int Width = 360;
-    private const int Height = 328;
+    private const int Height = 324;
     private const int ChartHeight = 120;
-    private const int CloseSize = 20;
-    private const int TitleStrip = Padding + TitleSize + 6;
 
-    private readonly WindowPlacement _placement = new(TitleStrip);
+    private readonly WindowFrame _frame = new("Demand");
 
     // What the panel says of each set of demands held back, worked out once rather than in a frame.
     private static readonly string[] HeldBack = [.. Enumerable.Range(0, 8).Select(caps => HeldBackText((DemandCaps)caps))];
 
-    /// <summary>Tells whether the player is dragging the panel by its title.</summary>
-    public bool IsDragging => _placement.IsDragging;
+    /// <summary>Tells whether the player is dragging the panel by its title bar.</summary>
+    public bool IsDragging => _frame.IsDragging;
 
     /// <summary>Where the panel's top sits until the player moves it: under the palette, as the game lays it out.</summary>
     public int DefaultTop { get; set; }
 
     /// <summary>Where the panel is on the screen.</summary>
-    public Rectangle Bounds => _placement.Bounds(new Vector2(Width, Height), new Vector2(8, DefaultTop));
+    public Rectangle Bounds => _frame.Place(new Vector2(Width, Height), new Vector2(8, DefaultTop));
 
     /// <summary>Tells whether a point on the screen is on the panel's close button.</summary>
-    public bool IsOnClose(Vector2 point) => Raylib.CheckCollisionPointRec(point, CloseBounds(Bounds));
+    public bool IsOnClose(Vector2 point) => WindowFrame.OnClose(point, Bounds);
 
-    /// <summary>Starts moving the panel when a press lands on its title. Tells whether it did.</summary>
-    public bool BeginDrag(Vector2 point) => _placement.BeginDrag(point, Bounds);
+    /// <summary>Starts moving the panel when a press lands on its title bar. Tells whether it did.</summary>
+    public bool BeginDrag(Vector2 point) => _frame.BeginDrag(point, Bounds);
 
     /// <summary>Moves the panel with the pointer while the button is held.</summary>
-    public void Drag(Vector2 point, bool held) => _placement.Drag(point, held, new Vector2(Width, Height));
+    public void Drag(Vector2 point, bool held) => _frame.Drag(point, held, new Vector2(Width, Height));
 
     /// <summary>Draws the panel where it is.</summary>
     public void Draw(CitySimulation city)
@@ -49,15 +46,9 @@ public sealed class DemandPanel : IMovableWindow
         ArgumentNullException.ThrowIfNull(city);
 
         var bounds = Bounds;
-        Raylib.DrawRectangleRec(bounds, Theme.Panel);
-        Raylib.DrawRectangleLinesEx(bounds, 1f, Theme.PanelBorder);
-
+        _frame.Draw(bounds);
         var x = (int)bounds.X + Padding;
-        var y = (int)bounds.Y + Padding;
-        Raylib.DrawText("Demand", x, y, TitleSize, Theme.Text);
-        var close = CloseBounds(bounds);
-        Raylib.DrawText("x", (int)close.X + 6, (int)close.Y + 2, FontSize, Theme.TextDim);
-        y = (int)bounds.Y + TitleStrip + 4;
+        var y = (int)bounds.Y + WindowFrame.TitleHeight + 8;
 
         var demand = city.Demand;
         var chart = new Rectangle { X = x, Y = y, Width = Width - (Padding * 2), Height = ChartHeight };
@@ -195,6 +186,4 @@ public sealed class DemandPanel : IMovableWindow
     }
 
     private static string Signed(int value) => value > 0 ? $"+{Hud.Count(value)}" : Hud.Count(value);
-
-    private static Rectangle CloseBounds(Rectangle bounds) => new() { X = bounds.X + Width - CloseSize - 6, Y = bounds.Y + 6, Width = CloseSize, Height = CloseSize };
 }

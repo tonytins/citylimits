@@ -5,8 +5,9 @@ namespace CityLimits.UI;
 /// from, beside a map of what that seed grows, as the OLPC port's terrain editor shows it. It opens
 /// on a seed of its own; typing another shows its map, and Generate picks another at random. A
 /// blank seed leaves the game to pick one when it starts. Start, or Enter, begins; Back, or Escape,
-/// returns. Tab or a click moves between the fields, and a problem with either is shown under them.
-/// The map is grown again only when the seed changes, never in a frame.
+/// returns, as its close button does. Tab or a click moves between the fields, and a problem with
+/// either is shown under them. The player moves it by its title bar. The map is grown again only
+/// when the seed changes, never in a frame.
 /// </summary>
 public sealed class NewCityPanel : IDisposable
 {
@@ -26,7 +27,7 @@ public sealed class NewCityPanel : IDisposable
     private readonly TextField _name = new(CitySimulation.DefaultName, CitySimulation.MaxNameLength, _ => true);
     private readonly TextField _seed = new(string.Empty, SeedLength, c => char.IsAsciiDigit(c) || c == '-');
     private readonly MapPreview _preview = new();
-    private string _title = "New city";
+    private readonly WindowFrame _frame = new("New city");
     private bool _seedFocused;
     private string? _problem;
 
@@ -55,7 +56,7 @@ public sealed class NewCityPanel : IDisposable
     /// </summary>
     public void Reset(int? seed, string title = "New city", string name = CitySimulation.DefaultName)
     {
-        _title = title;
+        _frame.Title = title;
         _name.Text = name;
         _seed.Text = (seed ?? PickSeed()).ToString(CultureInfo.InvariantCulture);
         _seedFocused = false;
@@ -83,10 +84,8 @@ public sealed class NewCityPanel : IDisposable
     public void Draw()
     {
         var bounds = Bounds();
-        Raylib.DrawRectangleRec(bounds, Theme.Panel);
-        Raylib.DrawRectangleLinesEx(bounds, 1f, Theme.PanelBorder);
+        _frame.Draw(bounds);
         var x = (int)bounds.X + Padding;
-        Raylib.DrawText(_title, x, (int)bounds.Y + Padding, FontSize, Theme.Text);
 
         var name = NameBounds();
         Raylib.DrawText("Name", x, (int)name.Y - LabelSize - 4, LabelSize, Theme.TextDim);
@@ -116,7 +115,12 @@ public sealed class NewCityPanel : IDisposable
     private Outcome Choose()
     {
         var mouse = Raylib.GetMousePosition();
-        if (Raylib.IsKeyPressed(KeyboardKey.Escape))
+        if (_frame.FollowPointer(Bounds()))
+        {
+            return Outcome.Open;
+        }
+
+        if (Raylib.IsKeyPressed(KeyboardKey.Escape) || _frame.Update(Bounds()) == WindowFrame.Action.Close)
         {
             return Outcome.Back;
         }
@@ -205,39 +209,35 @@ public sealed class NewCityPanel : IDisposable
     // Choosing a seed is outside any city, so the shared generator may pick it; the city logs it.
     private static int PickSeed() => Random.Shared.Next();
 
-    private static Rectangle Bounds() => new()
-    {
-        X = (Raylib.GetScreenWidth() - Width) / 2,
-        Y = (Raylib.GetScreenHeight() - Height) / 2,
-        Width = Width,
-        Height = Height,
-    };
+    private Rectangle Bounds() => _frame.Place(
+        new Vector2(Width, Height),
+        new Vector2((Raylib.GetScreenWidth() - Width) / 2, (Raylib.GetScreenHeight() - Height) / 2));
 
-    private static Vector2 Corner()
+    private Vector2 Corner()
     {
         var bounds = Bounds();
         return new Vector2(bounds.X + Width - Padding, bounds.Y + Height - Padding);
     }
 
-    private static Rectangle NameBounds()
+    private Rectangle NameBounds()
     {
         var bounds = Bounds();
         return new Rectangle { X = bounds.X + Padding, Y = bounds.Y + Padding + FontSize + 28, Width = FieldWidth, Height = TextField.Height };
     }
 
-    private static Rectangle SeedBounds()
+    private Rectangle SeedBounds()
     {
         var name = NameBounds();
         return name with { Y = name.Y + name.Height + 30 };
     }
 
-    private static Rectangle GenerateBounds()
+    private Rectangle GenerateBounds()
     {
         var seed = SeedBounds();
         return new Rectangle { X = seed.X, Y = seed.Y + seed.Height + 10, Width = GenerateWidth, Height = 30 };
     }
 
-    private static Rectangle PreviewBounds()
+    private Rectangle PreviewBounds()
     {
         var bounds = Bounds();
         return new Rectangle { X = bounds.X + Width - Padding - PreviewWidth, Y = bounds.Y + Padding + FontSize + 14, Width = PreviewWidth, Height = PreviewHeight };

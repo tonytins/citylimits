@@ -3,7 +3,8 @@ namespace CityLimits.UI;
 /// <summary>
 /// The budget panel: the year's taxes and upkeep as they stand, last year's, and the tax rate
 /// and funding levels, each with a button to lower it and one to raise it. The budget is always
-/// automatic; the panel is where the player changes what it works from.
+/// automatic; the panel is where the player changes what it works from. Continue or its close
+/// button closes it, and the player moves it by its title bar.
 /// </summary>
 public sealed class BudgetPanel : IMovableWindow
 {
@@ -15,7 +16,7 @@ public sealed class BudgetPanel : IMovableWindow
     private const int LineHeight = 20;
     private const int Padding = 16;
     private const int Width = 460;
-    private const int Height = 384;
+    private const int Height = 406;
     private const int ButtonSize = 22;
     private const int ContinueWidth = 110;
     private const int ContinueHeight = 28;
@@ -31,8 +32,10 @@ public sealed class BudgetPanel : IMovableWindow
 
     private static readonly Setting[] Settings = [Setting.TaxRate, Setting.Roads, Setting.Fire, Setting.Police];
 
-    // Dragged by the strip that holds the title and the funds.
-    private readonly WindowPlacement _placement = new(Padding + TitleSize + 6);
+    private readonly WindowFrame _frame = new("Budget");
+
+    // The content starts under the title bar, with the funds.
+    private const int Top = WindowFrame.TitleHeight + 8;
 
     /// <summary>What a click on the panel did.</summary>
     public enum Click
@@ -50,21 +53,21 @@ public sealed class BudgetPanel : IMovableWindow
     /// <summary>Tells whether a point on the screen is on the panel.</summary>
     public bool Contains(Vector2 point) => Raylib.CheckCollisionPointRec(point, Bounds);
 
-    /// <summary>Tells whether the player is dragging the panel by its title.</summary>
-    public bool IsDragging => _placement.IsDragging;
+    /// <summary>Tells whether the player is dragging the panel by its title bar.</summary>
+    public bool IsDragging => _frame.IsDragging;
 
-    /// <summary>Starts moving the panel when a press lands on its title. Tells whether it did.</summary>
-    public bool BeginDrag(Vector2 point) => _placement.BeginDrag(point, Bounds);
+    /// <summary>Starts moving the panel when a press lands on its title bar. Tells whether it did.</summary>
+    public bool BeginDrag(Vector2 point) => _frame.BeginDrag(point, Bounds);
 
     /// <summary>Moves the panel with the pointer while the button is held.</summary>
-    public void Drag(Vector2 point, bool held) => _placement.Drag(point, held, new Vector2(Width, Height));
+    public void Drag(Vector2 point, bool held) => _frame.Drag(point, held, new Vector2(Width, Height));
 
     /// <summary>Acts on a click: lowers or raises a setting, or closes the panel.</summary>
     public Click HandleClick(Vector2 point, CityBudget budget)
     {
         ArgumentNullException.ThrowIfNull(budget);
 
-        if (Raylib.CheckCollisionPointRec(point, ContinueBounds()))
+        if (Raylib.CheckCollisionPointRec(point, ContinueBounds()) || WindowFrame.OnClose(point, Bounds))
         {
             return Click.Close;
         }
@@ -98,12 +101,11 @@ public sealed class BudgetPanel : IMovableWindow
 
         Raylib.DrawRectangle(0, 0, Raylib.GetScreenWidth(), Raylib.GetScreenHeight(), Theme.Dim);
         var bounds = Bounds;
-        Raylib.DrawRectangleRec(bounds, Theme.Panel);
-        Raylib.DrawRectangleLinesEx(bounds, 1f, Theme.PanelBorder);
+        _frame.Draw(bounds);
 
         var x = (int)bounds.X + Padding;
-        var y = (int)bounds.Y + Padding;
-        Raylib.DrawText("Budget", x, y, TitleSize, Theme.Text);
+        var y = (int)bounds.Y + Top;
+        Raylib.DrawText("Funds", x, y + 4, FontSize, Theme.TextDim);
         Raylib.DrawText($"${city.Treasury.Funds}", (int)(bounds.X + bounds.Width) - Padding - Raylib.MeasureText($"${city.Treasury.Funds}", TitleSize), y, TitleSize, city.Treasury.Funds < 0 ? Theme.Error : Theme.Text);
         y += TitleSize + 6;
 
@@ -180,12 +182,12 @@ public sealed class BudgetPanel : IMovableWindow
     private static int Step(int level, int direction) => Math.Clamp(level + (direction * FundingStep), 0, CityBudget.FullFunding);
 
     /// <summary>Where the panel is: in the middle of the screen until the player moves it.</summary>
-    public Rectangle Bounds => _placement.Bounds(
+    public Rectangle Bounds => _frame.Place(
         new Vector2(Width, Height),
         new Vector2((Raylib.GetScreenWidth() - Width) / 2, (Raylib.GetScreenHeight() - Height) / 2));
 
-    // The settings start below the title, the reason, and the heading for this year.
-    private int RowTop(int row) => (int)Bounds.Y + Padding + TitleSize + 6 + LineHeight + 4 + LineHeight + (row * (ButtonSize + 8));
+    // The settings start below the funds, the reason, and the heading for this year.
+    private int RowTop(int row) => (int)Bounds.Y + Top + TitleSize + 6 + LineHeight + 4 + LineHeight + (row * (ButtonSize + 8));
 
     private Rectangle ButtonBounds(int row, bool raise) => new()
     {
