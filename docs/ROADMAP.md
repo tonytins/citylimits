@@ -1,6 +1,6 @@
 # CityLimits roadmap
 
-> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-28 · **Change:** minor (Senri, N4a: ordinances' rules; ordinances join Senri as N4, before neighbours) · **Stage:** beta
+> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-28 · **Change:** minor (Senri, N4b: the ordinances' page, budget line, and blue ticker news; N4 is done) · **Stage:** beta
 
 Forward-looking: where CityLimits stands, what blocks the next milestone,  
 and what comes next. Verified status and evidence are in the  
@@ -75,7 +75,7 @@ Next, in order:
    - N3, the unified title bar and an Editing scenarios page in the help. Done.
    - N4, ordinances after SimCity 3000: city-wide rules the player turns
      on and off at any time, each earning or costing money and nudging
-     the city, with the ones the city needs asked for on the ticker.
+     the city, with the ones the city needs asked for on the ticker. Done.
    - N5, neighbours after SimCity 3000: connections at the map's edges,
      and deals offered as SimCity 3000 offers them, in what the game
      already has. After N4, whose clickable ticker and panel the deals
@@ -100,16 +100,15 @@ Next, in order:
 | Deadwood: Land value, pollution, disasters | 100% | 0 | Meets the baseline: pollution and crime, fire with the ticker's fire-risk hints, floods, and earthquakes, as in Micropolis, with free repair and the settings' disaster switches |
 | Happy Isle: Player-facing game | 100% | 0 | The palette, laid out as Micropolis', and the HUD, with its bar along the bottom over a news ticker after Tony Bark's mock-up; the budget, demand, and city panels, the overview's power mode, the settings window, and the New City window; cities that save, load, autosave, and import from Micropolis; and scenarios to play, with four built-in challenges |
 | Kyoto: The scenario editor | 100% | 0 | The interface library it shares with play, the stadium, the seaport, and the airport the alpha missed, with the demand they hold back, the shared city view, editing a scenario in the game, tested by playing, its details, and saving it, with a New City window |
-| Senri (0.5, long-term): Formats, specs, neighbours, and packaging | 75% | 15–26 | Every format is at its next major and can be written for 0.4, the base game is data in `common/`, with more of it as specs, power runs along roads, facilities influence the land around them, every window has a unified title bar, and the game is packaged for Linux, Windows, and macOS; ordinances, neighbours and their deals, and what turns up before online play, are left |
+| Senri (0.5, long-term): Formats, specs, neighbours, and packaging | 85% | 9–16 | Every format is at its next major and can be written for 0.4, the base game is data in `common/`, with more of it as specs, power runs along roads, facilities influence the land around them, every window has a unified title bar, the city has ordinances, and the game is packaged for Linux, Windows, and macOS; neighbours and their deals, and what turns up before online play, are left |
 | Yokohama (0.6): Online play | 0% | unestimated | Nothing yet: a Network Edition-style shared city, hosted by `CityLimits.Server`. Its checklist is a draft, settled when it starts |
-| | **Total** | **≈ 15–26, Yokohama unestimated** | |
+| | **Total** | **≈ 9–16, Yokohama unestimated** | |
 
 ## Upcoming work, ranked
 
 | Rank | Work | Milestone | Estimate (h) |
 |---|---|---|---|
-| 1 | Senri, N4: ordinances | Senri | 6–10 |
-| 2 | Senri, N5: neighbours, connections, and deals | Senri | 8–14 |
+| 1 | Senri, N5: neighbours, connections, and deals | Senri | 8–14 |
 
 Every row of the alpha gate passes, and CityLimits is an alpha since 0.3.100,
 and a beta since 0.4.100.
@@ -554,7 +553,7 @@ play builds on, so 0.6 adds to them rather than changing them.
   the city panel does, for the city's name, in place of its own field.
   The start menu and the in-game menu stay as they are. An Editing
   scenarios page in the Help window, beside the keys.
-- [ ] N4: ordinances, after SimCity 3000, as Tony Bark chose.
+- [x] N4: ordinances, after SimCity 3000, as Tony Bark chose.
   - [x] The rules (N4a): ten ordinances, any of which the player enacts
     or repeals at any time, each earning or costing money a year by the
     city's population, collected with the taxes on a line of the budget
@@ -567,9 +566,10 @@ play builds on, so 0.6 adds to them rather than changing them.
     pollution, fires, money, and slack business. Saved as the
     `ordinances` feature, the first since 2.0, which a save for 0.4
     leaves out.
-  - [ ] The panel and the ticker (N4b): an Ordinances page in the city
+  - [x] The panel and the ticker (N4b): an Ordinances page in the city
     panel's toolbar, each ordinance a named button with what it earns or
-    costs; the budget's line; and the ticker's ordinance news in blue,
+    costs for every 1,000 people and, under the pointer, what it does;
+    the budget's line; and the ticker's ordinance news in blue,
     clickable, opening that page: what the city asks for, and what was
     enacted or repealed.
 - [ ] N5: neighbours, after SimCity 3000, as Tony Bark chose: the map's
@@ -653,6 +653,7 @@ Yokohama waits on Senri, and on Tony Bark settling its design from the
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-28 | minor | Senri, N4b, closing N4: the city panel's Ordinances page, each ordinance a button with its rate and, under the pointer, what it does; the budget's ordinance line; and ordinance news on the ticker in blue, as Tony Bark chose, opening the page when clicked. 929 tests. |
 | 2026-10-28 | minor | Senri, N4a: Tony Bark added ordinances, after SimCity 3000's, as N4, before neighbours, which become N5, with oversights N6. Ten ordinances, any enacted at any time, earn or cost money by population and nudge demand, crime, pollution, fires, power, or traffic; the city asks for the one it most wants each quarter. `ordinances.json` in definitions 2.2; saved as the `ordinances` feature. 928 tests. |
 | 2026-10-28 | minor | Senri, N3: every window has a unified title bar, macOS-style, after Tony Bark's idea: a red close button, the title in the middle, and a toolbar for the settings' tabs and the help's pages, which frees the room the tabs took. Every window moves by it, the start menu's too. The city panel's title is the city's name, edited in place; other windows can turn that on, and none does yet. Help has an Editing scenarios page. 908 tests. |
 | 2026-10-28 | minor | GitInfo counts every commit from 0.5.103, not only the game project's, as Tony Bark chose, bringing forward what was planned for 0.6, so a library-only change gets its own version. |

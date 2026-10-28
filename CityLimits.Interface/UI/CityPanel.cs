@@ -9,8 +9,10 @@ namespace CityLimits.UI;
 /// disasters still to come, and its goals under both, each with how the city measures up; a
 /// scenario being edited shows its draft there, which nothing acts on until it is tested, with an
 /// Edit under its goals that opens the scenario's details. At the
-/// bottom, the seed its map grew from, which a click copies. The game is paused while it is open,
-/// and the player moves it by its title bar.
+/// bottom, the seed its map grew from, which a click copies. Its toolbar's second page, Ordinances,
+/// lists the city's ordinances, after SimCity 3000's, each a button that enacts or repeals it, with
+/// what it earns or costs a year for every 1,000 people and, under the pointer, what it does. The game
+/// is paused while it is open, and the player moves it by its title bar.
 /// </summary>
 public sealed class CityPanel : IMovableWindow
 {
@@ -34,8 +36,17 @@ public sealed class CityPanel : IMovableWindow
     private const int EventRoom = 3;
     private const double NoteSeconds = 2.0;
 
+    // The ordinances' page: a row each, and the line under them.
+    private const int OrdinanceRow = 21;
+    private const int CityPage = 0;
+    private const int OrdinancesPage = 1;
+
+    private static readonly string[] Pages = ["City", "Ordinances"];
+
     private readonly WindowFrame _frame = new(CitySimulation.DefaultName, CitySimulation.MaxNameLength)
     {
+        Toolbar = Pages,
+        SelectedTool = CityPage,
         TitleEditable = true,
         CheckTitle = name => CitySimulation.IsValidName(name) ? null : $"A city's name needs 1 to {CitySimulation.MaxNameLength} characters",
     };
@@ -54,6 +65,14 @@ public sealed class CityPanel : IMovableWindow
     // The disasters to come, laid out when the panel opens, since the city is paused while it is.
     private readonly List<string> _events = [];
     private int _moreEvents;
+
+    // The ordinances as the page shows them, laid out when the panel opens or one changes.
+    private string[] _ordinanceIds = [];
+    private string[] _ordinanceNames = [];
+    private string[] _ordinanceMoney = [];
+    private string[] _ordinanceEffects = [];
+    private bool[] _enacted = [];
+    private string _ordinanceTotal = string.Empty;
 
     private int Width => _isChallenge ? WideWidth : NarrowWidth;
 
@@ -77,7 +96,13 @@ public sealed class CityPanel : IMovableWindow
 
         /// <summary>The player asked to edit the details of the scenario being edited.</summary>
         EditScenario,
+
+        /// <summary>The player clicked an ordinance, in <see cref="Ordinance"/>, to enact or repeal it.</summary>
+        ToggleOrdinance,
     }
+
+    /// <summary>The ordinance the player clicked, once the outcome is <see cref="Outcome.ToggleOrdinance"/>.</summary>
+    public string? Ordinance { get; private set; }
 
     /// <summary>The name the player entered, once the outcome is <see cref="Outcome.Renamed"/>, trimmed.</summary>
     public string Name { get; private set; } = CitySimulation.DefaultName;
@@ -98,13 +123,16 @@ public sealed class CityPanel : IMovableWindow
 
     /// <summary>
     /// Opens the panel on the city as it is, with its challenge, or, when it has none, the draft of
-    /// the scenario being edited, if any, which nothing acts on yet.
+    /// the scenario being edited, if any, which nothing acts on yet; on its Ordinances page when
+    /// <paramref name="ordinances"/> asks, as the ticker's ordinance news does.
     /// </summary>
-    public void Reset(CitySimulation city, Challenge? draft = null)
+    public void Reset(CitySimulation city, Challenge? draft = null, bool ordinances = false)
     {
         ArgumentNullException.ThrowIfNull(city);
         _frame.CancelEdit();
         _frame.Title = city.Name;
+        _frame.SelectedTool = ordinances ? OrdinancesPage : CityPage;
+        RefreshOrdinances(city);
         _challenge = city.Challenge ?? draft;
         _isDraft = city.Challenge is null && draft is not null;
         _isChallenge = _challenge is not null;
@@ -127,6 +155,24 @@ public sealed class CityPanel : IMovableWindow
         _copiedAt = double.NegativeInfinity;
     }
 
+    /// <summary>Lays the ordinances' page out again, as the city has them now; call it when one changes.</summary>
+    public void RefreshOrdinances(CitySimulation city)
+    {
+        ArgumentNullException.ThrowIfNull(city);
+        var all = city.Ordinances.All;
+        var population = city.Census.CityPopulation;
+        _ordinanceIds = [.. all.Select(ordinance => ordinance.Id)];
+        _ordinanceNames = [.. all.Select(ordinance => ordinance.Name)];
+        // A row gives the rate, which a new city's size would make $0; the line under them, what it comes to now.
+        _ordinanceMoney = [.. all.Select(ordinance => $"{SignedMoney(ordinance.Money)} per 1,000")];
+        _ordinanceEffects = [.. all.Select(EffectsOf)];
+        _enacted = [.. all.Select(ordinance => city.Ordinances.IsEnacted(ordinance.Id))];
+        var (income, cost) = city.Ordinances.YearlyMoney(population);
+        _ordinanceTotal = _enacted.Any(on => on)
+            ? $"Those enacted earn {Hud.Money(income)} and cost {Hud.Money(cost)} a year at {Hud.Count(population)} people"
+            : "Each earns or costs that a year for every 1,000 people. Click one to enact it";
+    }
+
     /// <summary>Takes this frame's typing and clicks, other than a drag by the title bar.</summary>
     public Outcome Update(CitySimulation city)
     {
@@ -141,6 +187,9 @@ public sealed class CityPanel : IMovableWindow
         {
             case WindowFrame.Action.Close:
                 return Outcome.Closed;
+            case WindowFrame.Action.Toolbar:
+                _frame.SelectedTool = _frame.ClickedTool;
+                return Outcome.Open;
             case WindowFrame.Action.Renamed:
                 Name = _frame.Title;
                 _renamedAt = Raylib.GetTime();
@@ -155,6 +204,18 @@ public sealed class CityPanel : IMovableWindow
         if (Raylib.IsKeyPressed(KeyboardKey.Escape))
         {
             return Outcome.Closed;
+        }
+
+        if (_frame.SelectedTool == OrdinancesPage)
+        {
+            var row = pressed ? OrdinanceAt(mouse) : -1;
+            if (row < 0)
+            {
+                return Outcome.Open;
+            }
+
+            Ordinance = _ordinanceIds[row];
+            return Outcome.ToggleOrdinance;
         }
 
         if (pressed && _isDraft && Raylib.CheckCollisionPointRec(mouse, EditBounds()))
@@ -179,6 +240,11 @@ public sealed class CityPanel : IMovableWindow
         Raylib.DrawRectangle(0, 0, Raylib.GetScreenWidth(), Raylib.GetScreenHeight(), Theme.Dim);
         var bounds = Bounds;
         _frame.Draw(bounds);
+        if (_frame.SelectedTool == OrdinancesPage)
+        {
+            DrawOrdinances(bounds);
+            return;
+        }
 
         // The frame shows a problem with the name under the title bar while the name is edited.
         var x = (int)bounds.X + Padding;
@@ -217,6 +283,74 @@ public sealed class CityPanel : IMovableWindow
         var copied = now - _copiedAt < NoteSeconds;
         Raylib.DrawText(copied ? "copied" : "click to copy", (int)seed.X + Raylib.MeasureText(seedText, FontSize) + 12, (int)seed.Y + 7, SmallSize, copied ? Theme.Accent : Theme.TextDim);
     }
+
+    // Each ordinance a row: lit when enacted, with what it earns or costs; under them, what the one
+    // under the pointer does, or what those enacted come to.
+    private void DrawOrdinances(Rectangle bounds)
+    {
+        var mouse = Raylib.GetMousePosition();
+        var hovered = OrdinanceAt(mouse);
+        for (var i = 0; i < _ordinanceIds.Length; i++)
+        {
+            var row = OrdinanceBounds(i);
+            if (_enacted[i])
+            {
+                Raylib.DrawRectangleRec(row, Theme.ToolbarSelected);
+            }
+
+            Raylib.DrawRectangleLinesEx(row, 1f, _enacted[i] ? Theme.Accent : i == hovered ? Theme.TextDim : Theme.PanelBorder);
+            var textY = (int)(row.Y + ((row.Height - FontSize) / 2));
+            Raylib.DrawText(_ordinanceNames[i], (int)row.X + 8, textY, FontSize, _enacted[i] ? Theme.Accent : Theme.Text);
+            var money = _ordinanceMoney[i];
+            Raylib.DrawText(money, (int)(row.X + row.Width - 8 - Raylib.MeasureText(money, SmallSize + 2)), textY + 2, SmallSize + 2, Theme.TextDim);
+        }
+
+        var note = hovered >= 0 ? _ordinanceEffects[hovered] : _ordinanceTotal;
+        Raylib.DrawText(note, (int)bounds.X + Padding, (int)(bounds.Y + bounds.Height - Padding - SmallSize), SmallSize, hovered >= 0 ? Theme.Text : Theme.TextDim);
+    }
+
+    private int OrdinanceAt(Vector2 point)
+    {
+        for (var i = 0; i < _ordinanceIds.Length; i++)
+        {
+            if (Raylib.CheckCollisionPointRec(point, OrdinanceBounds(i)))
+            {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+    private Rectangle OrdinanceBounds(int row)
+    {
+        var bounds = Bounds;
+        return new Rectangle
+        {
+            X = bounds.X + Padding,
+            Y = bounds.Y + WindowFrame.TitleHeight + 8 + (row * OrdinanceRow),
+            Width = Width - (Padding * 2),
+            Height = OrdinanceRow - 3,
+        };
+    }
+
+    // What an ordinance does, in words, as the tuning guide words it.
+    private static string EffectsOf(OrdinanceSpec ordinance) =>
+        ordinance.Effects.Count == 0
+            ? $"{ordinance.Name}: nothing but its money"
+            : $"{ordinance.Name}: {string.Join(", ", ordinance.Effects.Select(effect => effect.Effect switch
+            {
+                OrdinanceEffect.ResidentialDemand => $"residential demand {Signed(effect.Amount)}",
+                OrdinanceEffect.CommercialDemand => $"commercial demand {Signed(effect.Amount)}",
+                OrdinanceEffect.IndustrialDemand => $"industrial demand {Signed(effect.Amount)}",
+                OrdinanceEffect.Crime => $"crime {Signed(effect.Amount)}",
+                OrdinanceEffect.IndustrialPollution => $"industry's pollution {Signed(effect.Amount)}%",
+                OrdinanceEffect.Fires => $"fires breaking out {Signed(effect.Amount)}%",
+                OrdinanceEffect.PowerCapacity => $"power plants' capacity {Signed(effect.Amount)}%",
+                _ => $"traffic {Signed(effect.Amount)}%",
+            }))}";
+
+    private static string Signed(int amount) => amount > 0 ? $"+{amount}" : amount.ToString(CultureInfo.InvariantCulture);
 
     private static void DrawCity(CitySimulation city, int x, int y)
     {

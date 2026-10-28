@@ -37,6 +37,20 @@ public class NewsQueueTests
     }
 
     [Fact]
+    public void AnOrdinancesNewsGoesWithTheAdvisoriesAndKeepsWhichOrdinanceItIsAbout()
+    {
+        var queue = new NewsQueue();
+        queue.Post(Headline("h1"));
+        queue.Post(new NewsItem("o1", NewsKind.Ordinance, "salesTax"));
+        queue.Post(Advisory("a1"));
+
+        var items = Drain(queue);
+
+        Assert.Equal(["o1", "a1", "h1"], items.Select(item => item.Text));
+        Assert.Equal("salesTax", items[0].Ordinance);
+    }
+
+    [Fact]
     public void ALineAlreadyWaitingIsntQueuedTwice()
     {
         var queue = new NewsQueue();

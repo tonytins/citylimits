@@ -4,8 +4,9 @@ namespace CityLimits.UI;
 /// The news ticker, after Tony Bark's mock-up in <c>docs/design/</c>: a strip of news that scrolls
 /// from right to left and never stops. Lines posted to it wait their turn in a
 /// <see cref="NewsQueue"/>, disasters and advisories ahead of headlines, and when nothing is
-/// waiting a filler line keeps it running. Each line is drawn in its kind's colour. The loading
-/// screen uses one too, for its phrases.
+/// waiting a filler line keeps it running. Each line is drawn in its kind's colour; an
+/// ordinance's news, in blue, can be clicked (<see cref="OrdinanceAt"/>). The loading screen uses
+/// one too, for its phrases.
 /// </summary>
 public sealed class NewsTicker
 {
@@ -109,9 +110,32 @@ public sealed class NewsTicker
         }
     }
 
+    /// <summary>
+    /// The ordinance whose news is under a point, on a strip with its top edge at the given height,
+    /// or null when the point isn't on one.
+    /// </summary>
+    public string? OrdinanceAt(Vector2 point, int top)
+    {
+        if (point.Y < top || point.Y >= top + Height)
+        {
+            return null;
+        }
+
+        foreach (var line in _showing)
+        {
+            if (line.Item.Ordinance is { } id && point.X >= line.X && point.X < line.X + line.Width)
+            {
+                return id;
+            }
+        }
+
+        return null;
+    }
+
     private static Color ColorOf(NewsKind kind) => kind switch
     {
         NewsKind.Disaster => Theme.NewsDisaster,
+        NewsKind.Ordinance => Theme.NewsOrdinance,
         NewsKind.Advisory => Theme.NewsAdvisory,
         _ => Theme.NewsHeadline,
     };

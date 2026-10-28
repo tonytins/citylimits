@@ -16,7 +16,7 @@ public sealed class BudgetPanel : IMovableWindow
     private const int LineHeight = 20;
     private const int Padding = 16;
     private const int Width = 460;
-    private const int Height = 406;
+    private const int Height = 426;
     private const int ButtonSize = 22;
     private const int ContinueWidth = 110;
     private const int ContinueHeight = 28;
@@ -126,6 +126,8 @@ public sealed class BudgetPanel : IMovableWindow
         DrawSetting(3, $"Police at {budget.PoliceFunding}%", $"asks ${estimate.PoliceRequest}, pays ${estimate.PoliceFunded}");
 
         y = RowTop(Settings.Length) + 4;
+        Raylib.DrawText($"Ordinances earn ${estimate.OrdinanceIncome}, cost ${estimate.OrdinanceCost}", x, y, FontSize, Theme.Text);
+        y += LineHeight;
         Raylib.DrawText($"Cash flow ${estimate.CashFlow}{(estimate.Cut ? ", funding cut: the money runs out" : string.Empty)}", x, y, FontSize, estimate.NeedsAttention ? Theme.Error : Theme.Text);
         y += LineHeight + 8;
 
@@ -134,7 +136,7 @@ public sealed class BudgetPanel : IMovableWindow
         var last = budget.LastYear;
         var lastLine = last is null
             ? "The city hasn't settled a year yet"
-            : $"Collected ${last.TaxIncome}, paid ${last.Expenses}, cash flow ${last.CashFlow}";
+            : $"Collected ${last.Income}, paid ${last.Expenses}, cash flow ${last.CashFlow}";
         Raylib.DrawText(lastLine, x, y, FontSize, last is { NeedsAttention: true } ? Theme.Error : Theme.Text);
 
         var go = ContinueBounds();

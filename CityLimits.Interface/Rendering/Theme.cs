@@ -102,6 +102,9 @@ public static class Theme
     /// <summary>The ticker's disasters: red.</summary>
     public static readonly Color NewsDisaster = new() { R = 235, G = 70, B = 60, A = 255 };
 
+    /// <summary>The ticker's news of an ordinance, as Tony Bark chose: blue, and clickable.</summary>
+    public static readonly Color NewsOrdinance = new() { R = 110, G = 170, B = 250, A = 255 };
+
     /// <summary>The background of a hint beside the pointer, as Tony Bark chose: yellow.</summary>
     public static readonly Color HintBackground = new() { R = 250, G = 215, B = 80, A = 255 };
 

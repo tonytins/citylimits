@@ -121,6 +121,7 @@ public sealed class GameLoop : IDisposable
         }
 
         _simulation.MessageSent += ShowMessage;
+        _simulation.OrdinanceNews += ShowOrdinanceNews;
 
         // A challenge says what it asks when it starts, and its result when its goals are judged.
         if (city.Challenge is { } challenge)
@@ -930,6 +931,10 @@ public sealed class GameLoop : IDisposable
             case CityPanel.Outcome.Closed:
                 CloseModal();
                 return;
+            case CityPanel.Outcome.ToggleOrdinance when _cityPanel.Ordinance is { } id:
+                _simulation.SetOrdinance(id, !_simulation.Ordinances.IsEnacted(id));
+                _cityPanel.RefreshOrdinances(_simulation);
+                return;
             case CityPanel.Outcome.EditScenario when _editing is { IsTesting: false }:
                 // The city stays paused from the city panel to the details and back.
                 _scenarioWindow.Open(_editing.Scenario, _editing.CanMoveStart(_simulation));
@@ -1050,6 +1055,14 @@ public sealed class GameLoop : IDisposable
             // A press on the bar works its buttons, and neither it nor the ticker under it reaches the map.
             if (Hud.IsOnBottom(mouse))
             {
+                // A blue line on the ticker opens the city's ordinances.
+                if (_ticker.OrdinanceAt(mouse, Raylib.GetScreenHeight() - NewsTicker.Height) is not null && _modal == Modal.None)
+                {
+                    _cityPanel.Reset(_simulation, _editing is { IsTesting: false } ? _draft : null, ordinances: true);
+                    OpenModal(Modal.City);
+                    return;
+                }
+
                 PressBar(_hud.ButtonAt(mouse));
                 return;
             }
@@ -1182,6 +1195,21 @@ public sealed class GameLoop : IDisposable
 
         _ticker.Advise(text);
         Logger.Warn(text);
+    }
+
+    // An ordinance's news goes on the ticker in blue, as Tony Bark chose, and to the log: what the
+    // city asks for, and what the player enacted or repealed.
+    private void ShowOrdinanceNews(OrdinanceNews news)
+    {
+        var name = news.Ordinance.Name;
+        var text = news.Kind switch
+        {
+            OrdinanceNewsKind.Petition => $"Petition in {_simulation.Name}: residents ask for {name}",
+            OrdinanceNewsKind.Enacted => $"{name} enacted in {_simulation.Name}",
+            _ => $"{name} repealed in {_simulation.Name}",
+        };
+        _ticker.Post(new NewsItem(text, NewsKind.Ordinance, news.Ordinance.Id));
+        Logger.Info(text);
     }
 
     private static string Count(int count, string thing) => count == 1 ? $"1 {thing}" : $"{count} {thing}s";

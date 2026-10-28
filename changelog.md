@@ -1,5 +1,22 @@
 # CityLimits Changelog
 
+## 0.5.106
+
+Ordinances are in the game. The city panel has an Ordinances page in its
+title bar: each of the ten is a button that enacts or repeals it, with
+what it earns or costs a year for every 1,000 people, and pointing at one
+says what it does. The budget shows what the ordinances earn and cost.
+
+Ordinance news runs on the ticker in blue: what you enacted or repealed,
+and, each quarter, what a city of 2,000 or more asks for, such as a
+neighbourhood watch when crime is high. Click a blue line to open the
+ordinances.
+
+For developers: `NewsKind.Ordinance`, queued with the advisories, and
+`NewsItem.Ordinance`, the id a line is about; `NewsTicker.OrdinanceAt`
+finds the line under the pointer. `CityPanel.Reset(city, draft,
+ordinances: true)` opens it on the ordinances.
+
 ## 0.5.105
 
 Cities have ordinances underneath now, after SimCity 3000's: ten
