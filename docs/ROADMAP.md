@@ -1,6 +1,6 @@
 # CityLimits roadmap
 
-> **Last reviewed:** 2026-10-21 · **Last updated:** 2026-10-27 · **Change:** minor (Kyoto, K3: the scenario's details, edited in a window of their own, and disasters that repeat) · **Stage:** beta
+> **Last reviewed:** 2026-10-27 · **Last updated:** 2026-10-27 · **Change:** minor (Happy Isle, P4: three built-in challenges, made with the editor; 0.4 is complete) · **Stage:** beta
 
 Forward-looking: where CityLimits stands, what blocks the next milestone,  
 and what comes next. Verified status and evidence are in the  
@@ -9,10 +9,28 @@ and what comes next. Verified status and evidence are in the
 Keep it current: when work lands, update its milestone row and checklist,  
 re-estimate what remains, and add a line to the revision history.
 
-Milestones are named after Micropolis scenarios. The names are labels, not  
-a release order: the owner may re-order or re-cut them as the design  
-settles. Estimates are rough hours for one developer and are re-measured  
-when a milestone lands.
+Milestones up to Kyoto are named after the cities Micropolis ships with;
+from Senri on, after Japanese cities and towns, with no theme to match, as
+Tony Bark chose. The names are labels, not a release order: Tony Bark may
+re-order or re-cut them as the design settles. Estimates are rough hours
+for one developer and are re-measured when a milestone lands.
+
+## Releases
+
+Each minor version is a line, and some lines are kept for the long term,
+in the manner of Ubuntu's and .NET's, without dates.
+
+| Line | Milestones | Kind | What it is |
+|---|---|---|---|
+| 0.3 | the alpha | kept | The alpha, with backports on `release/0.3.100` to `release/0.3.102` |
+| 0.4 | Happy Isle, Kyoto | current | The beta: scenarios to play and their editor. It stays playable after 0.5 |
+| 0.5 | Senri | long-term | Every format moves to a new major version, the base game becomes data a mod can change, and the game is packaged for each platform. 0.5.100 reads and writes the old formats and the new; 0.5.101 writes only the new, and reads the old for good |
+| 0.6 | Yokohama | | Online play, after SimCity 2000 Network Edition. Its new state arrives as features in the 0.5 formats, so 0.5 can open its cities single-player |
+| 0.7 | unnamed | long-term | The next long-term line |
+
+A long-term line is kept on its own branch, such as `release/0.5`, while the
+next one is built. A fix there is an ordinary patch: GitInfo counts it up,
+as 0.5.1xx, with no fourth number, unlike the 0.3 backports.
 
 ## Alpha gate
 
@@ -37,30 +55,23 @@ focus turns to polish.
 
 ## Current focus
 
-The engine plays like Micropolis: the baseline refactor (tool strokes,  
-roads and zones, time, growth, and terrain) is done, and Joffburg (power,  
-taxes and the budget, services, and the overview map) was built to the  
-baseline from the start and is complete. With saving finished, every row  
-of the alpha gate passes, and 0.3.100 is the alpha. The owner's liberties  
-so far are the always-automatic budget, parks' look chosen by their place,  
-Micropolis' hospital-then-church quirk fixed, the demand panel, and  
-unsupported things in imported cities becoming bare ground.
+The engine plays like Micropolis, and 0.4 is a beta with scenarios to play,
+four built-in challenges, and a scenario editor built into the game. Happy
+Isle and Kyoto are complete, and with them 0.4.
 
 Next, in order:
 
-1. **Scenarios to play**, the polish Tony Bark chose first: P1, a city's  
-   calendar starting in a later year, and P2, scenario format 2.0, are in.  
-   In the order Tony Bark settled, the interface split out into a  
-   library of its own and P3, playing a challenge from the start menu,  
-   with its goals, its result, and saving partway, are in, and the  
-   demo-town fallback is dropped. Kyoto, the scenario editor, is  
-   complete: K0 to K4, editing a scenario in the game, its details in a  
-   window of their own, and saving it, with a New City window. Then P4,  
-   the first built-in challenges, made with the editor, and Senri, a  
-   small milestone for the interface and packaging before online play.
-2. **Happy Isle's last item**: map size on the start screen; Tony Bark  
-   dropped the city score. Deadwood (pollution, crime, fire, floods, and  
-   earthquakes) and Radial (traffic and rail) are complete.
+1. **Senri, 0.5**, a small long-term milestone before online play:
+   - N1, the formats and the specs: every format moves to its next major
+     version, a save names its features rather than counting minor
+     versions, and lists its mods rather than carrying their definitions;
+     the base game becomes data in `Assets/Definitions/`, with more of it
+     made specs a mod can change; and packaging for each platform. 0.5.100
+     still writes the old formats, chosen in the settings.
+   - 0.5.101 writes only the new formats.
+   - N2, the unified title bar and an Editing scenarios page in the help.
+   - N3, oversights found on the way.
+2. **Yokohama, 0.6**, online play, settled when it starts.
 
 ## Milestones
 
@@ -76,21 +87,22 @@ Next, in order:
 | Joffburg: Services and economy | 100% | 0 | Meets the baseline: power, taxes and the budget, services (stations, coverage, parks, hospitals, and churches), and the overview map with its power, coverage, land value, and density modes, as in Micropolis |
 | Radial: Traffic and commuting | 100% | 0 | Meets the baseline: versioned file formats with schemas, read without reflection, the traffic map trips leave and what it shows and costs, and rail, with tunnels, crossings, trips along it, its upkeep and message, and the commuter train |
 | Deadwood: Land value, pollution, disasters | 100% | 0 | Meets the baseline: pollution and crime, fire with the ticker's fire-risk hints, floods, and earthquakes, as in Micropolis, with free repair and the settings' disaster switches |
-| Happy Isle: Player-facing game | 60% | 4–8 | The palette, laid out as Micropolis', and the HUD, with its bar along the bottom over a news ticker after Tony Bark's mock-up, are in; the budget, demand, and city panels, the overview's power mode, and the settings window are too, and cities save, load, autosave, and import from Micropolis. Scenarios to play (P1 to P3 of four in, with one example challenge) and map size on the start screen are left |
+| Happy Isle: Player-facing game | 100% | 0 | The palette, laid out as Micropolis', and the HUD, with its bar along the bottom over a news ticker after Tony Bark's mock-up; the budget, demand, and city panels, the overview's power mode, the settings window, and the New City window; cities that save, load, autosave, and import from Micropolis; and scenarios to play, with four built-in challenges |
 | Kyoto: The scenario editor | 100% | 0 | The interface library it shares with play, the stadium, the seaport, and the airport the alpha missed, with the demand they hold back, the shared city view, editing a scenario in the game, tested by playing, its details, and saving it, with a New City window |
-| Senri: Interface and packaging | 0% | 6–12 | Nothing yet: a unified title bar, an Editing scenarios help page, packaging for each platform, and what turns up before online play |
-| Yokohama: Online play | 0% | unestimated | Nothing yet: a Network Edition-style shared city, hosted by `CityLimits.Server`. Its checklist is a draft, settled when it starts |
-| | **Total** | **≈ 10–20, Yokohama unestimated** | |
+| Senri (0.5, long-term): Formats, specs, and packaging | 0% | 17–30 | Nothing yet: the formats' new majors, saves by features and mods, the base game as data and more of it as specs, packaging for each platform, the unified title bar and the help page, and what turns up before online play |
+| Yokohama (0.6): Online play | 0% | unestimated | Nothing yet: a Network Edition-style shared city, hosted by `CityLimits.Server`. Its checklist is a draft, settled when it starts |
+| | **Total** | **≈ 17–30, Yokohama unestimated** | |
 
 ## Upcoming work, ranked
 
 | Rank | Work | Milestone | Estimate (h) |
 |---|---|---|---|
-| 1 | Scenarios, P4: the first built-in challenges, made with the editor | Happy Isle | 2–4 |
-| 2 | Senri: the unified title bar, the help page, and packaging | Senri | 6–12 |
-| 3 | Happy Isle: map size on the start screen | Happy Isle | 2–4 |
+| 1 | Senri, N1: the formats' new majors, saves by features and mods, the base game as data, the specs, and packaging | Senri | 12–20 |
+| 2 | Senri, 0.5.101: only the new formats written | Senri | 1–2 |
+| 3 | Senri, N2: the unified title bar and the help page | Senri | 4–8 |
 
-Every row of the alpha gate passes, and CityLimits is an alpha since 0.3.100.
+Every row of the alpha gate passes, and CityLimits is an alpha since 0.3.100,
+and a beta since 0.4.100.
 
 ## Milestone checklists
 
@@ -344,7 +356,7 @@ later games, where such tools live in the palette.
   Escape menu, which became one column of buttons (Resume, Save, Load,  
   Settings, Main menu, Quit), with tabs for Graphics (fullscreen) and  
   Gameplay (autosave off, one, or two) (`UI/SettingsPanel.cs`).
-- [ ] Scenarios to play, in the phases Tony Bark settled. Format 2.0  
+- [x] Scenarios to play, in the phases Tony Bark settled. Format 2.0  
   counts time in the game's dates, a month with an optional week, not  
   ticks, and still reads 1.x files; a scenario starts from a seed and  
   strokes or a saved city, can start in a later year, has goals judged  
@@ -365,11 +377,20 @@ later games, where such tools live in the palette.
     disasters made on their dates, its goals in the city panel, a pop-up  
     with the result, and the challenge saved with its city (save 1.8).  
     The demo-town fallback is dropped, and `first-town` is an example.
-  - [ ] P4: the first built-in challenges.
-- [ ] A start screen and a new-city flow: name, seed, and map size. The  
-  loading screen, the start menu, and New Game's name and seed are in  
-  (S2a), and clicking the name in the top bar renames the city; map size  
-  waits for a second size to choose.
+  - [x] P4: the first built-in challenges, made with the editor's own
+    machinery: towns grown on seeded maps and saved through
+    `ScenarioEdit` with their cities beside them. Smokestack (1965),
+    pollution from industry in the middle of town; Hard Times (1972), a
+    town with no police; and Aftershock (1922), two earthquakes to
+    rebuild from; beside First Town. Each is lost left alone, and a
+    scripted answer won Smokestack and Hard Times. Win or lose, the city
+    plays on, so their goals are left for Tony Bark to tune in the
+    editor.
+- [x] A start screen and a new-city flow: the loading screen, the start
+  menu, and the New City window (Kyoto, K4), with the city's name, its
+  seed, the map that seed grows, and Generate; clicking the name in the
+  top bar renames the city. Choosing a map size moves to Senri, where the
+  terrain becomes a spec.
 
 ### Kyoto: The scenario editor
 
@@ -428,25 +449,55 @@ scenario file and the city it starts from beside it.
   goals yet, is listed to edit, not to play. A saved city's start and  
   money move too while it is at its founding. Trying it from the editor  
   came with K2.
-### Senri: Interface and packaging
+### Senri: Formats, specs, and packaging
 
-A small milestone between the editor and online play, as Tony Bark set
-it out: mostly internal, it scaffolds the interface and catches what was
-missed before the work on online play begins.
+Version 0.5, the first long-term line: a small milestone between the editor
+and online play, as Tony Bark set it out. Its formats are the ones online
+play builds on, so 0.6 adds to them rather than changing them.
 
-- [ ] A unified title bar for every window, macOS-style, whose title can
-  be edited where a window turns that on, as the city panel does for the
-  city's name; off by default. An Editing scenarios page in the Help
-  window.
+- [ ] N1: the formats and the specs, in one phase, as Tony Bark asked.
+  - [ ] Every format rounds up to its next major version: city saves 1.10
+    to 2.0, scenarios 2.2 to 3.0, and definitions and mods 1.0 to 2.0.
+    Older versions refuse the new majors with a message; 0.5 reads every
+    format before them, for good.
+  - [ ] A save names its features, as HTML's do, rather than counting
+    minor versions: new state is a new feature, and the version moves
+    only for a change that breaks. Each feature says whether an older
+    version may leave it out or keep it.
+  - [ ] A save lists the mods its city was made with, not their
+    definitions; opening a city whose mods differ from those installed
+    says so. Offline, the seed is what makes a map; matching mods online
+    is the server's to manage.
+  - [ ] The base game as data: its specs in `Assets/Definitions/`, read
+    as a mod is, with the code's own as the fallback when they're
+    missing or damaged, said so.
+  - [ ] More of the game as specs a mod can change: every tool's price
+    (roads, bridges, rail, power lines, parks, the bulldozer, and the
+    stadium, seaport, and airport), the facilities' demand caps and
+    pollution, the disasters' chances and how fires and floods run,
+    services' coverage, the economy's starting money and tax, and the
+    terrain, with the map sizes to choose from in the New City window.
+    The engine's rules, its calendar, cycle, and tick, stay in code.
+  - [ ] 0.5.100 writes the old formats as well as the new, for every
+    format, chosen by a setting in the game, so a city or a mod can still
+    go back to 0.4; 0.5.101 drops the old writers. Yokohama moves the
+    choice to the command line.
   - [ ] Packaging for each platform from one place, after Photocraft's
     `packaging/`: a shared setup that reads the version once, then
-    Linux's AppImage (in already), Windows, and macOS, so one release
-    goes out before networking.
-- [ ] Oversights found on the way, fixed before Yokohama starts.
+    Linux's AppImage (in already), Windows, and macOS, shipping the base
+    game's data with it.
+- [ ] `citylimits scenario --verbose`: the report lists every tile an
+  action touched, beside the totals it gives by default, as Tony Bark
+  chose; in 0.5.100.
+- [ ] N2: a unified title bar for every window, macOS-style, whose title
+  can be edited where a window turns that on, as the city panel does for
+  the city's name; off by default. An Editing scenarios page in the Help
+  window.
+- [ ] N3: oversights found on the way, fixed before Yokohama starts.
 
 ### Yokohama: Online play
 
-A shared city for two to four players, after SimCity 2000 Network  
+Version 0.6. A shared city for two to four players, after SimCity 2000 Network  
 Edition (2KNet): each a commissioner of their own district, on land  
 they own, with their own budget beside the city's. Tony Bark swapped the  
 polish checklist for it. This is a draft, settled when the milestone  
@@ -471,20 +522,18 @@ starts.
 
 ## Critical path
 
-New Dullsville, Neat Map, Line City, and Kowloon are done: the loop, the  
-map, the tools, and a simulation that grows a city as Micropolis does,  
-proven on ordinary .NET through `CityLimits.Core` and its tests. Joffburg  
-is nearly done; its power overlay is the last piece.
+The engine, the alpha gate, and the beta's scenarios, their editor, and its
+first challenges are done, and 0.4 with them.
 
-Alpha now waits on Happy Isle's saving, and saving waits on the owner's  
-choice of format. Radial and Deadwood hang off the simulation's data  
-model, which is settled: trips already record their routes for traffic,  
-and the coverage maps and land value are ready for crime, pollution, and  
-fire. Happy Isle's remaining panels can be built alongside them.
+Senri's N1 is the long pole, and the one with the most at stake: the
+formats it settles are the ones 0.5 keeps for the long term and 0.6 builds
+online play on. The save rework comes first in it, since every spec after
+it then costs a feature name, not a format version. Its dual writing is
+temporary and comes out in 0.5.101, so it should stay thin: one save model,
+written two ways.
 
-The long poles are now Radial and Deadwood. If they run long, cut scope  
-inside Deadwood's disasters first, not inside traffic or crime, which the  
-baseline's growth depends on.
+Yokohama waits on Senri, and on Tony Bark settling its design from the
+2KNet manual.
 
 ## Risks most likely to push estimates up
 
@@ -510,6 +559,8 @@ baseline's growth depends on.
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-27 | minor | Happy Isle, P4: three built-in challenges made with the editor's machinery, Smokestack, Hard Times, and Aftershock, beside First Town; each grown on a seeded map, saved with its city, and lost when left alone. Happy Isle is complete, and with Kyoto, 0.4. 873 tests. |
+| 2026-10-27 | major | Release lines, as Tony Bark set them: 0.5, Senri, is the first long-term line, kept on its own branch with ordinary patches; 0.6 is Yokohama's online play; 0.7 the next long-term line. Senri's N1 joins the save rework and the specs, rounds every format up to its next major, writes the old formats beside the new in 0.5.100 and drops them in 0.5.101, and takes in packaging. Happy Isle's new-city flow is checked off, its map size moved to Senri's terrain spec; P4 is its last item. Milestones from Senri on are named after Japanese places. 867 tests. |
 | 2026-10-27 | minor | Tony Bark made Senri a small milestone of its own, between Kyoto and Yokohama: the unified title bar, the Editing scenarios help page, and packaging within that phase, and room for oversights before online play. Kyoto is complete. |
 | 2026-10-27 | minor | Kyoto, K4: a scenario saves to the player's scenarios folder with its city beside it, a game's own as a copy, and then starts from that city; New starts one from a seed in the New City window, which New Game shares, with the seed's map and Generate. Drafts without goals are listed to edit. A saved city's start and money move while it is at its founding. Kyoto is complete, 867 tests. |
 | 2026-10-27 | minor | Tony Bark swapped Yokohama's polish checklist for online play after SimCity 2000 Network Edition, hosted by a `CityLimits.Server` that starts from SimsCraft's oracles; the old polish items are dropped, and packaging for each platform, after Photocraft's, goes after K4 in Kyoto, so one release can go out before networking. Its checklist is a draft. Milestones from here are named after Japanese cities and towns. |

@@ -1,0 +1,19 @@
+{
+  "$schema": "https://raw.githubusercontent.com/tonytins/citylimits/main/docs/schemas/scenario.v2.2.schema.json",
+  "format": "2.2",
+  "name": "Smokestack",
+  "description": "The mills that built this town are choking it. Smoke from the industry in its middle, and from the coal plant that powers it, hangs over the homes on either side. Clear the air without losing the people, or the jobs that keep them here: by 1975, bring average pollution down to 65 or less and keep at least 15,000 people.",
+  "ends": "1975-01",
+  "goals": [
+    {
+      "measure": "Pollution",
+      "atMost": 65,
+      "text": "Bring average pollution down to 65 or less"
+    },
+    {
+      "measure": "Population",
+      "atLeast": 15000
+    }
+  ],
+  "city": "smokestack.fcl"
+}

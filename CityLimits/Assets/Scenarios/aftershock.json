@@ -1,0 +1,29 @@
+{
+  "$schema": "https://raw.githubusercontent.com/tonytins/citylimits/main/docs/schemas/scenario.v2.2.schema.json",
+  "format": "2.2",
+  "name": "Aftershock",
+  "description": "An earthquake is coming, and another will follow it. When the ground stops shaking, put out the fires, clear the rubble, and rebuild: by 1928, have at least 10,000 people, half the town before the quakes, without falling into debt.",
+  "ends": "1928-01",
+  "goals": [
+    {
+      "measure": "Population",
+      "atLeast": 10000
+    },
+    {
+      "measure": "Funds",
+      "atLeast": 0,
+      "text": "Stay out of debt"
+    }
+  ],
+  "events": [
+    {
+      "at": "1922-03",
+      "disaster": "Earthquake"
+    },
+    {
+      "at": "1924-06",
+      "disaster": "Earthquake"
+    }
+  ],
+  "city": "aftershock.fcl"
+}

@@ -2,9 +2,10 @@
 
 > **Status:** format 2.2 is built: `CityLimits.Core/Scenarios/` and
 > `citylimits scenario`, with `demo-town`, the built-in scenarios
-> `bridges`, `rail`, `zones-and-bulldozer`, and `small-town`, and the
-> example challenge `first-town`, each run as a test, all written in 2.0,
-> which 2.2 reads, since none needs what 2.1 and 2.2 added.
+> `bridges`, `rail`, `zones-and-bulldozer`, and `small-town`, written in
+> 2.0, and the challenges `first-town`, in 2.0, and `smokestack`,
+> `hard-times`, and `aftershock`, made with the editor in 2.2, each with
+> its city beside it; every one runs as a test.
 > Files in format 1, which counted time in ticks, are still read. A
 > challenge can be [played in the game](#playing-a-scenario). It follows the Micropolis
 > baseline: tools are strokes, zones are 3 by 3, the bulldozer refunds
@@ -53,6 +54,20 @@ measures now. At the end date the goals are judged, and a pop-up says
 whether the challenge was won or lost, and which goals weren't met; the
 city plays on after, won or lost. Saving partway keeps the challenge,
 with what is still to come (`docs/saving.md`).
+
+## The built-in challenges
+
+| Challenge | Starts | Ends | The trouble | Goals |
+|---|---|---|---|---|
+| `first-town` | 1900, open land by a river | 1910 | A fire along the way | 2,000 people, out of debt |
+| `smokestack` | 1965, about 18,000 people | 1975 | Industry and a coal plant in the middle of town | Average pollution 65 or less, 15,000 people |
+| `hard-times` | 1972, about 21,000 people | 1982 | No police, and crime everywhere | Average crime 90 or less, 15,000 people |
+| `aftershock` | 1922, about 21,000 people | 1928 | Earthquakes in 1922 and 1924 | 10,000 people, out of debt |
+
+The last three were made with the editor's own machinery: a town laid out
+and grown on a seeded map, then saved through `ScenarioEdit` with its city
+beside it. Each is lost when left alone. Win or lose, the city plays on,
+so their numbers are a starting point, open to tuning in the editor.
 
 ## Editing a scenario
 
@@ -525,8 +540,8 @@ scenario defaults all read, so they can't drift apart.
   and nothing else: their city files belong to their authors, and every
   CityLimits scenario is original work.
 
-## Open questions
+## Settled questions
 
 - Whether the report should list every tile an action touched, or only
-  the totals. Totals keep the report small; a `--verbose` flag could add
-  the tiles later without a format bump.
+  the totals. The totals stay the default, keeping the report small; a
+  `--verbose` flag adds the tiles, as Tony Bark chose, in 0.5.100.

@@ -1,0 +1,19 @@
+{
+  "$schema": "https://raw.githubusercontent.com/tonytins/citylimits/main/docs/schemas/scenario.v2.2.schema.json",
+  "format": "2.2",
+  "name": "Hard Times",
+  "description": "The town grew fast and nobody thought to hire a police force. Now crime runs through every street, and the people who can leave are leaving. Make the streets safe again: by 1982, bring average crime down to 90 or less and grow the town to at least 15,000 people.",
+  "ends": "1982-01",
+  "goals": [
+    {
+      "measure": "Crime",
+      "atMost": 90,
+      "text": "Bring average crime down to 90 or less"
+    },
+    {
+      "measure": "Population",
+      "atLeast": 15000
+    }
+  ],
+  "city": "hard-times.fcl"
+}
