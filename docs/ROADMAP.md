@@ -1,6 +1,6 @@
 # CityLimits roadmap
 
-> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-28 · **Change:** minor (Senri, N5a: neighbours' rules, connections, and power deals) · **Stage:** beta
+> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-28 · **Change:** minor (Senri, N5b: the deal window, the Neighbours page, and their news; N5 is done) · **Stage:** beta
 
 Forward-looking: where CityLimits stands, what blocks the next milestone,  
 and what comes next. Verified status and evidence are in the  
@@ -79,7 +79,7 @@ Next, in order:
    - N5, neighbours after SimCity 3000: connections at the map's edges,
      and deals offered as SimCity 3000 offers them, in what the game
      already has. After N4, whose clickable ticker and panel the deals
-     reuse.
+     reuse. Done.
    - N6, oversights found on the way.
 2. **Yokohama, 0.6**, online play: the server first, bringing online
    neighbours and the region view, settled when it starts.
@@ -100,15 +100,15 @@ Next, in order:
 | Deadwood: Land value, pollution, disasters | 100% | 0 | Meets the baseline: pollution and crime, fire with the ticker's fire-risk hints, floods, and earthquakes, as in Micropolis, with free repair and the settings' disaster switches |
 | Happy Isle: Player-facing game | 100% | 0 | The palette, laid out as Micropolis', and the HUD, with its bar along the bottom over a news ticker after Tony Bark's mock-up; the budget, demand, and city panels, the overview's power mode, the settings window, and the New City window; cities that save, load, autosave, and import from Micropolis; and scenarios to play, with four built-in challenges |
 | Kyoto: The scenario editor | 100% | 0 | The interface library it shares with play, the stadium, the seaport, and the airport the alpha missed, with the demand they hold back, the shared city view, editing a scenario in the game, tested by playing, its details, and saving it, with a New City window |
-| Senri (0.5, long-term): Formats, specs, neighbours, and packaging | 85% | 9–16 | Every format is at its next major and can be written for 0.4, the base game is data in `common/`, with more of it as specs, power runs along roads, facilities influence the land around them, every window has a unified title bar, the city has ordinances, and the game is packaged for Linux, Windows, and macOS; neighbours and their deals, and what turns up before online play, are left |
+| Senri (0.5, long-term): Formats, specs, neighbours, and packaging | 95% | 1–3 | Every format is at its next major and can be written for 0.4, the base game is data in `common/`, with more of it as specs, power runs along roads, facilities influence the land around them, every window has a unified title bar, the city has ordinances and neighbours to deal with, and the game is packaged for Linux, Windows, and macOS; what turns up before online play is left |
 | Yokohama (0.6): Online play | 0% | unestimated | Nothing yet: a Network Edition-style shared city, hosted by `CityLimits.Server`. Its checklist is a draft, settled when it starts |
-| | **Total** | **≈ 9–16, Yokohama unestimated** | |
+| | **Total** | **≈ 1–3, Yokohama unestimated** | |
 
 ## Upcoming work, ranked
 
 | Rank | Work | Milestone | Estimate (h) |
 |---|---|---|---|
-| 1 | Senri, N5: neighbours, connections, and deals | Senri | 8–14 |
+| 1 | Senri, N6: oversights found on the way | Senri | 1–3 |
 
 Every row of the alpha gate passes, and CityLimits is an alpha since 0.3.100,
 and a beta since 0.4.100.
@@ -572,7 +572,7 @@ play builds on, so 0.6 adds to them rather than changing them.
     the budget's line; and the ticker's ordinance news in blue,
     clickable, opening that page: what the city asks for, and what was
     enacted or repealed.
-- [ ] N5: neighbours, after SimCity 3000, as Tony Bark chose: the map's
+- [x] N5: neighbours, after SimCity 3000, as Tony Bark chose: the map's
   edges border neighbouring cities, made up from the city's seed so they
   stay the same, and roads, rail, and power lines run to an edge connect
   to them. Neighbours offer deals as SimCity 3000's do, in a window of
@@ -593,10 +593,11 @@ play builds on, so 0.6 adds to them rather than changing them.
     line is up; breaking one costs a year's money, and the neighbour
     won't deal for five years. Deals show in the budget, and are saved
     as `connections`.
-  - [ ] The window and the ticker (N5b): an offer in a window of its own,
+  - [x] The window and the ticker (N5b): an offer in a window of its own,
     taken or turned down there; a Neighbours page in the city panel,
     with each neighbour, its connections, and its deal, which can be
-    broken; the budget's deal line; and the news in blue on the ticker.
+    broken, after asking; the budget's deal line; and the news in blue
+    on the ticker, opening the offer standing or the page.
 - [ ] N6: oversights found on the way, fixed before Yokohama starts.
   - [ ] `--headless` only reads `common/`, and leaves writing it to the
     game in a window, as Tony Bark asked; 0.5.101 writes it from both.
@@ -638,8 +639,8 @@ first challenges are done, and 0.4 with them.
 
 Senri's N1, done, settled the formats 0.5 keeps for the long term and 0.6
 builds online play on; every spec after it costs a feature name, not a
-format version. N5, neighbours, is now the long pole, with the most to
-design: the deals, their window, and their place in the budget. N1's dual writing lasts through 0.6 and comes out
+format version. With N5, neighbours, done, Senri has only its
+oversights left. N1's dual writing lasts through 0.6 and comes out
 in 0.7, so it stays thin: one save model, written two ways.
 
 Yokohama waits on Senri, and on Tony Bark settling its design from the
@@ -669,6 +670,7 @@ Yokohama waits on Senri, and on Tony Bark settling its design from the
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-10-28 | minor | Senri, N5b, closing N5: a neighbour's offer in a window of its own, a Neighbours page in the city panel where a deal can be broken after asking, the budget's deal line, and the neighbours' news in blue on the ticker. Senri has only N6, oversights, left. 937 tests. |
 | 2026-10-28 | minor | Senri, N5a: four neighbours from the seed, connections read from the map's edges, roads and rail lifting demand, and power deals offered every six months, with a term, a yearly price, and a cost for breaking one; saved as `connections`, which 0.5.100 reserved and nothing is now. 937 tests. |
 | 2026-10-28 | minor | Senri, N4b, closing N4: the city panel's Ordinances page, each ordinance a button with its rate and, under the pointer, what it does; the budget's ordinance line; and ordinance news on the ticker in blue, as Tony Bark chose, opening the page when clicked. 929 tests. |
 | 2026-10-28 | minor | Senri, N4a: Tony Bark added ordinances, after SimCity 3000's, as N4, before neighbours, which become N5, with oversights N6. Ten ordinances, any enacted at any time, earn or cost money by population and nudge demand, crime, pollution, fires, power, or traffic; the city asks for the one it most wants each quarter. `ordinances.json` in definitions 2.2; saved as the `ordinances` feature. 928 tests. |

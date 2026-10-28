@@ -1,5 +1,20 @@
 # CityLimits Changelog
 
+## 0.5.108
+
+Neighbours' deals are in the game. When a neighbour offers one, the
+ticker says so in blue; click it to read the offer in a window of its
+own, and accept or decline it. The city panel has a Neighbours page:
+each neighbour, its size, what connects to it, and its deal, with a
+button to break it, which asks first, since breaking costs a year of the
+deal's money. The budget shows what the deals earn and cost.
+
+For developers: `NewsItem.Ordinance` is now `NewsItem.Link`, the
+ordinance's id or the neighbour's side, and `NewsKind.Neighbour` is
+blue; `NewsTicker.LinkAt` finds the line under the pointer. `DealWindow`
+shows an offer, and `CityPanel.Reset(..., neighbours: true)` opens the
+Neighbours page.
+
 ## 0.5.107
 
 Cities have neighbours now, after SimCity 3000's: one beyond each edge

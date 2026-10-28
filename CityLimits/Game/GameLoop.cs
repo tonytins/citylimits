@@ -50,6 +50,13 @@ public sealed class GameLoop : IDisposable
     private readonly SettingsPanel _settingsPanel = new();
     private readonly NoticePanel _notice = new();
     private readonly ScenarioWindow _scenarioWindow = new();
+    private readonly DealWindow _dealWindow = new();
+
+    // Whether the deal window was opened from the city panel, which it goes back to.
+    private bool _dealFromPanel;
+
+    // The neighbour whose deal the confirm panel asks about breaking.
+    private CityNeighbours.Side _breaking;
     private readonly GameFolders _folders;
 
     // The file the city was opened from or last saved to, and the save it was then; a city whose
@@ -122,6 +129,7 @@ public sealed class GameLoop : IDisposable
 
         _simulation.MessageSent += ShowMessage;
         _simulation.OrdinanceNews += ShowOrdinanceNews;
+        _simulation.NeighbourNews += ShowNeighbourNews;
 
         // A challenge says what it asks when it starts, and its result when its goals are judged.
         if (city.Challenge is { } challenge)
@@ -209,6 +217,7 @@ public sealed class GameLoop : IDisposable
         Settings,
         Notice,
         Scenario,
+        Deal,
     }
 
     // What a question asks before it goes ahead.
@@ -221,6 +230,7 @@ public sealed class GameLoop : IDisposable
         OpenCity,
         ResetTest,
         StartOver,
+        BreakDeal,
     }
 
     /// <summary>Whether, and where, the player asked to leave the city.</summary>
@@ -364,6 +374,9 @@ public sealed class GameLoop : IDisposable
             case Modal.Scenario:
                 _scenarioWindow.Draw();
                 break;
+            case Modal.Deal:
+                _dealWindow.Draw();
+                break;
         }
 
         Raylib.EndDrawing();
@@ -442,6 +455,9 @@ public sealed class GameLoop : IDisposable
                 return;
             case Modal.Scenario:
                 HandleScenarioInput(mouse);
+                return;
+            case Modal.Deal:
+                HandleDealInput(mouse);
                 return;
         }
 
@@ -697,6 +713,20 @@ public sealed class GameLoop : IDisposable
             return;
         }
 
+        // Breaking a deal is asked from the city panel, which the answer goes back to, still paused.
+        if (_pending == Pending.BreakDeal)
+        {
+            _pending = Pending.None;
+            if (answer == ConfirmPanel.Answer.Yes)
+            {
+                _simulation.BreakDeal(_breaking);
+            }
+
+            _cityPanel.RefreshNeighbours(_simulation);
+            _modal = Modal.City;
+            return;
+        }
+
         var pending = _pending;
         _pending = Pending.None;
         CloseModal();
@@ -935,6 +965,20 @@ public sealed class GameLoop : IDisposable
                 _simulation.SetOrdinance(id, !_simulation.Ordinances.IsEnacted(id));
                 _cityPanel.RefreshOrdinances(_simulation);
                 return;
+            case CityPanel.Outcome.ShowOffer:
+                OpenDeal(fromPanel: true);
+                return;
+            case CityPanel.Outcome.BreakDeal when _simulation.Neighbours.DealWith(_cityPanel.DealSide) is { } deal:
+                var neighbour = _simulation.Neighbours.Of(deal.Side).Name;
+                _breaking = deal.Side;
+                _pending = Pending.BreakDeal;
+                _confirm.Ask(
+                    $"Break the deal with {neighbour}?",
+                    $"It costs {Hud.Money(deal.Money)} now, a year of the deal's money, and {neighbour} won't deal again for {CityNeighbours.GrudgeYears} years.",
+                    "Break",
+                    "Keep");
+                _modal = Modal.Confirm;
+                return;
             case CityPanel.Outcome.EditScenario when _editing is { IsTesting: false }:
                 // The city stays paused from the city panel to the details and back.
                 _scenarioWindow.Open(_editing.Scenario, _editing.CanMoveStart(_simulation));
@@ -1055,10 +1099,17 @@ public sealed class GameLoop : IDisposable
             // A press on the bar works its buttons, and neither it nor the ticker under it reaches the map.
             if (Hud.IsOnBottom(mouse))
             {
-                // A blue line on the ticker opens the city's ordinances.
-                if (_ticker.OrdinanceAt(mouse, Raylib.GetScreenHeight() - NewsTicker.Height) is not null && _modal == Modal.None)
+                // A blue line on the ticker opens what it is about: the ordinances, or a neighbour's
+                // offer while it stands, or else the city's neighbours.
+                if (_ticker.LinkAt(mouse, Raylib.GetScreenHeight() - NewsTicker.Height) is { } link && _modal == Modal.None)
                 {
-                    _cityPanel.Reset(_simulation, _editing is { IsTesting: false } ? _draft : null, ordinances: true);
+                    if (link.Kind == NewsKind.Neighbour && _simulation.Neighbours.Offer is not null)
+                    {
+                        OpenDeal(fromPanel: false);
+                        return;
+                    }
+
+                    _cityPanel.Reset(_simulation, _editing is { IsTesting: false } ? _draft : null, ordinances: link.Kind == NewsKind.Ordinance, neighbours: link.Kind == NewsKind.Neighbour);
                     OpenModal(Modal.City);
                     return;
                 }
@@ -1210,6 +1261,75 @@ public sealed class GameLoop : IDisposable
         };
         _ticker.Post(new NewsItem(text, NewsKind.Ordinance, news.Ordinance.Id));
         Logger.Info(text);
+    }
+
+    // A neighbour's news goes on the ticker in blue, as an ordinance's does, and to the log.
+    private void ShowNeighbourNews(NeighbourNews news)
+    {
+        var (name, city) = (news.Neighbour.Name, _simulation.Name);
+        var text = news.Kind switch
+        {
+            NeighbourNewsKind.Offer when news.Deal == DealKind.CityBuys => $"{name} offers to sell {city} {Hud.Count(news.Power)} power for {Hud.Money(news.Money)} a year",
+            NeighbourNewsKind.Offer => $"{name} offers to buy {Hud.Count(news.Power)} of {city}'s spare power for {Hud.Money(news.Money)} a year",
+            NeighbourNewsKind.Accepted => $"{city} signs a power deal with {name}",
+            NeighbourNewsKind.Declined => $"{city} turns down {name}'s offer",
+            NeighbourNewsKind.Lapsed => $"{name}'s offer lapses unanswered",
+            NeighbourNewsKind.Ended => $"{city}'s power deal with {name} comes to its end",
+            _ => $"{city} breaks its power deal with {name}",
+        };
+        _ticker.Post(new NewsItem(text, NewsKind.Neighbour, CityNeighbours.SideName(news.Neighbour.Side)));
+        Logger.Info(text);
+    }
+
+    // The offer standing, in its window; from the city panel, the window goes back to it.
+    private void OpenDeal(bool fromPanel)
+    {
+        if (_simulation.Neighbours.Offer is not { } offer)
+        {
+            return;
+        }
+
+        _dealWindow.Show(offer, _simulation.Neighbours.Of(offer.Side), _simulation);
+        _dealFromPanel = fromPanel;
+        if (fromPanel)
+        {
+            _modal = Modal.Deal;
+        }
+        else
+        {
+            OpenModal(Modal.Deal);
+        }
+    }
+
+    private void HandleDealInput(Vector2 mouse)
+    {
+        var outcome = _dealWindow.Update();
+        switch (outcome)
+        {
+            case DealWindow.Outcome.Open:
+                if (Raylib.IsMouseButtonPressed(MouseButton.Left))
+                {
+                    TryBeginDrag(_dealWindow, mouse);
+                }
+
+                return;
+            case DealWindow.Outcome.Accept:
+                _simulation.AcceptOffer();
+                break;
+            case DealWindow.Outcome.Decline:
+                _simulation.DeclineOffer();
+                break;
+        }
+
+        if (_dealFromPanel)
+        {
+            _cityPanel.RefreshNeighbours(_simulation);
+            _modal = Modal.City;
+        }
+        else
+        {
+            CloseModal();
+        }
     }
 
     private static string Count(int count, string thing) => count == 1 ? $"1 {thing}" : $"{count} {thing}s";

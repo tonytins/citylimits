@@ -11,8 +11,10 @@ namespace CityLimits.UI;
 /// Edit under its goals that opens the scenario's details. At the
 /// bottom, the seed its map grew from, which a click copies. Its toolbar's second page, Ordinances,
 /// lists the city's ordinances, after SimCity 3000's, each a button that enacts or repeals it, with
-/// what it earns or costs a year for every 1,000 people and, under the pointer, what it does. The game
-/// is paused while it is open, and the player moves it by its title bar.
+/// what it earns or costs a year for every 1,000 people and, under the pointer, what it does. Its
+/// third, Neighbours, has the cities beyond the map's edges, what connects to each, and the deal
+/// made with each, which can be broken there; and the offer standing, which a click opens. The
+/// game is paused while it is open, and the player moves it by its title bar.
 /// </summary>
 public sealed class CityPanel : IMovableWindow
 {
@@ -21,7 +23,7 @@ public sealed class CityPanel : IMovableWindow
     private const int Padding = 14;
 
     // A free city's panel holds the city's column; a challenge's is wide enough for a second.
-    private const int NarrowWidth = 360;
+    private const int NarrowWidth = 420;
     private const int WideWidth = 580;
     private const int BaseHeight = 290;
 
@@ -40,8 +42,14 @@ public sealed class CityPanel : IMovableWindow
     private const int OrdinanceRow = 21;
     private const int CityPage = 0;
     private const int OrdinancesPage = 1;
+    private const int NeighboursPage = 2;
 
-    private static readonly string[] Pages = ["City", "Ordinances"];
+    // The neighbours' page: two lines for each, and a button to break a deal.
+    private const int NeighbourRow = 50;
+    private const int BreakWidth = 60;
+
+    private static readonly string[] Pages = ["City", "Ordinances", "Neighbours"];
+    private static readonly CityNeighbours.Side[] Sides = Enum.GetValues<CityNeighbours.Side>();
 
     private readonly WindowFrame _frame = new(CitySimulation.DefaultName, CitySimulation.MaxNameLength)
     {
@@ -74,6 +82,13 @@ public sealed class CityPanel : IMovableWindow
     private bool[] _enacted = [];
     private string _ordinanceTotal = string.Empty;
 
+    // The neighbours as the page shows them, laid out when the panel opens or a deal changes.
+    private readonly string[] _neighbourNames = new string[4];
+    private readonly string[] _neighbourLinks = new string[4];
+    private readonly bool[] _hasDeal = new bool[4];
+    private string _offerLine = string.Empty;
+    private bool _hasOffer;
+
     private int Width => _isChallenge ? WideWidth : NarrowWidth;
 
     // The Edit button's row, under a draft's goals.
@@ -99,7 +114,16 @@ public sealed class CityPanel : IMovableWindow
 
         /// <summary>The player clicked an ordinance, in <see cref="Ordinance"/>, to enact or repeal it.</summary>
         ToggleOrdinance,
+
+        /// <summary>The player asked to see the offer a neighbour has made.</summary>
+        ShowOffer,
+
+        /// <summary>The player asked to break the deal with the neighbour in <see cref="DealSide"/>.</summary>
+        BreakDeal,
     }
+
+    /// <summary>The neighbour whose deal the player asked to break, once the outcome is <see cref="Outcome.BreakDeal"/>.</summary>
+    public CityNeighbours.Side DealSide { get; private set; }
 
     /// <summary>The ordinance the player clicked, once the outcome is <see cref="Outcome.ToggleOrdinance"/>.</summary>
     public string? Ordinance { get; private set; }
@@ -126,13 +150,14 @@ public sealed class CityPanel : IMovableWindow
     /// the scenario being edited, if any, which nothing acts on yet; on its Ordinances page when
     /// <paramref name="ordinances"/> asks, as the ticker's ordinance news does.
     /// </summary>
-    public void Reset(CitySimulation city, Challenge? draft = null, bool ordinances = false)
+    public void Reset(CitySimulation city, Challenge? draft = null, bool ordinances = false, bool neighbours = false)
     {
         ArgumentNullException.ThrowIfNull(city);
         _frame.CancelEdit();
         _frame.Title = city.Name;
-        _frame.SelectedTool = ordinances ? OrdinancesPage : CityPage;
+        _frame.SelectedTool = neighbours ? NeighboursPage : ordinances ? OrdinancesPage : CityPage;
         RefreshOrdinances(city);
+        RefreshNeighbours(city);
         _challenge = city.Challenge ?? draft;
         _isDraft = city.Challenge is null && draft is not null;
         _isChallenge = _challenge is not null;
@@ -153,6 +178,36 @@ public sealed class CityPanel : IMovableWindow
 
         _renamedAt = double.NegativeInfinity;
         _copiedAt = double.NegativeInfinity;
+    }
+
+    /// <summary>Lays the neighbours' page out again, as the city stands with them now; call it when a deal changes.</summary>
+    public void RefreshNeighbours(CitySimulation city)
+    {
+        ArgumentNullException.ThrowIfNull(city);
+        var neighbours = city.Neighbours;
+        var population = city.Census.CityPopulation;
+        foreach (var side in Sides)
+        {
+            var i = (int)side;
+            var neighbour = neighbours.Of(side);
+            _neighbourNames[i] = $"{neighbour.Name}, to the {CityNeighbours.SideName(side)}: {Hud.Count(neighbour.PopulationBeside(population))} people";
+            var connections = neighbours.ConnectionsTo(side);
+            var links = connections == Connections.None
+                ? "Not connected"
+                : string.Join(", ", new[] { (Connections.Road, "road"), (Connections.Rail, "rail"), (Connections.Power, "power") }
+                    .Where(link => connections.HasFlag(link.Item1)).Select(link => link.Item2));
+            links = char.ToUpperInvariant(links[0]) + links[1..];
+            var deal = neighbours.DealWith(side);
+            _hasDeal[i] = deal is not null;
+            _neighbourLinks[i] = deal is null
+                ? links
+                : $"{links}. {(deal.Kind == DealKind.CityBuys ? "Sells you" : "Buys")} {Hud.Count(deal.Power)} power for {Hud.Money(deal.Money)} a year to {CityCalendar.DateAt(deal.EndStep / CityCalendar.StepsPerCount)}";
+        }
+
+        _hasOffer = neighbours.Offer is not null;
+        _offerLine = neighbours.Offer is { } offer
+            ? $"{neighbours.Of(offer.Side).Name} offers a deal until {CityCalendar.DateAt(offer.ExpiresStep / CityCalendar.StepsPerCount)}: click here to answer"
+            : "Build a road, rail, or power line off an edge to connect";
     }
 
     /// <summary>Lays the ordinances' page out again, as the city has them now; call it when one changes.</summary>
@@ -206,6 +261,30 @@ public sealed class CityPanel : IMovableWindow
             return Outcome.Closed;
         }
 
+        if (_frame.SelectedTool == NeighboursPage)
+        {
+            if (!pressed)
+            {
+                return Outcome.Open;
+            }
+
+            if (_hasOffer && Raylib.CheckCollisionPointRec(mouse, OfferBounds()))
+            {
+                return Outcome.ShowOffer;
+            }
+
+            foreach (var side in Sides)
+            {
+                if (_hasDeal[(int)side] && Raylib.CheckCollisionPointRec(mouse, BreakBounds((int)side)))
+                {
+                    DealSide = side;
+                    return Outcome.BreakDeal;
+                }
+            }
+
+            return Outcome.Open;
+        }
+
         if (_frame.SelectedTool == OrdinancesPage)
         {
             var row = pressed ? OrdinanceAt(mouse) : -1;
@@ -243,6 +322,12 @@ public sealed class CityPanel : IMovableWindow
         if (_frame.SelectedTool == OrdinancesPage)
         {
             DrawOrdinances(bounds);
+            return;
+        }
+
+        if (_frame.SelectedTool == NeighboursPage)
+        {
+            DrawNeighbours(bounds);
             return;
         }
 
@@ -307,6 +392,50 @@ public sealed class CityPanel : IMovableWindow
 
         var note = hovered >= 0 ? _ordinanceEffects[hovered] : _ordinanceTotal;
         Raylib.DrawText(note, (int)bounds.X + Padding, (int)(bounds.Y + bounds.Height - Padding - SmallSize), SmallSize, hovered >= 0 ? Theme.Text : Theme.TextDim);
+    }
+
+    // Each neighbour two lines, its deal with a button to break it; under them, the offer standing.
+    private void DrawNeighbours(Rectangle bounds)
+    {
+        var mouse = Raylib.GetMousePosition();
+        var x = (int)bounds.X + Padding;
+        foreach (var side in Sides)
+        {
+            var i = (int)side;
+            var top = NeighbourTop(i);
+            Raylib.DrawText(_neighbourNames[i], x, top, FontSize, Theme.Text);
+            Raylib.DrawText(_neighbourLinks[i], x, top + FontSize + 6, SmallSize + 2, _hasDeal[i] ? Theme.Accent : Theme.TextDim);
+            if (_hasDeal[i])
+            {
+                var button = BreakBounds(i);
+                Raylib.DrawRectangleRec(button, Theme.PanelBorder);
+                const string Label = "Break";
+                var color = Raylib.CheckCollisionPointRec(mouse, button) ? Theme.Error : Theme.Text;
+                Raylib.DrawText(Label, (int)(button.X + ((button.Width - Raylib.MeasureText(Label, FontSize)) / 2)), (int)button.Y + 3, FontSize, color);
+            }
+
+            Raylib.DrawLine(x, top + NeighbourRow - 8, (int)(bounds.X + bounds.Width) - Padding, top + NeighbourRow - 8, Theme.PanelBorder);
+        }
+
+        var offer = OfferBounds();
+        var offerColor = !_hasOffer ? Theme.TextDim : Raylib.CheckCollisionPointRec(mouse, offer) ? Theme.Accent : Theme.NewsOrdinance;
+        Raylib.DrawText(_offerLine, (int)offer.X, (int)offer.Y + 2, SmallSize + 2, offerColor);
+    }
+
+    private int NeighbourTop(int row) => (int)Bounds.Y + WindowFrame.TitleHeight + 10 + (row * NeighbourRow);
+
+    private Rectangle BreakBounds(int row) => new()
+    {
+        X = Bounds.X + Width - Padding - BreakWidth,
+        Y = NeighbourTop(row) - 2,
+        Width = BreakWidth,
+        Height = 20,
+    };
+
+    private Rectangle OfferBounds()
+    {
+        var bounds = Bounds;
+        return new Rectangle { X = bounds.X + Padding, Y = bounds.Y + bounds.Height - Padding - SmallSize - 6, Width = Width - (Padding * 2), Height = SmallSize + 6 };
     }
 
     private int OrdinanceAt(Vector2 point)

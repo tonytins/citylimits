@@ -4,8 +4,8 @@ namespace CityLimits.UI;
 /// The news ticker, after Tony Bark's mock-up in <c>docs/design/</c>: a strip of news that scrolls
 /// from right to left and never stops. Lines posted to it wait their turn in a
 /// <see cref="NewsQueue"/>, disasters and advisories ahead of headlines, and when nothing is
-/// waiting a filler line keeps it running. Each line is drawn in its kind's colour; an
-/// ordinance's news, in blue, can be clicked (<see cref="OrdinanceAt"/>). The loading screen uses
+/// waiting a filler line keeps it running. Each line is drawn in its kind's colour; the news of an
+/// ordinance or a neighbour, in blue, can be clicked (<see cref="LinkAt"/>). The loading screen uses
 /// one too, for its phrases.
 /// </summary>
 public sealed class NewsTicker
@@ -111,10 +111,10 @@ public sealed class NewsTicker
     }
 
     /// <summary>
-    /// The ordinance whose news is under a point, on a strip with its top edge at the given height,
-    /// or null when the point isn't on one.
+    /// The line under a point that opens something when clicked, on a strip with its top edge at
+    /// the given height, or null when the point isn't on one.
     /// </summary>
-    public string? OrdinanceAt(Vector2 point, int top)
+    public NewsItem? LinkAt(Vector2 point, int top)
     {
         if (point.Y < top || point.Y >= top + Height)
         {
@@ -123,9 +123,9 @@ public sealed class NewsTicker
 
         foreach (var line in _showing)
         {
-            if (line.Item.Ordinance is { } id && point.X >= line.X && point.X < line.X + line.Width)
+            if (line.Item.Link is not null && point.X >= line.X && point.X < line.X + line.Width)
             {
-                return id;
+                return line.Item;
             }
         }
 
@@ -135,7 +135,7 @@ public sealed class NewsTicker
     private static Color ColorOf(NewsKind kind) => kind switch
     {
         NewsKind.Disaster => Theme.NewsDisaster,
-        NewsKind.Ordinance => Theme.NewsOrdinance,
+        NewsKind.Ordinance or NewsKind.Neighbour => Theme.NewsOrdinance,
         NewsKind.Advisory => Theme.NewsAdvisory,
         _ => Theme.NewsHeadline,
     };

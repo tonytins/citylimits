@@ -1,8 +1,8 @@
 namespace CityLimits.Core.News;
 
 /// <summary>
-/// The lines waiting for the news ticker. A disaster goes before everything, an advisory or an
-/// ordinance's news before any headline, and lines of the same rank keep their order. A line already waiting isn't queued
+/// The lines waiting for the news ticker. A disaster goes before everything, an advisory or the
+/// news of an ordinance or a neighbour before any headline, and lines of the same rank keep their order. A line already waiting isn't queued
 /// twice, so a warning the game keeps raising doesn't fill the ticker, and the queue holds at most
 /// <see cref="Capacity"/> lines, dropping the oldest headline, or else the oldest line, to make room.
 /// </summary>
@@ -54,7 +54,7 @@ public sealed class NewsQueue
     private static int Rank(NewsKind kind) => kind switch
     {
         NewsKind.Disaster => 2,
-        NewsKind.Advisory or NewsKind.Ordinance => 1,
+        NewsKind.Advisory or NewsKind.Ordinance or NewsKind.Neighbour => 1,
         _ => 0,
     };
 }

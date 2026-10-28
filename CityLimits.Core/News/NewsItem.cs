@@ -17,10 +17,16 @@ public enum NewsKind
     /// enacted or repealed. A click on it opens the city's ordinances.
     /// </summary>
     Ordinance,
+
+    /// <summary>
+    /// News of a neighbour, shown in blue as an ordinance's is: an offer, and what came of a deal. A
+    /// click on it opens the offer standing, or the city's neighbours.
+    /// </summary>
+    Neighbour,
 }
 
 /// <summary>A line on the news ticker, and what kind of news it is.</summary>
 /// <param name="Text">What the line says, with the city's name already filled in.</param>
 /// <param name="Kind">What kind of news it is.</param>
-/// <param name="Ordinance">The id of the ordinance an ordinance line is about, which a click opens; null for any other line.</param>
-public readonly record struct NewsItem(string Text, NewsKind Kind, string? Ordinance = null);
+/// <param name="Link">What a click on the line opens: an ordinance's id, or a neighbour's side; null for a line that opens nothing.</param>
+public readonly record struct NewsItem(string Text, NewsKind Kind, string? Link = null);

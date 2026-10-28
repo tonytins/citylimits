@@ -47,7 +47,7 @@ public class NewsQueueTests
         var items = Drain(queue);
 
         Assert.Equal(["o1", "a1", "h1"], items.Select(item => item.Text));
-        Assert.Equal("salesTax", items[0].Ordinance);
+        Assert.Equal("salesTax", items[0].Link);
     }
 
     [Fact]
