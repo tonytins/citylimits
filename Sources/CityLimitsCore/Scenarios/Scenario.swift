@@ -168,7 +168,7 @@ public struct ScenarioCheck: Hashable, Sendable {
 
 /// A city set up from a file: a seed and a script of strokes, or a saved city, disasters on set
 /// dates, checks along the way, and goals to meet by an end date.
-public struct Scenario: Sendable {
+public struct Scenario: Hashable, Sendable {
     public static let maxTicks = 100_000
 
     public var name: String
@@ -233,8 +233,10 @@ public enum ScenarioLoader {
         return try parse(text, folder: file.deletingLastPathComponent())
     }
 
-    /// Reads a scenario from its text. Only one read from a file can start from a saved city.
-    public static func parse(_ text: String, folder: URL? = nil) throws(FormatError) -> Scenario {
+    /// Reads a scenario from its text. Only one read from a file can start from a saved city. The
+    /// editor passes `cityAsSaved` for a city it has changed but not yet saved, which is read in
+    /// place of the file the scenario names.
+    public static func parse(_ text: String, folder: URL? = nil, cityAsSaved: CitySimulation? = nil) throws(FormatError) -> Scenario {
         guard text.utf8.count <= maxFileBytes else {
             throw FormatError("The scenario is \(text.utf8.count) bytes long; the most is \(maxFileBytes).")
         }
@@ -244,12 +246,12 @@ public enum ScenarioLoader {
             let reads = version > Self.version ? "up to \(Self.version)" : "\(Self.version.major).x"
             throw FormatError("format: this is format \(version); this version of CityLimits reads \(reads). A scenario from 0.4 can be opened in 0.5's editor and saved again there.")
         }
-        let scenario = try read(&fields, folder: folder)
+        let scenario = try read(&fields, folder: folder, cityAsSaved: cityAsSaved)
         try fields.finish(noun: "a scenario has")
         return scenario
     }
 
-    private static func read(_ fields: inout JSONFields, folder: URL?) throws(FormatError) -> Scenario {
+    private static func read(_ fields: inout JSONFields, folder: URL?, cityAsSaved: CitySimulation?) throws(FormatError) -> Scenario {
         let name = try fields.requiredString("name").trimmingWhitespace
         guard (1...maxNameLength).contains(name.count) else { throw FormatError("name: needs 1 to \(maxNameLength) characters, not \(name.count).") }
         let description = try fields.string("description")?.trimmingWhitespace
@@ -266,7 +268,11 @@ public enum ScenarioLoader {
             let file = try cityPath(city, folder)
             let saved: CitySimulation
             do throws(FormatError) {
-                saved = try CityFiles.read(file).city
+                if let cityAsSaved {
+                    saved = cityAsSaved
+                } else {
+                    saved = try CityFiles.read(file).city
+                }
             } catch {
                 throw FormatError("city: '\(city)' couldn't be opened: \(error.message)")
             }
