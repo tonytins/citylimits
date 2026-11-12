@@ -138,3 +138,8 @@ AppDir
 
 # Packages built by packaging/
 /dist/
+
+### SwiftPackageManager ###
+.build/
+.swiftpm/
+Packages

@@ -1,0 +1,42 @@
+{
+  "originHash" : "99a61c8810b4487aabaecde6ec1a9b28dd87bcaf4e3d01313a1d31b037666f23",
+  "pins" : [
+    {
+      "identity" : "gitversion",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/tonytins/GitVersion.git",
+      "state" : {
+        "revision" : "485901ed762689af3abee8b65dd1c2f2a8d00750",
+        "version" : "0.2.0"
+      }
+    },
+    {
+      "identity" : "hudini",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/tonytins/Hudini.git",
+      "state" : {
+        "branch" : "main",
+        "revision" : "a8335802ba33909b87799370d7285e5c50d4b8cc"
+      }
+    },
+    {
+      "identity" : "raylib-swift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/tonytins/raylib-swift",
+      "state" : {
+        "branch" : "main",
+        "revision" : "3fe725b204bf30913366a82203566ab316941f2e"
+      }
+    },
+    {
+      "identity" : "swift-cst",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/tonytins/swift-cst.git",
+      "state" : {
+        "revision" : "8b3a06b2a31fd5b6d605cae496548f2393f6dfd4",
+        "version" : "0.4.0"
+      }
+    }
+  ],
+  "version" : 3
+}
