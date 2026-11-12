@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Demand, a window that stays open beside the map and can be minimized: a chart of each zone's
+     demand over time, which the game draws into its region, and what moves it. -->
+<UIScript version="1">
+  <Window width="420" height="300"/>
+
+  <Style name="dim" textColor="#969EAA" fontSize="10"/>
+  <Style name="figure" textColor="#E4E8EE" fontSize="14"/>
+  <Style name="warning" textColor="#E86A60" fontSize="10"/>
+  <Style name="residential" textColor="#4A8A42" fontSize="14"/>
+  <Style name="commercial" textColor="#3E6EBE" fontSize="14"/>
+  <Style name="industrial" textColor="#C69C3A" fontSize="14"/>
+
+  <Region name="chart" x="12" y="12" width="396" height="110"/>
+  <Text name="span" x="12" y="128" width="396" height="10" style="dim"/>
+  <Text name="residential" x="12" y="148" width="120" height="14" style="residential"/>
+  <Text name="commercial" x="140" y="148" width="120" height="14" style="commercial"/>
+  <Text name="industrial" x="268" y="148" width="120" height="14" style="industrial"/>
+  <Text name="pulls" x="12" y="172" width="396" height="10" style="dim"/>
+  <Text name="taxes" x="12" y="188" width="396" height="10" style="dim"/>
+  <Text name="ratios" x="12" y="204" width="396" height="10" style="dim"/>
+  <Text name="heldBack" x="12" y="220" width="396" height="10" style="dim"/>
+  <Text name="heldBackWarning" x="12" y="220" width="396" height="10" style="warning"/>
+  <Text name="population" x="12" y="244" width="396" height="14" style="figure"/>
+  <Text name="breakdown" x="12" y="266" width="396" height="10" style="dim"/>
+</UIScript>

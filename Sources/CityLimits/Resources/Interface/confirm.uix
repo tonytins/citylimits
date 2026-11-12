@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- A yes-or-no question, in a modal window that dims what's behind it. One window serves every
+     question: whoever asks gives it the question, its two answers, and what to do with the answer. -->
+<UIScript version="1">
+  <Window width="380" height="132"/>
+
+  <Text name="message" x="14" y="14" width="352" height="72"/>
+  <Button name="no" x="166" y="94" width="96" height="26"/>
+  <Button name="yes" x="270" y="94" width="96" height="26"/>
+</UIScript>

@@ -1,5 +1,6 @@
 import CityLimitsCore
 import Foundation
+import Hudini
 import Raylib
 
 /// Playing a city: its map and tools, the clock that runs it at the speed the player picks, and
@@ -9,12 +10,19 @@ import Raylib
 final class PlaySession {
     // How long what a stroke came to stays beside the pointer once it's let go.
     private static let hintSeconds: Float = 3
+    private static let iconSize = Vector2(x: 110, y: 22)
 
     let city: CitySimulation
     let view: CityView
     private let palette: ToolPaletteView
     private let status = StatusBar()
     private let overview: OverviewMap
+    private let windows = WindowManager()
+    private let confirm = ConfirmWindow()
+    private let notice = NoticeWindow()
+    private let budget: BudgetWindow
+    private let demand: DemandWindow
+    private let help = HelpWindow()
     private var clock = GameClock()
     private(set) var speed = GameSpeed.normal
     // The speed play brings back after a pause.
@@ -31,6 +39,8 @@ final class PlaySession {
         view = CityView(city: city, assets: assets)
         palette = ToolPaletteView(assets: assets, definitions: city.definitions)
         overview = OverviewMap(city: city)
+        budget = BudgetWindow(city: city)
+        demand = DemandWindow(city: city)
         newsDesk = NewsDesk(city: city)
         status.ticker.filler = { [unowned self] in newsDesk.next(for: city, random: &newsRandom) }
         city.onEvent = { [unowned self] event in hear(event) }
@@ -59,6 +69,12 @@ final class PlaySession {
             ticker.post(NewsText.ordinance(news, city: city.name))
         case .neighbour(let news):
             ticker.post(NewsText.neighbour(news, city: city.name))
+        case .yearSettled(let year):
+            // A year that needs attention opens the budget by itself, unless a question is open.
+            if let reason = BudgetWindow.reason(for: year), !windows.hasModal {
+                view.cancelStroke()
+                budget.open(reason: reason, in: windows)
+            }
         case .challengeFinished(let won, _):
             ticker.advise(won ? "The challenge was won" : "The challenge was lost")
         default:
@@ -70,7 +86,19 @@ final class PlaySession {
     private var mapBottom: Int32 { Int32(status.origin.y) }
 
     private func isOverInterface(_ point: Vector2) -> Bool {
-        palette.contains(point) || overview.contains(point) || status.contains(point)
+        windows.contains(point) || minimizedIcon(at: point) != nil
+            || palette.contains(point) || overview.contains(point) || status.contains(point)
+    }
+
+    // Minimized windows wait as icons above the bar; a click restores one.
+    private func iconBounds(_ index: Int) -> Rectangle {
+        Rectangle(
+            x: 8 + Float(index) * (Self.iconSize.x + 6), y: status.origin.y - Self.iconSize.y - 6,
+            width: Self.iconSize.x, height: Self.iconSize.y)
+    }
+
+    private func minimizedIcon(at point: Vector2) -> WindowFrame? {
+        windows.minimizedWindows.enumerated().first { CheckCollisionPointRec(point, iconBounds($0.offset)) }?.element
     }
 
     // MARK: Each frame
@@ -78,11 +106,14 @@ final class PlaySession {
     func update() {
         let elapsed = GetFrameTime()
         handleInput(elapsed)
-        if speed != .paused {
+        // Every modal window pauses the city.
+        if speed != .paused, !windows.hasModal {
             let due = clock.advance(Double(elapsed) * speed.multiplier)
             for _ in 0..<due { city.tick() }
         }
-        view.animate(elapsed, speed: speed)
+        view.animate(elapsed, speed: windows.hasModal ? .paused : speed)
+        if windows.isOpen(budget.frame) { budget.show() }
+        if windows.isOpen(demand.frame) { demand.show() }
         hintLeft = max(0, hintLeft - elapsed)
         view.update()
     }
@@ -94,6 +125,19 @@ final class PlaySession {
 
     private func handleInput(_ elapsed: Float) {
         let pointer = GetMousePosition()
+        let isOverWindow = windows.contains(pointer)
+        // Windows sit above everything else, so they take the pointer first; their handlers act.
+        windows.update()
+        if windows.hasModal {
+            view.cancelStroke()
+            // The budget closes from the keyboard too; a question waits for its answer.
+            if windows.frontWindow === budget.frame, IsKeyPressed(.escape) || IsKeyPressed(.enter) || IsKeyPressed(.b) {
+                windows.close(budget.frame)
+            }
+            _ = status.update(city: city, speed: speed, elapsed: 0, takesInput: false)
+            return
+        }
+
         let wheel = GetMouseWheelMove()
         if wheel != 0, !isOverInterface(pointer) { view.camera.zoom(at: pointer, by: wheel) }
 
@@ -107,20 +151,40 @@ final class PlaySession {
         if IsKeyPressed(.space) { setSpeed(speed == .paused ? lastSpeed : .paused) }
         if IsKeyPressed(.comma) { setSpeed(GameSpeed(rawValue: max(speed.rawValue - 1, 0)) ?? .paused) }
         if IsKeyPressed(.period) { setSpeed(GameSpeed(rawValue: min(speed.rawValue + 1, GameSpeed.superFast.rawValue)) ?? .superFast) }
-        if IsKeyPressed(.escape) { view.cancelStroke() }
+        if IsKeyPressed(.escape) {
+            if view.stroke != nil {
+                view.cancelStroke()
+            } else if let front = windows.frontWindow {
+                windows.close(front)
+            }
+        }
+        if IsKeyPressed(.b) { openBudget() }
+        if IsKeyPressed(.f1) { help.toggle(in: windows) }
 
-        // The HUD takes the pointer only between strokes, so a drag across it doesn't click it.
-        let takesPointer = view.stroke == nil
-        if takesPointer { overview.update(camera: view.camera, tileSize: Float(MapRenderer.tileSize)) }
+        // The HUD takes the pointer only between strokes and off the windows, so a drag across it
+        // doesn't click it.
+        let takesPointer = view.stroke == nil && !isOverWindow
+        if takesPointer {
+            overview.update(camera: view.camera, tileSize: Float(MapRenderer.tileSize))
+            if IsMouseButtonPressed(.left), let icon = minimizedIcon(at: pointer) { windows.restore(icon) }
+        }
         let action = status.update(city: city, speed: speed, elapsed: elapsed, takesInput: takesPointer)
         switch action {
         case .pausePlay: setSpeed(speed == .paused ? lastSpeed : .paused)
         case .speed(let chosen): setSpeed(chosen)
-        // The windows these open come in phase 4c.
-        case .cityName, .demand, .funds, .help, .link, nil: break
+        case .funds: openBudget()
+        case .demand: demand.open(in: windows)
+        case .help: help.toggle(in: windows)
+        // The city panel these open comes in phase 4c's second half.
+        case .cityName, .link, nil: break
         }
 
-        handleStroke(pointer)
+        if view.stroke != nil || !isOverWindow { handleStroke(pointer) }
+    }
+
+    private func openBudget() {
+        view.cancelStroke()
+        budget.open(in: windows)
     }
 
     private func handleStroke(_ pointer: Vector2) {
@@ -156,11 +220,13 @@ final class PlaySession {
         BeginDrawing()
         ClearBackground(Palette.background)
         let pointer = GetMousePosition()
-        let hover = isOverInterface(pointer) ? nil : view.tile(at: pointer)
+        let hover = isOverInterface(pointer) || windows.hasModal ? nil : view.tile(at: pointer)
         view.drawMap(hover: hover)
         palette.draw(pointer: pointer)
         overview.draw(camera: view.camera, tileSize: Float(MapRenderer.tileSize))
-        status.draw(city: city, speed: speed, resumeSpeed: lastSpeed)
+        status.draw(city: city, speed: windows.hasModal ? .paused : speed, resumeSpeed: lastSpeed)
+        drawMinimizedIcons(pointer)
+        drawWindows()
 
         // Beside the pointer: what the stroke being dragged would cost, what the last one came
         // to, or, with Inspect, what the tile under the pointer is.
@@ -173,6 +239,36 @@ final class PlaySession {
                 at: pointer, "Tile \(hover.x), \(hover.y)",
                 city.map.describe(hover.x, hover.y, definitions: city.definitions, hazards: city.hazards), bottom: mapBottom)
         }
+        windows.drawTooltip()
         EndDrawing()
+    }
+
+    // The windows, back to front. Hudini's manager would draw them itself, but its frames give no
+    // way to draw into a view's region, and the demand chart is one; so the session draws each
+    // frame and fills the chart after it. A modal window dims what's behind it.
+    private func drawWindows() {
+        let modal = [confirm.frame, notice.frame, budget.frame]
+        for frame in windows.windows where !windows.isMinimized(frame) {
+            guard let bounds = windows.bounds(of: frame) else { continue }
+            if modal.contains(where: { $0 === frame }) {
+                DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Interface.theme.overlay)
+            }
+            frame.draw(in: bounds)
+            if frame === demand.frame { demand.drawChart(window: bounds) }
+        }
+    }
+
+    private func drawMinimizedIcons(_ pointer: Vector2) {
+        let theme = Interface.theme
+        for (index, frame) in windows.minimizedWindows.enumerated() {
+            let bounds = iconBounds(index)
+            let isHovered = CheckCollisionPointRec(pointer, bounds)
+            theme.fillRectangle(bounds, isHovered ? theme.selectedItem : theme.titleBar)
+            theme.outlineRectangle(bounds, theme.border)
+            let size = theme.textSizes.body
+            theme.drawText(
+                frame.title, x: Int(bounds.x) + 8, y: Int(bounds.y + (bounds.height - Float(size)) / 2), size: size,
+                color: isHovered ? theme.accent : theme.text)
+        }
     }
 }

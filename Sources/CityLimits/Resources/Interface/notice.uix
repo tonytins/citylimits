@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Something the player should read before going on, such as a challenge's result, in a modal
+     window that dims what's behind it. -->
+<UIScript version="1">
+  <Window width="380" height="200"/>
+
+  <Text name="message" x="14" y="14" width="352" height="140"/>
+  <Button name="ok" x="270" y="162" width="96" height="26" text="OK"/>
+</UIScript>

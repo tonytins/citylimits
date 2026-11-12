@@ -6,7 +6,9 @@ import Raylib
 /// The game's UIScript documents, in `Resources/Interface`.
 @MainActor
 enum Interface {
-    static let theme = InterfaceTheme.standard
+    /// Hudini's standard colours, which the game's own match, with opaque panels so windows that
+    /// overlap don't show through each other or the map.
+    static let theme = InterfaceTheme(panel: Palette.rgb(26, 30, 38))
 
     /// The view of a document. A document that's missing or can't be read is reported, and an
     /// empty one of the given size stands in, so the game goes on without that part of the screen.
