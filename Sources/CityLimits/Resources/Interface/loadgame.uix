@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- The saved cities, newest first. Picking one shows its map, which the game draws into its
+     region, and what it holds; Open, or a double-click, opens it. -->
+<UIScript version="1">
+  <Window width="660" height="400"/>
+
+  <Style name="dim" textColor="#969EAA" fontSize="12"/>
+  <Style name="figure" textColor="#E4E8EE" fontSize="12"/>
+  <Style name="warning" textColor="#E86A60" fontSize="12"/>
+
+  <List name="cities" x="12" y="12" width="364" height="330" selectable="true"/>
+  <Slider name="citiesScroll" x="378" y="12" width="12" height="330" scrolls="cities"/>
+  <Text name="empty" x="20" y="22" width="350" height="12" style="dim" text="No saved cities yet: press Ctrl+S in a city to save it."/>
+  <Region name="preview" x="402" y="12" width="246" height="205"/>
+  <Text name="stats" x="402" y="226" width="246" height="100" style="figure"/>
+  <Text name="problem" x="402" y="226" width="246" height="100" style="warning"/>
+  <Button name="back" x="448" y="356" width="96" height="30" text="Back"/>
+  <Button name="open" x="552" y="356" width="96" height="30" text="Open"/>
+</UIScript>

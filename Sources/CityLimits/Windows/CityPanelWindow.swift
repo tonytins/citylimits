@@ -184,7 +184,10 @@ final class CityPanelWindow {
         view.setHidden(state != true, named: "stateWon")
 
         let upcoming = challenge.upcomingEvents
-        var events = upcoming.prefix(Self.mostEvents).map { "\($0.disaster), \($0.date)" }
+        var events = upcoming.prefix(Self.mostEvents).map { event in
+            let name = "\(event.disaster)"
+            return "\(name.prefix(1).uppercased())\(name.dropFirst()), \(event.date)"
+        }
         if upcoming.count > Self.mostEvents { events.append("and \(upcoming.count - Self.mostEvents) more") }
         view.setText(events.isEmpty ? "None" : events.joined(separator: "\n"), named: "events")
 

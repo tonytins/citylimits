@@ -12,6 +12,8 @@ final class PlaySession {
     enum Leave {
         case toMenu
         case quit
+        /// Opens another city, read from its file.
+        case open(LoadedCity, file: URL)
     }
 
     // How long what a stroke came to stays beside the pointer once it's let go.
@@ -33,6 +35,7 @@ final class PlaySession {
     private let help = HelpWindow()
     private let gameMenu = GameMenuWindow()
     private let settingsWindow = SettingsWindow()
+    private let load: LoadWindow
     private let settings: SettingsKeeper
     private let citiesFolder: URL
     private(set) var leaving: Leave?
@@ -57,8 +60,12 @@ final class PlaySession {
     private var newsRandom = SystemRandomNumberGenerator()
 
     /// Plays a city: a new one, or one opened from `file`, which is then the file Ctrl+S saves to.
-    init(city: CitySimulation, file: URL? = nil, assets: GameAssets, settings: SettingsKeeper, citiesFolder: URL) {
+    init(
+        city: CitySimulation, file: URL? = nil, assets: GameAssets, settings: SettingsKeeper, citiesFolder: URL,
+        definitions: @escaping () -> CityDefinitions
+    ) {
         self.city = city
+        load = LoadWindow(folder: citiesFolder, definitions: definitions)
         self.settings = settings
         self.citiesFolder = citiesFolder
         view = CityView(city: city, assets: assets)
@@ -74,6 +81,7 @@ final class PlaySession {
         cityPanel.onShowOffer = { [unowned self] in deal.open(in: windows) }
         cityPanel.onBreakDeal = { [unowned self] side in askToBreakDeal(side) }
         gameMenu.onChoice = { [unowned self] choice in choose(choice) }
+        load.onOpen = { [unowned self] loaded, file in leaveOrAsk(.open(loaded, file: file)) }
         settingsWindow.onChange = { [unowned settings, unowned city] chosen in
             settings.settings = chosen
             chosen.apply(to: city)
@@ -128,6 +136,7 @@ final class PlaySession {
         city.onEvent = nil
         status.ticker.filler = nil
         overview.unload()
+        load.unload()
         view.unload()
     }
 
@@ -232,6 +241,7 @@ final class PlaySession {
         // Ctrl+S saves; held Control keeps the letters from panning the map.
         let control = IsKeyDown(.leftControl) || IsKeyDown(.rightControl)
         if control, IsKeyPressed(.s) { save(confirmed: false) }
+        if control, IsKeyPressed(.o) { load.open(in: windows) }
 
         var pan = Vector2.zero
         if !control {
@@ -300,6 +310,7 @@ final class PlaySession {
     private func choose(_ choice: GameMenuWindow.Choice) {
         switch choice {
         case .save: save(confirmed: false)
+        case .load: load.open(in: windows)
         case .settings: settingsWindow.open(settings.settings, in: windows)
         case .mainMenu: leaveOrAsk(.toMenu)
         case .quit: leaveOrAsk(.quit)
@@ -389,7 +400,11 @@ final class PlaySession {
             leaving = leave
             return
         }
-        let whereTo = leave == .toMenu ? "for the menu" : "and quit"
+        let whereTo = switch leave {
+        case .toMenu: "for the menu"
+        case .quit: "and quit"
+        case .open(let loaded, _): "for \(loaded.city.name)"
+        }
         confirm.ask(
             "Leave \(city.name) \(whereTo)?", "It has changes since it was last saved. Ctrl+S saves it first.", yes: "Leave", no: "Stay",
             in: windows
@@ -433,6 +448,7 @@ final class PlaySession {
         // The map's cache and the overview draw into textures, which can't happen inside the frame.
         view.refresh()
         overview.refresh()
+        load.refresh()
         BeginDrawing()
         ClearBackground(Palette.background)
         let pointer = GetMousePosition()
@@ -463,7 +479,7 @@ final class PlaySession {
     // way to draw into a view's region, and the demand chart is one; so the session draws each
     // frame and fills the chart after it. A modal window dims what's behind it.
     private func drawWindows() {
-        let modal = [confirm.frame, notice.frame, budget.frame, cityPanel.frame, deal.frame, gameMenu.frame, settingsWindow.frame]
+        let modal = [confirm.frame, notice.frame, budget.frame, cityPanel.frame, deal.frame, gameMenu.frame, settingsWindow.frame, load.frame]
         for frame in windows.windows where !windows.isMinimized(frame) {
             guard let bounds = windows.bounds(of: frame) else { continue }
             if modal.contains(where: { $0 === frame }) {
@@ -471,6 +487,8 @@ final class PlaySession {
             }
             if frame === cityPanel.frame {
                 cityPanel.draw(in: bounds)
+            } else if frame === load.frame {
+                load.draw(in: bounds)
             } else {
                 frame.draw(in: bounds)
             }

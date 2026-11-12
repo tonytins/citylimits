@@ -193,14 +193,14 @@ final class NewCityWindow {
 @MainActor
 final class GameMenuWindow {
     enum Choice: String {
-        case save, settings, mainMenu, quit
+        case save, load, settings, mainMenu, quit
     }
 
     let frame: WindowFrame
     var onChoice: ((Choice) -> Void)?
 
     init() {
-        frame = WindowFrame(view: Interface.view("gamemenu", fallbackSize: Vector2(x: 220, y: 214)), title: "Menu")
+        frame = WindowFrame(view: Interface.view("gamemenu", fallbackSize: Vector2(x: 220, y: 248)), title: "Menu")
     }
 
     func open(in windows: WindowManager) {

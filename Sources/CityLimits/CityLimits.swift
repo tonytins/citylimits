@@ -18,14 +18,16 @@ struct CityLimits {
         case .exit(let code):
             exit(code)
         case .window(let seed):
-            runWindow(seed: seed, folders: folders, assetsFolder: Bundle.module.url(forResource: "Assets", withExtension: nil))
+            runWindow(
+                seed: seed, folders: folders, builtInScenarios: scenarios,
+                assetsFolder: Bundle.module.url(forResource: "Assets", withExtension: nil))
         }
     }
 
     /// Opens the window: the loading screen, then the start menu, and the cities chosen from it,
     /// until the player quits or closes the window. A seed from the command line fills in New
     /// Game's seed.
-    static func runWindow(seed: Int32?, folders: GameFolders, assetsFolder: URL?) {
+    static func runWindow(seed: Int32?, folders: GameFolders, builtInScenarios: URL, assetsFolder: URL?) {
         if let problem = folders.problem { warn(problem) }
         for folder in [folders.modsFolder, folders.scenariosFolder] {
             do {
@@ -59,29 +61,60 @@ struct CityLimits {
             loading.draw()
         }
 
-        let menu = StartMenu(assets: assets, version: GitVersion.version, settings: settings)
+        // Saved cities are read with the definitions a new city would get, mods included.
+        let definitions = { folders.definitions(build: GitVersion.version).definitions }
+        let menu = StartMenu(
+            assets: assets, version: GitVersion.version, settings: settings,
+            load: LoadWindow(folder: folders.citiesFolder, definitions: definitions),
+            // The game's own challenges, then the player's.
+            scenarios: ScenarioWindow(folders: [builtInScenarios, folders.scenariosFolder]))
         menu.show(fromLoading: true, seed: seed)
-        while !WindowShouldClose() {
-            guard case .newCity(let name, let wanted) = menu.run() else { break }
-            // Picking a seed is outside the simulation, so the system's random numbers may choose
-            // it; the line printed keeps it, so the city can be grown again with --seed.
-            let chosen = wanted ?? Int32.random(in: 0...Int32.max)
-            print("A new city, \(name), from seed \(chosen)")
-            let (definitions, problems) = folders.definitions(build: GitVersion.version)
-            let city = CitySimulation(map: TerrainGenerator.generate(seed: chosen), seed: chosen, definitions: definitions)
-            city.rename(name)
-            let session = PlaySession(city: city, assets: assets, settings: settings, citiesFolder: folders.citiesFolder)
-            for problem in problems { warn(problem) }
-            if !problems.isEmpty {
-                session.advise(problems.count == 1 ? problems[0] : "\(problems.count) mods were skipped; the log says why")
+        menus: while !WindowShouldClose() {
+            var playing: (city: CitySimulation, file: URL?, notes: [String])
+            switch menu.run() {
+            case .quit:
+                break menus
+            case .newCity(let name, let wanted):
+                // Picking a seed is outside the simulation, so the system's random numbers may
+                // choose it; the line printed keeps it, so the city can be grown again with --seed.
+                let chosen = wanted ?? Int32.random(in: 0...Int32.max)
+                print("A new city, \(name), from seed \(chosen)")
+                let (definitions, problems) = folders.definitions(build: GitVersion.version)
+                let city = CitySimulation(map: TerrainGenerator.generate(seed: chosen), seed: chosen, definitions: definitions)
+                city.rename(name)
+                for problem in problems { warn(problem) }
+                let note = problems.count == 1 ? problems[0] : "\(problems.count) mods were skipped; the log says why"
+                playing = (city, nil, problems.isEmpty ? [] : [note])
+            case .loadCity(let loaded, let file):
+                print("Playing \(loaded.city.name) from \(file.path)")
+                playing = (loaded.city, file, loaded.notes)
+            case .playChallenge(let city):
+                print("Playing the challenge \(city.challenge?.name ?? city.name)")
+                playing = (city, nil, [])
             }
-            while !WindowShouldClose() && session.leaving == nil {
-                session.update()
-                session.draw()
+
+            // A city plays until the player leaves it, and then any city they open from it.
+            cities: while true {
+                let session = PlaySession(
+                    city: playing.city, file: playing.file, assets: assets, settings: settings, citiesFolder: folders.citiesFolder,
+                    definitions: definitions)
+                for note in playing.notes { session.advise(note) }
+                while !WindowShouldClose() && session.leaving == nil {
+                    session.update()
+                    session.draw()
+                }
+                let leave = session.leaving
+                session.unload()
+                switch leave {
+                case .open(let loaded, let file):
+                    print("Playing \(loaded.city.name) from \(file.path)")
+                    playing = (loaded.city, file, loaded.notes)
+                case .toMenu:
+                    break cities
+                case .quit, nil:
+                    break menus
+                }
             }
-            let leave = session.leaving
-            session.unload()
-            guard leave == .toMenu else { break }
             menu.show(fromLoading: false, seed: seed)
         }
 

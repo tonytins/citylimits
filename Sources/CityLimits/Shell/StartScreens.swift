@@ -60,6 +60,8 @@ final class LoadingScreen {
 final class StartMenu {
     enum Choice {
         case newCity(name: String, seed: Int32?)
+        case loadCity(LoadedCity, file: URL)
+        case playChallenge(CitySimulation)
         case quit
     }
 
@@ -87,26 +89,40 @@ final class StartMenu {
     private let windows = WindowManager()
     private let newCity = NewCityWindow()
     private let settingsWindow = SettingsWindow()
+    private let load: LoadWindow
+    private let scenarios: ScenarioWindow
     private var glide: Float = 0
     private var commandLineSeed: Int32?
     private var choice: Choice?
 
-    init(assets: GameAssets, version: String, settings: SettingsKeeper) {
+    /// A menu that loads cities from `load` and lists challenges from `scenarios`.
+    init(assets: GameAssets, version: String, settings: SettingsKeeper, load: LoadWindow, scenarios: ScenarioWindow) {
         self.assets = assets
         self.version = version
         self.settings = settings
+        self.load = load
+        self.scenarios = scenarios
         newCity.onStart = { [unowned self] name, seed in choice = .newCity(name: name, seed: seed) }
+        load.onOpen = { [unowned self] loaded, file in choice = .loadCity(loaded, file: file) }
+        scenarios.onPlay = { [unowned self] city in choice = .playChallenge(city) }
         settingsWindow.onChange = { [unowned settings] chosen in settings.settings = chosen }
         settingsWindow.onClose = { [unowned settings] _ in settings.save() }
     }
 
-    func unload() { newCity.unload() }
+    func unload() {
+        newCity.unload()
+        load.unload()
+        scenarios.unload()
+    }
 
     /// Shows the menu afresh: straight from the loading screen, the logo glides into place.
     func show(fromLoading: Bool, seed: Int32?) {
         glide = fromLoading ? 0 : Self.glideSeconds
         commandLineSeed = seed
         choice = nil
+        // Load Game and Scenarios are dimmed while there's nothing to open.
+        load.refreshList()
+        scenarios.refreshList()
     }
 
     /// Runs the menu until the player chooses, or the window closes, which counts as quitting.
@@ -125,6 +141,8 @@ final class StartMenu {
         windows.update()
         if windows.isOpen(newCity.frame) { newCity.refresh() }
         if windows.isOpen(settingsWindow.frame) { settingsWindow.refresh(in: windows) }
+        load.refresh()
+        scenarios.refresh()
         if IsKeyPressed(.escape), let front = windows.frontWindow {
             windows.close(front)
             if front === settingsWindow.frame { settings.save() }
@@ -134,12 +152,18 @@ final class StartMenu {
         case .newGame: newCity.open(seed: commandLineSeed, in: windows)
         case .settings: settingsWindow.open(settings.settings, in: windows)
         case .quit: choice = .quit
-        // Saved cities and scenarios open from here in the next part of phase 4d.
-        case .loadGame, .scenarios: break
+        case .loadGame: load.open(in: windows)
+        case .scenarios: scenarios.open(in: windows)
         }
     }
 
-    private func isEnabled(_ item: Item) -> Bool { item != .loadGame && item != .scenarios }
+    private func isEnabled(_ item: Item) -> Bool {
+        switch item {
+        case .loadGame: load.hasCities
+        case .scenarios: scenarios.hasScenarios
+        default: true
+        }
+    }
 
     private func item(at point: Vector2) -> Item? {
         Item.allCases.first { isEnabled($0) && CheckCollisionPointRec(point, bounds(of: $0)) }
@@ -182,7 +206,15 @@ final class StartMenu {
         for frame in windows.windows where !windows.isMinimized(frame) {
             guard let bounds = windows.bounds(of: frame) else { continue }
             DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Interface.theme.overlay)
-            if frame === newCity.frame { newCity.draw(in: bounds) } else { frame.draw(in: bounds) }
+            if frame === newCity.frame {
+                newCity.draw(in: bounds)
+            } else if frame === load.frame {
+                load.draw(in: bounds)
+            } else if frame === scenarios.frame {
+                scenarios.draw(in: bounds)
+            } else {
+                frame.draw(in: bounds)
+            }
         }
         windows.drawTooltip()
         EndDrawing()

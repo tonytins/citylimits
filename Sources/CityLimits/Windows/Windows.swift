@@ -12,10 +12,15 @@ extension UIScriptView {
         setHidden(!warning, named: name + "Warning")
     }
 
-    /// Wraps `text` to the width of the control called `name`, at the theme's body size.
-    func setWrapped(_ text: String, named name: String) {
-        let width = bounds(named: name, at: .zero)?.width ?? 300
-        setText(TextWrapper.lines(for: text, fontSize: theme.textSizes.body, maximumWidth: Int(width)).joined(separator: "\n"), named: name)
+    /// Wraps `text` to the width of the control called `name`, at the size its style gives,
+    /// keeping its own line breaks.
+    func setWrapped(_ text: String, named name: String, fontSize: Int? = nil) {
+        let width = Int(bounds(named: name, at: .zero)?.width ?? 300)
+        let size = fontSize ?? theme.textSizes.body
+        let lines = text.split(separator: "\n", omittingEmptySubsequences: false).flatMap { line in
+            line.isEmpty ? [""] : TextWrapper.lines(for: String(line), fontSize: size, maximumWidth: width)
+        }
+        setText(lines.joined(separator: "\n"), named: name)
     }
 }
 
@@ -286,7 +291,7 @@ final class HelpWindow {
     let frame: WindowFrame
 
     init() {
-        frame = WindowFrame(view: Interface.view("help", fallbackSize: Vector2(x: 520, y: 400)), title: "Help")
+        frame = WindowFrame(view: Interface.view("help", fallbackSize: Vector2(x: 520, y: 420)), title: "Help")
         frame.showsMinimizeButton = true
     }
 
