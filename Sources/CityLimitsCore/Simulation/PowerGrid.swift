@@ -67,7 +67,7 @@ public final class PowerGrid {
     /// Traces power from every plant the scan counted.
     public func trace(_ map: TileMap, definitions: CityDefinitions, capacityPercent: Int = 100, traded: Int = 0) {
         let tiles = map.width * map.height
-        if poweredTiles.count != tiles {
+        if stack.count != tiles || poweredTiles.count != tiles {
             poweredTiles = Array(repeating: false, count: tiles)
             joined = poweredTiles
             stack = Array(repeating: 0, count: tiles)
