@@ -1,0 +1,6 @@
+{
+  "$schema": "https://raw.githubusercontent.com/tonytins/citylimits/main/docs/schemas/economy.v2.2.schema.json",
+  "format": "2.2",
+  "startingFunds": 20000,
+  "taxRate": 7
+}

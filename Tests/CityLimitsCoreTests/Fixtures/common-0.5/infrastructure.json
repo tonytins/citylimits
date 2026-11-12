@@ -1,0 +1,44 @@
+{
+  "$schema": "https://raw.githubusercontent.com/tonytins/citylimits/main/docs/schemas/infrastructure.v2.2.schema.json",
+  "format": "2.2",
+  "infrastructure": [
+    {
+      "id": "road",
+      "price": 10,
+      "carriesPower": true
+    },
+    {
+      "id": "bridge",
+      "price": 50
+    },
+    {
+      "id": "rail",
+      "price": 20,
+      "carriesPower": false
+    },
+    {
+      "id": "tunnel",
+      "price": 100
+    },
+    {
+      "id": "powerLine",
+      "price": 5
+    },
+    {
+      "id": "underwaterPowerLine",
+      "price": 25
+    },
+    {
+      "id": "park",
+      "price": 10
+    },
+    {
+      "id": "bulldozer",
+      "price": 1
+    },
+    {
+      "id": "clearing",
+      "price": 1
+    }
+  ]
+}

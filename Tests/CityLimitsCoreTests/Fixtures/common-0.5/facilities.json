@@ -1,0 +1,48 @@
+{
+  "$schema": "https://raw.githubusercontent.com/tonytins/citylimits/main/docs/schemas/facilities.v2.2.schema.json",
+  "format": "2.2",
+  "facilities": [
+    {
+      "id": "stadium",
+      "name": "Stadium",
+      "price": 5000,
+      "demandCap": 500,
+      "pollution": 0,
+      "influences": [
+        {
+          "effect": "landValue",
+          "strength": 20,
+          "reach": 2
+        }
+      ]
+    },
+    {
+      "id": "seaport",
+      "name": "Seaport",
+      "price": 3000,
+      "demandCap": 70,
+      "pollution": 100,
+      "influences": [
+        {
+          "effect": "landValue",
+          "strength": -20,
+          "reach": 2
+        }
+      ]
+    },
+    {
+      "id": "airport",
+      "name": "Airport",
+      "price": 10000,
+      "demandCap": 100,
+      "pollution": 100,
+      "influences": [
+        {
+          "effect": "landValue",
+          "strength": -30,
+          "reach": 3
+        }
+      ]
+    }
+  ]
+}

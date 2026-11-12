@@ -1,0 +1,22 @@
+{
+  "$schema": "https://raw.githubusercontent.com/tonytins/citylimits/main/docs/schemas/services.v2.2.schema.json",
+  "format": "2.2",
+  "services": [
+    {
+      "id": "fire",
+      "name": "Fire station",
+      "price": 500,
+      "upkeep": 100,
+      "strength": 100,
+      "reach": 3
+    },
+    {
+      "id": "police",
+      "name": "Police station",
+      "price": 500,
+      "upkeep": 100,
+      "strength": 100,
+      "reach": 3
+    }
+  ]
+}

@@ -1,10 +1,10 @@
 /// The definitions a city runs on: the base game's, with any mods applied on top. The same
 /// definitions, seed, and work make the same city.
 public struct CityDefinitions: Hashable, Sendable {
-    public private(set) var zones: [TileUse: ZoneSpec]
-    public private(set) var plants: [TileUse: PlantSpec]
-    public private(set) var services: [TileUse: ServiceSpec]
-    public private(set) var facilities: [TileUse: FacilitySpec]
+    public internal(set) var zones: [TileUse: ZoneSpec]
+    public internal(set) var plants: [TileUse: PlantSpec]
+    public internal(set) var services: [TileUse: ServiceSpec]
+    public internal(set) var facilities: [TileUse: FacilitySpec]
     public var infrastructure: InfrastructureSpec
     public var economy: EconomySpec
     /// In the order the player is shown them.

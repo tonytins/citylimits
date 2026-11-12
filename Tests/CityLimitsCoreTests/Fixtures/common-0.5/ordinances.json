@@ -1,0 +1,120 @@
+{
+  "$schema": "https://raw.githubusercontent.com/tonytins/citylimits/main/docs/schemas/ordinances.v2.2.schema.json",
+  "format": "2.2",
+  "ordinances": [
+    {
+      "id": "salesTax",
+      "name": "Sales tax",
+      "money": 6,
+      "effects": [
+        {
+          "effect": "commercialDemand",
+          "amount": -40
+        }
+      ]
+    },
+    {
+      "id": "incomeTax",
+      "name": "Income tax",
+      "money": 8,
+      "effects": [
+        {
+          "effect": "residentialDemand",
+          "amount": -60
+        }
+      ]
+    },
+    {
+      "id": "legalizedGambling",
+      "name": "Legalized gambling",
+      "money": 10,
+      "effects": [
+        {
+          "effect": "crime",
+          "amount": 15
+        }
+      ]
+    },
+    {
+      "id": "parkingFines",
+      "name": "Parking fines",
+      "money": 2,
+      "effects": [
+        {
+          "effect": "traffic",
+          "amount": -10
+        }
+      ]
+    },
+    {
+      "id": "neighbourhoodWatch",
+      "name": "Neighbourhood watch",
+      "money": -5,
+      "effects": [
+        {
+          "effect": "crime",
+          "amount": -15
+        }
+      ]
+    },
+    {
+      "id": "smokeDetectors",
+      "name": "Smoke detectors",
+      "money": -3,
+      "effects": [
+        {
+          "effect": "fires",
+          "amount": -50
+        }
+      ]
+    },
+    {
+      "id": "pollutionControls",
+      "name": "Pollution controls",
+      "money": -6,
+      "effects": [
+        {
+          "effect": "industrialPollution",
+          "amount": -30
+        },
+        {
+          "effect": "industrialDemand",
+          "amount": -40
+        }
+      ]
+    },
+    {
+      "id": "energyConservation",
+      "name": "Energy conservation",
+      "money": -4,
+      "effects": [
+        {
+          "effect": "powerCapacity",
+          "amount": 15
+        }
+      ]
+    },
+    {
+      "id": "tourismPromotion",
+      "name": "Tourism promotion",
+      "money": -5,
+      "effects": [
+        {
+          "effect": "commercialDemand",
+          "amount": 50
+        }
+      ]
+    },
+    {
+      "id": "industrialPromotion",
+      "name": "Industrial promotion",
+      "money": -5,
+      "effects": [
+        {
+          "effect": "industrialDemand",
+          "amount": 50
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,55 @@
+{
+  "$schema": "https://raw.githubusercontent.com/tonytins/citylimits/main/docs/schemas/zones.v2.2.schema.json",
+  "format": "2.2",
+  "zones": [
+    {
+      "id": "residential",
+      "name": "Residential zone",
+      "price": 100,
+      "populations": [
+        16,
+        24,
+        32,
+        40
+      ],
+      "houses": 8,
+      "trips": [
+        "commercial",
+        "industrial"
+      ]
+    },
+    {
+      "id": "commercial",
+      "name": "Commercial zone",
+      "price": 100,
+      "populations": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "houses": 0,
+      "trips": [
+        "residential",
+        "commercial",
+        "industrial"
+      ]
+    },
+    {
+      "id": "industrial",
+      "name": "Industrial zone",
+      "price": 100,
+      "populations": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "houses": 0,
+      "trips": [
+        "residential"
+      ]
+    }
+  ]
+}

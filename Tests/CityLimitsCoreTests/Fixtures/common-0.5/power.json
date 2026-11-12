@@ -1,0 +1,18 @@
+{
+  "$schema": "https://raw.githubusercontent.com/tonytins/citylimits/main/docs/schemas/power.v2.2.schema.json",
+  "format": "2.2",
+  "plants": [
+    {
+      "id": "coal",
+      "name": "Coal power plant",
+      "price": 3000,
+      "capacity": 700
+    },
+    {
+      "id": "nuclear",
+      "name": "Nuclear power plant",
+      "price": 5000,
+      "capacity": 2000
+    }
+  ]
+}

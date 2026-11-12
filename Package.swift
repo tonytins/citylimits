@@ -32,6 +32,7 @@ let package = Package(
         .testTarget(
             name: "CityLimitsCoreTests",
             dependencies: ["CityLimitsCore"],
+            exclude: ["Fixtures"],
         ),
     ],
     swiftLanguageModes: [.v6],
