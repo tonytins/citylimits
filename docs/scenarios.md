@@ -1,13 +1,14 @@
 # Scenarios
 
-> **Status:** format 3.0 is built, from 0.5: `CityLimits.Core/Scenarios/` and
+> **Status:** format 3.0 is built, from 0.5: `Sources/CityLimitsCore/Scenarios/` and
 > `citylimits scenario`, with `demo-town`, the built-in scenarios
 > `bridges`, `rail`, `zones-and-bulldozer`, and `small-town`, written in
 > 2.0, and the challenges `first-town`, in 2.0, and `smokestack`,
 > `hard-times`, and `aftershock`, made with the editor in 2.2, each with
 > its city beside it; every one runs as a test.
-> Files in format 1, which counted time in ticks, are still read. A
-> challenge can be [played in the game](#playing-a-scenario). It follows the Micropolis
+> 0.6 reads 3.0 only; files in format 1, which counted time in ticks, and
+> in 2.x open in 0.5, which saves them again as 3.0 (see
+> [Format 1](#format-1)). A challenge can be [played in the game](#playing-a-scenario). It follows the Micropolis
 > baseline: tools are strokes, zones are 3 by 3, the bulldozer refunds
 > nothing, and a tick is one phase of the simulation's 16-phase cycle.
 
@@ -32,7 +33,7 @@ doesn't need a debugging protocol or a live connection to the game.
 ## Playing a scenario
 
 The start menu's Scenarios opens a list of the challenges a player can
-pick (`UI/ScenarioPanel.cs`, `ChallengeShelf`): the scenarios with goals
+pick (`ScenarioWindow`, `ScenarioCatalog.challenges()`): the scenarios with goals
 in the game's own folder, then those in the player's own,
 `Documents/CityLimits/Scenarios`, which the game makes. A scenario with
 only checks is a test, for agents, and isn't listed; a draft from the
@@ -40,17 +41,17 @@ editor, with neither goals nor checks yet, is listed to edit but can't be
 played until it has a goal. A file that can't be read is listed with
 why, and can't be played. Picking one shows its
 briefing, its description and its goals, beside a map of the city it
-starts with; Play, or Enter, starts it.
+starts with; Play, or a double-click, starts it.
 
 A played scenario is a city like any other, with its challenge
-(`Challenge`, kept by `CitySimulation.Challenge`): a city made from a
+(`Challenge`, kept by `CitySimulation.challenge`): a city made from a
 seed runs on the base game's definitions, whatever mods are installed,
 and takes the scenario's name. Its actions are made on their dates, as
 a scripted town grows, and its events strike on theirs; its checks are
 left out of play. Disasters on their own follow the player's settings,
 as in any city; `disasters` decides them only in a run. The city panel
 shows the challenge, its end date, and each goal with what the city
-measures now. At the end date the goals are judged, and a pop-up says
+measures now. At the end date the goals are judged, and a notice says
 whether the challenge was won or lost, and which goals weren't met; the
 city plays on after, won or lost. Saving partway keeps the challenge,
 with what is still to come (`docs/saving.md`).
@@ -74,21 +75,22 @@ so their numbers are a starting point, open to tuning in the editor.
 A city builder is a map editor turned into a game, so a scenario is
 edited in the game itself, in the same view it is played in. The
 Scenarios list's Edit opens the scenario's city (`ScenarioEdit`), paused,
-with the bar saying it is being edited:
+with the bar saying it is being edited. The editor is a session of its
+own (`EditorSession`), beside play's, over the same screen:
 
 - Building is free, paused or playing; the city's money is left as the
   scenario has it.
 - The scenario's goals, actions, and events are kept aside as a draft
   that nothing acts on; the city panel shows it, with an Edit scenario
   button under its goals.
-- Edit scenario opens the scenario's details in three columns: its
-  name, start year, end, starting money, and description; its goals;
-  and its disasters, each of which may repeat. Nothing changes until
-  Apply, which checks the details as a file would be read
-  (`ScenarioEdit.TryChange`, through `ScenarioWriter`), and says what is
+- Edit scenario opens the scenario's details: its name, start year,
+  end, starting money, and description on the left; up to five goals
+  and five disasters, each of which may repeat, on the right. Nothing
+  changes until Apply, which checks the details as a file would be read
+  (`ScenarioEdit.change(_:city:)`, through `ScenarioWriter`), and says what is
   wrong without closing; Cancel drops every edit. Moving the start year
   of a scenario made from a seed moves its city's founding there
-  (`CitySimulation.MoveFounding`), everything built on it kept, since
+  (`CitySimulation.moveFounding(to:)`), everything built on it kept, since
   the map grows from the seed alone and never from the year; the
   scenario's own strokes and checks move with it. A scenario that
   starts from a saved city takes its start and its money from the city,
@@ -97,7 +99,7 @@ with the bar saying it is being edited:
   checkpoint, and the scenario runs on it as it would for a player: its
   actions and events come on their dates, and its goals are judged at
   its end date.
-- The Escape menu's Reset puts the city back as it was at
+- The Escape menu's Reset the test puts the city back as it was at
   the checkpoint, undoing the test and everything built during it. Start
   over opens the scenario's city afresh, dropping every change.
 
@@ -108,8 +110,8 @@ while one is edited.
 
 Ctrl+S, or the Escape menu's Save, saves the scenario to the player's
 `Documents/CityLimits/Scenarios` as `<name>.json`, in format 3.0, with its
-city beside it as `<name>.fcl`, in save format 2.0 (`ScenarioEdit.TrySave`);
-with Save for 0.4 on in the settings, as 2.2 and 1.10, which 0.4 opens: from then on it starts from
+city beside it as `<name>.fcl`, in save format 2.0 (`ScenarioEdit.save(_:)`):
+from then on it starts from
 that city, whatever it was made from, its strokes, goals, and disasters
 kept. A game's own scenario is saved there as a copy, and the original
 is left as it was; saving over another scenario of the same name asks
@@ -117,7 +119,7 @@ first, and leaving asks only when something changed since the last
 save. A saved city's start year and money can still move while the city
 is at its founding, as a seed's can.
 
-The Help window's Editing scenarios page, from the question mark on the bar
+The Help window's Editing tab, from the question mark on the bar
 or F1, sums this up in the game.
 
 The Scenarios list's New opens the New City window, titled New scenario:
@@ -141,8 +143,8 @@ it is refused, so a script written today keeps its meaning once a
 scenario can open in a window. `scenario list` opens no window, so it
 doesn't need the flag.
 
-Built-in scenarios are the files in `CityLimits/Assets/Scenarios/`, copied
-to the output folder with the other assets, plus `demo-town`, which is
+Built-in scenarios are the files in `Sources/CityLimits/Resources/Scenarios/`,
+copied into the game's resources, plus `demo-town`, which is
 defined in code, where it can't go missing, as the town this document's
 examples describe. A file scenario's id is its file name without `.json`.
 A scenario that can't be read says why and runs nothing, with exit code
@@ -155,10 +157,10 @@ and hyphens, so an id can never name a path outside that folder.
 |---|---|
 | 0 | The scenario ran and every check passed |
 | 1 | The scenario could not run: the file is missing, too large, or invalid, or its saved city can't be opened. This includes a run that fell back to `demo-town` |
-| 2 | The command line was wrong (`ExitCodes.Usage`) |
+| 2 | The command line was wrong (`ExitCode.usage`) |
 | 3 | The scenario ran, and at least one check failed |
 
-Code 3 is `ExitCodes.ChecksFailed`, added for scenarios. A caller
+Code 3 is `ExitCode.checksFailed`, added for scenarios. A caller
 can then tell a broken scenario (1) from a city that didn't do what was
 expected (3) without reading the output. Goals don't change the exit
 code: a challenge that was lost is still a run that worked, and the
@@ -175,9 +177,7 @@ the log, a line for each tile under its action, with how many tiles were
 skipped for each reason, and in the JSON report, each action's `changes`.
 
 With `--json`, stdout carries the report and nothing else, so it can be
-piped into a parser. For that run, the log moves to stderr:
-`GameLog.UseStandardError` points the console target at the error stream.
-NLog still writes to the console and nowhere else.
+piped into a parser. For that run, the log moves to stderr.
 
 ## Time
 
@@ -413,8 +413,8 @@ first problem is reported with its location, as in
 
 - A file over 1 MiB is refused before it is parsed.
 - An unknown field is refused, so a misspelt check can't silently pass.
-  (`System.Text.Json`'s `UnmappedMemberHandling.Disallow`.)
-- Enum names are matched exactly, with the casing of the C# names.
+- Enum names are matched exactly, with the casing the C# build gave them,
+  such as `ZoneResidential` and `PlaneCrash`.
 - Every number is range-checked as the tables above say. A stroke's
   coordinates run from -512 to 1023, so a stroke can be made to run off
   the map on purpose; the builder refuses it with `OffTheMap`, which is
@@ -423,13 +423,14 @@ first problem is reported with its location, as in
   outside the scenario's, a week outside 1 to 4, and a goal that can
   never be met.
 
-`System.Text.Json` ships with .NET, so this needs no new package, and
-`CityLimits.Core` keeps its rule of no package references.
+The core's own JSON reader does this, so `CityLimitsCore` keeps its rule
+of no package references.
 
 ## Format 1
 
-Files of format 1, `"1.0"` to `"1.3"`, are still read, so scripts and
-agents' files written before 2.0 keep working. They count time in ticks
+Files of format 1, `"1.0"` to `"1.3"`, are read by 0.5, so scripts and
+agents' files written before 2.0 keep working there; 0.6 refuses them,
+as it does 2.x, and 0.5 saves either again as 3.0. They count time in ticks
 from January 1900, where 2.0 names dates: `"ticks"` in place of `ends`,
 and `"tick"` in place of `at` and `week` on actions and checks. They have
 no `start`, `city`, `events`, or `goals`, and a field of one format is
@@ -522,24 +523,25 @@ seed's rolls.
 
 | Part | Place |
 |---|---|
-| The file model, the loader, and the validation | `CityLimits.Core/Scenarios/` |
-| The runner and the report | `CityLimits.Core/Scenarios/` |
-| The command | `CityLimits/Game/Commands/ScenarioSubcommand.cs`, which loads, runs, logs, and writes the report |
-| The built-in scenarios | `CityLimits/Assets/Scenarios/*.json`, and `demo-town` in `CityLimits.Core/Scenarios/` |
-| The tests | `CityLimits.Tests/`: the loader, the runner, and one test that runs every built-in scenario and expects it to pass |
+| The file model, the loader, and the validation | `Sources/CityLimitsCore/Scenarios/Scenario.swift` |
+| The runner and the report | `Sources/CityLimitsCore/Scenarios/ScenarioRunner.swift` |
+| The writer and the editor's rules | `Sources/CityLimitsCore/Scenarios/ScenarioEdit.swift` |
+| The command | `Sources/CityLimitsCore/Commands/Commands.swift`, which loads, runs, logs, and writes the report |
+| The built-in scenarios | `Sources/CityLimits/Resources/Scenarios/*.json`, and `demo-town` in `Scenario.swift` |
+| The tests | `Tests/CityLimitsCoreTests/`: the loader, the runner, the editor, and one test that runs every built-in scenario and expects it to pass |
 
 The runner lives in the core library, not in the game, so the tests can
-run a scenario exactly as the command does. A bug found with a scenario
-becomes a regression test by adding the file. The test project gets the
-built-in files by linking them in its project file. It still never
-references the game project.
+run a scenario exactly as the command does, and the command lives in
+the core too. A bug found with a scenario becomes a regression test by
+adding the file. The tests read the built-in files from the game's
+resources folder, and never import the game.
 
 The runner takes no logger. It returns the report and raises an event per
 action, disaster, and check, and the command turns those into log lines. That
-keeps the core library free of NLog and of any package.
+keeps the core library free of any package.
 
-The default map size is `MapSize.DefaultWidth` and `MapSize.DefaultHeight`
-in `CityLimits.Core/World/`, which the game, the headless run, and the
+The default map size is `TileMap.defaultWidth` and `TileMap.defaultHeight`
+in `Sources/CityLimitsCore/World/`, which the game, the headless run, and the
 scenario defaults all read, so they can't drift apart.
 
 ## What it is not

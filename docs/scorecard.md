@@ -8,6 +8,13 @@ is in the [roadmap](./ROADMAP.md).
 When a change affects a row, update its status and evidence in the same
 change. Statuses are `done`, `partial`, and `missing`.
 
+From 0.6, CityLimits is written in Swift. The [port](#the-swift-port-06)
+has its own section below, checked on 2026-11-12. The other sections were
+checked against the C# build, which lives on the `legacy/csharp` branch,
+and name its files; the Swift build keeps their behaviour, as the port's
+checks show, but re-checking each row against the Swift files is still
+open.
+
 ## Summary
 
 | Area | Done | Partial | Missing | Key numbers |
@@ -20,7 +27,8 @@ change. Statuses are `done`, `partial`, and `missing`.
 | [Traffic](#traffic-and-commuting) | 4 | 1 | 0 | 1 road network, trips of up to 30 tiles, traffic up to 240 a block, light from 64 and heavy from 192, jams above an average of 60, rail at $20 a tile counting as two road tiles |
 | [Environment](#land-value-pollution-and-disasters) | 5 | 0 | 0 | land value from distance, terrain, pollution, and crime; pollution 50 an industry tile and 100 a coal plant tile; fire, floods, and earthquakes, a disaster 1 cycle in 481 |
 | [Interface](#player-interface) | 3 | 2 | 1 | 16 tools with icons, the bar along the bottom, a news ticker, a help window, the demand panel, the budget panel, the overview map, a loading screen and start menu |
-| [Platform](#platform) | 8 | 0 | 2 | Raylib-cs 8.1.0, NLog 6.2.2, .NET 10, data mods, versioned formats with schemas |
+| [Platform](#platform) | 8 | 0 | 2 | Swift 6.3, raylib-swift and Hudini from 0.6 (Raylib-cs 8.1.0 and .NET 10 to 0.5), data mods, versioned formats with schemas |
+| [The Swift port](#the-swift-port-06) | 9 | 1 | 0 | 117 Swift tests; the C# build's terrain, towns, scenarios, saves, and headless log matched |
 | [Reliability](#reliability) | 6 | 0 | 0 | 828 tests, all passing, CI green |
 | [Documentation](#documentation) | 3 | 0 | 2 | 3 of 5 documents exist |
 | [Known issues](#known-issues) | | | | 1 open, 3 resolved |
@@ -59,6 +67,33 @@ bar carries the refusal for the bulldozer's last click, which had nothing to
 clear. The headless mode needs no display at all, so the simulation can be
 checked on a machine with no screen, and it builds a small demo town first so
 there is something to grow.
+
+## The Swift port, 0.6
+
+The C# build was ported to Swift, with raylib-swift and Hudini, from
+2026-11-12, as Tony Bark chose: the C# build stays on `legacy/csharp` as
+it was at 0.5, and 0.6 reads and writes the 0.5 formats only (city saves
+2.0, scenarios 3.0, definitions 2.x). Checked on 2026-11-12:
+
+```sh
+swift build                                        # 0 new warnings
+swift test                                         # 117 tests in 21 suites, all passing
+swift run citylimits --headless --ticks 768        # a year, logged as the C# build logs it
+swift run citylimits scenario demo-town --headless # exit code 0
+```
+
+| Id | Target | Status | Evidence |
+|---|---|---|---|
+| PORT-1 | The core is engine-free Swift, and the game alone imports raylib | done | `Package.swift`: `CityLimitsCore` depends on nothing; `citylimits` on raylib-swift, Hudini, and GitVersion. `swift build` gives no new warnings |
+| PORT-2 | The same seed and strokes make the same city as the C# build | done | `SimulationParityTests`: terrain from four seeds, a scripted town over six years with its disasters and tornado, and a port town over eight years with its plane crashes, each matching a fingerprint the C# build gave (`SeededGeneratorTests` matches its random numbers) |
+| PORT-3 | Saves cross between the builds | done | `SavingTests`: a port town the C# build saved in both formats loads and runs on to its numbers; a city this build saves loaded in the C# build and ran on to the same numbers (checked by hand during the port) |
+| PORT-4 | Scenarios run as they did | done | `ScenarioTests`: every built-in scenario's report matches the C# build's (`Fixtures/scenario-reports-0.5/`), and the command line's exit codes and `--json` report are covered in `CommandLineTests` |
+| PORT-5 | Micropolis cities import as they did | done | `MicropolisImportTests`: Bridgeport's `.cty` imports to the city the C# build made of it |
+| PORT-6 | The game plays from the start menu | done | On a virtual display on 2026-11-12: the loading screen, the start menu, New Game with its map, building and growth, the bar, ticker, and overview, the budget, demand, help, and city panel windows, the Escape menu, Ctrl+S, Load Game, a challenge played to its result, and leaving with unsaved changes asking first |
+| PORT-7 | Saving is held off while a disaster is under way | done | `AutosaveTests.aFireHoldsSavingUntilItsOut`; on a virtual display, Aftershock's earthquake put "Saving disabled" on the ticker and Ctrl+S during the fires saved nothing |
+| PORT-8 | The editor is a session of its own, not a mode | done | `EditorSession` beside `PlaySession`, over the shared `CityScreen`; `ScenarioEditTests` covers writing, editing, saving, and testing; on a virtual display a new scenario was edited, given a goal and a fire, saved, tested, and reset |
+| PORT-9 | Settings are shared with the C# build | done | `SettingsTests`: a `settings.json` the C# build wrote reads with its own `SaveOlderFormats` kept and written back |
+| PORT-10 | Every file format is described by a schema that matches the readers | partial | The schemas in `docs/schemas/` are 0.5's, generated from the C# readers; the formats are unchanged, but 0.6 neither generates them nor tests them against its readers |
 
 ## Core
 

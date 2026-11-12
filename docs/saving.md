@@ -5,16 +5,17 @@ runs on, step for step, as if it had never stopped. This page describes
 where saves go, how the game saves and loads them, and the two formats:
 the binary city format, `.cl`, the game's own save, and the flat city
 format, `.fcl`, which a person or an agent can read and compare. Both
-hold exactly the same city. From 0.5 both are format 2.0; 0.5 still reads
-every 1.x save, and can still write 1.10, the format 0.4 reads.
+hold exactly the same city. From 0.5 both are format 2.0. 0.6 reads and
+writes 2.0 only: a 1.x save, from 0.4 or before, opens in 0.5 (the C#
+build, on the `legacy/csharp` branch), which saves it again as 2.0.
 
 ## Where saves go
 
 Saved cities are files in `Documents/CityLimits/Cities`, or in a
 `Cities` folder beside the game when the game is portable (see
-`GameFolders` in `CityLimits.Core/Settings/`). A city is saved under its
-own name, such as `Joffburg.cl`; characters a file name can't hold
-become underscores (`CityFiles.FileNameFor`). A city opened from a `.fcl`
+`GameFolders` in `Sources/CityLimitsCore/Commands/`). A city is saved
+under its own name, such as `Joffburg.cl`; characters a file name can't
+hold become underscores (`CityFiles.fileName(for:)`). A city opened from a `.fcl`
 file is saved back to one. There is no file dialog:
 the game lists the folder's cities itself, newest first.
 
@@ -38,24 +39,31 @@ the game lists the folder's cities itself, newest first.
   commerce 2.0, and opens with no mods, so it may play differently.` A city whose buildings the installed
   definitions can't hold, such as a level a mod added, is refused, naming
   the mods to install.
-- **Save for 0.4**, in the Settings window's Gameplay tab, saves cities,
-  and scenarios' cities, as 1.10, the format 0.4 reads, so they can go
-  back to it. Off by default. 0.5 offers it in the game, 0.6 moves it to
-  the command line, and 0.7 drops it; every version keeps reading 1.x.
+- **Saving disabled.** While a disaster is under way, the city isn't
+  saved: not by Ctrl+S, the Escape menu, or an autosave, since a save
+  would keep the city mid-disaster. A disaster is under way while
+  anything burns or is flooded, or while a monster or a tornado is on the
+  map; radiation, which lasts decades, doesn't count. The news ticker
+  says `Saving disabled` when it begins, and again for each try to save.
+  An autosave that falls due waits until it's over
+  (`CitySimulation.holdsSaving`).
+- **No saves for 0.4.** 0.5's Save for 0.4 setting wrote cities as 1.10;
+  0.6 writes 2.0 only, and keeps the setting's value in `settings.json`
+  for 0.5.
 - A save is written to a temporary file first and then takes the file's
   place, so a failure partway leaves the save before it as it was.
 
 ## Autosave
 
 A city saves itself every 15 minutes of play, counting only time it runs:
-paused, or with a panel holding it, the clock stops. An autosave sits
+paused, or with a window holding it, the clock stops. An autosave sits
 beside the city's own file, in the same format, such as
 `Joffburg (autosave).cl`, or `Joffburg (autosave).fcl` for a city saved
 as `.fcl`, so a newer save's parts it keeps go into its autosaves too.
 It is skipped when the city is as it was last saved, by the player or by
 an autosave. The news ticker says when one is written.
 
-- **Off, one slot, or two.** The Gameplay tab of the settings sets
+- **Off, one slot, or two.** The Game tab of the settings sets
   `AutosaveSlots` in `settings.json`: `1` by default, `0` for no
   autosaves, or `2`: with two, `Joffburg (autosave 2).cl` joins the
   first, and each autosave replaces the older of the two, so the one
@@ -65,8 +73,10 @@ an autosave. The news ticker says when one is written.
   its autosave goes to its own file, `Joffburg.cl`, without asking.
 - **It isn't the player saving.** Leaving a city still asks when it has
   changes since the player last saved it.
-- `Autosave` in `CityLimits.Core/Saving/` decides when one is due and
-  where it goes; `AutosaveTests` covers both.
+- **It waits out a disaster.** One that falls due while saving is
+  disabled is written once the disaster is over.
+- `Autosave` in `Sources/CityLimitsCore/Saving/` decides when one is due
+  and where it goes; `AutosaveTests` covers both, and the hold.
 
 ## What a save holds
 
@@ -136,11 +146,11 @@ size of the same city as `.fcl`.
 | `CHAL` | The scenario being played, for a city that is a challenge; from format 1.8, and only in such a city |
 | `FCLT` | The stadiums, seaports, and airports, the scan's counts of them, and the demand held back for want of one; from format 1.9 |
 | `FNDG` | The year the city was founded; from format 1.10 |
-| `ORDN` | The city's ordinances; a 2.0 feature, which a save for 0.4 leaves out |
-| `CONN` | The city's deals with its neighbours; a 2.0 feature, which a save for 0.4 leaves out |
-| `RADN` | The radioactive ground meltdowns left; a 2.0 feature, which a save for 0.4 leaves out |
-| `VHCL` | The plane, helicopter, and ship under way; a 2.0 feature, which a save for 0.4 leaves out |
-| `MNCE` | The tornado and the monster about; a 2.0 feature, which a save for 0.4 leaves out |
+| `ORDN` | The city's ordinances; a 2.0 feature |
+| `CONN` | The city's deals with its neighbours; a 2.0 feature |
+| `RADN` | The radioactive ground meltdowns left; a 2.0 feature |
+| `VHCL` | The plane, helicopter, and ship under way; a 2.0 feature |
+| `MNCE` | The tornado and the monster about; a 2.0 feature |
 
 In a 2.0 file, the chunks from `TRAF` on are its features: each may be
 left out, and is then filled in as the version that added it fills it.
@@ -185,7 +195,7 @@ editions of SimCity add, of big-endian 16-bit numbers:
 3. the 120 by 100 map, a number a tile, column by column: a Micropolis
    tile number in the low 10 bits and flags above, power the highest.
 
-The import (`MicropolisCityImport` in `CityLimits.Core/Saving/`) reads the
+The import (`MicropolisImport` in `Sources/CityLimitsCore/Saving/`) reads the
 tiles with Micropolis' tile numbers, which Tony Bark approved for this
 and which the tile sheet uses too. Ground, water, trees, rubble, parks and
 fountains, roads at any level of traffic, bridges and drawbridges, power
@@ -284,18 +294,19 @@ a change that breaks. A major version breaks with the one before.
   version reads, such as `this is format 3.0; this version of CityLimits
   reads up to 2.0.` A save with features this version doesn't know opens
   as its features list allows (see Opening a newer save).
-- **Upgrading.** A 1.x save climbs to 1.10 one minor version at a time,
+- **Upgrading, in 0.5.** A 1.x save climbs to 1.10 one minor version at a time,
   each step filling in what that version added (`SaveUpgrades`), then
   becomes 2.0: its definitions and parts list are left behind. A 2.0
   save that leaves out a feature has it filled in by the same step.
-  Bridgeport's fixtures stay at 1.0, so the steps stay tested.
-- **Writing for 0.4.** With Save for 0.4 on, a city is written as 1.10:
+  Bridgeport's fixtures stay at 1.0, so the steps stay tested. 0.6
+  doesn't read 1.x, and says to open such a save in 0.5.
+- **Writing for 0.4, in 0.5.** With Save for 0.4 on, a city is written as 1.10:
   the same save model, with its definitions and its parts list put back
   (`FlatCityFormat.Write` and `BinaryCityFormat.Write` with `legacy`).
   Anything 1.10 can't hold, such as a newer save's features kept here,
   is left out. A test runs a city written as 1.10 and read back in step
   with the city itself, and 0.4.111 itself was checked to open such
-  files. 0.7 drops the 1.10 writer, and keeps reading 1.x.
+  files. 0.6 has no 1.10 writer.
 
 | Version | What it added | Upgrading from the one before |
 |---|---|---|
@@ -323,7 +334,7 @@ a change that breaks. A major version breaks with the one before.
 ## Rail
 
 From format 1.4, rail is saved as a part of its own, `"rail"` in `.fcl`
-and the `RAIL` chunk in `.cl` (`Saving/RailCodec.cs`), apart from the
+and the `RAIL` chunk in `.cl`, apart from the
 map. The map holds what lies beneath the rail: clear ground or water
 under track or a tunnel, and the road or the power line at a crossing.
 The rail part holds, for each row of the map, a character a tile: `.`
@@ -351,7 +362,7 @@ from old figures.
 ## Fire
 
 From format 1.6, the city's fires are saved as a part of their own,
-`"fire"` in `.fcl` and the `FIRE` chunk in `.cl` (`Saving/FireCodec.cs`).
+`"fire"` in `.fcl` and the `FIRE` chunk in `.cl`.
 When a tile burns, what stood there is lost, so the city holds rubble
 beneath the fire; an outer tile of a building that burns leaves the
 building standing with a hole. The part holds, for each row of the map,
@@ -372,8 +383,8 @@ a building, or any other character, and says where.
 ## Floods
 
 From format 1.7, the city's floods are saved as a part of their own,
-`"flood"` in `.fcl` and the `FLOD` chunk in `.cl`
-(`Saving/FloodCodec.cs`): for each row of the map, a character a tile,
+`"flood"` in `.fcl` and the `FLOD` chunk in `.cl`: for each
+row of the map, a character a tile,
 `.` for none and `w` for a tile under water, and how many more cycles the
 water spreads for, from 0 to 30. Beneath the water the map holds bare
 ground, what a flood leaves when it drains. A flooded hole in a building
@@ -406,7 +417,7 @@ then the value.
 
 From format 1.9, the city's stadiums, seaports, and airports are saved as
 a part of their own, `"facilities"` in `.fcl` and the `FCLT` chunk in
-`.cl` (`Saving/FacilityCodec.cs`), as rail is: the map holds the bare
+`.cl`, as rail is: the map holds the bare
 ground beneath each, and the part lists each one by its centre, with what
 it is (`Stadium`, `Seaport`, or `Airport`), whether it had power, and its
 holes, as part numbers counted across and then down. It also holds the
@@ -499,8 +510,8 @@ for 0.4 leaves it out.
 ## Radiation
 
 The radioactive ground a nuclear plant's meltdown leaves is a feature of
-format 2.0, `"radiation"` in `.fcl` and the `RADN` chunk in `.cl`
-(`Saving/RadiationCodec.cs`), saved as floods are: for each row of the
+format 2.0, `"radiation"` in `.fcl` and the `RADN` chunk in `.cl`, saved as floods
+are: for each row of the
 map, a character a tile, `.` for none and `r` for radioactive ground.
 Beneath it the map holds bare ground, or, where the ground is a hole in
 a building, the building whole, the fire part marking the hole. A save
@@ -508,7 +519,7 @@ without the section opens with none.
 
 It is ignorable but not keepable, as floods are: a version that doesn't
 know it opens the city as if the ground had decayed, and can't write it
-back, since it may build there. A save for 0.4 leaves it out. Reading
+back, since it may build there. 0.5's save for 0.4 leaves it out. Reading
 refuses radiation on a fire, a flood, or anything but bare ground or a
 marked hole, and says where.
 
@@ -516,7 +527,7 @@ marked hole, and says where.
 
 The plane, the helicopter, and the ship under way, as Micropolis' sprites,
 are a feature of format 2.0, `"vehicles"` in `.fcl` and the `VHCL` chunk
-in `.cl` (`Sprites/Vehicles.cs`). Each is a list of numbers, empty or
+in `.cl` (`Sprites/Vehicles.swift`). Each is a list of numbers, empty or
 left out when none is under way, its positions in pixels, 16 to a tile:
 
 | Field | Numbers |
@@ -532,14 +543,14 @@ section opens with nothing under way.
 It is ignorable and keepable, as the ordinances are: a version that
 doesn't know it opens the city with nothing under way, and writes the
 section back as it was, since the vehicles leave nothing on the map
-until they come down. A save for 0.4 leaves it out. Reading refuses a
+until they come down. 0.5's save for 0.4 leaves it out. Reading refuses a
 list of the wrong length or a frame out of range, and says which.
 
 ## Menaces
 
 The tornado and the monster about, as Micropolis' sprites, are a feature
 of format 2.0, `"menaces"` in `.fcl` and the `MNCE` chunk in `.cl`
-(`Sprites/Menaces.cs`), saved as the vehicles are: each a list of
+(`Sprites/Menaces.swift`), saved as the vehicles are: each a list of
 numbers, empty or left out when none is about, its positions in pixels.
 
 | Field | Numbers |
@@ -549,7 +560,7 @@ numbers, empty or left out when none is about, its positions in pixels.
 
 A save without the section opens with neither about. It is ignorable and
 keepable, as the vehicles are, for the same reason: they change nothing
-until they move. A save for 0.4 leaves it out. Reading refuses a list of
+until they move. 0.5's save for 0.4 leaves it out. Reading refuses a list of
 the wrong length or a number out of range, and says which.
 
 ## Opening a newer save
@@ -600,46 +611,33 @@ the base game's, one file a version, such as `city-save.v2.0.schema.json`.
 A schema describes a file's shape: its fields and their types, with no
 others. A file names its schema in `"$schema"`, which every loader
 accepts and ignores, and an editor such as VS Code then checks the file
-and suggests its fields. The game writes it into every `.fcl` save.
+and suggests its fields. The game writes it into every `.fcl` save and
+every scenario it saves.
 
-The schemas are generated from the same code that reads the files
-(`FormatSchemas` in `CityLimits.Core/Formats/`), and a test fails when a
-committed one no longer matches, writing the current one beside the
-tests to look at and copy in. The game's own checks go further than a
-schema can, to ranges and the rules between fields, and decide what
-loads; the schemas are for people, editors, and agents.
-
-## Reading needs no reflection
-
-Every JSON format reads and writes through code generated at build time
-(System.Text.Json's source generator), not reflection, so saves,
-scenarios, mods, and settings survive a trimmed build. The binary
-format's codec reads the save model's properties by reflection, so the
-model's classes are marked for the trimmer to keep them. Reflection-based
-JSON is switched off in the game and the tests, so a path that still
-needs it fails at once, and the core library is analysed for trimming,
-so new reflection shows up as a build warning.
+0.5's C# build generated the schemas from the code that read the files,
+and a test failed when a committed one no longer matched. 0.6 reads and
+writes the same formats, so the schemas still hold, but it doesn't
+generate them, and no test checks them against its readers yet. The
+game's own checks go further than a schema can, to ranges and the rules
+between fields, and decide what loads; the schemas are for people,
+editors, and agents.
 
 ## For contributors
 
-- `CityLimits.Core/Saving/` holds the formats: `CitySave` is the save
-  model and the shape of the flat file, `FlatCityFormat` and
-  `BinaryCityFormat` write and read it, `SectionCodec` writes a section as
-  bytes, `MapCodec` handles the map's layers and words, and `CityFiles`
-  names the files, lists a folder, and reads and writes either format by
-  its extension.
-- `CityLimits.Tests/Assets/` holds Bridgeport, a city Tony Bark built in
-  the game, in both formats. The tests read each and check they are the
-  same city, so a change that stops an older save loading is caught.
-- Each part of the simulation captures and restores its own state with
-  internal `Capture` and `Restore` methods, and checks what it restores.
-- **New state goes in the save.** A field that lasts from one step to the
-  next is captured and restored, or a loaded city drifts from the one
-  that was saved. `FlatCityFormatTests` saves a busy town at several
-  steps, loads it, and runs both in step for two years, comparing their
-  saves as they go; it catches state left out of the save, as long as
-  the state changes what the city does.
-- `CityLimits.Tests/Assets/Bridgeport.cty` is Bridgeport in Micropolis'
-  format, made by a writer that lives only in the tests
-  (`MicropolisCityImportTests`); importing it gives back Bridgeport's map
-  tile for tile.
+- `Sources/CityLimitsCore/Saving/` holds the formats: `CitySave.swift`
+  captures a city as the flat file's JSON and restores one from it,
+  `SaveShapes.swift` gives each section its shape and its binary
+  encoding, `MapRows.swift` handles the map's rows, `CityFiles.swift`
+  writes and reads either format by its extension, names the files, and
+  lists a folder, and `MicropolisImport.swift` imports `.cty` files.
+- `Tests/CityLimitsCoreTests/Fixtures/` holds a port town saved by the
+  C# build in both formats, and Bridgeport in Micropolis' format with
+  its import as 0.5 made it. `SavingTests` reads each and runs them on
+  in step with the C# build's numbers, so a change that stops an older
+  save loading, or a loaded city drifting, is caught.
+- **New state goes in the save.** A field that lasts from one step to
+  the next is captured and restored, as a new feature, or a loaded city
+  drifts from the one that was saved. `SavingTests` saves a busy town at
+  several steps, loads it, and runs both in step, comparing their saves
+  as they go; it catches state left out of the save, as long as the
+  state changes what the city does.

@@ -1,5 +1,9 @@
 # Packaging
 
+> These scripts package the C# build, 0.5, which lives on the
+> `legacy/csharp` branch; run them there. The Swift build, from 0.6, isn't
+> packaged yet.
+
 Scripts that build CityLimits into the packages players download, one
 folder for each platform, after Photocraft's `packaging/`. Every script
 runs on Linux or macOS with the .NET 10 SDK, since .NET publishes for

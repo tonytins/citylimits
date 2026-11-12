@@ -1,6 +1,6 @@
 # CityLimits roadmap
 
-> **Last reviewed:** 2026-10-28 · **Last updated:** 2026-10-28 · **Change:** minor (Senri, N6d: tornadoes and the monster) · **Stage:** beta
+> **Last reviewed:** 2026-11-12 · **Last updated:** 2026-11-12 · **Change:** major (0.6 begins with the port to Swift) · **Stage:** beta
 
 Forward-looking: where CityLimits stands, what blocks the next milestone,  
 and what comes next. Verified status and evidence are in the  
@@ -28,6 +28,11 @@ in the manner of Ubuntu's and .NET's, without dates.
 | 0.6 | Yokohama | | Online play, after SimCity 2000 Network Edition. Its new state arrives as features in the 0.5 formats, so 0.5 can open its cities single-player. It still writes the old formats, chosen on the command line |
 | 0.7 | unnamed | long-term | The next long-term line. It drops the writers of the formats 0.4 reads, and keeps reading them |
 
+0.6 began as the port from C# to Swift, as Tony Bark chose on 2026-11-12,
+before online play: it reads and writes the 0.5 formats only, so the old
+writers this table gives 0.6 are left to 0.5. Where Yokohama falls now is
+Tony Bark's to settle.
+
 A long-term line is kept on its own branch, such as `release/0.5`, while the
 next one is built. A fix there is an ordinary patch: GitInfo counts it up,
 as 0.5.1xx, with no fourth number, unlike the 0.3 backports.
@@ -54,6 +59,15 @@ complete; it stays a beta for a while, whatever its version, as the
 focus turns to polish.
 
 ## Current focus
+
+**The port to Swift, 0.6.** The C# code had grown too heavy to carry a
+game, a scenario editor, and network play in one loop of switches, so
+CityLimits is ported to Swift, with raylib-swift and Hudini, and the C#
+build stays on the `legacy/csharp` branch as it was at 0.5. The Swift
+build plays like the C# one, reads and writes the 0.5 formats, and runs on
+Linux for now. Play and the editor are sessions of their own over one
+shared screen. Saving waits out a disaster, and the ticker says so. See
+[the port's checklist](#the-port-to-swift-06).
 
 The engine plays like Micropolis, and 0.4 is a beta with scenarios to play,
 four built-in challenges, and a scenario editor built into the game. Happy
@@ -101,6 +115,7 @@ Next, in order:
 | Happy Isle: Player-facing game | 100% | 0 | The palette, laid out as Micropolis', and the HUD, with its bar along the bottom over a news ticker after Tony Bark's mock-up; the budget, demand, and city panels, the overview's power mode, the settings window, and the New City window; cities that save, load, autosave, and import from Micropolis; and scenarios to play, with four built-in challenges |
 | Kyoto: The scenario editor | 100% | 0 | The interface library it shares with play, the stadium, the seaport, and the airport the alpha missed, with the demand they hold back, the shared city view, editing a scenario in the game, tested by playing, its details, and saving it, with a New City window |
 | Senri (0.5, long-term): Formats, specs, neighbours, and packaging | 90% | 2–6 | Every format is at its next major and can be written for 0.4, the base game is data in `common/`, with more of it as specs, power runs along roads, facilities influence the land around them, every window has a unified title bar, the city has ordinances and neighbours to deal with, and the game is packaged for Linux, Windows, and macOS; what else turns up before online play is left |
+| The port to Swift (0.6) | 90% | 2–4 | The core, the game, the formats, the editor, and the docs are ported; removing the C# projects from `main` is left |
 | Yokohama (0.6): Online play | 0% | unestimated | Nothing yet: a Network Edition-style shared city, hosted by `CityLimits.Server`. Its checklist is a draft, settled when it starts |
 | | **Total** | **≈ 10–18, Yokohama unestimated** | |
 
@@ -623,6 +638,26 @@ play builds on, so 0.6 adds to them rather than changing them.
   - [ ] `--headless` only reads `common/`, and leaves writing it to the
     game in a window, as Tony Bark asked; 0.5.101 writes it from both.
 
+### The port to Swift (0.6)
+
+Ported in phases, each checked against the C# build, as the scorecard's
+[port section](./scorecard.md#the-swift-port-06) records.
+
+- [x] Phase 1: the Swift package, beside the C# projects, with the C#
+  build moved to `legacy/csharp`.
+- [x] Phase 2: the world and the simulation, matching the C# build's
+  terrain, towns, and disasters step for step.
+- [x] Phase 3: the formats, definitions and mods, scenarios, the command
+  line, and Micropolis imports, matching the C# build's saves and reports.
+- [x] Phase 4: play on raylib-swift and Hudini: the map and tools, the HUD,
+  the windows, the start menu, saving, loading, autosave, scenarios, and
+  saving held off during a disaster.
+- [x] Phase 5a: the scenario editor as a session of its own.
+- [x] Phase 5b: the docs.
+- [ ] Phase 5c: the C# projects removed from `main`.
+- [ ] Afterwards: the formats reviewed against the forward compatibility
+  rule, as Tony Bark asked.
+
 ### Yokohama: Online play
 
 Version 0.6: a region of cities, after SimCity 2000 Network Edition's way
@@ -691,6 +726,7 @@ Yokohama waits on Senri, and on Tony Bark settling its design from the
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-11-12 | major | 0.6 begins as the port to Swift, as Tony Bark chose: the C# build to `legacy/csharp`, the 0.5 formats only, Linux only for now, and play and the scenario editor as sessions over one screen rather than a loop with a mode flag. Ported and checked against the C# build through phase 5b; saving is held off while a disaster is under way, with "Saving disabled" on the ticker. Where Yokohama falls is left to Tony Bark. 117 tests. |
 | 2026-10-28 | minor | Senri, N6d: the tornado and the monster, after Micropolis' sprites, each with a row on the Disasters tab and a scenario event, the helicopter chasing them, and the `menaces` feature. Micropolis' disasters are all in; N6 has the `--headless` change left. 969 tests. |
 | 2026-10-28 | minor | Senri, N6c: planes, helicopters, and ships, after Micropolis' sprites, with air crashes and shipwrecks on the Disasters tab, scenario events for each, and the `vehicles` feature. 958 tests. |
 | 2026-10-28 | minor | Senri, N6b: nuclear meltdowns, after Micropolis', and the radioactive ground they leave for decades, with a switch on the Disasters tab, a scenario event, and the `radiation` feature. 946 tests. |

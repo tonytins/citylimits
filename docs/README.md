@@ -1,8 +1,9 @@
 # CityLimits documentation
 
-CityLimits is a SimCity-style city builder by Tony Bark, written in C# with
-Raylib-cs, that plays like Micropolis, the open-source SimCity Classic, and
-goes its own way from there. These pages are for anyone who wants to play
+CityLimits is a SimCity-style city builder by Tony Bark, written in Swift
+with raylib-swift and Hudini, that plays like Micropolis, the open-source
+SimCity Classic, and goes its own way from there. Up to 0.5 it was written
+in C#; that build lives on the `legacy/csharp` branch. These pages are for anyone who wants to play
 it, mod it, or work on it. The project's front page is the
 [README](../README.md) at the top of the repository.
 
@@ -20,8 +21,9 @@ it, mod it, or work on it. The project's front page is the
 ## How the game keeps things
 
 - [Saving](./saving.md): where cities are saved, the two save formats
-  (`.fcl`, flat JSON, and `.cl`, binary), autosave, importing Micropolis'
-  cities, and how a city saved by a newer version opens in an older one.
+  (`.fcl`, flat JSON, and `.cl`, binary), autosave, saving held off during
+  a disaster, importing Micropolis' cities, and how a city saved by a newer
+  version opens in an older one.
 - [Schemas](./schemas/): a JSON schema for every version of every file
   format, for editors such as VS Code to check a file as it is written.
 
@@ -44,5 +46,6 @@ it, mod it, or work on it. The project's front page is the
 coding agents alike: the simulation is deterministic, it never touches the
 engine, the game never crashes, and every format change is versioned. It
 also lists the commands to build, test, and run the game.
-[Packaging](../packaging/README.md) builds the game into the packages
-players download, for Linux, Windows, and macOS.
+[Packaging](../packaging/README.md) builds the C# build into the packages
+players download, for Linux, Windows, and macOS; it doesn't package the
+Swift build yet.

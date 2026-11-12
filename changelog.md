@@ -1,5 +1,40 @@
 # CityLimits Changelog
 
+## 0.6.116
+
+CityLimits is now written in Swift, with raylib-swift and Hudini, rather
+than C#. It plays as 0.5 did, and this entry covers 0.6 so far. For now
+it runs on Linux, and isn't packaged yet: build it from source, as the
+README says. 0.5, the C# build, stays on the `legacy/csharp` branch, and
+still runs on Linux, Windows, and macOS.
+
+- **Saving waits out a disaster.** While anything burns or is flooded, or
+  a monster or a tornado is about, the city isn't saved, by Ctrl+S or by
+  an autosave, and the news ticker says `Saving disabled`. An autosave
+  that falls due waits until the disaster is over.
+- **The 0.5 formats only.** 0.6 opens cities saved as format 2.0 and
+  scenarios in 3.0, as 0.5 writes them. A city or scenario from 0.4 or
+  before opens in 0.5, which saves it again for 0.6. Save for 0.4 is
+  gone from the settings; 0.6 leaves its value in `settings.json` for 0.5.
+- **Settings** has two tabs: Game, with fullscreen, autosave, and
+  disasters, and Disasters, with each disaster's switch.
+- **Windows** are drawn solid, so the map no longer shows through, and
+  the Demand and Help windows minimize to buttons above the bar.
+- **The scenario editor** keeps its place in the game, from the
+  Scenarios list's New and Edit. Its Escape menu's Reset is now called
+  Reset the test, and Help's Editing scenarios page is its Editing tab.
+- **Disasters** are named in words in the city panel and the scenario
+  details, such as "Plane crash".
+
+For modders and scenario writers: the files are unchanged, and every
+mod, scenario, and save 0.5 writes opens in 0.6. The JSON schemas in
+`docs/schemas/` are 0.5's.
+
+For developers: the code is a Swift package, `CityLimitsCore`, with no
+engine, and the `citylimits` game; see `AGENTS.md`. Settings,
+saves, scenarios, and the command line behave as 0.5's, and the
+simulation matches 0.5's step for step for the same seed and strokes.
+
 ## 0.5.112
 
 The last of Micropolis' disasters come to CityLimits: the tornado and the

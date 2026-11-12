@@ -149,42 +149,40 @@ numbers.
 
 ## For developers
 
-The definitions live in `CityLimits.Core/Definitions/`:
+The definitions live in `Sources/CityLimitsCore/Definitions/`:
 
-- `BaseGame` is the base game's definitions, in code, so they can't go
-  missing: `BaseGame.Json`, the zones, plants, and services in the
-  definitions format 1.0 and read by the same `DefinitionLoader` a mod
-  is, and the facilities, infrastructure, and economy as specs.
-- `DefinitionLoader` reads and checks the base game's definitions and
-  every spec file (`SpecFile`), reporting the first problem with where it
-  is. Each kind of file becomes a patch (`ZonePatch`, `ServicePatch`, and
-  so on) that sets only what it lists, and a later file's patch goes on
-  top of an earlier one's (`Then`).
-- `SpecFolder` finds a folder's spec files, however deep, in path order.
-- `BaseSpecFiles` writes the base game's spec files into `common/`
-  (`Refresh`, once for each build, by the stamp in `version.txt`) and
-  applies them to `CityDefinitions.Base` (`Load`), without counting them
-  as a mod.
-- `ModLoader.Load` reads a mods folder, applies each valid mod in id order
-  on top of the definitions it is given, and returns the problems it
-  found.
-- `CityDefinitions` holds the specs a city runs on (`ZoneSpec`,
-  `PlantSpec`, `ServiceSpec`, `FacilitySpec`, `InfrastructureSpec`,
-  `EconomySpec`); a city keeps the definitions it was made with
-  (`CitySimulation.Definitions`).
+- `Specs.swift` holds the specs a city runs on (`ZoneSpec`, `PlantSpec`,
+  `ServiceSpec`, `FacilitySpec`, `InfrastructureSpec`, `EconomySpec`,
+  `OrdinanceSpec`), and `CityDefinitions.swift` gathers them.
+  `CityDefinitions.base` is the base game's, in code, so they can't go
+  missing; a city keeps the definitions it was made with
+  (`CitySimulation.definitions`).
+- `SpecFiles.swift` reads and checks every spec file (`SpecFile`, format
+  2.2 in `SpecFormat`), reporting the first problem with where it is.
+  `CityDefinitions.applying(_:)` puts files on top of definitions, each
+  setting only what it lists, and `specFiles()` writes the base game's
+  own.
+- `SpecFolders` finds a folder's spec files, however deep, in path order
+  (`read`); writes the base game's files into `common/` once for each
+  build, by the stamp in `version.txt` (`refreshBase`), and applies them
+  without counting them as a mod (`loadBase`); and reads a mods folder,
+  applying each valid mod in id order and returning the problems it
+  found (`loadMods`).
 - The game reads the folders `GameFolders` works out
-  (`Core/Settings/GameFolders.cs`, `Game/GameMods.cs`): `common/` in the
-  config folder, then `Documents/CityLimits/Mods`, or both beside the
-  executable in a portable copy. Both the window and `--headless` use
-  them; `ScenarioRunner` and the challenges never do.
+  (`Sources/CityLimitsCore/Commands/Commands.swift`, whose
+  `definitions(build:)` does all of the above): `common/` in the config
+  folder, then `Documents/CityLimits/Mods`, or both beside the
+  executable in a portable copy. A new city, a saved city opened, and
+  `--headless` use them; `ScenarioRunner` and the challenges never do.
 
 To make something moddable:
 
 1. Put the value in a spec instead of a constant.
 2. Give it a field in the spec file it belongs to, its base value in
-   `BaseGame`, and a line in `BaseSpecFiles.Write`, so `common/` shows it.
-3. Check the field in `DefinitionLoader`, with a range and a message that
-   says where the problem is.
+   `CityDefinitions.base`, and a line in `specFiles()`, so `common/` shows
+   it.
+3. Check the field where `SpecFile` reads it, with a range and a message
+   that says where the problem is.
 4. Let the mod's patch change it, so a mod sets only what it lists.
 5. Add tests: that a mod can change it, and that a bad value is refused
    with the right message.
