@@ -50,3 +50,13 @@ enum Figures {
 
     static func count(_ value: Int) -> String { NewsDesk.grouped(value) }
 }
+
+extension Disaster {
+    /// How a window names it: `planeCrash` is "Plane crash".
+    var title: String {
+        let words = "\(self)".reduce(into: "") { text, letter in
+            text += letter.isUppercase ? " " + letter.lowercased() : String(letter)
+        }
+        return words.prefix(1).uppercased() + words.dropFirst()
+    }
+}

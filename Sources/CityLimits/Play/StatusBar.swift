@@ -35,12 +35,13 @@ final class StatusBar {
 
     func contains(_ point: Vector2) -> Bool { point.y >= origin.y }
 
-    /// Fits the bar to the screen, shows the city, moves the ticker on, and answers a click.
-    func update(city: CitySimulation, speed: GameSpeed, elapsed: Float, takesInput: Bool) -> Action? {
+    /// Fits the bar to the screen, shows the city, under `name` in place of its own when one is
+    /// given, moves the ticker on, and answers a click.
+    func update(city: CitySimulation, name: String? = nil, speed: GameSpeed, elapsed: Float, takesInput: Bool) -> Action? {
         view.setWindowSize(Vector2(x: Float(GetScreenWidth()), y: Self.height))
         let date = city.date
         view.setText("\(date.month < 10 ? "0" : "")\(date.month)/\(date.year)", named: "date")
-        view.setText(city.name, named: "cityName")
+        view.setText(name ?? city.name, named: "cityName")
         let funds = city.treasury.funds
         view.setText(Figures.money(funds), named: funds < 0 ? "debt" : "funds")
         view.setHidden(funds < 0, named: "funds")

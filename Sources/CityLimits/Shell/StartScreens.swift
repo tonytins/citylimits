@@ -62,6 +62,7 @@ final class StartMenu {
         case newCity(name: String, seed: Int32?)
         case loadCity(LoadedCity, file: URL)
         case playChallenge(CitySimulation)
+        case editScenario(ScenarioEdit, city: CitySimulation)
         case quit
     }
 
@@ -88,6 +89,9 @@ final class StartMenu {
     private let settings: SettingsKeeper
     private let windows = WindowManager()
     private let newCity = NewCityWindow()
+    private let newScenario = NewCityWindow()
+    private let notice = NoticeWindow()
+    private let scenariosFolder: URL
     private let settingsWindow = SettingsWindow()
     private let load: LoadWindow
     private let scenarios: ScenarioWindow
@@ -96,8 +100,9 @@ final class StartMenu {
     private var choice: Choice?
 
     /// A menu that loads cities from `load` and lists challenges from `scenarios`.
-    init(assets: GameAssets, version: String, settings: SettingsKeeper, load: LoadWindow, scenarios: ScenarioWindow) {
+    init(assets: GameAssets, version: String, settings: SettingsKeeper, load: LoadWindow, scenarios: ScenarioWindow, scenariosFolder: URL) {
         self.assets = assets
+        self.scenariosFolder = scenariosFolder
         self.version = version
         self.settings = settings
         self.load = load
@@ -105,11 +110,32 @@ final class StartMenu {
         newCity.onStart = { [unowned self] name, seed in choice = .newCity(name: name, seed: seed) }
         load.onOpen = { [unowned self] loaded, file in choice = .loadCity(loaded, file: file) }
         scenarios.onPlay = { [unowned self] city in choice = .playChallenge(city) }
+        scenarios.onNew = { [unowned self] in newScenario.open(title: "New scenario", name: "New Scenario", seed: commandLineSeed, in: windows) }
+        scenarios.onEdit = { [unowned self] file in
+            startEditing("open it") { () throws(FormatError) in try ScenarioEdit.open(file, saveFolder: scenariosFolder) }
+        }
+        newScenario.onStart = { [unowned self] name, seed in
+            startEditing("start it") { () throws(FormatError) in
+                try ScenarioEdit.new(name: name, seed: seed ?? Int32.random(in: 0...Int32.max), saveFolder: scenariosFolder)
+            }
+        }
         settingsWindow.onChange = { [unowned settings] chosen in settings.settings = chosen }
         settingsWindow.onClose = { [unowned settings] _ in settings.save() }
     }
 
+    // Opens a scenario in the editor, with its city, or says why it couldn't.
+    private func startEditing(_ what: String, _ make: () throws(FormatError) -> ScenarioEdit) {
+        do throws(FormatError) {
+            let edit = try make()
+            choice = .editScenario(edit, city: try edit.openCity())
+        } catch {
+            warn(error.message)
+            notice.show("The scenario couldn't \(what)", error.message, in: windows)
+        }
+    }
+
     func unload() {
+        newScenario.unload()
         newCity.unload()
         load.unload()
         scenarios.unload()
@@ -140,6 +166,7 @@ final class StartMenu {
         let wasOverWindow = windows.contains(GetMousePosition())
         windows.update()
         if windows.isOpen(newCity.frame) { newCity.refresh() }
+        if windows.isOpen(newScenario.frame) { newScenario.refresh() }
         if windows.isOpen(settingsWindow.frame) { settingsWindow.refresh(in: windows) }
         load.refresh()
         scenarios.refresh()
@@ -208,6 +235,8 @@ final class StartMenu {
             DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Interface.theme.overlay)
             if frame === newCity.frame {
                 newCity.draw(in: bounds)
+            } else if frame === newScenario.frame {
+                newScenario.draw(in: bounds)
             } else if frame === load.frame {
                 load.draw(in: bounds)
             } else if frame === scenarios.frame {

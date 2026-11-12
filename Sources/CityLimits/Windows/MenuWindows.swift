@@ -128,8 +128,10 @@ final class NewCityWindow {
         frame = WindowFrame(view: view, title: "New city")
     }
 
-    func open(seed: Int32?, in windows: WindowManager) {
-        view.setText(CitySimulation.defaultName, named: "name")
+    /// Opens it titled `title`, with a name to start from, as New scenario uses it too.
+    func open(title: String = "New city", name: String = CitySimulation.defaultName, seed: Int32?, in windows: WindowManager) {
+        frame.title = title
+        view.setText(name, named: "name")
         view.setText(seed.map(String.init) ?? "", named: "seed")
         shownSeed = nil
         windows.open(frame, modal: true, dimsBehind: true) { [unowned self, unowned windows] event in

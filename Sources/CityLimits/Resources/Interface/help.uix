@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Help, a window that stays open beside the map and can be minimized: what each key and press
-     does. A heading has no action. -->
+<!-- Help, a window that stays open beside the map and can be minimized. Keys says what each key
+     and press does (a heading has no action); Editing says how a scenario is made. -->
 <UIScript version="1">
   <Window width="520" height="420"/>
+
+  <ToolbarItem name="keysTab" title="Keys"/>
+  <ToolbarItem name="editingTab" title="Editing"/>
 
   <Style name="heading" textColor="#F0BE5A" fontSize="14"/>
   <Style name="key" textColor="#E4E8EE" fontSize="14"/>
@@ -46,4 +49,5 @@
   <Text name="action18" x="142" y="372" width="366" height="14" style="action" text="Open the budget"/>
   <Text name="key19" x="12" y="392" width="130" height="14" style="key" text="Title bars"/>
   <Text name="action19" x="142" y="392" width="366" height="14" style="action" text="Drag a window to move it"/>
+  <TextArea name="editing" x="12" y="12" width="496" height="396" readOnly="true" text="Opening one&#10;Scenarios on the start menu lists them: Edit opens the one picked, paused, and New starts one from a seed.&#10;&#10;Building&#10;Building is free while a scenario is edited, paused or playing, and its money stays as the scenario has it.&#10;&#10;Its details&#10;Click the city&apos;s name on the bar for the city panel, then Edit scenario under the goals: its name, dates, money, and briefing, its goals, and its disasters, each of which may repeat. Apply checks them and Cancel drops them.&#10;&#10;Testing&#10;Play to test it: the city is kept as it stands, and the scenario runs on it as a player would see it. The Escape menu&apos;s Reset the test undoes the test; Start over opens it afresh.&#10;&#10;Saving&#10;Ctrl+S, or the Escape menu&apos;s Save, saves it to Documents/CityLimits/Scenarios with its city beside it."/>
 </UIScript>

@@ -67,7 +67,7 @@ struct CityLimits {
             assets: assets, version: GitVersion.version, settings: settings,
             load: LoadWindow(folder: folders.citiesFolder, definitions: definitions),
             // The game's own challenges, then the player's.
-            scenarios: ScenarioWindow(folders: [builtInScenarios, folders.scenariosFolder]))
+            scenarios: ScenarioWindow(folders: [builtInScenarios, folders.scenariosFolder]), scenariosFolder: folders.scenariosFolder)
         menu.show(fromLoading: true, seed: seed)
         menus: while !WindowShouldClose() {
             var playing: (city: CitySimulation, file: URL?, notes: [String])
@@ -91,6 +91,18 @@ struct CityLimits {
             case .playChallenge(let city):
                 print("Playing the challenge \(city.challenge?.name ?? city.name)")
                 playing = (city, nil, [])
+            case .editScenario(let edit, let city):
+                print("Editing the scenario \(edit.scenario.name) from \(edit.file.path)")
+                let session = EditorSession(edit: edit, city: city, assets: assets, settings: settings)
+                while !WindowShouldClose() && session.leaving == nil {
+                    session.update()
+                    session.draw()
+                }
+                let leave = session.leaving
+                session.unload()
+                guard leave == .toMenu else { break menus }
+                menu.show(fromLoading: false, seed: seed)
+                continue menus
             }
 
             // A city plays until the player leaves it, and then any city they open from it.

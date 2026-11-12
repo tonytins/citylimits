@@ -56,6 +56,7 @@
   <Text name="goalsLabel" x="12" y="228" width="696" height="14" style="figure"/>
   <Text name="goals" x="20" y="250" width="420" height="120" style="detail"/>
   <Text name="goalStates" x="500" y="250" width="208" height="120" style="detail" alignment="right"/>
+  <Button name="editScenario" x="12" y="380" width="140" height="26" text="Edit scenario"/>
 
   <!-- Ordinances -->
   <Region name="ordinances" x="12" y="8" width="396" height="10"/>

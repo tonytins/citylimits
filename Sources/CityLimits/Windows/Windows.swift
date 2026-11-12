@@ -285,14 +285,27 @@ final class DemandWindow {
     }
 }
 
-/// What each key and press does, in a window that stays open beside the map and minimizes.
+/// What each key and press does, and how a scenario is made, in a window that stays open beside
+/// the map and minimizes.
 @MainActor
 final class HelpWindow {
     let frame: WindowFrame
+    private let view = Interface.view("help", fallbackSize: Vector2(x: 520, y: 420))
+    private let keyControls: [String]
 
     init() {
-        frame = WindowFrame(view: Interface.view("help", fallbackSize: Vector2(x: 520, y: 420)), title: "Help")
+        frame = WindowFrame(view: view, title: "Help")
         frame.showsMinimizeButton = true
+        let view = self.view
+        keyControls = (0..<64).flatMap { ["row\($0)", "key\($0)", "action\($0)"] }.filter { view.bounds(named: $0, at: .zero) != nil }
+        show("keysTab")
+    }
+
+    private func show(_ tab: String) {
+        view.setSelected(tab == "keysTab", named: "keysTab")
+        view.setSelected(tab == "editingTab", named: "editingTab")
+        for name in keyControls { view.setHidden(tab != "keysTab", named: name) }
+        view.setHidden(tab != "editingTab", named: "editing")
     }
 
     /// Opens help, or closes it when it's already open.
@@ -301,6 +314,12 @@ final class HelpWindow {
             windows.close(frame)
             return
         }
-        windows.open(frame) { [unowned self, unowned windows] event in closeOrMinimize(event, frame, in: windows) }
+        windows.open(frame) { [unowned self, unowned windows] event in
+            if case .view(.pressed(control: let tab)) = event {
+                show(tab)
+            } else {
+                closeOrMinimize(event, frame, in: windows)
+            }
+        }
     }
 }

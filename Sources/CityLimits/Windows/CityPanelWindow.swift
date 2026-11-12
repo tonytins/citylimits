@@ -18,6 +18,8 @@ final class CityPanelWindow {
     private static let wideWidth: Float = 720
     private static let cityHeight: Float = 226
     private static let challengeHeight: Float = 380
+    // The Edit scenario button's row, under a draft's goals.
+    private static let editRow: Float = 36
     private static let neighboursHeight: Float = 226
     private static let ordinanceRow: Float = 26
     private static let noteSeconds = 2.0
@@ -44,6 +46,14 @@ final class CityPanelWindow {
     var onBreakDeal: ((Side) -> Void)?
     /// Asked to show the offer standing.
     var onShowOffer: (() -> Void)?
+    /// The scenario being edited, as a challenge not yet begun, which the City tab shows while
+    /// the city plays none; nil outside the editor, or while a test plays the real one.
+    var draft: Challenge?
+    /// Asked to open the scenario's details. The Edit scenario button shows only with a draft.
+    var onEditScenario: (() -> Void)?
+
+    private var challenge: Challenge? { city.challenge ?? draft }
+    private var isDraft: Bool { city.challenge == nil && draft != nil }
 
     init(city: CitySimulation) {
         self.city = city
@@ -83,6 +93,8 @@ final class CityPanelWindow {
             } else if name == "copySeed" {
                 SetClipboardText(String(city.seed))
                 copiedAt = GetTime()
+            } else if name == "editScenario" {
+                onEditScenario?()
             } else if name == "offer" {
                 onShowOffer?()
             } else if name.hasPrefix("break"), let index = Int(name.dropFirst(5)), let side = Side(rawValue: index) {
@@ -96,9 +108,10 @@ final class CityPanelWindow {
     private func show(_ chosen: Tab) {
         tab = chosen
         for each in Tab.allCases { view.setSelected(each == chosen, named: each.rawValue) }
-        let hasChallenge = city.challenge != nil
+        let hasChallenge = challenge != nil
         for name in Self.cityControls { view.setHidden(chosen != .city, named: name) }
         for name in Self.challengeControls { view.setHidden(chosen != .city || !hasChallenge, named: name) }
+        view.setHidden(chosen != .city || !isDraft || onEditScenario == nil, named: "editScenario")
         for name in Self.neighbourControls { view.setHidden(chosen != .neighbours, named: name) }
         view.setHidden(chosen != .ordinances, named: "ordinances")
         view.setHidden(chosen != .ordinances, named: "ordinanceNote")
@@ -106,7 +119,8 @@ final class CityPanelWindow {
         switch chosen {
         case .city:
             view.setWindowSize(Vector2(
-                x: hasChallenge ? Self.wideWidth : Self.narrowWidth, y: hasChallenge ? Self.challengeHeight : Self.cityHeight))
+                x: hasChallenge ? Self.wideWidth : Self.narrowWidth,
+                y: (hasChallenge ? Self.challengeHeight : Self.cityHeight) + (isDraft && onEditScenario != nil ? Self.editRow : 0)))
         case .ordinances:
             // The rows run as far as the city's ordinances go, mods' included, with the note under them.
             let rows = Float(city.ordinances.all.count) * Self.ordinanceRow
@@ -124,7 +138,7 @@ final class CityPanelWindow {
         switch tab {
         case .city:
             showCity()
-            if let challenge = city.challenge { showChallenge(challenge) }
+            if let challenge { showChallenge(challenge) }
         case .ordinances:
             showOrdinanceNote()
         case .neighbours:
@@ -173,10 +187,11 @@ final class CityPanelWindow {
     // The challenge the city is played as: its name, its end, how it stands, the disasters still
     // to come, and its goals, each with what the city measures now.
     private func showChallenge(_ challenge: Challenge) {
+        view.setText(isDraft ? "Scenario" : "Challenge", named: "challengeLabel")
         view.setText(challenge.name, named: "challengeName")
         view.setText("Ends \(challenge.ends)", named: "ends")
         let state = challenge.won
-        view.setText("Under way", named: "state")
+        view.setText(isDraft ? "Being edited" : "Under way", named: "state")
         view.setText("Lost", named: "stateWarning")
         view.setText("Won", named: "stateWon")
         view.setHidden(state != nil, named: "state")
@@ -184,10 +199,7 @@ final class CityPanelWindow {
         view.setHidden(state != true, named: "stateWon")
 
         let upcoming = challenge.upcomingEvents
-        var events = upcoming.prefix(Self.mostEvents).map { event in
-            let name = "\(event.disaster)"
-            return "\(name.prefix(1).uppercased())\(name.dropFirst()), \(event.date)"
-        }
+        var events = upcoming.prefix(Self.mostEvents).map { "\($0.disaster.title), \($0.date)" }
         if upcoming.count > Self.mostEvents { events.append("and \(upcoming.count - Self.mostEvents) more") }
         view.setText(events.isEmpty ? "None" : events.joined(separator: "\n"), named: "events")
 

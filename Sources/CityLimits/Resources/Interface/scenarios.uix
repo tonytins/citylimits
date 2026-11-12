@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- The challenges, the game's own and then the player's. Picking one shows its map, which the
      game draws into its region, and what it asks of the player; Play, or a double-click, starts
-     it. -->
+     it. New starts a scenario of one's own, and Edit opens the one picked in the editor. -->
 <UIScript version="1">
   <Window width="660" height="400"/>
 
@@ -13,6 +13,8 @@
   <Text name="empty" x="20" y="22" width="350" height="12" style="dim" text="No challenges were found."/>
   <Region name="preview" x="402" y="12" width="246" height="205"/>
   <TextArea name="briefing" x="402" y="226" width="246" height="120" readOnly="true"/>
+  <Button name="new" x="12" y="356" width="96" height="30" text="New"/>
+  <Button name="edit" x="116" y="356" width="96" height="30" text="Edit"/>
   <Button name="back" x="448" y="356" width="96" height="30" text="Back"/>
   <Button name="play" x="552" y="356" width="96" height="30" text="Play"/>
 </UIScript>

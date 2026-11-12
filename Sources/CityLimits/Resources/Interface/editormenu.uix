@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- The menu Escape opens over a scenario being edited. Reset shows only while a test plays. -->
+<UIScript version="1">
+  <Window width="220" height="282"/>
+
+  <Style name="dim" textColor="#969EAA" fontSize="14"/>
+
+  <Text name="paused" x="14" y="12" width="192" height="14" style="dim" text="Editing"/>
+  <Button name="resume" x="14" y="38" width="192" height="28" text="Resume"/>
+  <Button name="save" x="14" y="72" width="192" height="28" text="Save"/>
+  <Button name="reset" x="14" y="106" width="192" height="28" text="Reset the test"/>
+  <Button name="startOver" x="14" y="140" width="192" height="28" text="Start over"/>
+  <Button name="settings" x="14" y="174" width="192" height="28" text="Settings"/>
+  <Button name="mainMenu" x="14" y="208" width="192" height="28" text="Main menu"/>
+  <Button name="quit" x="14" y="242" width="192" height="28" text="Quit"/>
+</UIScript>

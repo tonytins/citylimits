@@ -128,6 +128,11 @@ final class ScenarioWindow {
     private var listed: [(file: URL, scenario: Scenario?, problem: String?)] = []
     private var picked: Scenario?
     var onPlay: ((CitySimulation) -> Void)?
+    /// Asked to start a new scenario.
+    var onNew: (() -> Void)?
+    /// Asked to edit the scenario in a file.
+    var onEdit: ((URL) -> Void)?
+    private var pickedFile: URL?
     /// Told when a challenge couldn't start, and why.
     var onProblem: ((String) -> Void)?
 
@@ -149,6 +154,8 @@ final class ScenarioWindow {
         view.list(named: "scenarios")?.selectedIndex = nil
         view.setHidden(!listed.isEmpty, named: "empty")
         picked = nil
+        pickedFile = nil
+        view.setDisabled(true, named: "edit")
         preview.show(note: listed.isEmpty ? "" : "Pick a challenge to see it")
         view.setText(listed.isEmpty ? "" : "Pick a challenge to read what it asks of you.", named: "briefing")
         view.setDisabled(true, named: "play")
@@ -158,6 +165,13 @@ final class ScenarioWindow {
                 windows.close(frame)
             case .view(.selected(control: "scenarios", let index)):
                 pick(index)
+            case .view(.pressed(control: "new")):
+                windows.close(frame)
+                onNew?()
+            case .view(.pressed(control: "edit")):
+                guard let pickedFile else { return }
+                windows.close(frame)
+                onEdit?(pickedFile)
             case .view(.pressed(control: "play")), .view(.submitted(control: "scenarios", text: _)):
                 guard let picked, picked.hasGoals else { return }
                 do throws(FormatError) {
@@ -186,12 +200,16 @@ final class ScenarioWindow {
         let entry = listed[index]
         guard let scenario = entry.scenario else {
             picked = nil
+            pickedFile = nil
+            view.setDisabled(true, named: "edit")
             preview.show(note: "No map: the file can't be read")
             view.setText("This file can't be played: \(entry.problem ?? "it couldn't be read")", named: "briefing")
             view.setDisabled(true, named: "play")
             return
         }
         picked = scenario
+        pickedFile = entry.file
+        view.setDisabled(false, named: "edit")
         if let file = scenario.cityFile {
             do throws(FormatError) {
                 preview.show(try CityFiles.read(file).city.map)
@@ -206,7 +224,7 @@ final class ScenarioWindow {
             briefing.append("By \(scenario.date(at: scenario.ticks)):")
             briefing += scenario.goals.map { "  \($0.text)" }
         } else {
-            briefing.append("A draft, with no goals yet; it opens in the editor once there is one.")
+            briefing.append("A draft, with no goals yet: Edit it to add some.")
         }
         view.setText(briefing.joined(separator: "\n"), named: "briefing")
         view.setDisabled(!scenario.hasGoals, named: "play")
