@@ -98,6 +98,8 @@ extension CitySimulation {
                 } ?? .null),
             ])),
         ]
+        // Only a city being played as a challenge has one.
+        if let challenge { fields.append(("challenge", challenge.capture())) }
         return .object(fields)
     }
 
@@ -334,10 +336,11 @@ extension CitySimulation {
         try section.roadTraffic.restoreRoadTraffic(city.traffic, map)
         city.railTiles = try section.rail.requiredInt("tiles", in: 0...CitySaveFormat.int32Max)
         city.budgetedRailTiles = try section.rail.requiredInt("budgetedTiles", in: 0...CitySaveFormat.int32Max)
-        try section.finish()
-        if section.challenge != nil {
-            notes.append("This city was being played as a challenge; this version opens it as a free city.")
+        if var challenge = section.challenge {
+            city.challenge = try Challenge.restore(&challenge)
+            try challenge.finish(noun: "a challenge has")
         }
+        try section.finish()
         try fields.finish(noun: "a save has")
         return LoadedCity(city: city, notes: notes)
     }

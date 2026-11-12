@@ -1,0 +1,56 @@
+{
+  "format": 1,
+  "scenario": {
+    "name": "Hard Times",
+    "source": "hard-times",
+    "seed": 314,
+    "ticks": 7680,
+    "start": "1972-01",
+    "ends": "1982-01"
+  },
+  "passed": true,
+  "won": false,
+  "final": {
+    "tick": 62976,
+    "cityTime": 3936,
+    "date": "1982-01",
+    "funds": 29097,
+    "counts": {
+      "road": 150,
+      "bridge": 0,
+      "residential": 33,
+      "commercial": 15,
+      "industrial": 10,
+      "developed": 44,
+      "coalPowerPlant": 1,
+      "nuclearPowerPlant": 0,
+      "powerLine": 23,
+      "fireStation": 1,
+      "policeStation": 0,
+      "park": 0,
+      "hospital": 1,
+      "church": 1,
+      "rail": 0,
+      "stadium": 0,
+      "seaport": 0,
+      "airport": 0
+    }
+  },
+  "actions": [],
+  "events": [],
+  "checks": [],
+  "goals": [
+    {
+      "index": 0,
+      "text": "Bring average crime down to 90 or less",
+      "met": false,
+      "found": 183
+    },
+    {
+      "index": 1,
+      "text": "Have a population of at least 15,000",
+      "met": true,
+      "found": 21360
+    }
+  ]
+}

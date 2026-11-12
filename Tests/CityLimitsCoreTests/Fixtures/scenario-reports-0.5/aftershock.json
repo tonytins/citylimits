@@ -1,0 +1,71 @@
+{
+  "format": 1,
+  "scenario": {
+    "name": "Aftershock",
+    "source": "aftershock",
+    "seed": 2024,
+    "ticks": 4608,
+    "start": "1922-01",
+    "ends": "1928-01"
+  },
+  "passed": true,
+  "won": false,
+  "final": {
+    "tick": 21504,
+    "cityTime": 1344,
+    "date": "1928-01",
+    "funds": 22714,
+    "counts": {
+      "road": 100,
+      "bridge": 0,
+      "residential": 23,
+      "commercial": 8,
+      "industrial": 8,
+      "developed": 16,
+      "coalPowerPlant": 1,
+      "nuclearPowerPlant": 0,
+      "powerLine": 17,
+      "fireStation": 1,
+      "policeStation": 1,
+      "park": 0,
+      "hospital": 0,
+      "church": 0,
+      "rail": 0,
+      "stadium": 0,
+      "seaport": 0,
+      "airport": 0
+    }
+  },
+  "actions": [],
+  "events": [
+    {
+      "index": 0,
+      "tick": 128,
+      "date": "1922-03",
+      "disaster": "Earthquake",
+      "happened": true
+    },
+    {
+      "index": 1,
+      "tick": 1856,
+      "date": "1924-06",
+      "disaster": "Earthquake",
+      "happened": true
+    }
+  ],
+  "checks": [],
+  "goals": [
+    {
+      "index": 0,
+      "text": "Have a population of at least 10,000",
+      "met": false,
+      "found": 5660
+    },
+    {
+      "index": 1,
+      "text": "Stay out of debt",
+      "met": true,
+      "found": 22714
+    }
+  ]
+}

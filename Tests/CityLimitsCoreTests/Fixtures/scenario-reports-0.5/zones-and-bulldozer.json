@@ -1,0 +1,206 @@
+{
+  "format": 1,
+  "scenario": {
+    "name": "Zones and the bulldozer",
+    "source": "zones-and-bulldozer",
+    "seed": 2000,
+    "ticks": 768,
+    "start": "1900-01",
+    "ends": "1901-01"
+  },
+  "passed": true,
+  "final": {
+    "tick": 768,
+    "cityTime": 48,
+    "date": "1901-01",
+    "funds": 16444,
+    "counts": {
+      "road": 12,
+      "bridge": 0,
+      "residential": 2,
+      "commercial": 1,
+      "industrial": 0,
+      "developed": 1,
+      "coalPowerPlant": 1,
+      "nuclearPowerPlant": 0,
+      "powerLine": 7,
+      "fireStation": 0,
+      "policeStation": 0,
+      "park": 0,
+      "hospital": 0,
+      "church": 0,
+      "rail": 0,
+      "stadium": 0,
+      "seaport": 0,
+      "airport": 0
+    }
+  },
+  "actions": [
+    {
+      "index": 0,
+      "tick": 0,
+      "tool": "Road",
+      "status": "Built",
+      "tiles": 12,
+      "skipped": {},
+      "cost": 120,
+      "met": true,
+      "date": "1900-01"
+    },
+    {
+      "index": 1,
+      "tick": 0,
+      "tool": "ZoneResidential",
+      "status": "Built",
+      "tiles": 27,
+      "skipped": {},
+      "cost": 300,
+      "met": true,
+      "date": "1900-01"
+    },
+    {
+      "index": 2,
+      "tick": 0,
+      "tool": "ZoneCommercial",
+      "status": "Built",
+      "tiles": 9,
+      "skipped": {},
+      "cost": 100,
+      "met": true,
+      "date": "1900-01"
+    },
+    {
+      "index": 3,
+      "tick": 0,
+      "tool": "CoalPowerPlant",
+      "status": "Built",
+      "tiles": 16,
+      "skipped": {},
+      "cost": 3000,
+      "met": true,
+      "date": "1900-01"
+    },
+    {
+      "index": 4,
+      "tick": 0,
+      "tool": "PowerLine",
+      "status": "Built",
+      "tiles": 7,
+      "skipped": {},
+      "cost": 35,
+      "met": true,
+      "date": "1900-01"
+    },
+    {
+      "index": 5,
+      "tick": 0,
+      "tool": "ZoneIndustrial",
+      "status": "Refused",
+      "reason": "CannotBuildHere",
+      "tiles": 0,
+      "skipped": {
+        "CannotBuildHere": 1
+      },
+      "cost": 0,
+      "met": true,
+      "date": "1900-01"
+    },
+    {
+      "index": 6,
+      "tick": 0,
+      "tool": "Bulldoze",
+      "status": "Refused",
+      "reason": "PartOfAZone",
+      "tiles": 0,
+      "skipped": {
+        "PartOfAZone": 1
+      },
+      "cost": 0,
+      "met": true,
+      "date": "1900-01"
+    },
+    {
+      "index": 7,
+      "tick": 0,
+      "tool": "Bulldoze",
+      "status": "Unchanged",
+      "reason": "NothingToClear",
+      "tiles": 0,
+      "skipped": {
+        "NothingToClear": 1
+      },
+      "cost": 0,
+      "met": true,
+      "date": "1900-01"
+    },
+    {
+      "index": 8,
+      "tick": 768,
+      "tool": "Bulldoze",
+      "status": "Built",
+      "tiles": 9,
+      "skipped": {},
+      "cost": 1,
+      "met": true,
+      "date": "1901-01"
+    }
+  ],
+  "events": [],
+  "checks": [
+    {
+      "index": 0,
+      "tick": 0,
+      "passed": true,
+      "date": "1900-01"
+    },
+    {
+      "index": 1,
+      "tick": 0,
+      "passed": true,
+      "date": "1900-01"
+    },
+    {
+      "index": 2,
+      "tick": 0,
+      "passed": true,
+      "date": "1900-01"
+    },
+    {
+      "index": 3,
+      "tick": 752,
+      "passed": true,
+      "date": "1900-12 week 4"
+    },
+    {
+      "index": 4,
+      "tick": 752,
+      "passed": true,
+      "date": "1900-12 week 4"
+    },
+    {
+      "index": 5,
+      "tick": 752,
+      "passed": true,
+      "date": "1900-12 week 4"
+    },
+    {
+      "index": 6,
+      "tick": 768,
+      "passed": true,
+      "date": "1901-01"
+    },
+    {
+      "index": 7,
+      "tick": 768,
+      "passed": true,
+      "date": "1901-01"
+    },
+    {
+      "index": 8,
+      "tick": 768,
+      "passed": true,
+      "date": "1901-01"
+    }
+  ],
+  "goals": []
+}

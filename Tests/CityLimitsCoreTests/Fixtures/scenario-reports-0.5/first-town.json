@@ -1,0 +1,64 @@
+{
+  "format": 1,
+  "scenario": {
+    "name": "First Town",
+    "source": "first-town",
+    "seed": 2000,
+    "ticks": 7680,
+    "start": "1900-01",
+    "ends": "1910-01"
+  },
+  "passed": true,
+  "won": false,
+  "final": {
+    "tick": 7680,
+    "cityTime": 480,
+    "date": "1910-01",
+    "funds": 20000,
+    "counts": {
+      "road": 0,
+      "bridge": 0,
+      "residential": 0,
+      "commercial": 0,
+      "industrial": 0,
+      "developed": 0,
+      "coalPowerPlant": 0,
+      "nuclearPowerPlant": 0,
+      "powerLine": 0,
+      "fireStation": 0,
+      "policeStation": 0,
+      "park": 0,
+      "hospital": 0,
+      "church": 0,
+      "rail": 0,
+      "stadium": 0,
+      "seaport": 0,
+      "airport": 0
+    }
+  },
+  "actions": [],
+  "events": [
+    {
+      "index": 0,
+      "tick": 4992,
+      "date": "1906-07",
+      "disaster": "Fire",
+      "happened": true
+    }
+  ],
+  "checks": [],
+  "goals": [
+    {
+      "index": 0,
+      "text": "Have a population of at least 2,000",
+      "met": false,
+      "found": 0
+    },
+    {
+      "index": 1,
+      "text": "Stay out of debt",
+      "met": true,
+      "found": 20000
+    }
+  ]
+}

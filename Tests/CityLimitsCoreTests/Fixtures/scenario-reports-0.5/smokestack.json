@@ -1,0 +1,56 @@
+{
+  "format": 1,
+  "scenario": {
+    "name": "Smokestack",
+    "source": "smokestack",
+    "seed": 7,
+    "ticks": 7680,
+    "start": "1965-01",
+    "ends": "1975-01"
+  },
+  "passed": true,
+  "won": false,
+  "final": {
+    "tick": 57600,
+    "cityTime": 3600,
+    "date": "1975-01",
+    "funds": 22550,
+    "counts": {
+      "road": 150,
+      "bridge": 0,
+      "residential": 30,
+      "commercial": 8,
+      "industrial": 20,
+      "developed": 41,
+      "coalPowerPlant": 1,
+      "nuclearPowerPlant": 0,
+      "powerLine": 26,
+      "fireStation": 1,
+      "policeStation": 1,
+      "park": 0,
+      "hospital": 1,
+      "church": 1,
+      "rail": 0,
+      "stadium": 0,
+      "seaport": 0,
+      "airport": 0
+    }
+  },
+  "actions": [],
+  "events": [],
+  "checks": [],
+  "goals": [
+    {
+      "index": 0,
+      "text": "Bring average pollution down to 65 or less",
+      "met": false,
+      "found": 85
+    },
+    {
+      "index": 1,
+      "text": "Have a population of at least 15,000",
+      "met": true,
+      "found": 18940
+    }
+  ]
+}

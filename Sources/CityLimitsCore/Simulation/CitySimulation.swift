@@ -151,6 +151,9 @@ public final class CitySimulation {
     /// Called with everything that happens, as it happens.
     public var onEvent: ((CityEvent) -> Void)?
 
+    /// The scenario the city is being played as, if any.
+    public var challenge: Challenge?
+
     /// Starts a city on a map. `startYear` is when its calendar begins.
     public init(map: TileMap, seed: Int32, funds: Int? = nil, definitions: CityDefinitions = .base, startYear: Int = CityCalendar.startYear) {
         precondition((CityCalendar.startYear...CityCalendar.latestStartYear).contains(startYear), "start year \(startYear) is out of range")
@@ -213,6 +216,9 @@ public final class CitySimulation {
 
     /// Runs one step.
     public func tick() {
+        if let challenge, let goals = challenge.beforeStep(self) {
+            onEvent?(.challengeFinished(won: challenge.won ?? false, goals: goals))
+        }
         tickCount += 1
         let phase = tickCount % CityCalendar.stepsPerCount
         switch phase {

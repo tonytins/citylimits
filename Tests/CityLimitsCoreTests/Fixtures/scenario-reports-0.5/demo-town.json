@@ -1,0 +1,169 @@
+{
+  "format": 1,
+  "scenario": {
+    "name": "Demo town",
+    "source": "demo-town",
+    "seed": 2000,
+    "ticks": 1536,
+    "start": "1900-01",
+    "ends": "1902-01"
+  },
+  "passed": true,
+  "final": {
+    "tick": 1536,
+    "cityTime": 96,
+    "date": "1902-01",
+    "funds": 16572,
+    "counts": {
+      "road": 9,
+      "bridge": 0,
+      "residential": 1,
+      "commercial": 1,
+      "industrial": 0,
+      "developed": 1,
+      "coalPowerPlant": 1,
+      "nuclearPowerPlant": 0,
+      "powerLine": 7,
+      "fireStation": 0,
+      "policeStation": 0,
+      "park": 0,
+      "hospital": 0,
+      "church": 0,
+      "rail": 0,
+      "stadium": 0,
+      "seaport": 0,
+      "airport": 0
+    }
+  },
+  "actions": [
+    {
+      "index": 0,
+      "tick": 0,
+      "tool": "Road",
+      "status": "Built",
+      "tiles": 9,
+      "skipped": {},
+      "cost": 90,
+      "met": true,
+      "date": "1900-01"
+    },
+    {
+      "index": 1,
+      "tick": 0,
+      "tool": "ZoneResidential",
+      "status": "Built",
+      "tiles": 9,
+      "skipped": {},
+      "cost": 100,
+      "met": true,
+      "date": "1900-01"
+    },
+    {
+      "index": 2,
+      "tick": 0,
+      "tool": "ZoneCommercial",
+      "status": "Built",
+      "tiles": 9,
+      "skipped": {},
+      "cost": 100,
+      "met": true,
+      "date": "1900-01"
+    },
+    {
+      "index": 3,
+      "tick": 0,
+      "tool": "ZoneIndustrial",
+      "status": "Built",
+      "tiles": 9,
+      "skipped": {},
+      "cost": 100,
+      "met": true,
+      "date": "1900-01"
+    },
+    {
+      "index": 4,
+      "tick": 0,
+      "tool": "CoalPowerPlant",
+      "status": "Built",
+      "tiles": 16,
+      "skipped": {},
+      "cost": 3000,
+      "met": true,
+      "date": "1900-01"
+    },
+    {
+      "index": 5,
+      "tick": 0,
+      "tool": "PowerLine",
+      "status": "Built",
+      "tiles": 7,
+      "skipped": {},
+      "cost": 35,
+      "met": true,
+      "date": "1900-01"
+    },
+    {
+      "index": 6,
+      "tick": 768,
+      "tool": "Bulldoze",
+      "status": "Built",
+      "tiles": 9,
+      "skipped": {},
+      "cost": 1,
+      "met": true,
+      "date": "1901-01"
+    }
+  ],
+  "events": [],
+  "checks": [
+    {
+      "index": 0,
+      "tick": 0,
+      "passed": true,
+      "date": "1900-01"
+    },
+    {
+      "index": 1,
+      "tick": 1536,
+      "passed": true,
+      "date": "1902-01"
+    },
+    {
+      "index": 2,
+      "tick": 1536,
+      "passed": true,
+      "date": "1902-01"
+    },
+    {
+      "index": 3,
+      "tick": 1536,
+      "passed": true,
+      "date": "1902-01"
+    },
+    {
+      "index": 4,
+      "tick": 1536,
+      "passed": true,
+      "date": "1902-01"
+    },
+    {
+      "index": 5,
+      "tick": 1536,
+      "passed": true,
+      "date": "1902-01"
+    },
+    {
+      "index": 6,
+      "tick": 1536,
+      "passed": true,
+      "date": "1902-01"
+    },
+    {
+      "index": 7,
+      "tick": 1536,
+      "passed": true,
+      "date": "1902-01"
+    }
+  ],
+  "goals": []
+}

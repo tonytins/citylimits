@@ -53,4 +53,6 @@ public enum CityEvent: Sendable {
     case earthquake
     case ordinance(OrdinanceNews)
     case neighbour(NeighbourNews)
+    /// A challenge reached its end date, and its goals were judged.
+    case challengeFinished(won: Bool, goals: [GoalReport])
 }

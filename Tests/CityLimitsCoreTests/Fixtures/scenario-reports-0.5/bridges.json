@@ -1,0 +1,116 @@
+{
+  "format": 1,
+  "scenario": {
+    "name": "Bridges",
+    "source": "bridges",
+    "seed": 2000,
+    "ticks": 0,
+    "start": "1900-01",
+    "ends": "1900-01"
+  },
+  "passed": true,
+  "final": {
+    "tick": 0,
+    "cityTime": 0,
+    "date": "1900-01",
+    "funds": 19030,
+    "counts": {
+      "road": 25,
+      "bridge": 18,
+      "residential": 0,
+      "commercial": 0,
+      "industrial": 0,
+      "developed": 0,
+      "coalPowerPlant": 0,
+      "nuclearPowerPlant": 0,
+      "powerLine": 0,
+      "fireStation": 0,
+      "policeStation": 0,
+      "park": 0,
+      "hospital": 0,
+      "church": 0,
+      "rail": 0,
+      "stadium": 0,
+      "seaport": 0,
+      "airport": 0
+    }
+  },
+  "actions": [
+    {
+      "index": 0,
+      "tick": 0,
+      "tool": "Road",
+      "status": "Built",
+      "tiles": 16,
+      "skipped": {},
+      "cost": 640,
+      "met": true,
+      "date": "1900-01"
+    },
+    {
+      "index": 1,
+      "tick": 0,
+      "tool": "Road",
+      "status": "Built",
+      "tiles": 9,
+      "skipped": {},
+      "cost": 330,
+      "met": true,
+      "date": "1900-01"
+    },
+    {
+      "index": 2,
+      "tick": 0,
+      "tool": "Road",
+      "status": "Refused",
+      "reason": "CannotBuildHere",
+      "tiles": 0,
+      "skipped": {
+        "CannotBuildHere": 1
+      },
+      "cost": 0,
+      "met": true,
+      "date": "1900-01"
+    }
+  ],
+  "events": [],
+  "checks": [
+    {
+      "index": 0,
+      "tick": 0,
+      "passed": true,
+      "date": "1900-01"
+    },
+    {
+      "index": 1,
+      "tick": 0,
+      "passed": true,
+      "date": "1900-01"
+    },
+    {
+      "index": 2,
+      "tick": 0,
+      "passed": true,
+      "date": "1900-01"
+    },
+    {
+      "index": 3,
+      "tick": 0,
+      "passed": true,
+      "date": "1900-01"
+    },
+    {
+      "index": 4,
+      "tick": 0,
+      "passed": true,
+      "date": "1900-01"
+    },
+    {
+      "index": 5,
+      "tick": 0,
+      "passed": true,
+      "date": "1900-01"
+    }
+  ],
+  "goals": []
+}

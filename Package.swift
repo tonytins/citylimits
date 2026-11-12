@@ -25,6 +25,9 @@ let package = Package(
                 .product(name: "Hudini", package: "Hudini"),
                 .product(name: "GitVersion", package: "GitVersion"),
             ],
+            resources: [
+                .copy("Resources/Scenarios"),
+            ],
             plugins: [
                 .plugin(name: "GitVersionPlugin", package: "GitVersion"),
             ],

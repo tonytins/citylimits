@@ -57,7 +57,7 @@ public enum BuildRefusal: Int, CaseIterable, Sendable {
 
 /// What happened when a tool was used.
 public struct BuildResult: Hashable, Sendable {
-    public enum Status: Sendable { case built, unchanged, refused }
+    public enum Status: CaseIterable, Sendable { case built, unchanged, refused }
 
     public var status: Status
     public var reason: BuildRefusal
