@@ -123,7 +123,7 @@ public struct NewsDesk {
     }
 
     // A whole number with commas between the thousands, as 250,000.
-    static func grouped(_ value: Int) -> String {
+    public static func grouped(_ value: Int) -> String {
         let digits = String(value.magnitude)
         var result = ""
         for (index, digit) in digits.enumerated() {

@@ -26,6 +26,7 @@ let package = Package(
                 .product(name: "GitVersion", package: "GitVersion"),
             ],
             resources: [
+                .copy("Resources/Assets"),
                 .copy("Resources/Scenarios"),
             ],
             plugins: [
