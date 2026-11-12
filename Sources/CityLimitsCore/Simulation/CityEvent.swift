@@ -52,4 +52,5 @@ public enum CityEvent: Sendable {
     /// The ground shook, for shaking the view.
     case earthquake
     case ordinance(OrdinanceNews)
+    case neighbour(NeighbourNews)
 }

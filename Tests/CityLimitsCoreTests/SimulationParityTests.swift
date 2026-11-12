@@ -3,8 +3,7 @@ import Testing
 @testable import CityLimitsCore
 
 /// The same scripted city, run in the C# build (legacy/csharp) and here, year by year. It has no
-/// airport or seaport, so no aircraft or ships draw random numbers, and it reads the same as long
-/// as no tornado or monster is rolled for.
+/// airport or seaport; `scriptedPort` adds both, so aircraft and ships fly and sail too.
 struct SimulationParityTests {
     /// A 64 by 64 town: a coal plant on a road, two more roads, rail, zones of each kind, two
     /// stations, a park, and a line, on grass with a strip of water and a wood.
@@ -98,15 +97,58 @@ struct SimulationParityTests {
         }
 
         city.run(steps: CityCalendar.stepsPerYear)
-        // The C# build's nuclear town has a tornado at step 2751, which this port doesn't have
-        // until the sprites come; from there the two draw different numbers.
-        withKnownIssue("The tornado arrives with the sprites", isIntermittent: !nuclear) {
-            #expect(city.treasury.funds == (nuclear ? 84928 : 86926))
-            #expect(city.census.cityPopulation == (nuclear ? 3220 : 6880))
-            #expect(Self.hash(city.map) == (nuclear ? 0x6929_F387_C18A_EABA : 0xA0F9_B271_7BA1_BCD9))
-            #expect(city.hazards.fires.count == (nuclear ? 13 : 40))
-            #expect(city.hazards.floods.count == (nuclear ? 21 : 14))
-            #expect(city.hazards.radiation.count == (nuclear ? 80 : 0))
+        // The C# build's nuclear town has a tornado at step 2751.
+        #expect(city.treasury.funds == (nuclear ? 84928 : 86926))
+        #expect(city.census.cityPopulation == (nuclear ? 3220 : 6880))
+        #expect(Self.hash(city.map) == (nuclear ? 0x6929_F387_C18A_EABA : 0xA0F9_B271_7BA1_BCD9))
+        #expect(city.hazards.fires.count == (nuclear ? 13 : 40))
+        #expect(city.hazards.floods.count == (nuclear ? 21 : 14))
+        #expect(city.hazards.radiation.count == (nuclear ? 80 : 0))
+    }
+
+    /// The town with a road along the water, a seaport and an airport on it, a power line to the
+    /// east edge, and a road off it, so aircraft, ships, and neighbours all take part.
+    static func scriptedPort() -> CitySimulation {
+        let city = scriptedTown()
+        func drag(_ action: BuildAction, _ x1: Int, _ y1: Int, _ x2: Int, _ y2: Int) {
+            var stroke = BuildStroke(action, x1, y1)
+            stroke.drag(to: x2, y2)
+            city.builder.apply(stroke)
         }
+        drag(.road, 2, 35, 61, 35)
+        city.builder.apply(.seaport, 10, 37)
+        city.builder.apply(.airport, 12, 47)
+        drag(.road, 17, 48, 29, 48)
+        drag(.powerLine, 58, 12, 63, 12)
+        drag(.road, 61, 20, 63, 20)
+        return city
+    }
+
+    @Test func aPortTownWithAircraftAndShipsRunsAsItDoesInTheCSharpBuild() {
+        let city = Self.scriptedPort()
+        var crashes = 0
+        city.onEvent = { if case .message(.planeCrashReported) = $0 { crashes += 1 } }
+        // Year, funds, population, the map's hash, the fires, and whether the plane, the
+        // helicopter, and the ship are about.
+        let expected: [(Int, Int, Int, UInt64, Int, Bool, Bool, Bool)] = [
+            (0, 73790, 0, 0xECF1_E0A4_7A85_0E47, 0, false, false, false),
+            (1, 73783, 1940, 0x87A6_2FC9_550F_603B, 10, true, false, true),
+            (2, 73444, 4940, 0x2695_CDE9_6B0A_9F03, 13, false, false, true),
+            (3, 73212, 5260, 0xADB1_3A3D_B5B7_D03B, 50, false, false, true),
+            (4, 73034, 8300, 0x8028_F5A4_C683_CBD3, 23, false, false, true),
+            (5, 72926, 7420, 0x7771_0B0A_9BAD_6EC4, 16, false, false, true),
+            (6, 72867, 11020, 0x233A_54C9_64E8_00FA, 6, false, false, true),
+            (7, 72836, 10560, 0xBA34_D0DB_AE47_0C3B, 2, false, false, true),
+            (8, 72864, 11560, 0x3E0C_331C_37F6_B16D, 0, false, false, true),
+        ]
+        for (year, funds, population, hash, fires, plane, helicopter, ship) in expected {
+            if year > 0 { city.run(steps: CityCalendar.stepsPerYear) }
+            #expect(city.treasury.funds == funds, "funds in year \(year)")
+            #expect(city.census.cityPopulation == population, "population in year \(year)")
+            #expect(Self.hash(city.map) == hash, "the map in year \(year)")
+            #expect(city.hazards.fires.count == fires, "fires in year \(year)")
+            #expect((city.vehicles.plane != nil, city.vehicles.helicopter != nil, city.vehicles.ship != nil) == (plane, helicopter, ship))
+        }
+        #expect(crashes == 5)
     }
 }

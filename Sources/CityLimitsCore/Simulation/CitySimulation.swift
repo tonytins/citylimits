@@ -120,7 +120,13 @@ public final class CitySimulation {
     public let community = CommunityBuildings()
     public let ordinances: CityOrdinances
     public let facilities = Facilities()
+    public let neighbours: CityNeighbours
+    public let vehicles = Vehicles()
+    public let menaces = Menaces()
     private let growth: ZoneGrowth
+    // What came of the vehicles' last move, kept so a step doesn't make a list.
+    private var vehicleEvents: [VehicleEvent] = []
+    private var trampled: [(x: Int, y: Int)] = []
 
     /// The road and rail tiles the scan has counted this count.
     public internal(set) var roadTiles = 0
@@ -137,6 +143,10 @@ public final class CitySimulation {
     public var randomFloods = true
     public var randomEarthquakes = true
     public var randomMeltdowns = true
+    public var randomAirCrashes = true
+    public var randomShipwrecks = true
+    public var randomTornadoes = true
+    public var randomMonsters = true
 
     /// Called with everything that happens, as it happens.
     public var onEvent: ((CityEvent) -> Void)?
@@ -162,6 +172,7 @@ public final class CitySimulation {
         budget = CityBudget(fireStationUpkeep: definitions.service(.fireStation).upkeep, policeStationUpkeep: definitions.service(.policeStation).upkeep)
         budget.setTaxRate(definitions.economy.taxRate)
         ordinances = CityOrdinances(definitions: definitions)
+        neighbours = CityNeighbours(map: map, seed: seed)
         growth = ZoneGrowth(map: map, trips: trips, definitions: definitions, demand: demand, maps: maps, community: community, hazards: hazards)
     }
 
@@ -224,6 +235,7 @@ public final class CitySimulation {
                 census.recordMonth()
                 community.updateNeeds(residents: census.residential)
                 askForOrdinance()
+                dealWithNeighbours()
             }
             collectTaxes()
         case Self.messagePhase:
@@ -231,7 +243,7 @@ public final class CitySimulation {
             traffic.fade()
             sendMessages()
         case Self.powerPhase:
-            power.trace(map, definitions: definitions, capacityPercent: ordinances.scaled(.powerCapacity, 100))
+            power.trace(map, definitions: definitions, capacityPercent: ordinances.scaled(.powerCapacity, 100), traded: neighbours.powerTraded())
             if power.isBrownedOut { send(.brownouts) }
         case Self.landValuePhase:
             influences.update(.landValue)
@@ -251,6 +263,7 @@ public final class CitySimulation {
         default:
             break
         }
+        moveVehicles()
     }
 
     /// Runs a number of steps.
@@ -260,9 +273,14 @@ public final class CitySimulation {
 
     private func send(_ message: CityMessage) { onEvent?(.message(message)) }
 
-    // What demand is nudged by each time it moves: the ordinances, CityLimits' own.
+    // What demand is nudged by each time it moves: the ordinances and the roads and rail to
+    // neighbours, CityLimits' own.
     private func demandNudge() -> (residential: Int, commercial: Int, industrial: Int) {
-        (ordinances.effect(.residentialDemand), ordinances.effect(.commercialDemand), ordinances.effect(.industrialDemand))
+        let roads = neighbours.demandNudge()
+        return (
+            roads.residential + ordinances.effect(.residentialDemand),
+            roads.commercial + ordinances.effect(.commercialDemand),
+            roads.industrial + ordinances.effect(.industrialDemand))
     }
 
     // MARK: The scan
@@ -311,6 +329,12 @@ public final class CitySimulation {
                     }
                     repairNowAndThen(x, y, every: Self.buildingRepairCounts)
                 } else if state.use.isFacility {
+                    // A powered airport sends up aircraft, and a powered seaport calls in a ship.
+                    if powered && state.use == .airport {
+                        vehicles.visitAirport(x, y, map: map, random: &random)
+                    } else if powered && state.use == .seaport {
+                        vehicles.visitSeaport(map: map, random: &random)
+                    }
                     repairNowAndThen(x, y, every: state.use == .airport ? Self.buildingRepairCounts : Self.communityRepairCounts)
                     facilities.count(state.use)
                 } else if state.use.isService {
@@ -382,11 +406,13 @@ public final class CitySimulation {
     /// What a full year would bring in and cost at today's numbers.
     public func estimateBudget() -> BudgetYear {
         let ordinanceMoney = ordinances.yearlyMoney(population: census.cityPopulation)
+        let dealMoney = neighbours.yearlyMoney()
         return budget.estimate(
             population: demand.taxablePopulation, landValueAverage: maps.landValueAverage,
             roadTiles: budgetedRoadTiles + budgetedRailTiles * Self.roadTilesPerRail,
             fireStations: budgetedFireStations, policeStations: budgetedPoliceStations, funds: treasury.funds,
-            ordinanceIncome: ordinanceMoney.income, ordinanceCost: ordinanceMoney.cost)
+            ordinanceIncome: ordinanceMoney.income, ordinanceCost: ordinanceMoney.cost,
+            dealIncome: dealMoney.income, dealCost: dealMoney.cost)
     }
 
     /// Enacts or repeals an ordinance, and says whether anything changed.
@@ -479,8 +505,12 @@ public final class CitySimulation {
             }
         } else if kind < Self.fireKinds + Self.floodKinds {
             _ = startFlood(allowed: randomFloods)
+        } else if kind == Self.tornadoKind {
+            _ = callTornado(allowed: randomTornadoes)
         } else if kind == Self.earthquakeKind {
             _ = quake(allowed: randomEarthquakes)
+        } else if kind >= Self.firstMonsterKind && maps.pollutionAverage > Self.monsterPollution {
+            _ = callMonster(allowed: randomMonsters)
         }
     }
 
@@ -492,7 +522,10 @@ public final class CitySimulation {
         case .flood: startFlood(allowed: true)
         case .earthquake: quake(allowed: true)
         case .meltdown: meltDownFirstPlant()
-        case .planeCrash, .shipwreck, .tornado, .monster: false
+        case .planeCrash: crashPlane()
+        case .shipwreck: wreckShip()
+        case .tornado: callTornado(allowed: true) || menaces.tornado != nil
+        case .monster: callMonster(allowed: true) || menaces.monster != nil
         }
     }
 
@@ -657,6 +690,151 @@ public final class CitySimulation {
         let state = map[x, y]
         guard state.hasFootprint, !state.isBuildingCenter else { return false }
         return state.use != .residential || state.hasHouse || map.centerState(x, y).development > 0
+    }
+
+    // MARK: Sprites
+
+    // As Micropolis moves its sprites twice for each step, the vehicles move twice a step, and the
+    // city answers what came of each move: fires where aircraft came down or a ship was wrecked,
+    // and the helicopter's word on the traffic.
+    private func moveVehicles() {
+        for move in 0..<2 {
+            vehicleEvents.removeAll(keepingCapacity: true)
+            trampled.removeAll(keepingCapacity: true)
+            vehicles.move(
+                step: tickCount, move: move, map: map, traffic: traffic, random: &random, airCrashes: randomAirCrashes,
+                shipwrecks: randomShipwrecks, events: &vehicleEvents, quarry: menaces.quarry)
+            menaces.move(
+                map: map, random: &random, vehicles: vehicles, airCrashes: randomAirCrashes, shipwrecks: randomShipwrecks,
+                events: &vehicleEvents, trampled: &trampled)
+            for (x, y) in trampled { trample(x, y) }
+            for happened in vehicleEvents {
+                switch happened.kind {
+                case .heavyTraffic:
+                    send(.heavyTrafficReported)
+                case .shipwreck:
+                    wreck(happened.x, happened.y)
+                    send(.shipwreckReported)
+                case .planeCrash, .helicopterCrash:
+                    crash(happened.x, happened.y)
+                    send(happened.kind == .planeCrash ? .planeCrashReported : .helicopterCrashReported)
+                }
+            }
+        }
+    }
+
+    // An aircraft coming down sets fire where it lands, and at the corners around, at once.
+    private func crash(_ x: Int, _ y: Int) {
+        let state = map.state(atOrDefault: x, y, fallback: TileState(.water))
+        let bare = state.use == .none && state.kind == .grass && !hazards.isFlooded(x, y) && !hazards.isRadioactive(x, y)
+        if !state.isBuildingCenter && (bare || hazards.canBurn(x, y)) { ignite(x, y) }
+        explode(x, y)
+        onEvent?(.exploded(x: x, y: y))
+    }
+
+    // A ship run aground blows up and wrecks what it hit, as Micropolis' destroyTile: what stands
+    // on the water is lost to it, and what stands on land burns.
+    private func wreck(_ x: Int, _ y: Int) {
+        crash(x, y)
+        let state = map.state(atOrDefault: x, y)
+        if state.kind == .water && state.use != .none { map.setState(x, y, TileState(.water)) }
+    }
+
+    // A tornado touches down, or the one blowing lasts its full time again.
+    private func callTornado(allowed: Bool) -> Bool {
+        guard menaces.callTornado(map: map, random: &random, allowed: allowed) else { return false }
+        send(.tornadoReported)
+        return true
+    }
+
+    // The monster comes, or the one about makes for the most polluted place again.
+    private func callMonster(allowed: Bool) -> Bool {
+        guard menaces.callMonster(map: map, random: &random, mostPolluted: maps.mostPolluted, allowed: allowed) else { return false }
+        send(.monsterReported)
+        return true
+    }
+
+    // As Micropolis' destroyTile, which the tornado and the monster do to each tile they pass:
+    // what stands on the water is lost to it; a building's centre goes up as fire takes it, since
+    // CityLimits can't leave its other tiles standing loose; anything else that can burn is blown
+    // to rubble. Bare ground, rubble, water, and what is burning are left be.
+    private func trample(_ x: Int, _ y: Int) {
+        guard map.contains(x, y) else { return }
+        let state = map[x, y]
+        if state.kind == .water {
+            if state.use != .none {
+                map.setState(x, y, TileState(.water))
+                onEvent?(.exploded(x: x, y: y))
+            }
+            return
+        }
+        guard hazards.canBurn(x, y) else { return }
+        if state.isBuildingCenter {
+            ignite(x, y)
+        } else {
+            map.setState(x, y, TileState(.rubble))
+        }
+        onEvent?(.exploded(x: x, y: y))
+    }
+
+    private func crashPlane() -> Bool {
+        guard let at = vehicles.downPlane() else { return false }
+        crash(at.x, at.y)
+        send(.planeCrashReported)
+        return true
+    }
+
+    private func wreckShip() -> Bool {
+        guard let at = vehicles.sinkShip() else { return false }
+        wreck(at.x, at.y)
+        send(.shipwreckReported)
+        return true
+    }
+
+    // MARK: Neighbours
+
+    /// Takes the offer on the table, and says whether there was one.
+    @discardableResult
+    public func acceptOffer() -> Bool {
+        guard let deal = neighbours.accept(at: tickCount) else { return false }
+        tell(.accepted, deal.side, deal.kind, deal.power, deal.money)
+        return true
+    }
+
+    /// Turns the offer on the table down, and says whether there was one.
+    @discardableResult
+    public func declineOffer() -> Bool {
+        guard let offer = neighbours.decline() else { return false }
+        tell(.declined, offer.side, offer.kind, offer.power, offer.money)
+        return true
+    }
+
+    /// Breaks the deal with a neighbour, paying a year's money, and says whether there was one.
+    @discardableResult
+    public func breakDeal(with side: Side) -> Bool {
+        guard let deal = neighbours.breakDeal(with: side, at: tickCount) else { return false }
+        treasury.settle(-deal.money)
+        tell(.broken, deal.side, deal.kind, deal.power, deal.money)
+        return true
+    }
+
+    // Each month the deals over and an offer unanswered lapse; every six months, offset from the
+    // petitions, a neighbour with a power line to the city may offer one.
+    private func dealWithNeighbours() {
+        let (ended, lapsed) = neighbours.expire(at: tickCount)
+        for deal in ended { tell(.ended, deal.side, deal.kind, deal.power, deal.money) }
+        if let lapsed { tell(.lapsed, lapsed.side, lapsed.kind, lapsed.power, lapsed.money) }
+        if cityTime % (CityCalendar.countsPerMonth * 6) == CityCalendar.countsPerMonth * 3,
+            let offer = neighbours.propose(
+                population: census.cityPopulation, brownedOut: power.isBrownedOut, capacity: power.capacity,
+                used: power.poweredTileCount, at: tickCount)
+        {
+            tell(.offer, offer.side, offer.kind, offer.power, offer.money)
+        }
+    }
+
+    private func tell(_ kind: NeighbourNewsKind, _ side: Side, _ deal: DealKind, _ power: Int, _ money: Int) {
+        onEvent?(.neighbour(NeighbourNews(neighbour: neighbours.neighbour(side), kind: kind, deal: deal, power: power, money: money)))
     }
 
     // MARK: Power on demand
