@@ -8,6 +8,12 @@ import Raylib
 /// inside it.
 @MainActor
 final class PlaySession {
+    /// How the player left the city.
+    enum Leave {
+        case toMenu
+        case quit
+    }
+
     // How long what a stroke came to stays beside the pointer once it's let go.
     private static let hintSeconds: Float = 3
     private static let iconSize = Vector2(x: 110, y: 22)
@@ -25,6 +31,20 @@ final class PlaySession {
     private let cityPanel: CityPanelWindow
     private let deal: DealWindow
     private let help = HelpWindow()
+    private let gameMenu = GameMenuWindow()
+    private let settingsWindow = SettingsWindow()
+    private let settings: SettingsKeeper
+    private let citiesFolder: URL
+    private(set) var leaving: Leave?
+
+    // The file Ctrl+S saves to, once the city has one, and the city as last saved, in the flat
+    // format, which later saves and leaving are compared with whichever format the file is in.
+    private var cityFile: URL?
+    private var savedText: String?
+    private var autosavedText: String?
+    private var autosave = Autosave()
+    private var autosaveDue = false
+    private var wasHoldingSaves = false
     private var clock = GameClock()
     private(set) var speed = GameSpeed.normal
     // The speed play brings back after a pause.
@@ -36,8 +56,11 @@ final class PlaySession {
     // Headlines are for show, so they use random numbers of their own, never the city's.
     private var newsRandom = SystemRandomNumberGenerator()
 
-    init(city: CitySimulation, assets: GameAssets) {
+    /// Plays a city: a new one, or one opened from `file`, which is then the file Ctrl+S saves to.
+    init(city: CitySimulation, file: URL? = nil, assets: GameAssets, settings: SettingsKeeper, citiesFolder: URL) {
         self.city = city
+        self.settings = settings
+        self.citiesFolder = citiesFolder
         view = CityView(city: city, assets: assets)
         palette = ToolPaletteView(assets: assets, definitions: city.definitions)
         overview = OverviewMap(city: city)
@@ -50,10 +73,28 @@ final class PlaySession {
         city.onEvent = { [unowned self] event in hear(event) }
         cityPanel.onShowOffer = { [unowned self] in deal.open(in: windows) }
         cityPanel.onBreakDeal = { [unowned self] side in askToBreakDeal(side) }
+        gameMenu.onChoice = { [unowned self] choice in choose(choice) }
+        settingsWindow.onChange = { [unowned settings, unowned city] chosen in
+            settings.settings = chosen
+            chosen.apply(to: city)
+        }
+        settingsWindow.onClose = { [unowned settings] _ in settings.save() }
+        settings.onProblem = { [unowned self] problem in status.ticker.advise(problem) }
+        settings.settings.apply(to: city)
+        speed = settings.settings.speed
+        if speed != .paused { lastSpeed = speed }
+        if let file {
+            cityFile = file
+            savedText = CityFiles.flatText(city)
+            autosavedText = savedText
+        }
         if let challenge = city.challenge, challenge.won == nil {
             status.ticker.advise("\(challenge.name): meet its goals by \(challenge.ends); the city panel lists them")
         }
     }
+
+    /// Puts a line from the game on the ticker, in yellow.
+    func advise(_ text: String) { status.ticker.advise(text) }
 
     private func askToBreakDeal(_ side: Side) {
         guard let standing = city.neighbours.deal(with: side) else { return }
@@ -82,6 +123,8 @@ final class PlaySession {
 
     /// Releases what the session drew with. Call before `CloseWindow`.
     func unload() {
+        settings.settings.speed = speed
+        settings.onProblem = nil
         city.onEvent = nil
         status.ticker.filler = nil
         overview.unload()
@@ -146,6 +189,7 @@ final class PlaySession {
             for _ in 0..<due { city.tick() }
         }
         view.animate(elapsed, speed: windows.hasModal ? .paused : speed)
+        keepSaving(elapsed)
         if windows.isOpen(budget.frame) { budget.show() }
         if windows.isOpen(demand.frame) { demand.show() }
         if windows.isOpen(cityPanel.frame) { cityPanel.refresh() }
@@ -175,7 +219,9 @@ final class PlaySession {
                 windows.close(budget.frame)
             } else if let front, front !== confirm.frame, !wasTyping, !cityPanel.isTyping, IsKeyPressed(.escape) {
                 windows.close(front)
+                if front === settingsWindow.frame { settings.save() }
             }
+            if windows.isOpen(settingsWindow.frame) { settingsWindow.refresh(in: windows) }
             _ = status.update(city: city, speed: speed, elapsed: 0, takesInput: false)
             return
         }
@@ -183,11 +229,17 @@ final class PlaySession {
         let wheel = GetMouseWheelMove()
         if wheel != 0, !isOverInterface(pointer) { view.camera.zoom(at: pointer, by: wheel) }
 
+        // Ctrl+S saves; held Control keeps the letters from panning the map.
+        let control = IsKeyDown(.leftControl) || IsKeyDown(.rightControl)
+        if control, IsKeyPressed(.s) { save(confirmed: false) }
+
         var pan = Vector2.zero
-        if IsKeyDown(.a) || IsKeyDown(.left) { pan.x -= 1 }
-        if IsKeyDown(.d) || IsKeyDown(.right) { pan.x += 1 }
-        if IsKeyDown(.w) || IsKeyDown(.up) { pan.y -= 1 }
-        if IsKeyDown(.s) || IsKeyDown(.down) { pan.y += 1 }
+        if !control {
+            if IsKeyDown(.a) || IsKeyDown(.left) { pan.x -= 1 }
+            if IsKeyDown(.d) || IsKeyDown(.right) { pan.x += 1 }
+            if IsKeyDown(.w) || IsKeyDown(.up) { pan.y -= 1 }
+            if IsKeyDown(.s) || IsKeyDown(.down) { pan.y += 1 }
+        }
         if pan != .zero { view.pan(pan, elapsed: elapsed) }
 
         if IsKeyPressed(.space) { setSpeed(speed == .paused ? lastSpeed : .paused) }
@@ -198,6 +250,8 @@ final class PlaySession {
                 view.cancelStroke()
             } else if let front = windows.frontWindow {
                 windows.close(front)
+            } else {
+                gameMenu.open(in: windows)
             }
         }
         if IsKeyPressed(.b) { openBudget() }
@@ -238,6 +292,109 @@ final class PlaySession {
             deal.open(in: windows)
         } else {
             openCityPanel(item.kind == .neighbour ? .neighbours : .ordinances)
+        }
+    }
+
+    // MARK: Saving and leaving
+
+    private func choose(_ choice: GameMenuWindow.Choice) {
+        switch choice {
+        case .save: save(confirmed: false)
+        case .settings: settingsWindow.open(settings.settings, in: windows)
+        case .mainMenu: leaveOrAsk(.toMenu)
+        case .quit: leaveOrAsk(.quit)
+        }
+    }
+
+    // A city saves in its own format: flat when it came from a flat file, and otherwise binary,
+    // a Micropolis city included.
+    private var saveExtension: String {
+        cityFile?.pathExtension.lowercased() == CityFiles.flatExtension ? CityFiles.flatExtension : CityFiles.binaryExtension
+    }
+
+    private var hasUnsavedChanges: Bool { savedText == nil || CityFiles.flatText(city) != savedText }
+
+    /// Saves the city under its name. Saving over its own file is plain saving, an autosave's
+    /// city counting as its own; replacing another city's file of the same name asks first. While
+    /// a disaster is under way, it doesn't save at all.
+    private func save(confirmed: Bool) {
+        guard !city.holdsSaving else {
+            status.ticker.advise("Saving disabled")
+            return
+        }
+        guard let name = CityFiles.fileName(for: city.name, extension: saveExtension) else {
+            status.ticker.advise("\(city.name) can't be a file's name; rename the city first")
+            return
+        }
+        let file = citiesFolder.appendingPathComponent(name)
+        let own: URL? = cityFile.flatMap { file in
+            if file.pathExtension.lowercased() == MicropolisImport.fileExtension { return nil }
+            return Autosave.isAutosave(file) ? Autosave.cityFile(for: file) : file
+        }
+        if !confirmed, FileManager.default.fileExists(atPath: file.path), file.standardizedFileURL != own?.standardizedFileURL {
+            confirm.ask(
+                "Replace a saved city?", "\(name) already holds a saved city, and saving would replace it.", yes: "Replace", no: "Cancel",
+                in: windows
+            ) { [unowned self] isYes in
+                if isYes { save(confirmed: true) }
+            }
+            return
+        }
+        let text = CityFiles.flatText(city)
+        do throws(FormatError) {
+            try CityFiles.write(city, to: file)
+        } catch {
+            warn(error.message)
+            status.ticker.advise(error.message)
+            return
+        }
+        (cityFile, savedText, autosavedText) = (file, text, text)
+        status.ticker.advise("Saved \(city.name) to \(name)")
+    }
+
+    // Counts play towards the next autosave, which waits out a disaster, and says once when a
+    // disaster stops saving.
+    private func keepSaving(_ elapsed: Float) {
+        let holding = city.holdsSaving
+        if holding, !wasHoldingSaves { status.ticker.advise("Saving disabled") }
+        wasHoldingSaves = holding
+        let slots = settings.settings.autosaveSlots
+        guard slots > 0 else { return }
+        if autosave.advance(Double(elapsed), running: speed != .paused && !windows.hasModal) { autosaveDue = true }
+        guard autosaveDue, !holding else { return }
+        autosaveDue = false
+        autosaveNow(slots: slots)
+    }
+
+    // An autosave is a save beside the city's own, written only when the city has changed since it
+    // was last saved either way. It doesn't count as the player saving, so leaving still asks.
+    private func autosaveNow(slots: Int) {
+        let text = CityFiles.flatText(city)
+        guard text != savedText, text != autosavedText else { return }
+        guard let file = Autosave.nextFile(in: citiesFolder, cityName: city.name, slots: slots, extension: saveExtension) else { return }
+        do throws(FormatError) {
+            try CityFiles.write(city, to: file)
+        } catch {
+            warn("Autosave failed: \(error.message)")
+            status.ticker.advise("Autosave failed: \(error.message)")
+            return
+        }
+        autosavedText = text
+        status.ticker.advise("Autosaved \(city.name)")
+    }
+
+    // Leaving a city with changes since its last save asks first, so a city isn't lost by a click.
+    private func leaveOrAsk(_ leave: Leave) {
+        guard hasUnsavedChanges else {
+            leaving = leave
+            return
+        }
+        let whereTo = leave == .toMenu ? "for the menu" : "and quit"
+        confirm.ask(
+            "Leave \(city.name) \(whereTo)?", "It has changes since it was last saved. Ctrl+S saves it first.", yes: "Leave", no: "Stay",
+            in: windows
+        ) { [unowned self] isYes in
+            if isYes { leaving = leave }
         }
     }
 
@@ -306,7 +463,7 @@ final class PlaySession {
     // way to draw into a view's region, and the demand chart is one; so the session draws each
     // frame and fills the chart after it. A modal window dims what's behind it.
     private func drawWindows() {
-        let modal = [confirm.frame, notice.frame, budget.frame, cityPanel.frame, deal.frame]
+        let modal = [confirm.frame, notice.frame, budget.frame, cityPanel.frame, deal.frame, gameMenu.frame, settingsWindow.frame]
         for frame in windows.windows where !windows.isMinimized(frame) {
             guard let bounds = windows.bounds(of: frame) else { continue }
             if modal.contains(where: { $0 === frame }) {

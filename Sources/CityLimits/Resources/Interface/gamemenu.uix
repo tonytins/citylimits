@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- The menu Escape opens over a city, which waits paused behind it. -->
+<UIScript version="1">
+  <Window width="220" height="214"/>
+
+  <Style name="dim" textColor="#969EAA" fontSize="14"/>
+
+  <Text name="paused" x="14" y="12" width="192" height="14" style="dim" text="Paused"/>
+  <Button name="resume" x="14" y="38" width="192" height="28" text="Resume"/>
+  <Button name="save" x="14" y="72" width="192" height="28" text="Save"/>
+  <Button name="settings" x="14" y="106" width="192" height="28" text="Settings"/>
+  <Button name="mainMenu" x="14" y="140" width="192" height="28" text="Main menu"/>
+  <Button name="quit" x="14" y="174" width="192" height="28" text="Quit"/>
+</UIScript>

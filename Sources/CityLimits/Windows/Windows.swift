@@ -286,7 +286,7 @@ final class HelpWindow {
     let frame: WindowFrame
 
     init() {
-        frame = WindowFrame(view: Interface.view("help", fallbackSize: Vector2(x: 520, y: 380)), title: "Help")
+        frame = WindowFrame(view: Interface.view("help", fallbackSize: Vector2(x: 520, y: 400)), title: "Help")
         frame.showsMinimizeButton = true
     }
 

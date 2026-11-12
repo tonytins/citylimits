@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- A new city: its name, and the seed its map grows from, with the map that seed makes. The game
+     draws the map into its region. -->
+<UIScript version="1">
+  <Window width="420" height="388"/>
+
+  <Style name="label" textColor="#969EAA" fontSize="10"/>
+  <Style name="note" textColor="#969EAA" fontSize="10"/>
+  <Style name="warning" textColor="#E86A60" fontSize="10"/>
+
+  <Text name="nameLabel" x="14" y="12" width="392" height="10" style="label" text="Name"/>
+  <TextField name="name" x="14" y="26" width="392" height="28" maximumLength="32"/>
+  <Text name="seedLabel" x="14" y="66" width="392" height="10" style="label" text="Seed, the number the map grows from: blank for any"/>
+  <TextField name="seed" x="14" y="80" width="280" height="28" maximumLength="11" placeholder="Any"/>
+  <Button name="generate" x="302" y="80" width="104" height="28" text="Generate"/>
+  <Region name="preview" x="90" y="120" width="240" height="200"/>
+  <Text name="problem" x="14" y="326" width="392" height="10" style="warning"/>
+  <Button name="back" x="206" y="348" width="96" height="28" text="Back"/>
+  <Button name="start" x="310" y="348" width="96" height="28" text="Start"/>
+</UIScript>

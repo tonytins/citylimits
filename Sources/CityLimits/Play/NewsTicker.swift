@@ -8,7 +8,7 @@ import Raylib
 /// clicked.
 @MainActor
 final class NewsTicker {
-    static let fontSize: Int32 = 14
+    static let gameFontSize: Int32 = 14
 
     // Pixels a second: slow enough to read a line as it passes.
     private static let speed: Float = 90
@@ -22,8 +22,11 @@ final class NewsTicker {
     /// Gives a line whenever nothing is waiting. Without one, the strip waits for news.
     var filler: (() -> NewsItem)?
     private var showing: [(item: NewsItem, x: Float, width: Float)] = []
+    private let fontSize: Int32
 
-    init() {
+    /// A ticker with text of the given size; the loading screen's is bigger than the game's.
+    init(fontSize: Int32 = NewsTicker.gameFontSize) {
+        self.fontSize = fontSize
         showing.reserveCapacity(Self.mostShowing)
     }
 
@@ -50,16 +53,16 @@ final class NewsTicker {
                 x = width * min(max(startShare, 0), 1)
             }
             guard let item = queue.next() ?? filler?() else { break }
-            showing.append((item, x, Float(MeasureText(item.text, Self.fontSize))))
+            showing.append((item, x, Float(MeasureText(item.text, fontSize))))
         }
     }
 
     /// Draws the strip in `bounds`, which runs the screen's width.
     func draw(in bounds: Rectangle) {
-        let textY = Int32(bounds.y + (bounds.height - Float(Self.fontSize)) / 2)
+        let textY = Int32(bounds.y + (bounds.height - Float(fontSize)) / 2)
         let middle = bounds.y + bounds.height / 2
         for line in showing {
-            DrawText(line.item.text, Int32(bounds.x + line.x), textY, Self.fontSize, Self.color(of: line.item.kind))
+            DrawText(line.item.text, Int32(bounds.x + line.x), textY, fontSize, Self.color(of: line.item.kind))
             DrawCircleV(Vector2(x: bounds.x + line.x + line.width + Self.spacing / 2, y: middle), Self.dotRadius, Palette.textDim)
         }
     }

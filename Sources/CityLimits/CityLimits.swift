@@ -13,38 +13,85 @@ struct CityLimits {
             output: { print($0) },
             error: { FileHandle.standardError.write(Data(($0 + "\n").utf8)) })
 
+        let folders = GameFolders.detect(programFolder: programFolder)
         switch runner.run(Array(CommandLine.arguments.dropFirst())) {
         case .exit(let code):
             exit(code)
         case .window(let seed):
-            runWindow(seed: seed ?? CommandLineRunner.defaultSeed, assetsFolder: Bundle.module.url(forResource: "Assets", withExtension: nil))
+            runWindow(seed: seed, folders: folders, assetsFolder: Bundle.module.url(forResource: "Assets", withExtension: nil))
         }
     }
 
-    /// Opens the window and plays a new city grown from the seed until the window closes.
-    static func runWindow(seed: Int32, assetsFolder: URL?) {
+    /// Opens the window: the loading screen, then the start menu, and the cities chosen from it,
+    /// until the player quits or closes the window. A seed from the command line fills in New
+    /// Game's seed.
+    static func runWindow(seed: Int32?, folders: GameFolders, assetsFolder: URL?) {
+        if let problem = folders.problem { warn(problem) }
+        for folder in [folders.modsFolder, folders.scenariosFolder] {
+            do {
+                try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+            } catch {
+                warn("\(folder.path) couldn't be made: \(error.localizedDescription)")
+            }
+        }
+        let settings = SettingsKeeper(file: folders.settingsFile)
+
         SetConfigFlags([.vsyncHint, .windowResizable])
-        InitWindow(1280, 800, "CityLimits")
+        InitWindow(Int32(settings.settings.windowWidth), Int32(settings.settings.windowHeight), "CityLimits")
         guard IsWindowReady() else {
             FileHandle.standardError.write(Data("citylimits: the game window couldn't be opened\n".utf8))
             exit(1)
         }
         SetWindowMinSize(800, 600)
         SetTargetFPS(60)
-        // Escape cancels a stroke, so it can't also close the game.
+        // Escape cancels a stroke or opens the menu, so it can't also close the game.
         SetExitKey(.null)
+        // Fullscreen is read at the start only; the settings say it waits for the next one.
+        let fullscreen = settings.settings.fullscreen
+        if fullscreen { ToggleBorderlessWindowed() }
 
         let assets = GameAssets(folder: assetsFolder ?? URL(fileURLWithPath: "Assets"))
-        for problem in assets.problems {
-            FileHandle.standardError.write(Data("warning: \(problem)\n".utf8))
+        for problem in assets.problems { warn(problem) }
+
+        let loading = LoadingScreen(assets: assets)
+        while !loading.isDone && !WindowShouldClose() {
+            loading.update()
+            loading.draw()
         }
-        let city = CitySimulation(map: TerrainGenerator.generate(seed: seed), seed: seed)
-        let session = PlaySession(city: city, assets: assets)
+
+        let menu = StartMenu(assets: assets, version: GitVersion.version, settings: settings)
+        menu.show(fromLoading: true, seed: seed)
         while !WindowShouldClose() {
-            session.update()
-            session.draw()
+            guard case .newCity(let name, let wanted) = menu.run() else { break }
+            // Picking a seed is outside the simulation, so the system's random numbers may choose
+            // it; the line printed keeps it, so the city can be grown again with --seed.
+            let chosen = wanted ?? Int32.random(in: 0...Int32.max)
+            print("A new city, \(name), from seed \(chosen)")
+            let (definitions, problems) = folders.definitions(build: GitVersion.version)
+            let city = CitySimulation(map: TerrainGenerator.generate(seed: chosen), seed: chosen, definitions: definitions)
+            city.rename(name)
+            let session = PlaySession(city: city, assets: assets, settings: settings, citiesFolder: folders.citiesFolder)
+            for problem in problems { warn(problem) }
+            if !problems.isEmpty {
+                session.advise(problems.count == 1 ? problems[0] : "\(problems.count) mods were skipped; the log says why")
+            }
+            while !WindowShouldClose() && session.leaving == nil {
+                session.update()
+                session.draw()
+            }
+            let leave = session.leaving
+            session.unload()
+            guard leave == .toMenu else { break }
+            menu.show(fromLoading: false, seed: seed)
         }
-        session.unload()
+
+        // The window's size is kept for next time, unless it filled the screen.
+        if !fullscreen {
+            settings.settings.windowWidth = min(max(Int(GetScreenWidth()), GameSettings.windowWidths.lowerBound), GameSettings.windowWidths.upperBound)
+            settings.settings.windowHeight = min(max(Int(GetScreenHeight()), GameSettings.windowHeights.lowerBound), GameSettings.windowHeights.upperBound)
+        }
+        settings.save()
+        menu.unload()
         assets.unload()
         CloseWindow()
     }

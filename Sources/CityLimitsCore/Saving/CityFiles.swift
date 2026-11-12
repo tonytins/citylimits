@@ -204,6 +204,12 @@ public enum CityFiles {
         case flatExtension: bytes = Array(flatText(city).utf8)
         default: throw FormatError("\(file.lastPathComponent) isn't a city file.")
         }
+        try replace(file, with: bytes)
+    }
+
+    /// Writes bytes to a temporary file beside `file`, which then takes its place in one step, so
+    /// a failure leaves what was there before. The folder is made if it's missing.
+    public static func replace(_ file: URL, with bytes: [UInt8]) throws(FormatError) {
         let temporary = file.appendingPathExtension("tmp")
         do {
             try FileManager.default.createDirectory(at: file.deletingLastPathComponent(), withIntermediateDirectories: true)

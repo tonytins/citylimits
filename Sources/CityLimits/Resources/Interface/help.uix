@@ -2,7 +2,7 @@
 <!-- Help, a window that stays open beside the map and can be minimized: what each key and press
      does. A heading has no action. -->
 <UIScript version="1">
-  <Window width="520" height="380"/>
+  <Window width="520" height="400"/>
 
   <Style name="heading" textColor="#F0BE5A" fontSize="14"/>
   <Style name="key" textColor="#E4E8EE" fontSize="14"/>
@@ -17,29 +17,31 @@
   <Text name="action3" x="142" y="72" width="366" height="14" style="action" text="Slow down and speed up"/>
   <Text name="key4" x="12" y="92" width="130" height="14" style="key" text="B"/>
   <Text name="action4" x="142" y="92" width="366" height="14" style="action" text="Open the budget"/>
-  <Text name="key5" x="12" y="112" width="130" height="14" style="key" text="F1"/>
-  <Text name="action5" x="142" y="112" width="366" height="14" style="action" text="Open or close this help"/>
-  <Text name="key6" x="12" y="132" width="130" height="14" style="key" text="Escape"/>
-  <Text name="action6" x="142" y="132" width="366" height="14" style="action" text="Cancel a stroke, or close a window"/>
-  <Text name="row7" x="12" y="152" width="496" height="14" style="heading" text="Mouse"/>
-  <Text name="key8" x="12" y="172" width="130" height="14" style="key" text="A tool&apos;s button"/>
-  <Text name="action8" x="142" y="172" width="366" height="14" style="action" text="Pick the tool up; again to put it down"/>
-  <Text name="key9" x="12" y="192" width="130" height="14" style="key" text="Drag on the map"/>
-  <Text name="action9" x="142" y="192" width="366" height="14" style="action" text="Build with the tool you hold"/>
-  <Text name="key10" x="12" y="212" width="130" height="14" style="key" text="Inspect tool"/>
-  <Text name="action10" x="142" y="212" width="366" height="14" style="action" text="Point at a tile to read what it is"/>
-  <Text name="key11" x="12" y="232" width="130" height="14" style="key" text="Wheel"/>
-  <Text name="action11" x="142" y="232" width="366" height="14" style="action" text="Zoom in and out"/>
-  <Text name="key12" x="12" y="252" width="130" height="14" style="key" text="Overview"/>
-  <Text name="action12" x="142" y="252" width="366" height="14" style="action" text="Click or drag to move the view there"/>
-  <Text name="key13" x="12" y="272" width="130" height="14" style="key" text="City name"/>
-  <Text name="action13" x="142" y="272" width="366" height="14" style="action" text="Open the city, its ordinances, and neighbours"/>
-  <Text name="key14" x="12" y="292" width="130" height="14" style="key" text="Blue news"/>
-  <Text name="action14" x="142" y="292" width="366" height="14" style="action" text="Open the ordinances, or a neighbour&apos;s offer"/>
-  <Text name="key15" x="12" y="312" width="130" height="14" style="key" text="Demand meter"/>
-  <Text name="action15" x="142" y="312" width="366" height="14" style="action" text="Open the demand chart"/>
-  <Text name="key16" x="12" y="332" width="130" height="14" style="key" text="Funds"/>
-  <Text name="action16" x="142" y="332" width="366" height="14" style="action" text="Open the budget"/>
-  <Text name="key17" x="12" y="352" width="130" height="14" style="key" text="Title bars"/>
-  <Text name="action17" x="142" y="352" width="366" height="14" style="action" text="Drag a window to move it"/>
+  <Text name="key5" x="12" y="112" width="130" height="14" style="key" text="Ctrl+S"/>
+  <Text name="action5" x="142" y="112" width="366" height="14" style="action" text="Save the city"/>
+  <Text name="key6" x="12" y="132" width="130" height="14" style="key" text="F1"/>
+  <Text name="action6" x="142" y="132" width="366" height="14" style="action" text="Open or close this help"/>
+  <Text name="key7" x="12" y="152" width="130" height="14" style="key" text="Escape"/>
+  <Text name="action7" x="142" y="152" width="366" height="14" style="action" text="Cancel a stroke, close a window, or open the menu"/>
+  <Text name="row8" x="12" y="172" width="496" height="14" style="heading" text="Mouse"/>
+  <Text name="key9" x="12" y="192" width="130" height="14" style="key" text="A tool&apos;s button"/>
+  <Text name="action9" x="142" y="192" width="366" height="14" style="action" text="Pick the tool up; again to put it down"/>
+  <Text name="key10" x="12" y="212" width="130" height="14" style="key" text="Drag on the map"/>
+  <Text name="action10" x="142" y="212" width="366" height="14" style="action" text="Build with the tool you hold"/>
+  <Text name="key11" x="12" y="232" width="130" height="14" style="key" text="Inspect tool"/>
+  <Text name="action11" x="142" y="232" width="366" height="14" style="action" text="Point at a tile to read what it is"/>
+  <Text name="key12" x="12" y="252" width="130" height="14" style="key" text="Wheel"/>
+  <Text name="action12" x="142" y="252" width="366" height="14" style="action" text="Zoom in and out"/>
+  <Text name="key13" x="12" y="272" width="130" height="14" style="key" text="Overview"/>
+  <Text name="action13" x="142" y="272" width="366" height="14" style="action" text="Click or drag to move the view there"/>
+  <Text name="key14" x="12" y="292" width="130" height="14" style="key" text="City name"/>
+  <Text name="action14" x="142" y="292" width="366" height="14" style="action" text="Open the city, its ordinances, and neighbours"/>
+  <Text name="key15" x="12" y="312" width="130" height="14" style="key" text="Blue news"/>
+  <Text name="action15" x="142" y="312" width="366" height="14" style="action" text="Open the ordinances, or a neighbour&apos;s offer"/>
+  <Text name="key16" x="12" y="332" width="130" height="14" style="key" text="Demand meter"/>
+  <Text name="action16" x="142" y="332" width="366" height="14" style="action" text="Open the demand chart"/>
+  <Text name="key17" x="12" y="352" width="130" height="14" style="key" text="Funds"/>
+  <Text name="action17" x="142" y="352" width="366" height="14" style="action" text="Open the budget"/>
+  <Text name="key18" x="12" y="372" width="130" height="14" style="key" text="Title bars"/>
+  <Text name="action18" x="142" y="372" width="366" height="14" style="action" text="Drag a window to move it"/>
 </UIScript>
