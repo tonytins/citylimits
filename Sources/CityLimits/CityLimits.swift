@@ -1,26 +1,22 @@
+import CityLimitsCore
 import Foundation
 import Raylib
 
 @main
 struct CityLimits {
-    static let usage = """
-        Usage: citylimits [--version] [--help]
-
-        Opens the game window. The headless commands from the C# build return as the port goes on.
-        """
-
     static func main() {
-        let arguments = Array(CommandLine.arguments.dropFirst())
-        switch arguments.first {
-        case nil:
+        let programFolder = Bundle.main.executableURL?.deletingLastPathComponent() ?? URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
+        let scenarios = Bundle.module.url(forResource: "Scenarios", withExtension: nil) ?? programFolder.appendingPathComponent("Scenarios")
+        let runner = CommandLineRunner(
+            version: GitVersion.version, folders: GameFolders.detect(programFolder: programFolder), builtInScenarios: scenarios,
+            output: { print($0) },
+            error: { FileHandle.standardError.write(Data(($0 + "\n").utf8)) })
+
+        switch runner.run(Array(CommandLine.arguments.dropFirst())) {
+        case .exit(let code):
+            exit(code)
+        case .window:
             runWindow()
-        case "--version":
-            print("CityLimits \(GitVersion.version)")
-        case "--help", "-h":
-            print(usage)
-        case let other?:
-            FileHandle.standardError.write(Data("citylimits: unknown option '\(other)'\n\n\(usage)\n".utf8))
-            exit(2)
         }
     }
 

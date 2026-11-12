@@ -39,18 +39,27 @@ change them.
 ## Build and test
 
 ```sh
-swift build                 # must build with no new warnings
-swift test                  # all tests must pass
-swift run citylimits        # open the window and look at it
-swift run citylimits --version
+swift build                                        # must build with no new warnings
+swift test                                         # all tests must pass
+swift run citylimits --headless --ticks 768        # run a city for a year with no window and read the log
+swift run citylimits scenario list                 # the built-in scenarios
+swift run citylimits scenario demo-town --headless # run one; --json for its report, --file for your own
+swift run citylimits                               # open the window and look at it
 ```
 
 Run the game when a change affects what it does. Passing tests don't show that
 a screen works. To look at the game without a desktop, follow the visual check
 steps in the `raylib-swift` skill, or your local guidance.
 
-Headless mode and scenarios return in the port. Until then, a test in
-`CityLimitsCoreTests` is how to check a rule.
+A scenario is the way to check a mechanic without a window: a seed or a saved
+city, scripted strokes, disasters on set dates, and checks along the way,
+described in [docs/scenarios.md](docs/scenarios.md). It exits 0 when every check
+passes, 1 when it couldn't run, 2 for a wrong command line, and 3 when a check
+failed. A scenario doesn't stand in for playing: it can't show how a screen
+looks or whether the city is fun.
+
+The command line lives in `CityLimitsCore/Commands`, so tests run it as a
+script does; the game only opens the window when that's what was asked for.
 
 ## Swift and raylib
 

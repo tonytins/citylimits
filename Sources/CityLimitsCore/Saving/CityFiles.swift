@@ -190,6 +190,7 @@ public enum CityFiles {
         switch file.pathExtension.lowercased() {
         case binaryExtension: return try read(binary: bytes, definitions: definitions)
         case flatExtension: return try read(flat: String(decoding: bytes, as: UTF8.self), definitions: definitions)
+        case MicropolisImport.fileExtension: return try MicropolisImport.read(bytes, name: file.deletingPathExtension().lastPathComponent)
         default: throw FormatError("\(file.lastPathComponent) isn't a city file.")
         }
     }
@@ -255,7 +256,7 @@ public enum CityFiles {
             return []
         }
         let cities = files
-            .filter { [flatExtension, binaryExtension].contains($0.pathExtension.lowercased()) }
+            .filter { [flatExtension, binaryExtension, MicropolisImport.fileExtension].contains($0.pathExtension.lowercased()) }
             .map { ($0, (try? $0.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast) }
             .sorted { $0.1 > $1.1 }
             .prefix(maxListed)
@@ -264,6 +265,11 @@ public enum CityFiles {
 
     private static func summary(_ file: URL, saved: Date) -> SavedCitySummary? {
         guard let bytes = try? readBytes(file) else { return nil }
+        if file.pathExtension.lowercased() == MicropolisImport.fileExtension {
+            // An import is listed by what it would open as, which means importing it.
+            guard let city = try? MicropolisImport.read(bytes, name: file.deletingPathExtension().lastPathComponent).city else { return nil }
+            return SavedCitySummary(file: file, name: city.name, date: city.date, population: city.census.cityPopulation, funds: city.treasury.funds, saved: saved)
+        }
         let save: JSON?
         if file.pathExtension.lowercased() == binaryExtension {
             save = try? sections(binary: bytes).0
