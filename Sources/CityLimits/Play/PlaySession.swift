@@ -22,6 +22,8 @@ final class PlaySession {
     private let notice = NoticeWindow()
     private let budget: BudgetWindow
     private let demand: DemandWindow
+    private let cityPanel: CityPanelWindow
+    private let deal: DealWindow
     private let help = HelpWindow()
     private var clock = GameClock()
     private(set) var speed = GameSpeed.normal
@@ -41,9 +43,41 @@ final class PlaySession {
         overview = OverviewMap(city: city)
         budget = BudgetWindow(city: city)
         demand = DemandWindow(city: city)
+        cityPanel = CityPanelWindow(city: city)
+        deal = DealWindow(city: city)
         newsDesk = NewsDesk(city: city)
         status.ticker.filler = { [unowned self] in newsDesk.next(for: city, random: &newsRandom) }
         city.onEvent = { [unowned self] event in hear(event) }
+        cityPanel.onShowOffer = { [unowned self] in deal.open(in: windows) }
+        cityPanel.onBreakDeal = { [unowned self] side in askToBreakDeal(side) }
+        if let challenge = city.challenge, challenge.won == nil {
+            status.ticker.advise("\(challenge.name): meet its goals by \(challenge.ends); the city panel lists them")
+        }
+    }
+
+    private func askToBreakDeal(_ side: Side) {
+        guard let standing = city.neighbours.deal(with: side) else { return }
+        let name = city.neighbours.neighbour(side).name
+        confirm.ask(
+            "Break the deal with \(name)?",
+            "It costs \(Figures.money(standing.money)) now, a year of the deal's money, and \(name) won't deal again for \(CityNeighbours.grudgeYears) years.",
+            yes: "Break", no: "Keep", in: windows
+        ) { [unowned self] isYes in
+            if isYes { _ = city.breakDeal(with: side) }
+        }
+    }
+
+    // The challenge's result, on the ticker and in a notice. Win or lose, the city plays on.
+    private func showResult(won: Bool, goals: [GoalReport]) {
+        guard let challenge = city.challenge else { return }
+        let missed = goals.filter { !$0.met }.map(\.text)
+        let title = won ? "Challenge won!" : "Challenge lost"
+        let message = won
+            ? "\(challenge.name): every goal was met by \(challenge.ends). The city is yours to play on."
+            : "\(challenge.name): by \(challenge.ends), \(missed.count) of \(goals.count) goals weren't met: \(missed.joined(separator: "; ")). The city is yours to play on."
+        status.ticker.advise(title)
+        view.cancelStroke()
+        notice.show(title, message, in: windows)
     }
 
     /// Releases what the session drew with. Call before `CloseWindow`.
@@ -75,8 +109,8 @@ final class PlaySession {
                 view.cancelStroke()
                 budget.open(reason: reason, in: windows)
             }
-        case .challengeFinished(let won, _):
-            ticker.advise(won ? "The challenge was won" : "The challenge was lost")
+        case .challengeFinished(let won, let goals):
+            showResult(won: won, goals: goals)
         default:
             break
         }
@@ -114,6 +148,7 @@ final class PlaySession {
         view.animate(elapsed, speed: windows.hasModal ? .paused : speed)
         if windows.isOpen(budget.frame) { budget.show() }
         if windows.isOpen(demand.frame) { demand.show() }
+        if windows.isOpen(cityPanel.frame) { cityPanel.refresh() }
         hintLeft = max(0, hintLeft - elapsed)
         view.update()
     }
@@ -126,13 +161,20 @@ final class PlaySession {
     private func handleInput(_ elapsed: Float) {
         let pointer = GetMousePosition()
         let isOverWindow = windows.contains(pointer)
+        // While the city's name is typed, Escape drops the edit, not the panel.
+        let wasTyping = cityPanel.isTyping
         // Windows sit above everything else, so they take the pointer first; their handlers act.
         windows.update()
+        cityPanel.handleOrdinances(isFront: windows.frontWindow === cityPanel.frame)
         if windows.hasModal {
             view.cancelStroke()
-            // The budget closes from the keyboard too; a question waits for its answer.
-            if windows.frontWindow === budget.frame, IsKeyPressed(.escape) || IsKeyPressed(.enter) || IsKeyPressed(.b) {
+            // Escape closes the window in front, and the budget closes with Enter or B too; a
+            // question waits for its answer.
+            let front = windows.frontWindow
+            if front === budget.frame, IsKeyPressed(.escape) || IsKeyPressed(.enter) || IsKeyPressed(.b) {
                 windows.close(budget.frame)
+            } else if let front, front !== confirm.frame, !wasTyping, !cityPanel.isTyping, IsKeyPressed(.escape) {
+                windows.close(front)
             }
             _ = status.update(city: city, speed: speed, elapsed: 0, takesInput: false)
             return
@@ -175,11 +217,28 @@ final class PlaySession {
         case .funds: openBudget()
         case .demand: demand.open(in: windows)
         case .help: help.toggle(in: windows)
-        // The city panel these open comes in phase 4c's second half.
-        case .cityName, .link, nil: break
+        case .cityName: openCityPanel(.city)
+        case .link(let item): openLink(item)
+        case nil: break
         }
 
         if view.stroke != nil || !isOverWindow { handleStroke(pointer) }
+    }
+
+    private func openCityPanel(_ tab: CityPanelWindow.Tab) {
+        view.cancelStroke()
+        cityPanel.open(tab, in: windows)
+    }
+
+    // A blue line on the ticker opens what it's about: a neighbour's offer while it stands, or
+    // else the city's neighbours, or its ordinances.
+    private func openLink(_ item: NewsItem) {
+        if item.kind == .neighbour, city.neighbours.offer != nil {
+            view.cancelStroke()
+            deal.open(in: windows)
+        } else {
+            openCityPanel(item.kind == .neighbour ? .neighbours : .ordinances)
+        }
     }
 
     private func openBudget() {
@@ -247,13 +306,17 @@ final class PlaySession {
     // way to draw into a view's region, and the demand chart is one; so the session draws each
     // frame and fills the chart after it. A modal window dims what's behind it.
     private func drawWindows() {
-        let modal = [confirm.frame, notice.frame, budget.frame]
+        let modal = [confirm.frame, notice.frame, budget.frame, cityPanel.frame, deal.frame]
         for frame in windows.windows where !windows.isMinimized(frame) {
             guard let bounds = windows.bounds(of: frame) else { continue }
             if modal.contains(where: { $0 === frame }) {
                 DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Interface.theme.overlay)
             }
-            frame.draw(in: bounds)
+            if frame === cityPanel.frame {
+                cityPanel.draw(in: bounds)
+            } else {
+                frame.draw(in: bounds)
+            }
             if frame === demand.frame { demand.drawChart(window: bounds) }
         }
     }

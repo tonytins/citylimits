@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- The city panel, a modal window that pauses the city. Its title is the city's name, edited in
+     place, and its toolbar items are tabs: the city, its ordinances, and its neighbours. A city
+     played as a challenge widens the City tab with the challenge and its goals. The game draws the
+     ordinances, whose number mods can change, into their region. -->
+<UIScript version="1">
+  <Window width="420" height="226"/>
+
+  <TitleField name="cityName" placeholder="Name your city"/>
+  <ToolbarItem name="cityTab" title="City"/>
+  <ToolbarItem name="ordinancesTab" title="Ordinances"/>
+  <ToolbarItem name="neighboursTab" title="Neighbours"/>
+
+  <Style name="small" textColor="#969EAA" fontSize="10"/>
+  <Style name="dim" textColor="#969EAA" fontSize="14"/>
+  <Style name="figure" textColor="#E4E8EE" fontSize="14"/>
+  <Style name="warning" textColor="#E86A60" fontSize="14"/>
+  <Style name="accent" textColor="#F0BE5A" fontSize="14"/>
+  <Style name="note" textColor="#F0BE5A" fontSize="10"/>
+  <Style name="detail" textColor="#969EAA" fontSize="12"/>
+  <Style name="deal" textColor="#F0BE5A" fontSize="12"/>
+  <Style name="residential" textColor="#4A8A42" fontSize="14"/>
+  <Style name="commercial" textColor="#3E6EBE" fontSize="14"/>
+  <Style name="industrial" textColor="#C69C3A" fontSize="14"/>
+  <Style name="plain" textColor="#969EAA" highlightedTextColor="#F0BE5A" backgroundColor="#00000000" borderColor="#00000000" fontSize="12"/>
+  <Style name="link" textColor="#6EAAFA" highlightedTextColor="#F0BE5A" disabledTextColor="#969EAA" backgroundColor="#00000000" borderColor="#00000000" fontSize="12"/>
+  <Style name="break" textColor="#E4E8EE" highlightedTextColor="#E86A60" backgroundColor="#48505C" borderColor="#48505C" fontSize="14"/>
+
+  <!-- City -->
+  <Text name="renameNote" x="12" y="8" width="396" height="10" style="small"/>
+  <Text name="renamed" x="12" y="8" width="396" height="10" style="note" text="Renamed"/>
+  <Text name="date" x="12" y="28" width="396" height="14" style="figure"/>
+  <Text name="population" x="12" y="50" width="396" height="14" style="figure"/>
+  <Text name="breakdown" x="12" y="70" width="396" height="10" style="small"/>
+  <Text name="demandLabel" x="12" y="90" width="64" height="14" style="figure" text="Demand"/>
+  <Text name="residential" x="80" y="90" width="84" height="14" style="residential"/>
+  <Text name="commercial" x="168" y="90" width="84" height="14" style="commercial"/>
+  <Text name="industrial" x="256" y="90" width="92" height="14" style="industrial"/>
+  <Text name="funds" x="12" y="114" width="396" height="14" style="figure"/>
+  <Text name="fundsWarning" x="12" y="114" width="396" height="14" style="warning"/>
+  <Text name="thisYear" x="12" y="136" width="396" height="14" style="figure"/>
+  <Text name="thisYearWarning" x="12" y="136" width="396" height="14" style="warning"/>
+  <Text name="lastYear" x="12" y="158" width="396" height="14" style="figure"/>
+  <Text name="lastYearWarning" x="12" y="158" width="396" height="14" style="warning"/>
+  <Text name="seed" x="12" y="194" width="150" height="14" style="figure"/>
+  <Button name="copySeed" x="160" y="190" width="100" height="22" style="plain" text="click to copy"/>
+
+  <Text name="challengeLabel" x="440" y="28" width="268" height="10" style="small" text="Challenge"/>
+  <Text name="challengeName" x="440" y="44" width="268" height="14" style="figure"/>
+  <Text name="ends" x="440" y="66" width="268" height="14" style="figure"/>
+  <Text name="state" x="440" y="88" width="268" height="14" style="dim"/>
+  <Text name="stateWarning" x="440" y="88" width="268" height="14" style="warning"/>
+  <Text name="stateWon" x="440" y="88" width="268" height="14" style="accent"/>
+  <Text name="eventsLabel" x="440" y="114" width="268" height="10" style="small" text="Disasters to come"/>
+  <Text name="events" x="440" y="130" width="268" height="84" style="figure"/>
+  <Text name="goalsLabel" x="12" y="228" width="696" height="14" style="figure"/>
+  <Text name="goals" x="20" y="250" width="420" height="120" style="detail"/>
+  <Text name="goalStates" x="500" y="250" width="208" height="120" style="detail" alignment="right"/>
+
+  <!-- Ordinances -->
+  <Region name="ordinances" x="12" y="8" width="396" height="10"/>
+  <Text name="ordinanceNote" x="12" y="20" width="396" height="10" style="small"/>
+
+  <!-- Neighbours -->
+  <Text name="neighbour0" x="12" y="10" width="396" height="14" style="figure"/>
+  <Text name="links0" x="12" y="30" width="330" height="12" style="detail"/>
+  <Text name="deal0" x="12" y="30" width="330" height="12" style="deal"/>
+  <Button name="break0" x="350" y="24" width="58" height="20" style="break" text="Break"/>
+  <Text name="neighbour1" x="12" y="58" width="396" height="14" style="figure"/>
+  <Text name="links1" x="12" y="78" width="330" height="12" style="detail"/>
+  <Text name="deal1" x="12" y="78" width="330" height="12" style="deal"/>
+  <Button name="break1" x="350" y="72" width="58" height="20" style="break" text="Break"/>
+  <Text name="neighbour2" x="12" y="106" width="396" height="14" style="figure"/>
+  <Text name="links2" x="12" y="126" width="330" height="12" style="detail"/>
+  <Text name="deal2" x="12" y="126" width="330" height="12" style="deal"/>
+  <Button name="break2" x="350" y="120" width="58" height="20" style="break" text="Break"/>
+  <Text name="neighbour3" x="12" y="154" width="396" height="14" style="figure"/>
+  <Text name="links3" x="12" y="174" width="330" height="12" style="detail"/>
+  <Text name="deal3" x="12" y="174" width="330" height="12" style="deal"/>
+  <Button name="break3" x="350" y="168" width="58" height="20" style="break" text="Break"/>
+  <Button name="offer" x="12" y="200" width="396" height="18" style="link"/>
+</UIScript>

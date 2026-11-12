@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- A neighbour's offer of a power deal, in a modal window over whatever opened it. -->
+<UIScript version="1">
+  <Window width="420" height="200"/>
+
+  <Text name="message" x="14" y="14" width="392" height="140"/>
+  <Button name="decline" x="206" y="162" width="96" height="26" text="Decline"/>
+  <Button name="accept" x="310" y="162" width="96" height="26" text="Accept"/>
+</UIScript>
