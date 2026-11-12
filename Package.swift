@@ -27,6 +27,7 @@ let package = Package(
             ],
             resources: [
                 .copy("Resources/Assets"),
+                .copy("Resources/Interface"),
                 .copy("Resources/Scenarios"),
             ],
             plugins: [

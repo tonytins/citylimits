@@ -13,46 +13,64 @@ final class PlaySession {
     let city: CitySimulation
     let view: CityView
     private let palette: ToolPaletteView
+    private let status = StatusBar()
+    private let overview: OverviewMap
     private var clock = GameClock()
     private(set) var speed = GameSpeed.normal
-    // The speed Space brings back after a pause.
+    // The speed play brings back after a pause.
     private var lastSpeed = GameSpeed.normal
     private var hint: String?
     private var hintLeft: Float = 0
     private var messages = CityMessageFilter()
-    /// The latest thing the city said, until 4b's ticker takes it.
-    private var lastMessage = ""
+    private var newsDesk: NewsDesk
+    // Headlines are for show, so they use random numbers of their own, never the city's.
+    private var newsRandom = SystemRandomNumberGenerator()
 
     init(city: CitySimulation, assets: GameAssets) {
         self.city = city
         view = CityView(city: city, assets: assets)
         palette = ToolPaletteView(assets: assets, definitions: city.definitions)
+        overview = OverviewMap(city: city)
+        newsDesk = NewsDesk(city: city)
+        status.ticker.filler = { [unowned self] in newsDesk.next(for: city, random: &newsRandom) }
         city.onEvent = { [unowned self] event in hear(event) }
     }
 
     /// Releases what the session drew with. Call before `CloseWindow`.
     func unload() {
         city.onEvent = nil
+        status.ticker.filler = nil
+        overview.unload()
         view.unload()
     }
 
+    // A disaster goes on the ticker in red the moment it starts, every time, since each one is
+    // news; the city's other messages go in yellow, unless one was said too lately. Ordinances
+    // and neighbours have news of their own, in blue.
     private func hear(_ event: CityEvent) {
         view.show(event)
+        let ticker = status.ticker
         switch event {
-        case .message(let message) where message.isDisaster || messages.shouldPass(message, cityTime: city.cityTime):
-            lastMessage = message.text
+        case .message(let message) where message.isDisaster:
+            ticker.post(NewsItem(message.text, kind: .disaster))
+        case .message(let message) where messages.shouldPass(message, cityTime: city.cityTime):
+            ticker.advise(message.text)
+        case .ordinance(let news):
+            ticker.post(NewsText.ordinance(news, city: city.name))
+        case .neighbour(let news):
+            ticker.post(NewsText.neighbour(news, city: city.name))
         case .challengeFinished(let won, _):
-            lastMessage = won ? "The challenge was won" : "The challenge was lost"
+            ticker.advise(won ? "The challenge was won" : "The challenge was lost")
         default:
             break
         }
     }
 
-    /// The bottom of the space the map has, above the status line.
-    private var mapBottom: Int32 { GetScreenHeight() - 24 }
+    /// The bottom of the space the map has, above the bar.
+    private var mapBottom: Int32 { Int32(status.origin.y) }
 
     private func isOverInterface(_ point: Vector2) -> Bool {
-        palette.contains(point) || point.y >= Float(mapBottom)
+        palette.contains(point) || overview.contains(point) || status.contains(point)
     }
 
     // MARK: Each frame
@@ -91,6 +109,17 @@ final class PlaySession {
         if IsKeyPressed(.period) { setSpeed(GameSpeed(rawValue: min(speed.rawValue + 1, GameSpeed.superFast.rawValue)) ?? .superFast) }
         if IsKeyPressed(.escape) { view.cancelStroke() }
 
+        // The HUD takes the pointer only between strokes, so a drag across it doesn't click it.
+        let takesPointer = view.stroke == nil
+        if takesPointer { overview.update(camera: view.camera, tileSize: Float(MapRenderer.tileSize)) }
+        let action = status.update(city: city, speed: speed, elapsed: elapsed, takesInput: takesPointer)
+        switch action {
+        case .pausePlay: setSpeed(speed == .paused ? lastSpeed : .paused)
+        case .speed(let chosen): setSpeed(chosen)
+        // The windows these open come in phase 4c.
+        case .cityName, .demand, .funds, .help, .link, nil: break
+        }
+
         handleStroke(pointer)
     }
 
@@ -121,15 +150,17 @@ final class PlaySession {
     // MARK: Drawing
 
     func draw() {
-        // The map's cache draws into textures, which can't happen inside the frame.
+        // The map's cache and the overview draw into textures, which can't happen inside the frame.
         view.refresh()
+        overview.refresh()
         BeginDrawing()
         ClearBackground(Palette.background)
         let pointer = GetMousePosition()
         let hover = isOverInterface(pointer) ? nil : view.tile(at: pointer)
         view.drawMap(hover: hover)
         palette.draw(pointer: pointer)
-        drawStatus()
+        overview.draw(camera: view.camera, tileSize: Float(MapRenderer.tileSize))
+        status.draw(city: city, speed: speed, resumeSpeed: lastSpeed)
 
         // Beside the pointer: what the stroke being dragged would cost, what the last one came
         // to, or, with Inspect, what the tile under the pointer is.
@@ -143,14 +174,5 @@ final class PlaySession {
                 city.map.describe(hover.x, hover.y, definitions: city.definitions, hazards: city.hazards), bottom: mapBottom)
         }
         EndDrawing()
-    }
-
-    // A plain status line until the bar comes in 4b.
-    private func drawStatus() {
-        let top = mapBottom
-        DrawRectangle(0, top, GetScreenWidth(), GetScreenHeight() - top, Palette.bar)
-        let speedName = ["Paused", "Normal", "Fast", "Super fast"][speed.rawValue]
-        let line = "\(city.name)   \(city.date)   $\(NewsDesk.grouped(city.treasury.funds))   population \(NewsDesk.grouped(city.census.cityPopulation))   \(speedName)   \(lastMessage)"
-        DrawText(line, 8, top + 5, 14, Palette.text)
     }
 }

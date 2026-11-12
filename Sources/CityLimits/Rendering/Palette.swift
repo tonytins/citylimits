@@ -24,6 +24,10 @@ enum Palette {
     static let speedUnlit = rgb(217, 217, 217)
     static let helpButton = rgb(74, 138, 66)
 
+    static let residential = rgb(74, 138, 66)
+    static let commercial = rgb(62, 110, 190)
+    static let industrial = rgb(198, 156, 58)
+
     static let hintBackground = rgb(250, 215, 80)
     static let hintText = rgb(0, 0, 0)
 
@@ -62,9 +66,9 @@ enum Palette {
         case .hospital, .church: return rgb(220, 220, 220)
         case .fireStation: return rgb(200, 60, 50)
         case .policeStation: return rgb(60, 80, 190)
-        case .residential: return rgb(74, 138, 66)
-        case .commercial: return rgb(62, 110, 190)
-        case .industrial: return rgb(198, 156, 58)
+        case .residential: return residential
+        case .commercial: return commercial
+        case .industrial: return industrial
         case .coalPowerPlant, .nuclearPowerPlant: return rgb(150, 150, 160)
         case .stadium, .seaport, .airport: return rgb(180, 170, 120)
         default: return ground(state.kind)

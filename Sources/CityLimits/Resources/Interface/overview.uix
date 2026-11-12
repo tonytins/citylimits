@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- The overview in the top-right corner, as Micropolis has it: the whole city small, which the
+     game draws into its region, and buttons that switch it between the city and the
+     simulation's maps. -->
+<UIScript version="1">
+  <Window width="252" height="278"/>
+
+  <Style name="mode" textColor="#969EAA" selectedTextColor="#F0BE5A" highlightedTextColor="#E4E8EE" backgroundColor="#161A20" borderColor="#48505C" fontSize="10"/>
+
+  <Region name="map" x="6" y="6" width="240" height="200"/>
+  <Button name="city" x="6" y="214" width="58" height="18" style="mode" text="City"/>
+  <Button name="power" x="66" y="214" width="58" height="18" style="mode" text="Power"/>
+  <Button name="fire" x="126" y="214" width="58" height="18" style="mode" text="Fire"/>
+  <Button name="police" x="186" y="214" width="60" height="18" style="mode" text="Police"/>
+  <Button name="value" x="6" y="234" width="58" height="18" style="mode" text="Value"/>
+  <Button name="people" x="66" y="234" width="58" height="18" style="mode" text="People"/>
+  <Button name="traffic" x="126" y="234" width="58" height="18" style="mode" text="Traffic"/>
+  <Button name="pollution" x="186" y="234" width="60" height="18" style="mode" text="Pollution"/>
+  <Button name="crime" x="6" y="254" width="58" height="18" style="mode" text="Crime"/>
+</UIScript>
