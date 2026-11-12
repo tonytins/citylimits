@@ -115,7 +115,7 @@ Next, in order:
 | Happy Isle: Player-facing game | 100% | 0 | The palette, laid out as Micropolis', and the HUD, with its bar along the bottom over a news ticker after Tony Bark's mock-up; the budget, demand, and city panels, the overview's power mode, the settings window, and the New City window; cities that save, load, autosave, and import from Micropolis; and scenarios to play, with four built-in challenges |
 | Kyoto: The scenario editor | 100% | 0 | The interface library it shares with play, the stadium, the seaport, and the airport the alpha missed, with the demand they hold back, the shared city view, editing a scenario in the game, tested by playing, its details, and saving it, with a New City window |
 | Senri (0.5, long-term): Formats, specs, neighbours, and packaging | 90% | 2–6 | Every format is at its next major and can be written for 0.4, the base game is data in `common/`, with more of it as specs, power runs along roads, facilities influence the land around them, every window has a unified title bar, the city has ordinances and neighbours to deal with, and the game is packaged for Linux, Windows, and macOS; what else turns up before online play is left |
-| The port to Swift (0.6) | 90% | 2–4 | The core, the game, the formats, the editor, and the docs are ported; removing the C# projects from `main` is left |
+| The port to Swift (0.6) | 100% | 0 | The core, the game, the formats, the editor, and the docs are ported, and the C# projects are off `main`. Next, the formats are reviewed against the forward compatibility rule |
 | Yokohama (0.6): Online play | 0% | unestimated | Nothing yet: a Network Edition-style shared city, hosted by `CityLimits.Server`. Its checklist is a draft, settled when it starts |
 | | **Total** | **≈ 10–18, Yokohama unestimated** | |
 
@@ -654,7 +654,9 @@ Ported in phases, each checked against the C# build, as the scorecard's
   saving held off during a disaster.
 - [x] Phase 5a: the scenario editor as a session of its own.
 - [x] Phase 5b: the docs.
-- [ ] Phase 5c: the C# projects removed from `main`.
+- [x] Phase 5c: the C# projects removed from `main`, with their packaging,
+  CI, and C# skills, which stay on `legacy/csharp`; CI on `main` builds and
+  tests the Swift package.
 - [ ] Afterwards: the formats reviewed against the forward compatibility
   rule, as Tony Bark asked.
 
@@ -726,6 +728,7 @@ Yokohama waits on Senri, and on Tony Bark settling its design from the
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-11-12 | minor | The port to Swift, phase 5c: the C# projects, their packaging and CI, and the C# skills leave `main` for `legacy/csharp`, and CI builds and tests the Swift package on Linux. The port is complete; the forward compatibility review is next. 117 tests. |
 | 2026-11-12 | major | 0.6 begins as the port to Swift, as Tony Bark chose: the C# build to `legacy/csharp`, the 0.5 formats only, Linux only for now, and play and the scenario editor as sessions over one screen rather than a loop with a mode flag. Ported and checked against the C# build through phase 5b; saving is held off while a disaster is under way, with "Saving disabled" on the ticker. Where Yokohama falls is left to Tony Bark. 117 tests. |
 | 2026-10-28 | minor | Senri, N6d: the tornado and the monster, after Micropolis' sprites, each with a row on the Disasters tab and a scenario event, the helicopter chasing them, and the `menaces` feature. Micropolis' disasters are all in; N6 has the `--headless` change left. 969 tests. |
 | 2026-10-28 | minor | Senri, N6c: planes, helicopters, and ships, after Micropolis' sprites, with air crashes and shipwrecks on the Disasters tab, scenario events for each, and the `vehicles` feature. 958 tests. |

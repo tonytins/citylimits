@@ -28,8 +28,8 @@ open.
 | [Environment](#land-value-pollution-and-disasters) | 5 | 0 | 0 | land value from distance, terrain, pollution, and crime; pollution 50 an industry tile and 100 a coal plant tile; fire, floods, and earthquakes, a disaster 1 cycle in 481 |
 | [Interface](#player-interface) | 3 | 2 | 1 | 16 tools with icons, the bar along the bottom, a news ticker, a help window, the demand panel, the budget panel, the overview map, a loading screen and start menu |
 | [Platform](#platform) | 8 | 0 | 2 | Swift 6.3, raylib-swift and Hudini from 0.6 (Raylib-cs 8.1.0 and .NET 10 to 0.5), data mods, versioned formats with schemas |
-| [The Swift port](#the-swift-port-06) | 9 | 1 | 0 | 117 Swift tests; the C# build's terrain, towns, scenarios, saves, and headless log matched |
-| [Reliability](#reliability) | 6 | 0 | 0 | 828 tests, all passing, CI green |
+| [The Swift port](#the-swift-port-06) | 10 | 1 | 0 | 117 Swift tests; the C# build's terrain, towns, scenarios, saves, and headless log matched |
+| [Reliability](#reliability) | 5 | 1 | 0 | 828 tests, all passing, CI green |
 | [Documentation](#documentation) | 3 | 0 | 2 | 3 of 5 documents exist |
 | [Known issues](#known-issues) | | | | 1 open, 3 resolved |
 
@@ -94,6 +94,7 @@ swift run citylimits scenario demo-town --headless # exit code 0
 | PORT-8 | The editor is a session of its own, not a mode | done | `EditorSession` beside `PlaySession`, over the shared `CityScreen`; `ScenarioEditTests` covers writing, editing, saving, and testing; on a virtual display a new scenario was edited, given a goal and a fire, saved, tested, and reset |
 | PORT-9 | Settings are shared with the C# build | done | `SettingsTests`: a `settings.json` the C# build wrote reads with its own `SaveOlderFormats` kept and written back |
 | PORT-10 | Every file format is described by a schema that matches the readers | partial | The schemas in `docs/schemas/` are 0.5's, generated from the C# readers; the formats are unchanged, but 0.6 neither generates them nor tests them against its readers |
+| PORT-11 | The C# projects are off `main` | done | Removed in 0.6 with their packaging, CI, and C# skills, which stay on `legacy/csharp`; `swift build` and `swift test` pass without them |
 
 ## Core
 
@@ -205,7 +206,7 @@ swift run citylimits scenario demo-town --headless # exit code 0
 | REL-3 | Input, tile indices, map sizes, and files are validated where they enter | done | Map sizes, tile counts, and the settings file are checked, and the tile indexer throws outside the map. The mouse position is turned into a tile by `MapRenderer.TryGetTileAt`, which reports when the pointer is off the map, and `CityBuilder.Apply` refuses a tile that is off the map, ground that cannot be built on, and work the city cannot pay for |
 | REL-4 | A test project covers the engine-free logic, and the tests pass | done | `CityLimits.Tests` references `CityLimits.Core` and `CityLimits.CommandLine` and holds 828 xUnit tests over stadiums, seaports, and airports and the demand they hold back, challenges, scenario format 2.0, a later start year, floods and earthquakes, fire, pollution and crime, the generator and the terrain edges, the power plants, lines, and grid, the budget, the stations and their coverage, parks, hospitals and churches, the map, the tile state, the rules, the calendar and the cycle, the clock, the simulation, the settings, the treasury, the road network and its connections, the map's change event, the builder and its strokes, the scenario loader and runner, every built-in scenario, the definitions and the mod loader, zone growth, the census and demand, trips, growth and the city maps, the option reader, and the dispatcher. All 803 passed on 2026-10-23. Letting an unknown option and an out-of-range number through on purpose failed 3 of them, and letting `--headless` reach a command that needs a window failed 2 |
 | REL-5 | A determinism test proves the same seed gives the same city | done | `DeterministicRandomTests.TheSameSeedGivesTheSameSequence`, `CitySimulationTests.TheSameSeedAndTheSameTicksGiveTheSameCity`, and `CitySimulationTests.TheSameSeedAndTheSameWorkGiveTheSameCity`, which builds the same road and zones in two cities and compares the tiles and the money after 40 ticks |
-| REL-6 | CI builds and tests on every push | done | `.github/workflows/dotnet.yml` runs on a push to `main` and on a pull request: restore, build, and test. The first run, on the commit 273fd9f on 2026-10-20, finished with the conclusion `success` (run 39443031762) |
+| REL-6 | CI builds and tests on every push | partial | From 0.6, `.github/workflows/swift.yml` builds and tests on Linux in the `swift:6.3-noble` container on a push to `main` and on a pull request, then runs a headless year and the demo town; it hasn't run yet. 0.5's `dotnet.yml` stays on `legacy/csharp`, whose first run, on the commit 273fd9f on 2026-10-20, finished with the conclusion `success` (run 39443031762) |
 
 ## Documentation
 

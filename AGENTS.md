@@ -13,19 +13,19 @@ where the two disagree, CityLimits' own decisions win. See
 - `Sources/CityLimitsCore` holds the world and the simulation: plain Swift with
   no raylib, no window, and no clock.
 - `Sources/CityLimits` holds the game: the window, the sessions, and the
-  drawing.
+  drawing. `Play/CityScreen.swift` is the city on the screen that both
+  sessions share; `Play/PlaySession.swift` and `Edit/EditorSession.swift` are
+  the sessions; `Windows/` the windows, and `Resources/Interface/` their
+  UIScript documents.
 - `Tests/CityLimitsCoreTests` covers the core.
-- `docs/` holds the documentation, and `packaging/` the files for distributing
-  the game.
+- `docs/` holds the documentation. The game isn't packaged yet: the C#
+  build's packaging scripts stay on `legacy/csharp`.
 
 ### The port from C#
 
-As of 0.6, CityLimits is being ported from C# to Swift. The C# build lives on
-the `legacy/csharp` branch, where it stays as it was at 0.5 (Senri). Its
-projects (`CityLimits/`, `CityLimits.Core/`, `CityLimits.Interface/`,
-`CityLimits.CommandLine/`, and `CityLimits.Tests/`) stay in `main` as a
-reference until the Swift game can be played, then they're removed. Don't
-change them.
+As of 0.6, CityLimits is written in Swift, ported from C#. The C# build lives
+on the `legacy/csharp` branch, where it stays as it was at 0.5 (Senri), with
+its projects, packaging, and CI; look there for how the C# did something.
 
 - Port what the game does, not how the C# did it. The C# threaded a scenario
   editor flag through the game loop and its menus; the Swift build doesn't.
