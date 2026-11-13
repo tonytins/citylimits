@@ -25,7 +25,11 @@ swift build                 # build the game and its core
 swift test                  # run the tests
 swift run citylimits        # play
 swift run citylimits --help # the command line: headless runs and scenarios
+packaging/linux/package.sh  # build an AppImage and a .tar.gz into dist/release
 ```
+
+[packaging/](packaging/README.md) says what the packages hold and which
+systems they run on.
 
 Up to 0.5, CityLimits was written in C#; that build lives on the
 `legacy/csharp` branch, with its own instructions. See

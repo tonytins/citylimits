@@ -46,5 +46,6 @@ it, mod it, or work on it. The project's front page is the
 coding agents alike: the simulation is deterministic, it never touches the
 engine, the game never crashes, and every format change is versioned. It
 also lists the commands to build, test, and run the game.
-The game isn't packaged yet; the C# build's packaging scripts, for Linux,
-Windows, and macOS, stay on the `legacy/csharp` branch.
+[packaging/](../packaging/README.md) holds the scripts that build the
+packages players download: an AppImage and a `.tar.gz` for Linux, and,
+untested so far, a zip for Windows and an app for macOS.

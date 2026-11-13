@@ -1,5 +1,12 @@
 # CityLimits Changelog
 
+## 0.6.118
+
+- **Linux packages again.** The game can be packaged as an AppImage and
+  a `.tar.gz` that carry the Swift runtime and the game's art, interface,
+  and scenarios, so they run without Swift installed. They need the
+  glibc of the machine that built them, or newer.
+
 ## 0.6.116
 
 CityLimits is now written in Swift, with raylib-swift and Hudini, rather

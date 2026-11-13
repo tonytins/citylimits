@@ -18,8 +18,8 @@ where the two disagree, CityLimits' own decisions win. See
   the sessions; `Windows/` the windows, and `Resources/Interface/` their
   UIScript documents.
 - `Tests/CityLimitsCoreTests` covers the core.
-- `docs/` holds the documentation. The game isn't packaged yet: the C#
-  build's packaging scripts stay on `legacy/csharp`.
+- `docs/` holds the documentation, and `packaging/` the scripts that build
+  the packages players download (see [its readme](packaging/README.md)).
 
 ### The port from C#
 

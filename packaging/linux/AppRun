@@ -1,0 +1,4 @@
+#!/bin/sh
+# Starts the game from inside the AppImage. It finds its resources beside itself, in usr/bin.
+HERE="$(dirname "$(readlink -f "$0")")"
+exec "$HERE/usr/bin/citylimits" "$@"
