@@ -131,8 +131,8 @@ Next, in order:
 | Kyoto: The scenario editor | 100% | 0 | The interface library it shares with play, the stadium, the seaport, and the airport the alpha missed, with the demand they hold back, the shared city view, editing a scenario in the game, tested by playing, its details, and saving it, with a New City window |
 | Senri (0.5, long-term): Formats, specs, neighbours, and packaging | 90% | 2–6 | Every format is at its next major and can be written for 0.4, the base game is data in `common/`, with more of it as specs, power runs along roads, facilities influence the land around them, every window has a unified title bar, the city has ordinances and neighbours to deal with, and the game is packaged for Linux, Windows, and macOS; what else turns up before online play is left |
 | The port to Swift (0.6) | 100% | 0 | The core, the game, the formats, the editor, and the docs are ported, and the C# projects are off `main`. Next, the formats are reviewed against the forward compatibility rule |
-| Kobe (0.6.2xx): Zone types and XML | 0% | 24–42 | Planned: zone types over residential, commercial, and industrial as data, the palette built from them, their drawings, and definitions and test scripts in XML |
-| Hakone (0.6.3xx): City and scenario formats | 0% | 24–42 | Planned: `.clc` cities and `.scn` challenges at version 1, each a Micropolis `.cty` body with a CityLimits trailer; the 0.5 formats' readers removed |
+| Kobe (0.6.2xx): Zone types and XML | 0% | 27–47 | Planned: zone types over residential, commercial, and industrial as data, the palette built from them, their drawings, and definitions and test scripts in XML |
+| Hakone (0.6.3xx): City and scenario formats | 0% | 21–37 | Planned: `.clc` cities and `.scn` challenges at version 1, each a Micropolis `.cty` body with a CityLimits trailer; the 0.5 formats' readers removed |
 | Yokohama (0.6): Online play | 0% | unestimated | Nothing yet: a Network Edition-style shared city, hosted by `CityLimits.Server`. Its checklist is a draft, settled when it starts |
 | | **Total** | **≈ 58–102, Yokohama unestimated** | |
 
@@ -140,13 +140,14 @@ Next, in order:
 
 | Rank | Work | Milestone | Estimate (h) |
 |---|---|---|---|
-| 1 | Phase 1: zone types as data over the three core zones, each tile recording its type | Kobe | 8–14 |
-| 2 | Phase 2: the palette built from the zone definitions | Kobe | 3–5 |
-| 3 | Phase 3: zone drawings: the core zone's art, or a zone's own | Kobe | 4–8 |
-| 4 | Phase 4: definitions and test scripts in XML, with XSD schemas | Kobe | 6–10 |
-| 5 | Phase 5: a tourist test mod and the docs | Kobe | 3–5 |
-| 6 | Hakone, phases 1 to 6: the city and scenario formats at version 1 | Hakone | 24–42 |
-| 7 | Senri, N6: oversights, `--headless` only reading `common/` (the C# build, on `legacy/csharp`) | Senri | 2–6 |
+| 1 | Phase 0: the command line, logging, and debug switches on Apple's packages | Kobe | 3–5 |
+| 2 | Phase 1: zone types as data over the three core zones, each tile recording its type | Kobe | 8–14 |
+| 3 | Phase 2: the palette built from the zone definitions | Kobe | 3–5 |
+| 4 | Phase 3: zone drawings: the core zone's art, or a zone's own | Kobe | 4–8 |
+| 5 | Phase 4: definitions and test scripts in XML, with XSD schemas | Kobe | 6–10 |
+| 6 | Phase 5: a tourist test mod and the docs | Kobe | 3–5 |
+| 7 | Hakone, phases 1 to 5: the city and scenario formats at version 1 | Hakone | 21–37 |
+| 8 | Senri, N6: oversights, `--headless` only reading `common/` (the C# build, on `legacy/csharp`) | Senri | 2–6 |
 
 Every row of the alpha gate passes, and CityLimits is an alpha since 0.3.100,
 and a beta since 0.4.100.
@@ -717,16 +718,20 @@ Settled with Tony Bark on 2026-11-19:
   must understand. Schemas are XSD. `settings.json` and the `--json`
   scenario report stay JSON.
 
-To settle as it goes:
-
-- Whether the debug mirror of `.clc` and `.scn` is XML, to match, or JSON,
-  for a quick look with tools such as `jq`.
+- **The debug mirror** of `.clc` and `.scn` is JSON, for a quick look with
+  tools such as `jq`.
+- **Packages first.** swift-argument-parser, swift-log, and
+  swift-configuration come in a phase 0 of scaffolding, before the zones,
+  so every phase after has them, as Tony Bark chose.
 
 Phases:
 
+- [ ] Phase 0: scaffolding: the command line on swift-argument-parser,
+  keeping its exit codes 0, 1, 2, and 3; logging through swift-log; and
+  debug switches through swift-configuration; `GitVersion.txt` at 0.6.200.
 - [ ] Phase 1: zone types as data over the three core zones, each tile
   recording its type and the city its list of ids, with the fallback for
-  a missing type; `GitVersion.txt` at 0.6.200.
+  a missing type.
 - [ ] Phase 2: the palette built from the zone definitions, a tool for
   each zone type.
 - [ ] Phase 3: drawings: a zone type's core zone's art, or its own.
@@ -793,17 +798,17 @@ Settled with Tony Bark on 2026-11-19:
   change. Both start again at version 1, with optional parts that have
   defaults and a `requires` attribute for an extension an older reader
   must not skip.
-- **A mirror** of `.clc` and `.scn` is for debugging only: the body's
-  fields and an entry per box, with an unknown box kept as base64. Kobe
-  settles whether it is XML or JSON.
+- **A JSON mirror** of `.clc` and `.scn` is for debugging only: the
+  body's fields and an object per box, with an unknown box kept as
+  base64.
 - **`settings.json` stays as it is**, shared with the C# build, and may
   move to TOML later.
 - **The 0.5 formats** (city saves 2.0, scenarios 3.0, definitions 2.x)
   are no longer read. The built-in challenges and the tests' fixtures are
   converted once.
 - **Packages**, approved by Tony Bark: swift-argument-parser for the
-  command line, keeping its exit codes 0, 1, 2, and 3; swift-log; and
-  swift-configuration for the format's debug switches only.
+  command line, swift-log, and swift-configuration for debug switches,
+  brought in by Kobe's phase 0.
 
 Settled with Tony Bark on 2026-11-19, after the plan:
 
@@ -823,18 +828,17 @@ Settled with Tony Bark on 2026-11-19, after the plan:
 
 Phases:
 
-- [ ] Phase 1: swift-argument-parser, swift-log, and swift-configuration,
-  with `GitVersion.txt` at 0.6.300.
-- [ ] Phase 2: the map as Micropolis tile numbers, written and read back
-  with nothing lost, proved by a round-trip test over built cities.
-- [ ] Phase 3: the container: the signature, boxes and the critical flag,
+- [ ] Phase 1: the map as Micropolis tile numbers, written and read back
+  with nothing lost, proved by a round-trip test over built cities;
+  `GitVersion.txt` at 0.6.300.
+- [ ] Phase 2: the container: the signature, boxes and the critical flag,
   unknown boxes kept byte for byte, the checksum, and the JSON mirror.
-- [ ] Phase 4: `.clc` version 1, with `resume`, Export for Micropolis,
+- [ ] Phase 3: `.clc` version 1, with `resume`, Export for Micropolis,
   and plain `.cty` opening as a city; Load Game and saving use it.
-- [ ] Phase 5: `.scn` version 1, the editor saving it and the built-in
+- [ ] Phase 4: `.scn` version 1, the editor saving it and the built-in
   challenges converted; the 0.5 formats' readers, the features list, and
   the minor versions removed.
-- [ ] Phase 6: `saving.md`, `scenarios.md`, a written spec of `.clc` and
+- [ ] Phase 5: `saving.md`, `scenarios.md`, a written spec of `.clc` and
   `.scn`, and their schemas.
 
 ### Yokohama: Online play
@@ -905,6 +909,7 @@ Yokohama waits on Senri, and on Tony Bark settling its design from the
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-11-19 | minor | Tony Bark brought swift-argument-parser, swift-log, and swift-configuration forward to a phase 0 of Kobe, which now starts the 0.6.2xx band, and settled the debug mirror of `.clc` and `.scn` as JSON. Hakone's phases are renumbered 1 to 5. |
 | 2026-11-19 | minor | Kobe planned with Tony Bark, as 0.6.2xx before Hakone, which moves to 0.6.3xx: residential, commercial, and industrial stay the engine's own, and zone types over them are data, each tile recording its type, sharing its core zone's demand and drawings, and falling back to its core zone when its mod is missing; the palette is built from them; and mod definitions, test scripts, and the scenario inside a `.scn` move to XML, read with `FoundationXML`, with XSD schemas. Hakone's second map layer becomes the zone types, not critical, since the core zone is the fallback. |
 | 2026-11-19 | minor | Hakone planned with Tony Bark: `.clc` cities and `.scn` challenges at version 1, each the body of a Micropolis `.cty` followed by a CityLimits trailer of boxes with a critical flag and one checksum; maps stay 120 by 100; a `resume` box for running on step for step; test scripts and mod definitions JSON at version 1; the 0.5 formats no longer read; swift-argument-parser, swift-log, and swift-configuration approved. The port's forward compatibility review is done, as this plan. |
 | 2026-11-12 | minor | The port to Swift, phase 5c: the C# projects, their packaging and CI, and the C# skills leave `main` for `legacy/csharp`, and CI builds and tests the Swift package on Linux. The port is complete; the forward compatibility review is next. 117 tests. |
