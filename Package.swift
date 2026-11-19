@@ -11,7 +11,7 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/tonytins/raylib-swift", branch: "main"),
         .package(url: "https://github.com/tonytins/Hudini.git", branch: "main"),
-        .package(url: "https://github.com/tonytins/GitVersion.git", from: "0.2.0"),
+        .package(url: "https://github.com/tonytins/GitVersion.git", from: "0.3.0"),
     ],
     targets: [
         // The world and the simulation: plain Swift with no engine, so tests run without a window.

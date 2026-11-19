@@ -139,7 +139,9 @@ Describe only what works today.
   version, and every commit counts up the patch number. Each milestone in a
   release takes a feature band (`0.6.1xx`, `0.6.2xx`, ...): set
   `GitVersion.txt` to the band in the commit that starts the milestone. A new
-  release, such as `0.7.100`, needs Tony Bark's word.
+  release, such as `0.7.100`, needs Tony Bark's word. `GitVersion.env` makes
+  GitVersion ignore tags, which mark old releases, so `GitVersion.txt` always
+  names the version being built.
 - `docs/ROADMAP.md` and `docs/scorecard.md`: tick what landed, with evidence,
   and add a revision-history line. Leave scope decisions to Tony Bark.
 - `docs/saving.md` and `docs/scenarios.md` when a format changes.
