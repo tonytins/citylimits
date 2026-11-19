@@ -1,6 +1,6 @@
 # CityLimits roadmap
 
-> **Last reviewed:** 2026-11-12 · **Last updated:** 2026-11-12 · **Change:** major (0.6 begins with the port to Swift) · **Stage:** beta
+> **Last reviewed:** 2026-11-19 · **Last updated:** 2026-11-19 · **Change:** minor (Hakone planned: the city and scenario formats start again at version 1) · **Stage:** beta
 
 Forward-looking: where CityLimits stands, what blocks the next milestone,  
 and what comes next. Verified status and evidence are in the  
@@ -69,6 +69,14 @@ Linux for now. Play and the editor are sessions of their own over one
 shared screen. Saving waits out a disaster, and the ticker says so. See
 [the port's checklist](#the-port-to-swift-06).
 
+**Next: Hakone, 0.6.2xx.** The formats the port carried over were designed
+before CityLimits had a firm rule for forward compatibility, and every part
+of them shows it: a features list beside the chunks, minor versions beside
+the features, a new chunk for every field, a second encoding for every part,
+and writers for older versions. Hakone starts the city and scenario formats
+again at version 1, on a plain Micropolis city with CityLimits' own
+contributions after it. See [its checklist](#hakone-city-and-scenario-formats).
+
 The engine plays like Micropolis, and 0.4 is a beta with scenarios to play,
 four built-in challenges, and a scenario editor built into the game. Happy
 Isle and Kyoto are complete, and with them 0.4.
@@ -116,14 +124,21 @@ Next, in order:
 | Kyoto: The scenario editor | 100% | 0 | The interface library it shares with play, the stadium, the seaport, and the airport the alpha missed, with the demand they hold back, the shared city view, editing a scenario in the game, tested by playing, its details, and saving it, with a New City window |
 | Senri (0.5, long-term): Formats, specs, neighbours, and packaging | 90% | 2–6 | Every format is at its next major and can be written for 0.4, the base game is data in `common/`, with more of it as specs, power runs along roads, facilities influence the land around them, every window has a unified title bar, the city has ordinances and neighbours to deal with, and the game is packaged for Linux, Windows, and macOS; what else turns up before online play is left |
 | The port to Swift (0.6) | 100% | 0 | The core, the game, the formats, the editor, and the docs are ported, and the C# projects are off `main`. Next, the formats are reviewed against the forward compatibility rule |
+| Hakone (0.6.2xx): City and scenario formats | 0% | 24–42 | Planned: `.clc` cities and `.scn` challenges at version 1, each a Micropolis `.cty` body with a CityLimits trailer; the 0.5 formats' readers removed |
 | Yokohama (0.6): Online play | 0% | unestimated | Nothing yet: a Network Edition-style shared city, hosted by `CityLimits.Server`. Its checklist is a draft, settled when it starts |
-| | **Total** | **≈ 10–18, Yokohama unestimated** | |
+| | **Total** | **≈ 34–60, Yokohama unestimated** | |
 
 ## Upcoming work, ranked
 
 | Rank | Work | Milestone | Estimate (h) |
 |---|---|---|---|
-| 1 | Senri, N6: oversights, `--headless` only reading `common/` | Senri | 2–6 |
+| 1 | Phase 1: the command line, logging, and the format's debug switches on Apple's packages | Hakone | 3–5 |
+| 2 | Phase 2: the map as Micropolis tile numbers, both ways, losing nothing | Hakone | 4–8 |
+| 3 | Phase 3: the container: signature, boxes, the critical flag, kept boxes, the checksum, and the JSON mirror | Hakone | 4–6 |
+| 4 | Phase 4: `.clc` version 1, with `resume` and Export for Micropolis | Hakone | 6–10 |
+| 5 | Phase 5: `.scn` version 1, test scripts and mod definitions at version 1, and the old readers removed | Hakone | 4–8 |
+| 6 | Phase 6: the docs and the spec | Hakone | 3–5 |
+| 7 | Senri, N6: oversights, `--headless` only reading `common/` (the C# build, on `legacy/csharp`) | Senri | 2–6 |
 
 Every row of the alpha gate passes, and CityLimits is an alpha since 0.3.100,
 and a beta since 0.4.100.
@@ -657,8 +672,101 @@ Ported in phases, each checked against the C# build, as the scorecard's
 - [x] Phase 5c: the C# projects removed from `main`, with their packaging,
   CI, and C# skills, which stay on `legacy/csharp`; CI on `main` builds and
   tests the Swift package.
-- [ ] Afterwards: the formats reviewed against the forward compatibility
-  rule, as Tony Bark asked.
+- [x] Afterwards: the formats reviewed against the forward compatibility
+  rule, as Tony Bark asked, which became [Hakone](#hakone-city-and-scenario-formats).
+
+### Hakone: City and scenario formats
+
+Version 0.6.2xx, named for Hakone's *himitsu-bako*, the puzzle boxes with
+hidden compartments: a plain Micropolis city, with CityLimits' own parts
+tucked in behind it. The city and scenario formats start again at version 1,
+following the forward compatibility rule rather than the C# build's habits.
+
+What the C# formats got wrong, which Hakone is built to avoid:
+
+- The same thing said twice: each chunk beside a features list, or a parts
+  list with its own flags, which had to agree.
+- Minor versions counted alongside the features they named.
+- A new chunk for every new field, since a field could never join an
+  existing section.
+- A second encoding for every part, binary beside JSON.
+- Legacy writers, reserved names, and falling back to an older version on
+  save.
+
+Settled with Tony Bark on 2026-11-19:
+
+- **Cities are `.clc`.** A file is the 27,120-byte body of a Micropolis
+  `.cty`, the map as Micropolis tile numbers with its histories, money,
+  time, tax, and funding, followed by a CityLimits trailer. The body is
+  the authoritative map, so CityLimits writes and reads its tiles as
+  Micropolis numbers exactly; fires, floods, and radiation are part of the
+  tiles, as in Micropolis. Maps are Micropolis' 120 by 100.
+- **The trailer** is the signature `\x89CLC\r\n\x1a\n`, the version, 1,
+  then boxes, each with a type, a flags byte (bit 0: critical), and a
+  length, then one checksum over the whole file. There is no list of parts:
+  the boxes are the list. A box may gain fields at its end, each with a
+  default, and an older reader reads those it knows and skips the rest by
+  the box's length. Only an addition that changes meaning, such as one an
+  older reader would get wrong rather than lose, is a box marked critical.
+- **Older readers** skip an unknown box that isn't critical and write it
+  back byte for byte, and refuse a file with an unknown critical box,
+  naming it. An addition that describes the map's tiles is critical, so
+  kept data can't go stale against a changed map.
+- **The boxes** hold what Micropolis has no place for: the name and the
+  seed, the founding year, the mods, a challenge, ordinances, neighbours
+  and their deals, the budget beyond the three funding levels, the
+  facilities' demand caps, vehicles and menaces, and `resume`.
+- **`resume`** carries the simulation's working state, its random numbers,
+  traffic, pollution, coverage, and the rest, so a city opens and runs on
+  step for step. Without it, as from a plain `.cty`, CityLimits works
+  them out again as Micropolis does.
+- **Micropolis** refuses any file that isn't exactly 27,120 bytes, so a
+  `.clc` doesn't open there; Export for Micropolis writes the body alone
+  as a `.cty`. A plain `.cty` opens in CityLimits as a city with no boxes.
+- **Challenges are `.scn`**, the same container with the signature
+  `\x89CLS\r\n\x1a\n` and its own version, 1: a city with a critical
+  `scenario` box holding the challenge as JSON text. One file a challenge,
+  its city inside. SimCity 2000's scenarios share the extension, and the
+  signature tells them apart.
+- **Test scripts stay JSON**, the seed-and-strokes runs agents and the
+  tests use, as do mod definitions; both start again at version 1, with
+  optional fields that have defaults and a `requires` list for an addition
+  an older reader must not skip.
+- **A JSON mirror** of `.clc` and `.scn` is for debugging only: the body's
+  fields and an object per box, with an unknown box kept as base64.
+- **`settings.json` stays as it is**, shared with the C# build, and may
+  move to TOML later.
+- **The 0.5 formats** (city saves 2.0, scenarios 3.0, definitions 2.x)
+  are no longer read. The built-in challenges and the tests' fixtures are
+  converted once.
+- **Packages**, approved by Tony Bark: swift-argument-parser for the
+  command line, keeping its exit codes 0, 1, 2, and 3; swift-log; and
+  swift-configuration for the format's debug switches only.
+
+To settle as it goes:
+
+- Whether the core logs through swift-log's API, or keeps reporting
+  through events and leaves logging to the game and the command line.
+- Which checksum, such as the CRC-32 the code already has.
+- The `.clc` names for Micropolis' tiles that CityLimits draws differently,
+  found by phase 2's round trip.
+
+Phases:
+
+- [ ] Phase 1: swift-argument-parser, swift-log, and swift-configuration,
+  with `GitVersion.txt` at 0.6.200.
+- [ ] Phase 2: the map as Micropolis tile numbers, written and read back
+  with nothing lost, proved by a round-trip test over built cities.
+- [ ] Phase 3: the container: the signature, boxes and the critical flag,
+  unknown boxes kept byte for byte, the checksum, and the JSON mirror.
+- [ ] Phase 4: `.clc` version 1, with `resume`, Export for Micropolis,
+  and plain `.cty` opening as a city; Load Game and saving use it.
+- [ ] Phase 5: `.scn` version 1, the editor saving it and the built-in
+  challenges converted; test scripts and mod definitions at version 1;
+  the 0.5 formats' readers, the features list, and the minor versions
+  removed.
+- [ ] Phase 6: `saving.md`, `scenarios.md`, a written spec of `.clc` and
+  `.scn`, and their schemas.
 
 ### Yokohama: Online play
 
@@ -728,6 +836,7 @@ Yokohama waits on Senri, and on Tony Bark settling its design from the
 
 | Date | Change | Summary |
 |---|---|---|
+| 2026-11-19 | minor | Hakone planned with Tony Bark: `.clc` cities and `.scn` challenges at version 1, each the body of a Micropolis `.cty` followed by a CityLimits trailer of boxes with a critical flag and one checksum; maps stay 120 by 100; a `resume` box for running on step for step; test scripts and mod definitions JSON at version 1; the 0.5 formats no longer read; swift-argument-parser, swift-log, and swift-configuration approved. The port's forward compatibility review is done, as this plan. |
 | 2026-11-12 | minor | The port to Swift, phase 5c: the C# projects, their packaging and CI, and the C# skills leave `main` for `legacy/csharp`, and CI builds and tests the Swift package on Linux. The port is complete; the forward compatibility review is next. 117 tests. |
 | 2026-11-12 | major | 0.6 begins as the port to Swift, as Tony Bark chose: the C# build to `legacy/csharp`, the 0.5 formats only, Linux only for now, and play and the scenario editor as sessions over one screen rather than a loop with a mode flag. Ported and checked against the C# build through phase 5b; saving is held off while a disaster is under way, with "Saving disabled" on the ticker. Where Yokohama falls is left to Tony Bark. 117 tests. |
 | 2026-10-28 | minor | Senri, N6d: the tornado and the monster, after Micropolis' sprites, each with a row on the Disasters tab and a scenario event, the helicopter chasing them, and the `menaces` feature. Micropolis' disasters are all in; N6 has the `--headless` change left. 969 tests. |
