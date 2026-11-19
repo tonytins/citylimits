@@ -743,13 +743,23 @@ Settled with Tony Bark on 2026-11-19:
   command line, keeping its exit codes 0, 1, 2, and 3; swift-log; and
   swift-configuration for the format's debug switches only.
 
+Settled with Tony Bark on 2026-11-19, after the plan:
+
+- **Logging.** The core logs through swift-log's API, so it is no longer
+  free of packages; the game and the command line choose where the log
+  goes.
+- **The checksum** is CRC-32, over the whole file.
+- **A second map layer.** Tiles the Micropolis body can't express, such
+  as a zone Micropolis never had, are written in the body as the nearest
+  Micropolis tile, so an exported `.cty` still makes sense, and exactly in
+  a critical box beside it that lists only the tiles that differ. An older
+  CityLimits refuses such a city rather than playing it wrongly.
+
 To settle as it goes:
 
-- Whether the core logs through swift-log's API, or keeps reporting
-  through events and leaves logging to the game and the command line.
-- Which checksum, such as the CRC-32 the code already has.
-- The `.clc` names for Micropolis' tiles that CityLimits draws differently,
-  found by phase 2's round trip.
+- How the second layer is tested: Tony Bark suggested a hypothetical
+  tourist zone holding hotels, but tile uses are a closed list in the
+  code, so a test can't make one up.
 
 Phases:
 
