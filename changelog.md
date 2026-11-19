@@ -1,5 +1,23 @@
 # CityLimits Changelog
 
+## 0.6.200
+
+Kobe begins, the milestone that makes zone types data a mod can add. This
+first step is groundwork, and nothing changes in play.
+
+For scripts and agents: the command line now runs on Apple's
+swift-argument-parser. Its options, its exit codes, the headless run's log,
+and a scenario's report are as they were, and `--headless` and `--ticks`
+may come before or after `scenario`. Its help and its refusals read
+differently: a refusal starts with `Error:` and shows the usage, and
+`citylimits help scenario` shows a command's help. The game's own messages,
+such as which city it opened, now go to stderr with a time and a level.
+
+For developers: the command line is its own target, `CityLimitsCommands`.
+The core logs through swift-log's API, and `CITYLIMITS_LOG_LEVEL` sets how
+much the log says, from `trace` to `critical`, read through
+swift-configuration; `AGENTS.md` lists the debug switches.
+
 ## 0.6.118
 
 - **Linux packages again.** The game can be packaged as an AppImage and

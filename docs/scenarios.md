@@ -423,8 +423,7 @@ first problem is reported with its location, as in
   outside the scenario's, a week outside 1 to 4, and a goal that can
   never be met.
 
-The core's own JSON reader does this, so `CityLimitsCore` keeps its rule
-of no package references.
+The core's own JSON reader does this, with no package.
 
 ## Format 1
 
@@ -526,7 +525,7 @@ seed's rolls.
 | The file model, the loader, and the validation | `Sources/CityLimitsCore/Scenarios/Scenario.swift` |
 | The runner and the report | `Sources/CityLimitsCore/Scenarios/ScenarioRunner.swift` |
 | The writer and the editor's rules | `Sources/CityLimitsCore/Scenarios/ScenarioEdit.swift` |
-| The command | `Sources/CityLimitsCore/Commands/Commands.swift`, which loads, runs, logs, and writes the report |
+| The command | `Sources/CityLimitsCommands/`, on swift-argument-parser, which loads, runs, logs, and writes the report |
 | The built-in scenarios | `Sources/CityLimits/Resources/Scenarios/*.json`, and `demo-town` in `Scenario.swift` |
 | The tests | `Tests/CityLimitsCoreTests/`: the loader, the runner, the editor, and one test that runs every built-in scenario and expects it to pass |
 
@@ -537,8 +536,9 @@ adding the file. The tests read the built-in files from the game's
 resources folder, and never import the game.
 
 The runner takes no logger. It returns the report and raises an event per
-action, disaster, and check, and the command turns those into log lines. That
-keeps the core library free of any package.
+action, disaster, and check, and the command turns those into the run's log
+lines, which are the command's own output, so their format doesn't depend on
+how swift-log's log is set up.
 
 The default map size is `TileMap.defaultWidth` and `TileMap.defaultHeight`
 in `Sources/CityLimitsCore/World/`, which the game, the headless run, and the

@@ -1,6 +1,7 @@
 import CityLimitsCore
 import Foundation
 import Hudini
+import Logging
 import Raylib
 
 /// The game's UIScript documents, in `Resources/Interface`.
@@ -36,10 +37,13 @@ enum Interface {
     }
 }
 
-/// Writes a warning to the standard error, where the game's other warnings go.
+/// Logs a warning in the game's log.
 func warn(_ line: String) {
-    FileHandle.standardError.write(Data("warning: \(line)\n".utf8))
+    gameLog.warning("\(line)")
 }
+
+/// The game's log, through swift-log; `DebugSwitches` sends it to stderr at its level.
+let gameLog = Logger(label: "citylimits.game")
 
 /// How the bar and the windows write money and counts.
 enum Figures {

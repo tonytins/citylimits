@@ -1,4 +1,6 @@
+import CityLimitsCommands
 import Foundation
+import Logging
 import Testing
 
 @testable import CityLimitsCore
@@ -68,9 +70,28 @@ struct CommandLineTests {
         ("scenario list --json", .exit(ExitCode.usage)),
         ("scenario no-such-thing --headless", .exit(ExitCode.failure)),
         ("scenario demo-town --headless --ticks 10", .exit(ExitCode.usage)),
+        ("--seed -5", .window(seed: -5)),
+        ("--seed 5000000000", .exit(ExitCode.usage)),
+        ("--seed 1 --seed 2", .exit(ExitCode.usage)),
+        ("scenario list --ticks 5", .exit(ExitCode.usage)),
+        ("scenario list --headless", .exit(ExitCode.success)),
+        ("scenario --help", .exit(ExitCode.success)),
+        ("scenario demo-town extra --headless", .exit(ExitCode.usage)),
     ])
     func theCommandLineIsChecked(arguments: String, expected: Invocation) {
         #expect(run(arguments).0 == expected)
+    }
+
+    @Test func helpGoesToStdoutAndARefusalToStderr() {
+        let (_, help) = run("--help")
+        #expect(help.output.joined().contains("USAGE: citylimits"))
+        #expect(help.output.joined().contains("Exit codes: 0 done"))
+        #expect(help.error.isEmpty)
+        let (_, refused) = run("--frobnicate")
+        #expect(refused.output.isEmpty)
+        #expect(refused.error.joined().contains("--frobnicate"))
+        let (_, checked) = run("--ticks 5")
+        #expect(checked.error.first == "Error: --ticks only applies with --headless; the window runs until it is closed.")
     }
 
     @Test func theVersionIsPrinted() {
@@ -115,6 +136,21 @@ struct CommandLineTests {
             // It wrote the base game's files for this build, and played with them.
             #expect(FileManager.default.fileExists(atPath: folder.appendingPathComponent("common/zones.json").path))
         }
+    }
+}
+
+struct DebugSwitchTests {
+    @Test func theLogLevelIsReadFromTheEnvironment() {
+        #expect(DebugSwitches(environment: [:]).logLevel == .info)
+        let debug = DebugSwitches(environment: ["CITYLIMITS_LOG_LEVEL": "DEBUG"])
+        #expect(debug.logLevel == .debug)
+        #expect(debug.problems.isEmpty)
+    }
+
+    @Test func aLevelItCantTakeIsSaidNotIgnored() {
+        let switches = DebugSwitches(environment: ["CITYLIMITS_LOG_LEVEL": "loud"])
+        #expect(switches.logLevel == .info)
+        #expect(switches.problems == ["CITYLIMITS_LOG_LEVEL is 'loud', not one of trace, debug, info, notice, warning, error, critical, so the log stays at info."])
     }
 }
 

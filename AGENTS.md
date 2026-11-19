@@ -11,13 +11,17 @@ where the two disagree, CityLimits' own decisions win. See
 [the roadmap](docs/ROADMAP.md) for where it's going.
 
 - `Sources/CityLimitsCore` holds the world and the simulation: plain Swift with
-  no raylib, no window, and no clock.
+  no raylib, no window, and no clock. It logs through swift-log's API, and the
+  program it runs in decides where the log goes.
+- `Sources/CityLimitsCommands` holds the command line, on swift-argument-parser:
+  the headless run and the scenario command, which need no window, and the
+  debug switches, read through swift-configuration.
 - `Sources/CityLimits` holds the game: the window, the sessions, and the
   drawing. `Play/CityScreen.swift` is the city on the screen that both
   sessions share; `Play/PlaySession.swift` and `Edit/EditorSession.swift` are
   the sessions; `Windows/` the windows, and `Resources/Interface/` their
   UIScript documents.
-- `Tests/CityLimitsCoreTests` covers the core.
+- `Tests/CityLimitsCoreTests` covers the core and the command line.
 - `docs/` holds the documentation, and `packaging/` the scripts that build
   the packages players download (see [its readme](packaging/README.md)).
 
@@ -58,8 +62,16 @@ passes, 1 when it couldn't run, 2 for a wrong command line, and 3 when a check
 failed. A scenario doesn't stand in for playing: it can't show how a screen
 looks or whether the city is fun.
 
-The command line lives in `CityLimitsCore/Commands`, so tests run it as a
-script does; the game only opens the window when that's what was asked for.
+The command line lives in `CityLimitsCommands`, so tests run it as a script
+does; the game only opens the window when that's what was asked for. It keeps
+its exit codes whatever the parser would choose, and its run log, the lines a
+headless run or a scenario writes, is its own output, not swift-log's.
+
+Debug switches are environment variables, read through swift-configuration,
+for people working on the game, never for players, whose choices live in
+`settings.json`. `CITYLIMITS_LOG_LEVEL` sets how much swift-log's log says, on
+stderr: `trace`, `debug`, `info` (the default), `notice`, `warning`, `error`,
+or `critical`.
 
 ## Swift and raylib
 

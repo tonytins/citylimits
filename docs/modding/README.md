@@ -169,7 +169,7 @@ The definitions live in `Sources/CityLimitsCore/Definitions/`:
   applying each valid mod in id order and returning the problems it
   found (`loadMods`).
 - The game reads the folders `GameFolders` works out
-  (`Sources/CityLimitsCore/Commands/Commands.swift`, whose
+  (`Sources/CityLimitsCore/Settings/GameFolders.swift`, whose
   `definitions(build:)` does all of the above): `common/` in the config
   folder, then `Documents/CityLimits/Mods`, or both beside the
   executable in a portable copy. A new city, a saved city opened, and

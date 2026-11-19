@@ -1,11 +1,15 @@
+import CityLimitsCommands
 import CityLimitsCore
 import Foundation
+import Logging
 import Raylib
 
 @main
 @MainActor
 struct CityLimits {
     static func main() {
+        // Before anything logs: swift-log's log goes to stderr, at the level a debug switch sets.
+        DebugSwitches().bootstrapLogging()
         let programFolder = Bundle.main.executableURL?.deletingLastPathComponent() ?? URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
         let scenarios = Bundle.module.url(forResource: "Scenarios", withExtension: nil) ?? programFolder.appendingPathComponent("Scenarios")
         let runner = CommandLineRunner(
@@ -78,7 +82,7 @@ struct CityLimits {
                 // Picking a seed is outside the simulation, so the system's random numbers may
                 // choose it; the line printed keeps it, so the city can be grown again with --seed.
                 let chosen = wanted ?? Int32.random(in: 0...Int32.max)
-                print("A new city, \(name), from seed \(chosen)")
+                gameLog.info("A new city, \(name), from seed \(chosen)")
                 let (definitions, problems) = folders.definitions(build: GitVersion.version)
                 let city = CitySimulation(map: TerrainGenerator.generate(seed: chosen), seed: chosen, definitions: definitions)
                 city.rename(name)
@@ -86,13 +90,13 @@ struct CityLimits {
                 let note = problems.count == 1 ? problems[0] : "\(problems.count) mods were skipped; the log says why"
                 playing = (city, nil, problems.isEmpty ? [] : [note])
             case .loadCity(let loaded, let file):
-                print("Playing \(loaded.city.name) from \(file.path)")
+                gameLog.info("Playing \(loaded.city.name) from \(file.path)")
                 playing = (loaded.city, file, loaded.notes)
             case .playChallenge(let city):
-                print("Playing the challenge \(city.challenge?.name ?? city.name)")
+                gameLog.info("Playing the challenge \(city.challenge?.name ?? city.name)")
                 playing = (city, nil, [])
             case .editScenario(let edit, let city):
-                print("Editing the scenario \(edit.scenario.name) from \(edit.file.path)")
+                gameLog.info("Editing the scenario \(edit.scenario.name) from \(edit.file.path)")
                 let session = EditorSession(edit: edit, city: city, assets: assets, settings: settings)
                 while !WindowShouldClose() && session.leaving == nil {
                     session.update()
@@ -119,7 +123,7 @@ struct CityLimits {
                 session.unload()
                 switch leave {
                 case .open(let loaded, let file):
-                    print("Playing \(loaded.city.name) from \(file.path)")
+                    gameLog.info("Playing \(loaded.city.name) from \(file.path)")
                     playing = (loaded.city, file, loaded.notes)
                 case .toMenu:
                     break cities

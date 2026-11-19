@@ -1,4 +1,5 @@
 import Foundation
+import Logging
 
 /// A saved city as the Load Game list shows it, read without loading the city.
 public struct SavedCitySummary: Hashable, Sendable {
@@ -270,7 +271,13 @@ public enum CityFiles {
     }
 
     private static func summary(_ file: URL, saved: Date) -> SavedCitySummary? {
-        guard let bytes = try? readBytes(file) else { return nil }
+        let bytes: [UInt8]
+        do throws(FormatError) {
+            bytes = try readBytes(file)
+        } catch {
+            coreLog.warning("Load Game leaves out \(file.lastPathComponent): \(error.message)")
+            return nil
+        }
         if file.pathExtension.lowercased() == MicropolisImport.fileExtension {
             // An import is listed by what it would open as, which means importing it.
             guard let city = try? MicropolisImport.read(bytes, name: file.deletingPathExtension().lastPathComponent).city else { return nil }

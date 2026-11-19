@@ -2,10 +2,11 @@ import Foundation
 
 /// A case named in files as its Swift name with the first letter capitalized, as the C# build's
 /// enum names were: `zoneResidential` is `ZoneResidential`.
-protocol FileNamed: CaseIterable {}
+public protocol FileNamed: CaseIterable {}
 
 extension FileNamed {
-    var fileName: String {
+    /// The name files and logs give the case.
+    public var fileName: String {
         let name = String(describing: self)
         return name.prefix(1).uppercased() + name.dropFirst()
     }

@@ -13,7 +13,7 @@ build, on the `legacy/csharp` branch), which saves it again as 2.0.
 
 Saved cities are files in `Documents/CityLimits/Cities`, or in a
 `Cities` folder beside the game when the game is portable (see
-`GameFolders` in `Sources/CityLimitsCore/Commands/`). A city is saved
+`GameFolders` in `Sources/CityLimitsCore/Settings/`). A city is saved
 under its own name, such as `Joffburg.cl`; characters a file name can't
 hold become underscores (`CityFiles.fileName(for:)`). A city opened from a `.fcl`
 file is saved back to one. There is no file dialog:

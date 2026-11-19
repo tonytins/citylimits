@@ -84,7 +84,7 @@ swift run citylimits scenario demo-town --headless # exit code 0
 
 | Id | Target | Status | Evidence |
 |---|---|---|---|
-| PORT-1 | The core is engine-free Swift, and the game alone imports raylib | done | `Package.swift`: `CityLimitsCore` depends on nothing; `citylimits` on raylib-swift, Hudini, and GitVersion. `swift build` gives no new warnings |
+| PORT-1 | The core is engine-free Swift, and the game alone imports raylib | done | `Package.swift`: `CityLimitsCore` depends only on swift-log's API, from Kobe's phase 0; `CityLimitsCommands` on swift-argument-parser and swift-configuration; `citylimits` on raylib-swift, Hudini, and GitVersion. `swift build` gives no new warnings |
 | PORT-2 | The same seed and strokes make the same city as the C# build | done | `SimulationParityTests`: terrain from four seeds, a scripted town over six years with its disasters and tornado, and a port town over eight years with its plane crashes, each matching a fingerprint the C# build gave (`SeededGeneratorTests` matches its random numbers) |
 | PORT-3 | Saves cross between the builds | done | `SavingTests`: a port town the C# build saved in both formats loads and runs on to its numbers; a city this build saves loaded in the C# build and ran on to the same numbers (checked by hand during the port) |
 | PORT-4 | Scenarios run as they did | done | `ScenarioTests`: every built-in scenario's report matches the C# build's (`Fixtures/scenario-reports-0.5/`), and the command line's exit codes and `--json` report are covered in `CommandLineTests` |
