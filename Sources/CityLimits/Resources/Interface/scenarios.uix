@@ -8,8 +8,7 @@
   <Style name="dim" textColor="#969EAA" fontSize="12"/>
   <Style name="figure" textColor="#E4E8EE" fontSize="12"/>
 
-  <List name="scenarios" x="12" y="12" width="364" height="330" selectable="true"/>
-  <Slider name="scenariosScroll" x="378" y="12" width="12" height="330" scrolls="scenarios"/>
+  <List name="scenarios" x="12" y="12" width="378" height="330" selectable="true"/>
   <Text name="empty" x="20" y="22" width="350" height="12" style="dim" text="No challenges were found."/>
   <Region name="preview" x="402" y="12" width="246" height="205"/>
   <TextArea name="briefing" x="402" y="226" width="246" height="120" readOnly="true"/>

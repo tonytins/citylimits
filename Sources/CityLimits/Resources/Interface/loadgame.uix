@@ -8,8 +8,7 @@
   <Style name="figure" textColor="#E4E8EE" fontSize="12"/>
   <Style name="warning" textColor="#E86A60" fontSize="12"/>
 
-  <List name="cities" x="12" y="12" width="364" height="330" selectable="true"/>
-  <Slider name="citiesScroll" x="378" y="12" width="12" height="330" scrolls="cities"/>
+  <List name="cities" x="12" y="12" width="378" height="330" selectable="true"/>
   <Text name="empty" x="20" y="22" width="350" height="12" style="dim" text="No saved cities yet: press Ctrl+S in a city to save it."/>
   <Region name="preview" x="402" y="12" width="246" height="205"/>
   <Text name="stats" x="402" y="226" width="246" height="100" style="figure"/>
